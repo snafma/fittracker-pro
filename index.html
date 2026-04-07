@@ -453,7 +453,7 @@ const cheatKcal=t=>{let k=0,tx=t.toLowerCase();CHEAT_DB.forEach(i=>{if(i.k.some(
 // ══════════════════════════════════
 // AUTH STATE
 // ══════════════════════════════════
-const AU={user:null,tab:'login',msg:''};
+const AU={user:null,tab:'login',msg:'',fgStep:1,fgUser:'',fgSecOk:false};
 
 function defST(){return{p:null,h:[],wLog:[],nutri:{},water:{},life:{},cheatDebt:0,measures:{},notes:[],suppLog:{},chatHistory:[],exPrefs:{},wHistory:{},programStart:null,mealOpts:{},tab:'home',aWo:null,step:0,isRest:false,tmr:0,tmrId:null,currVol:0,chatLoading:false,sheet:null,sheetData:null};}
 const ST=defST();
@@ -475,12 +475,14 @@ async function doReg(){
   const un=vv('aU')?.trim(),pw2=vv('aP'),p2=vv('aP2');
   const wt=parseFloat(vv('aW')),ht=parseFloat(vv('aH')),ag=parseInt(vv('aA'));
   const sx=document.querySelector('.sx-btn.on')?.dataset?.sx||'m';
-  if(!un||!pw2||!wt||!ht||!ag) return setMsg('Compila tutti i campi!');
+  const secQ=vv('aSecQ'),secA=vv('aSecA')?.trim().toLowerCase();
+  if(!un||!pw2||!wt||!ht||!ag||!secQ||!secA) return setMsg('Compila tutti i campi, inclusa la domanda di sicurezza!');
   if(pw2!==p2) return setMsg('Le password non coincidono!');
-  if(un.length<3) return setMsg('Username troppo corto!');
+  if(un.length<3) return setMsg('Username troppo corto (minimo 3 caratteri)!');
+  if(!/^[a-zA-Z0-9_]+$/.test(un)) return setMsg('Username: usa solo lettere, numeri e _');
   const reg=(await DB.g('ft_reg'))||[];
-  if(reg.find(u=>u.un===un)) return setMsg('Username già in uso!');
-  reg.push({un,pw:hp(pw2),ht,ag,sx,created:td()});
+  if(reg.find(u=>u.un.toLowerCase()===un.toLowerCase())) return setMsg(`⚠️ Username "${un}" già in uso. Scegli un nome diverso.`);
+  reg.push({un,pw:hp(pw2),ht,ag,sx,secQ,secA:hp(secA),created:td()});
   await DB.s('ft_reg',reg);
   AU.user=un;AU.msg='';
   const ini={...defST(),h:[{d:td(),w:wt}],programStart:td()};
@@ -505,6 +507,53 @@ async function doLogout(){await saveU();AU.user=null;AU.profile=null;SS.clr();Ob
 function setMsg(m){AU.msg=m;render();}
 function pickSex(btn){document.querySelectorAll('.sx-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');}
 
+// ── FORGOT PASSWORD ──
+async function doForgotStep1(){
+  const un=vv('fgU')?.trim();
+  if(!un) return setMsg('Inserisci il tuo username!');
+  const reg=(await DB.g('ft_reg'))||[];
+  const user=reg.find(u=>u.un.toLowerCase()===un.toLowerCase());
+  if(!user) return setMsg(`❌ Nessun account trovato con username "${un}".`);
+  AU.fgUser=user.un;AU.fgStep=2;AU.msg='';render();
+}
+async function doForgotStep2(){
+  const ans=vv('fgA')?.trim().toLowerCase();
+  if(!ans) return setMsg('Inserisci la risposta!');
+  const reg=(await DB.g('ft_reg'))||[];
+  const user=reg.find(u=>u.un===AU.fgUser);
+  if(!user) return setMsg('Errore. Ricomincia.');
+  if(user.secA!==hp(ans)) return setMsg('❌ Risposta errata. Riprova.');
+  AU.fgSecOk=true;AU.fgStep=3;AU.msg='';render();
+}
+async function doForgotStep3(){
+  const np=vv('fgNP'),np2=vv('fgNP2');
+  if(!np||np.length<4) return setMsg('Password troppo corta (minimo 4 caratteri).');
+  if(np!==np2) return setMsg('Le password non coincidono!');
+  const reg=(await DB.g('ft_reg'))||[];
+  const idx=reg.findIndex(u=>u.un===AU.fgUser);
+  if(idx<0) return setMsg('Errore. Ricomincia.');
+  reg[idx].pw=hp(np);
+  await DB.s('ft_reg',reg);
+  AU.fgStep=1;AU.fgUser='';AU.fgSecOk=false;AU.tab='login';AU.msg='✅ Password cambiata! Ora accedi con la nuova password.';
+  render();
+}
+
+// ── CHANGE PASSWORD (dentro app) ──
+async function doChangePassword(){
+  const cur=vv('cpCur'),np=vv('cpNew'),np2=vv('cpNew2');
+  if(!cur||!np||!np2) return alert('Compila tutti i campi!');
+  if(np.length<4) return alert('Nuova password troppo corta (minimo 4 caratteri).');
+  if(np!==np2) return alert('Le nuove password non coincidono!');
+  const reg=(await DB.g('ft_reg'))||[];
+  const idx=reg.findIndex(u=>u.un===AU.user);
+  if(idx<0) return alert('Errore: utente non trovato.');
+  if(reg[idx].pw!==hp(cur)) return alert('❌ Password attuale errata.');
+  reg[idx].pw=hp(np);
+  await DB.s('ft_reg',reg);
+  alert('✅ Password cambiata con successo!');
+  render();
+}
+
 // ══════════════════════════════════
 // PROGRAM ACTIONS
 // ══════════════════════════════════
@@ -514,8 +563,8 @@ function initProgram(){
   const intol=[...document.querySelectorAll('.intol-chip.on')].map(c=>c.dataset.id);
   if(!w||!g||!tRaw) return alert('Compila tutti i campi!');
   // Validazione: 0 sessioni + massa = impossibile
-  if(sess===0&&t==='bulk') return alert('⚠️ Con 0 sessioni di allenamento non è possibile fare una fase di massa muscolare.\n\nPuoi scegliere:\n• Definizione con soli passi e dieta\n• Almeno 1 sessione a settimana per la massa');
-  if(sess<2&&t==='bulk') return alert('⚠️ Per una fase di massa efficace servono almeno 2 sessioni a settimana.\n\nCon 1 sessione ti consiglio la Definizione per risultati più realistici.');
+  if(sess===0&&t==='bulk') return alert('⚠️ Con 0 sessioni di allenamento non è possibile fare una fase di massa muscolare.\n\nPuoi scegliere:\n• Definizione con soli passi e dieta\n• Almeno 2 sessioni a settimana per la massa');
+  if(sess===1&&t==='bulk') return alert('⚠️ Per una fase di massa efficace serve un minimo di 2 sessioni a settimana.\n\nCon 1 sola sessione ti consiglio la Definizione per risultati più realistici.');
   let tDate=new Date(tRaw);
   const minWk=t==='cut'?Math.abs(w-g)/0.8:Math.abs(w-g)/0.3;
   if((tDate-new Date())/(7*864e5)<minWk){tDate=new Date(new Date().getTime()+minWk*7*864e5);alert('La data era troppo vicina. L\'AI ha impostato la data minima sicura per la tua salute muscolare.');}
@@ -531,7 +580,8 @@ function updateProgram(){
   const g=parseFloat(vv('eG')),t=vv('eT'),dur=parseInt(vv('eDur')),tRaw=vv('eDate'),sess=parseInt(vv('eSess'))||3,cl=parseInt(vv('eCardio'))||1;
   const intol=[...document.querySelectorAll('.intol-chip2.on')].map(c=>c.dataset.id);
   if(!g||!tRaw) return alert('Compila i campi!');
-  if(sess===0&&t==='bulk') return alert('⚠️ Con 0 sessioni la massa non è possibile.');
+  if(sess===0&&t==='bulk') return alert('⚠️ Con 0 sessioni la massa non è possibile. Scegli almeno 2 sessioni.');
+  if(sess===1&&t==='bulk') return alert('⚠️ Con 1 sola sessione la massa è inefficace. Scegli almeno 2 sessioni o passa alla Definizione.');
   let tDate=new Date(tRaw);
   const currW=ST.h[ST.h.length-1].w;
   const minWk=t==='cut'?Math.abs(currW-g)/0.8:Math.abs(currW-g)/0.3;
@@ -625,7 +675,7 @@ async function sendMsg(){
   const an=analyze(ST.h,ST.p);
   const mac=calcMacros(cW,AU.profile?.ht,AU.profile?.ag,sx,ST.p,ST.p.sessions||3,an);
   const intolStr=ST.p.intol?.length?`Intolleranze: ${ST.p.intol.join(', ')}`:'Nessuna intolleranza';
-  const sys=`Sei Alex, coach fitness e nutrizionista professionista che segue ${AU.user} (${sx==='f'?'donna':'uomo'}, ${AU.profile?.ag||25} anni, ${AU.profile?.ht||170}cm).
+  const sys=`Sei Marcello, coach fitness e nutrizionista professionista che segue ${AU.user} (${sx==='f'?'donna':'uomo'}, ${AU.profile?.ag||25} anni, ${AU.profile?.ht||170}cm).
 DATI ATTUALI: Peso ${cW}kg → obiettivo ${ST.p.g}kg | ${ST.p.t==='cut'?'Definizione':'Massa'} | Settimana ${p2} | ${ST.p.sessions} sessioni/settimana | ${intolStr} | Target ${mac.kcal}kcal (P:${mac.prot}g C:${mac.carb}g F:${mac.fat}g) | Cardio ${mac.cardioLevel} sess. | Allenamenti: ${ST.wLog.filter(w=>!w.isRest).length}
 Rispondi in italiano. Sii diretto, pratico, motivante. Considera sempre le intolleranze e il sesso nelle raccomandazioni. Max 4 frasi salvo piani dettagliati.`;
   try{
@@ -637,6 +687,17 @@ Rispondi in italiano. Sii diretto, pratico, motivante. Considera sempre le intol
   setTimeout(()=>{const c=el('chatArea');if(c)c.scrollTop=c.scrollHeight;},80);
 }
 function clearChat(){if(confirm('Cancellare la chat?')){ST.chatHistory=[];save();}}
+function copyLink(){
+  const url=window.location.href.split('?')[0];
+  if(navigator.clipboard){navigator.clipboard.writeText(url).then(()=>alert('✅ Link copiato negli appunti!\n\nOra puoi incollarlo dove vuoi.'));}
+  else{const inp=document.createElement('input');inp.value=url;document.body.appendChild(inp);inp.select();document.execCommand('copy');document.body.removeChild(inp);alert('✅ Link copiato!');}
+}
+function shareViaEmail(){
+  const url=window.location.href.split('?')[0];
+  const sub=encodeURIComponent('Ti invito su FitTracker PRO!');
+  const body=encodeURIComponent(`Ciao!\n\nTi invito a provare FitTracker PRO, l'app di fitness e nutrizione con AI Coach MARCELLO.\n\nHa schede di allenamento personalizzate, piano alimentare adattivo, analisi del progresso e molto altro.\n\n👉 Apri l'app qui: ${url}\n\nUna volta aperto il link, crea il tuo account gratuito e inizia subito!\n\nBuon allenamento! 💪`);
+  window.location.href=`mailto:?subject=${sub}&body=${body}`;
+}
 function exportData(){
   const b=new Blob([JSON.stringify({user:AU.user,profile:AU.profile,...ST,exported:new Date().toISOString()},null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`ft_${AU.user}_${td()}.json`;a.click();
@@ -768,6 +829,83 @@ function render(){
 
 // ── AUTH ──
 function renderAuth(root){
+  const SEC_QUESTIONS=[
+    'Nome del tuo primo animale domestico?',
+    'Città di nascita di tua madre?',
+    'Nome del tuo migliore amico d\'infanzia?',
+    'Marca del tuo primo telefono?',
+    'Nome della tua scuola elementare?',
+    'Soprannome che avevi da bambino?',
+  ];
+
+  let content='';
+
+  if(AU.tab==='forgot'){
+    if(AU.fgStep===1){
+      content=`<div class="card">
+        <div class="bebas" style="font-size:20px;color:var(--ora);margin-bottom:14px;">🔑 RECUPERA PASSWORD</div>
+        <span class="lbl">IL TUO USERNAME</span><input id="fgU" placeholder="Inserisci il tuo username">
+        <button class="btn" onclick="doForgotStep1()">CONTINUA ▸</button>
+        <div style="text-align:center;margin-top:12px;">
+          <span onclick="AU.tab='login';AU.msg='';render()" style="font-size:13px;color:var(--mut);cursor:pointer;text-decoration:underline;">← Torna al Login</span>
+        </div>
+      </div>`;
+    } else if(AU.fgStep===2){
+      const reg_q=(async()=>{})();// lazy — secQ shown from state
+      content=`<div class="card">
+        <div class="bebas" style="font-size:18px;color:var(--ora);margin-bottom:4px;">🔑 VERIFICA IDENTITÀ</div>
+        <div style="font-size:12px;color:var(--mut);margin-bottom:14px;">Account: <strong style="color:var(--text)">${AU.fgUser}</strong></div>
+        <div id="secQLabel" style="font-size:13px;color:var(--text);margin-bottom:8px;line-height:1.5;">Caricamento domanda...</div>
+        <span class="lbl">LA TUA RISPOSTA</span><input id="fgA" placeholder="Risposta (non distingue maiuscole/minuscole)">
+        <button class="btn" onclick="doForgotStep2()">VERIFICA ▸</button>
+        <div style="text-align:center;margin-top:10px;">
+          <span onclick="AU.tab='forgot';AU.fgStep=1;AU.msg='';render()" style="font-size:13px;color:var(--mut);cursor:pointer;text-decoration:underline;">← Indietro</span>
+        </div>
+      </div>`;
+    } else if(AU.fgStep===3){
+      content=`<div class="card">
+        <div class="bebas" style="font-size:18px;color:var(--acc);margin-bottom:4px;">🔑 NUOVA PASSWORD</div>
+        <div style="font-size:12px;color:var(--gre);margin-bottom:14px;">✅ Identità verificata per: <strong>${AU.fgUser}</strong></div>
+        <span class="lbl">NUOVA PASSWORD</span><input id="fgNP" type="password" placeholder="Minimo 4 caratteri">
+        <span class="lbl">CONFERMA NUOVA PASSWORD</span><input id="fgNP2" type="password" placeholder="Ripeti la nuova password">
+        <button class="btn" onclick="doForgotStep3()">SALVA NUOVA PASSWORD</button>
+      </div>`;
+    }
+  } else {
+    content=`
+      <div style="display:flex;background:var(--surf);border-radius:12px;padding:3px;margin-bottom:14px;">
+        <button class="atab ${AU.tab==='login'?'on':''}" onclick="AU.tab='login';AU.msg='';render()">ACCEDI</button>
+        <button class="atab ${AU.tab==='reg'?'on':''}" onclick="AU.tab='reg';AU.msg='';render()">REGISTRATI</button>
+      </div>
+      ${AU.tab==='login'?`<div class="card">
+        <span class="lbl">USERNAME</span><input id="lU" placeholder="Il tuo username" autocomplete="username">
+        <span class="lbl">PASSWORD</span><input id="lP" type="password" placeholder="Password" autocomplete="current-password">
+        <button class="btn" onclick="doLogin()">ACCEDI</button>
+        <div style="text-align:center;margin-top:12px;">
+          <span onclick="AU.tab='forgot';AU.fgStep=1;AU.msg='';render()" style="font-size:13px;color:var(--mut);cursor:pointer;text-decoration:underline;">🔑 Ho dimenticato la password</span>
+        </div>
+      </div>`:`<div class="card">
+        <span class="lbl">USERNAME (min 3 caratteri, solo lettere/numeri/_)</span><input id="aU" placeholder="Es. marco_fit">
+        <span class="lbl">PASSWORD</span><input id="aP" type="password" placeholder="Crea password (min 4 caratteri)">
+        <span class="lbl">CONFERMA PASSWORD</span><input id="aP2" type="password" placeholder="Ripeti la password">
+        <span class="lbl" style="margin-bottom:8px;">SEI UN UOMO O UNA DONNA?</span>
+        <div style="display:flex;gap:8px;margin-bottom:10px;">
+          <button class="sx-btn on" data-sx="m" onclick="pickSex(this)"><div style="font-size:24px;margin-bottom:4px;">👨</div><div style="font-size:13px;font-weight:700;">UOMO</div></button>
+          <button class="sx-btn" data-sx="f" onclick="pickSex(this)"><div style="font-size:24px;margin-bottom:4px;">👩</div><div style="font-size:13px;font-weight:700;">DONNA</div></button>
+        </div>
+        <div class="g2"><div><span class="lbl">PESO ATTUALE (KG)</span><input id="aW" type="number" step=".1" placeholder="Es. 70"></div><div><span class="lbl">ALTEZZA (CM)</span><input id="aH" type="number" placeholder="Es. 168"></div></div>
+        <div class="g2"><div><span class="lbl">ETÀ</span><input id="aA" type="number" placeholder="Es. 27"></div></div>
+        <div class="sep"></div>
+        <span class="lbl" style="margin-bottom:6px;">🔑 DOMANDA DI SICUREZZA (per recuperare la password)</span>
+        <select id="aSecQ" style="margin-bottom:10px;">
+          <option value="">— Scegli una domanda —</option>
+          ${SEC_QUESTIONS.map(q=>`<option value="${q}">${q}</option>`).join('')}
+        </select>
+        <span class="lbl">LA TUA RISPOSTA</span><input id="aSecA" placeholder="Risposta segreta (non case-sensitive)">
+        <button class="btn" onclick="doReg()">CREA ACCOUNT</button>
+      </div>`}`;
+  }
+
   root.innerHTML=`<div class="auth-w">
     <div style="text-align:center;margin-bottom:24px;">
       <div class="bebas" style="font-size:60px;color:var(--acc);line-height:.85;letter-spacing:3px;">FIT</div>
@@ -776,31 +914,20 @@ function renderAuth(root){
       <div style="font-size:10px;color:var(--mut);letter-spacing:3px;margin-top:10px;">ADAPTIVE AI COACH · MULTI-USER</div>
     </div>
     <div style="width:100%;max-width:380px;">
-      <div style="display:flex;background:var(--surf);border-radius:12px;padding:3px;margin-bottom:14px;">
-        <button class="atab ${AU.tab==='login'?'on':''}" onclick="AU.tab='login';AU.msg='';render()">ACCEDI</button>
-        <button class="atab ${AU.tab==='reg'?'on':''}" onclick="AU.tab='reg';AU.msg='';render()">REGISTRATI</button>
-      </div>
-      ${AU.msg?`<div class="err-box">${AU.msg}</div>`:''}
-      ${AU.tab==='login'?`<div class="card">
-        <span class="lbl">USERNAME</span><input id="lU" placeholder="Il tuo username">
-        <span class="lbl">PASSWORD</span><input id="lP" type="password" placeholder="Password">
-        <button class="btn" onclick="doLogin()">ACCEDI</button>
-      </div>`:`<div class="card">
-        <span class="lbl">USERNAME (min 3 caratteri)</span><input id="aU" placeholder="Es. marco_fit">
-        <span class="lbl">PASSWORD</span><input id="aP" type="password" placeholder="Crea password">
-        <span class="lbl">CONFERMA PASSWORD</span><input id="aP2" type="password" placeholder="Ripeti password">
-        <span class="lbl" style="margin-bottom:8px;">SEI UN UOMO O UNA DONNA?</span>
-        <div style="display:flex;gap:8px;margin-bottom:10px;">
-          <button class="sx-btn on" data-sx="m" onclick="pickSex(this)"><div style="font-size:24px;margin-bottom:4px;">👨</div><div style="font-size:13px;font-weight:700;">UOMO</div></button>
-          <button class="sx-btn" data-sx="f" onclick="pickSex(this)"><div style="font-size:24px;margin-bottom:4px;">👩</div><div style="font-size:13px;font-weight:700;">DONNA</div></button>
-        </div>
-        <div class="g2"><div><span class="lbl">PESO ATTUALE (KG)</span><input id="aW" type="number" step=".1" placeholder="Es. 70"></div><div><span class="lbl">ALTEZZA (CM)</span><input id="aH" type="number" placeholder="Es. 168"></div></div>
-        <div class="g2"><div><span class="lbl">ETÀ</span><input id="aA" type="number" placeholder="Es. 27"></div></div>
-        <button class="btn" onclick="doReg()">CREA ACCOUNT</button>
-      </div>`}
+      ${AU.msg?`<div class="${AU.msg.startsWith('✅')?'':'err-box'}" style="${AU.msg.startsWith('✅')?'background:rgba(74,222,128,.1);border:1px solid var(--gre);border-radius:10px;padding:11px 13px;font-size:13px;color:var(--gre);margin-bottom:12px;':''}">${AU.msg}</div>`:''}
+      ${content}
       <div style="text-align:center;margin-top:12px;font-size:11px;color:var(--mut);">🔒 Dati privati per account · Condividi l'app con chi vuoi</div>
     </div>
   </div>`;
+
+  // Carica la domanda di sicurezza per step 2 (async)
+  if(AU.tab==='forgot'&&AU.fgStep===2){
+    DB.g('ft_reg').then(reg=>{
+      const user=reg?.find(u=>u.un===AU.fgUser);
+      const lbl=document.getElementById('secQLabel');
+      if(lbl&&user) lbl.innerHTML=`<strong>Domanda:</strong> ${user.secQ||'Domanda non trovata.'}`;
+    });
+  }
 }
 
 // ── SETUP ──
@@ -819,13 +946,13 @@ function renderSetup(){
       <select id="iT"><option value="cut">Definizione (Perdita Grasso)</option><option value="bulk">Massa (Aumento Muscolo)</option></select>
       <span class="lbl">QUANTE SESSIONI DI ALLENAMENTO A SETTIMANA?</span>
       <select id="iSess">
-        <option value="0">0 — Solo Dieta & Passi (solo taglio grasso)</option>
-        <option value="1">1 sessione/settimana</option>
-        <option value="2">2 sessioni/settimana</option>
-        <option value="3" selected>3 sessioni/settimana (consigliato)</option>
-        <option value="4">4 sessioni/settimana</option>
-        <option value="5">5 sessioni/settimana (avanzato)</option>
-        <option value="6">6 sessioni/settimana (intenso)</option>
+        <option value="0">0 — Solo Dieta &amp; Passi (solo taglio grasso)</option>
+        <option value="1">1 sessione a settimana</option>
+        <option value="2">2 sessioni a settimana</option>
+        <option value="3" selected>3 sessioni a settimana (consigliato)</option>
+        <option value="4">4 sessioni a settimana</option>
+        <option value="5">5 sessioni a settimana (avanzato)</option>
+        <option value="6">6 sessioni a settimana (intenso)</option>
       </select>
       <span class="lbl">DURATA SESSIONE</span>
       <select id="iDur"><option value="45">45 min</option><option value="60" selected>60 min (consigliato)</option><option value="90">90 min</option></select>
@@ -1131,14 +1258,14 @@ function renderCoach(){
   const sx=AU.profile?.sx||'m';
   return`<div style="position:fixed;top:72px;left:50%;transform:translateX(-50%);width:100%;max-width:500px;z-index:10;background:var(--bg);padding:12px 14px 0;">
     <div class="card card-hi" style="padding:13px;">
-      <div class="r"><div class="rc"><div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--acc),#7ab300);display:flex;align-items:center;justify-content:center;font-size:18px;">🤖</div><div><div class="bebas" style="font-size:18px;color:var(--acc);">ALEX — AI COACH</div><div style="font-size:10px;color:var(--mut);">Conosce il tuo profilo completo · Claude AI</div></div></div>${ST.chatHistory.length?`<button class="btn-s btn-dim" style="font-size:11px;" onclick="clearChat()">🗑</button>`:''}</div>
+      <div class="r"><div class="rc"><div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--acc),#7ab300);display:flex;align-items:center;justify-content:center;font-size:18px;">🤖</div><div><div class="bebas" style="font-size:18px;color:var(--acc);">MARCELLO — AI COACH</div><div style="font-size:10px;color:var(--mut);">Conosce il tuo profilo completo · Powered by Claude</div></div></div>${ST.chatHistory.length?`<button class="btn-s btn-dim" style="font-size:11px;" onclick="clearChat()">🗑</button>`:''}</div>
     </div>
   </div>
   <div id="chatArea" style="display:flex;flex-direction:column;padding:14px;gap:4px;overflow-y:auto;margin-top:132px;padding-bottom:90px;min-height:50vh;">
     ${ST.chatHistory.length===0?`<div style="text-align:center;padding:20px 14px;">
       <div style="font-size:36px;margin-bottom:10px;">💬</div>
       <div class="bebas" style="font-size:22px;color:var(--acc);margin-bottom:6px;">Ciao ${AU.user}!</div>
-      <div style="font-size:13px;color:var(--mut);line-height:1.65;margin-bottom:16px;">Sono Alex, il tuo coach personale. Conosco il tuo sesso, età, altezza, intolleranze e progressi.</div>
+      <div style="font-size:13px;color:var(--mut);line-height:1.65;margin-bottom:16px;">Sono <strong style="color:var(--acc)">Marcello</strong>, il tuo coach personale. Conosco il tuo sesso, età, altezza, intolleranze e progressi.</div>
       <div style="display:flex;flex-direction:column;gap:7px;">
         ${[sx==='f'?'Come posso ridurre la cellulite con la dieta?':'Come posso bruciare più grasso velocemente?',sx==='f'?'Qual è il miglior allenamento per i glutei?':'Quante proteine devo assumere per la massa?','Ho saltato 3 allenamenti, cosa faccio?','Cosa mangio prima dell\'allenamento?'].map(q=>`<div onclick="el('aiIn').value='${q}';sendMsg();" style="cursor:pointer;background:var(--surf);border:1px solid var(--bord);border-radius:10px;padding:11px 14px;font-size:13px;text-align:left;">${q}</div>`).join('')}
       </div>
@@ -1154,32 +1281,57 @@ function renderCoach(){
 // ── SETTINGS ──
 function renderSettings(mac){
   const sx=AU.profile?.sx||'m';
+  const appUrl=window.location.href.split('?')[0];
+  const sess=ST.p?.sessions||3;
   return`
   <div class="card" style="background:linear-gradient(135deg,#0c1a00,#0a1000);border-color:#1e2d00;padding:18px;margin-bottom:14px;">
     <div class="rc"><div style="width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--acc),#7ab300);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:28px;color:#000;">${AU.user.charAt(0).toUpperCase()}</div>
     <div><div class="bebas" style="font-size:22px;">${AU.user}</div>
     <div style="font-size:11px;color:var(--mut);">${sx==='f'?'👩 Donna':'👨 Uomo'} · ${AU.profile?.ag||'?'} anni · ${AU.profile?.ht||'?'}cm</div>
-    <div style="font-size:11px;color:var(--mut);margin-top:2px;">${ST.wLog.filter(w=>!w.isRest).length} allenamenti · ${streak(ST.wLog)} streak 🔥 · ${ST.p?.sessions||0} gg/sett</div></div></div>
+    <div style="font-size:11px;color:var(--mut);margin-top:2px;">${ST.wLog.filter(w=>!w.isRest).length} allenamenti · ${streak(ST.wLog)} streak 🔥 · ${sess===1?'1 sessione':sess+' sessioni'}/sett</div></div></div>
   </div>
 
+  <!-- MODIFICA PROGRAMMA -->
   <div class="card">
     <div class="bebas" style="font-size:20px;margin-bottom:14px;">⚙️ MODIFICA PROGRAMMA</div>
     <span class="lbl">PESO OBIETTIVO (KG)</span><input type="number" id="eG" value="${ST.p.g}" step=".1">
     <span class="lbl">DATA OBIETTIVO</span><input type="date" id="eDate" value="${ST.p.targetD}">
-    <span class="lbl">STRATEGIA</span><select id="eT"><option value="cut" ${ST.p.t==='cut'?'selected':''}>Definizione</option><option value="bulk" ${ST.p.t==='bulk'?'selected':''}>Massa</option></select>
-    <span class="lbl">SESSIONI ALLENAMENTO / SETTIMANA</span>
+    <span class="lbl">STRATEGIA</span><select id="eT"><option value="cut" ${ST.p.t==='cut'?'selected':''}>Definizione (Perdita Grasso)</option><option value="bulk" ${ST.p.t==='bulk'?'selected':''}>Massa (Aumento Muscolo)</option></select>
+    <span class="lbl">SESSIONI DI ALLENAMENTO / SETTIMANA</span>
     <select id="eSess">
-      ${[0,1,2,3,4,5,6].map(n=>`<option value="${n}" ${ST.p.sessions===n?'selected':''}>${n===0?'0 — Solo Dieta & Passi':n+' sessione'+(n>1?'i':'')}</option>`).join('')}
+      ${[0,1,2,3,4,5,6].map(n=>`<option value="${n}" ${(ST.p.sessions||3)===n?'selected':''}>${n===0?'0 — Solo Dieta &amp; Passi':n===1?'1 sessione a settimana':n+' sessioni a settimana'}</option>`).join('')}
     </select>
-    <span class="lbl">DURATA SESSIONE</span><select id="eDur"><option value="45" ${ST.p.dur===45?'selected':''}>45 min</option><option value="60" ${ST.p.dur===60?'selected':''}>60 min</option><option value="90" ${ST.p.dur===90?'selected':''}>90 min</option></select>
-    <span class="lbl">CARDIO BASE / SETTIMANA</span><select id="eCardio">${[0,1,2,3].map(n=>`<option value="${n}" ${ST.p.cardioLevel===n?'selected':''}>${{0:'0 — Solo pesi',1:'1 — Leggero',2:'2 — Moderato',3:'3 — Intenso'}[n]}</option>`).join('')}</select>
-    <span class="lbl" style="margin-bottom:8px;">INTOLLERANZE (aggiorna)</span>
+    <span class="lbl">DURATA SESSIONE</span><select id="eDur"><option value="45" ${ST.p.dur===45?'selected':''}>45 minuti</option><option value="60" ${ST.p.dur===60?'selected':''}>60 minuti</option><option value="90" ${ST.p.dur===90?'selected':''}>90 minuti</option></select>
+    <span class="lbl">SESSIONI CARDIO BASE / SETTIMANA</span><select id="eCardio">${[0,1,2,3].map(n=>`<option value="${n}" ${ST.p.cardioLevel===n?'selected':''}>${{0:'0 — Solo pesi',1:'1 — Leggero',2:'2 — Moderato',3:'3 — Intenso'}[n]}</option>`).join('')}</select>
+    <span class="lbl" style="margin-bottom:8px;">INTOLLERANZE ALIMENTARI</span>
     <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;">
       ${INTOL_LIST.map(i=>`<span class="intol-chip2 ${(ST.p.intol||[]).includes(i.id)?'on':''}" data-id="${i.id}" onclick="this.classList.toggle('on')">${i.icon} ${i.label}</span>`).join('')}
     </div>
     <button class="btn" onclick="updateProgram()">SALVA E RICALCOLA TUTTO</button>
   </div>
 
+  <!-- CAMBIA PASSWORD -->
+  <div class="card" style="border-color:var(--purp);">
+    <div class="bebas" style="font-size:20px;color:var(--purp);margin-bottom:14px;">🔑 CAMBIA PASSWORD</div>
+    <span class="lbl">PASSWORD ATTUALE</span><input type="password" id="cpCur" placeholder="Inserisci la password attuale">
+    <span class="lbl">NUOVA PASSWORD</span><input type="password" id="cpNew" placeholder="Minimo 4 caratteri">
+    <span class="lbl">CONFERMA NUOVA PASSWORD</span><input type="password" id="cpNew2" placeholder="Ripeti la nuova password">
+    <button class="btn-s btn-purp" style="width:100%;padding:13px;font-family:'Bebas Neue';font-size:18px;" onclick="doChangePassword()">AGGIORNA PASSWORD</button>
+  </div>
+
+  <!-- CONDIVIDI APP -->
+  <div class="card" style="border-color:var(--blu);">
+    <div class="bebas" style="font-size:20px;color:var(--blu);margin-bottom:8px;">📤 CONDIVIDI L'APP</div>
+    <div style="font-size:13px;color:var(--mut);line-height:1.6;margin-bottom:12px;">Vuoi condividere FitTracker PRO con qualcuno? Copia il link dell'app oppure invialo direttamente via email. Ogni utente avrà il proprio account privato.</div>
+    <div style="background:var(--surf);border:1px solid var(--bord);border-radius:10px;padding:12px 14px;font-size:12px;color:var(--mut);word-break:break-all;margin-bottom:10px;" id="shareUrlBox">${appUrl}</div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;">
+      <button class="btn-s btn-blu" style="flex:1;padding:13px;font-family:'Bebas Neue';font-size:16px;" onclick="copyLink()">📋 COPIA LINK</button>
+      <button class="btn-s" style="flex:1;padding:13px;font-family:'Bebas Neue';font-size:16px;background:var(--ora);color:#000;border:none;border-radius:9px;" onclick="shareViaEmail()">✉️ INVIA VIA EMAIL</button>
+    </div>
+    <div style="font-size:11px;color:var(--mut);line-height:1.5;">ℹ️ Il destinatario dovrà solo aprire il link e creare il proprio account. Tutti i dati sono privati per ogni utente.</div>
+  </div>
+
+  <!-- DIARIO -->
   <div class="card">
     <div class="bebas" style="font-size:20px;margin-bottom:14px;">📓 DIARIO</div>
     <div style="display:flex;gap:6px;margin-bottom:10px;">
@@ -1193,10 +1345,11 @@ function renderSettings(mac){
     </div>
   </div>
 
+  <!-- STRUMENTI -->
   <div class="card" style="padding:16px;">
     <div class="bebas" style="font-size:18px;margin-bottom:12px;">🔧 STRUMENTI</div>
     <div style="display:flex;gap:8px;">
-      <button class="btn-s btn-dim" style="flex:1;font-family:'Bebas Neue';font-size:14px;padding:13px;" onclick="exportData()">📥 EXPORT</button>
+      <button class="btn-s btn-dim" style="flex:1;font-family:'Bebas Neue';font-size:14px;padding:13px;" onclick="exportData()">📥 EXPORT JSON</button>
       <button class="btn-s btn-out" style="flex:1;font-family:'Bebas Neue';font-size:14px;padding:13px;" onclick="doLogout()">🚪 LOGOUT</button>
     </div>
   </div>
@@ -1204,7 +1357,7 @@ function renderSettings(mac){
   <div class="card card-red">
     <div class="bebas" style="color:var(--red);font-size:20px;margin-bottom:8px;">⚠️ ZONA PERICOLOSA</div>
     <p style="font-size:13px;line-height:1.5;margin-bottom:12px;">Cancella tutti i tuoi dati. Azione irreversibile.</p>
-    <button class="btn btn-red" onclick="if(confirm('Sei ASSOLUTAMENTE sicuro? Tutti i dati verranno eliminati.')){DB.d('ft_u_'+AU.user);doLogout();}">CANCELLA ACCOUNT</button>
+    <button class="btn btn-red" onclick="if(confirm('Sei ASSOLUTAMENTE sicuro? Tutti i dati verranno eliminati e non sarà possibile recuperarli.')){DB.d('ft_u_'+AU.user);doLogout();}">CANCELLA IL MIO ACCOUNT</button>
   </div>`;
 }
 
