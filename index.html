@@ -97,7 +97,7 @@ input[type="date"]::-webkit-datetime-edit{display:block;padding:0;}
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
   import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-  // 🔴 LE TUE CHIAVI FIREBASE
+  // LE TUE CHIAVI FIREBASE
   const firebaseConfig = {
     apiKey: "AIzaSyD7M6tX2diy6R-AuOPpG-VZQFO_MzPVSuQ",
     authDomain: "fittracker-pro-27296.firebaseapp.com",
@@ -118,6 +118,7 @@ input[type="date"]::-webkit-datetime-edit{display:block;padding:0;}
     async s(k,v) { if(!firestore) return; try { await setDoc(doc(firestore,"fittracker_data",k),{value:v}); } catch(e){} },
     async d(k) { if(!firestore) return; try { await deleteDoc(doc(firestore,"fittracker_data",k)); } catch(e){} }
   };
+
   window.SS = { get:()=>localStorage.getItem('ft_session'), set:u=>localStorage.setItem('ft_session',u), clr:()=>localStorage.removeItem('ft_session') };
 </script>
 
@@ -134,6 +135,7 @@ const getToday=()=>new Date().toISOString().split('T')[0];
 // EXERCISE LIBRARY
 // ══════════════════════════════════════════════════════════════
 const EX={
+  // PALESTRA (GYM)
   ch_man:{cat:'chest',t:'compound',name:'Panca Piana — Manubri',mus:'Petto Medio',steps:['Sdraiati sulla panca, manubrio per mano all\'altezza delle orecchie','Gomiti a 75° dal corpo, non perpendicolari alla schiena','Abbassa lentamente in 2-3 secondi sfiorando il petto','Spingi esplosivamente verso l\'alto'],cues:['Scapole retratte e abbassate per tutta la serie','Piedi piatti e fermi a terra','Non bloccare completamente i gomiti in cima']},
   ch_bil:{cat:'chest',t:'compound',name:'Panca Piana — Bilancere',mus:'Petto Medio',steps:['Impugna il bilancere leggermente più largo delle spalle','Abbassa controllando fino a sfiorare il petto (altezza capezzoli)','Spingi esplosivo e mantieni il controllo','Piedi fissi a terra per tutta la serie'],cues:['Arco lombare naturale, non esagerato','Stringi il bilancere al massimo per attivare meglio il petto']},
   ch_incl:{cat:'chest',t:'compound',name:'Panca Inclinata — Manubri',mus:'Petto Alto',steps:['Regola la panca a 30-45°','Posiziona i manubri all\'altezza della clavicola','Abbassa controllato fino a quasi toccare le spalle','Spingi verso l\'alto e leggermente verso il centro'],cues:['Più la panca è inclinata più lavora il deltoide anteriore','Mantieni i gomiti a 45-60° dal corpo']},
@@ -169,7 +171,7 @@ const EX={
   lg_af:{cat:'quads',t:'compound',name:'Affondi con Manubri',mus:'Quadricipiti / Glutei',steps:['In piedi, un manubrio per mano','Fai un passo avanti ampio','Abbassa il ginocchio posteriore verso terra','Risali tornando in posizione e alterna le gambe'],cues:['Il ginocchio anteriore NON deve superare la punta del piede','Busto eretto per tutto il movimento']},
   lg_rum:{cat:'glutes',t:'compound',name:'Stacchi Rumeni — Manubri',mus:'Femorali / Glutei',steps:['In piedi, manubri davanti alle cosce','Piega il busto in avanti — i manubri scendono lungo le gambe','Ginocchia appena sbloccate, non piegarle','Senti lo stretch intenso nei femorali in basso','Contrai i glutei per tornare in piedi'],cues:['Non è uno squat — le ginocchia rimangono quasi dritte','Schiena sempre piatta — fondamentale']},
   lg_lc:{cat:'glutes',t:'isolation',name:'Leg Curl (Macchina)',mus:'Femorali',steps:['Sdraiati sulla macchina, talloni posizionati sotto il pad','Piega le ginocchia portando i talloni verso i glutei','Contrai al massimo','Abbassa lentamente'],cues:['Contrarre anche i glutei aumenta l\'attivazione']},
-  lg_bridge:{cat:'glutes',t:'isolation',name:'Ponte Glutei (A Terra)',mus:'Glutei',steps:['Sdraiato, ginocchia piegate, piedi piatti a terra','Spingi il bacino verso l'alto contraendo i glutei','Tieni 1-2 secondi in cima','Abbassa controllato'],cues:['Per aumentare la difficoltà: esegui con una sola gamba','Puoi appoggiare un peso sulle anche']},
+  lg_bridge:{cat:'glutes',t:'isolation',name:'Ponte Glutei (A Terra)',mus:'Glutei',steps:['Sdraiato, ginocchia piegate, piedi piatti a terra','Spingi il bacino verso l\'alto contraendo i glutei','Tieni 1-2 secondi in cima','Abbassa controllato'],cues:['Per aumentare la difficoltà: esegui con una sola gamba','Puoi appoggiare un peso sulle anche']},
   lg_sq_jump:{cat:'quads',t:'compound',name:'Squat Saltati (Jump Squat)',mus:'Gambe / Forza Esplosiva',steps:['Scendi in squat a circa 90°','Esplodi verso l\'alto saltando il più alto possibile','Atterra ammortizzando il peso piegando subito le ginocchia','Ripeti senza pausa'],cues:['Massima esplosività nella spinta','Atterra morbido per proteggere le articolazioni']},
   lg_calf:{cat:'calves',t:'isolation',name:'Calf Raises — Scalino',mus:'Polpacci',steps:['Metti le punte dei piedi sul bordo di uno scalino, talloni nel vuoto','Scendi fino a sentire lo stretch nei polpacci','Spingi verso l\'alto il più possibile','Tieni 1 secondo in cima'],cues:['Non trascurare i polpacci — fondamentali per l\'estetica delle gambe','Puoi eseguirlo con un peso per mano per più resistenza']},
   co_plk:{cat:'core',t:'isometric',name:'Plank su Gomiti',mus:'Core / Stabilizzatori',steps:['Appoggiati sui gomiti direttamente sotto le spalle','Corpo in linea perfetta: testa-spalle-fianchi-caviglie','Addome contratto come se aspettassi un pugno','Respira regolarmente senza trattenere il fiato'],cues:['Non alzare i glutei — il corpo deve essere piatto','10 secondi perfetti valgono più di 60 secondi scadenti']},
@@ -319,27 +321,34 @@ function parseMeanReps(repsStr){
 function buildMeals(macros,intol=[],sex='m'){
   const haG=intol.includes('gluten'),haL=intol.includes('lactose'),haE=intol.includes('eggs'),haN=intol.includes('nuts'),haF=intol.includes('fish');
   const cP=macros.kcal<1800?'70g':'100g',cR=macros.kcal<1800?'60g':'90g',olio='1-2 cucchiai EVO';
+
   let colOpts=[];
   if(!haL) colOpts.push({lbl:'🥛 Proteica classica',items:['Shaker 30g Whey/Isolate','Caffè amaro','15g Cioccolato Fondente 85%']});
   if(!haL) colOpts.push({lbl:'🥣 Yogurt & Avena',items:['200g Yogurt Greco 0%','50g Avena integrale',(!haN?'15g Mandorle':'1 frutto'),'Caffè']});
-  if(haL) colOpts.push({lbl:'🌱 Senza Lattosio',items:['200g Yogurt di soia/cocco',(!haG?'50g Avena':'50g Riso soffiato'),'1 banana','Caffè']});
+  if(haL) colOpts.push({lbl:'🌱 Senza Lattosio',items:['200g Yogurt di soia/cocco',(!haG?'50g Avena':'50g Riso soffiato senza glutine'),'1 banana','Caffè']});
+  if(haL&&!haE) colOpts.push({lbl:'🍳 Uova & Frutta',items:['2 uova strapazzate','1 banana matura','Caffè']});
   if(!colOpts.length) colOpts.push({lbl:'🍌 Base',items:['2 banane','1 tazza tè verde','30g semi di zucca']});
+
   let sp1Opts=[];
   if(!haN) sp1Opts.push({lbl:'🥜 Frutta & Noci',items:['1 mela o pera','15g Noci o Mandorle']});
   sp1Opts.push({lbl:'🍌 Frutto',items:['1 banana matura','1 tazza tè verde']});
   if(!haL) sp1Opts.push({lbl:'🥛 Fiocchi di Latte',items:['200g Fiocchi di Latte 0%','1 kiwi']});
+
   let praOpts=[];
   praOpts.push({lbl:'🍗 Pollo + Riso',items:[`150-200g Petto di pollo`,`${cR} Riso integrale`,olio,'Verdure a piacere']});
   praOpts.push({lbl:'🦃 Tacchino',items:['150g Tacchino',(!haG?`${cR} Farro integrale`:`${cP} Patate bollite`),olio,'Verdure']});
   if(!haF) praOpts.push({lbl:'🐟 Tonno + Riso',items:['150g Tonno al naturale',`${cR} Riso`,olio,'Pomodori, cetrioli']});
   if(!haE) praOpts.push({lbl:'🥚 Uova + Pasta',items:['3 uova sode',(!haG?`${cP} Pasta integrale`:`${cP} Pasta di riso`),olio,'Insalata']});
+
   let sp2Opts=[];
   sp2Opts.push({lbl:'⚡ Pre-WO base',items:['1 banana','Caffè nero (opzionale)']});
   if(!haL) sp2Opts.push({lbl:'🥛 Pre-WO proteico',items:['Shaker 20g Whey','1 banana']});
+
   let cenOpts=[];
   if(!haF) cenOpts.push({lbl:'🐟 Pesce Bianco',items:['250g Merluzzo/Orata/Branzino','Verdure abbondanti',(!haG?'1 fetta pane integrale':'1 patata bollita'),olio]});
   cenOpts.push({lbl:'🥩 Carne Magra',items:['200g Pollo/Tacchino/Manzo magro',(!haG?`${cP} Pane integrale`:`${cP} Riso o Patate`),'Verdure',olio]});
   cenOpts.push({lbl:'🫘 Legumi',items:['200g Lenticchie o Ceci',(!haE?'2 uova strapazzate':'30g Tofu'),'Verdure saltate',olio]});
+
   return[
     {id:'col',pct:.20,n:'🌅 COLAZIONE  07:00',kcal:Math.round(macros.kcal*.20),opts:colOpts},
     {id:'sp1',pct:.10,n:'🍎 SPUNTINO  10:30',kcal:Math.round(macros.kcal*.10),opts:sp1Opts},
@@ -473,7 +482,7 @@ function estimateCalories(text){
     }
   }
   if(results.length===0){
-    if(lower.match(/\b(cena|pranzo|colazione|pasto|mangiato|mangiato)\b/))
+    if(lower.match(/\b(cena|pranzo|colazione|pasto|mangiato)\b/))
       return{kcal:600,foods:['Pasto generico (stima media: 600 kcal)'],multiplier};
     return{kcal:400,foods:['Alimento non riconosciuto (stima media: 400 kcal)'],multiplier};
   }
@@ -515,7 +524,7 @@ const el=id=>document.getElementById(id);
 const vv=id=>el(id)?.value;
 
 // ══════════════════════════════════════════════════════════════
-// AUTH 
+// AUTHENTICATION
 // ══════════════════════════════════════════════════════════════
 async function doReg(){
   if(!window.DB) return setMsg('Attendi il caricamento del database Cloud...');
@@ -604,10 +613,8 @@ async function doChangePassword(){
 }
 
 // ══════════════════════════════════════════════════════════════
-// PROGRAM ACTIONS
+// ACTIONS
 // ══════════════════════════════════════════════════════════════
-const INTOL_LIST=[{id:'gluten',label:'Glutine',icon:'🌾'},{id:'lactose',label:'Lattosio',icon:'🥛'},{id:'eggs',label:'Uova',icon:'🥚'},{id:'nuts',label:'Frutta Secca',icon:'🥜'},{id:'fish',label:'Pesce/Crostacei',icon:'🐟'},{id:'soy',label:'Soia',icon:'🫘'}];
-
 function initProgram(){
   const w=parseFloat(vv('iW')),g=parseFloat(vv('gW')),t=vv('iT'),dur=parseInt(vv('iDur')),tRaw=vv('iDate'),loc=vv('iLoc');
   const sess=parseInt(vv('iSess'))||3,cl=parseInt(vv('iCardio'))||1;
@@ -847,7 +854,7 @@ function svg(data,key,col,H,goal){
 }
 
 // ══════════════════════════════════════════════════════════════
-// RENDER PRINCIPALE
+// RENDER 
 // ══════════════════════════════════════════════════════════════
 function render(){
   const root=document.getElementById('app');
@@ -983,7 +990,7 @@ function render(){
         <div class="card" style="padding:14px;margin-bottom:10px;">
           <div class="r" style="margin-bottom:8px;">
             <div>
-              <div class="lbl" style="margin-bottom:2px;">PESO USATO (KG)</div>
+              <div class="lbl" style="margin-bottom:2px;">PESO DA USARE (KG)</div>
               <div style="font-size:11px;color:var(--mut);">${sug.hint}</div>
             </div>
             ${sug.kg?`<div class="bebas" style="font-size:26px;color:${theme};">${sug.kg}kg</div>`:''}
@@ -1014,32 +1021,45 @@ function render(){
     </div>`;return;
   }
 
-  const sheetH=ST.sheet==='swap'&&ST.sheetData?`<div class="sh-ov" onclick="if(event.target===this)closeSheet()"> <div class="sh"><div class="sh-h"></div> <div class="bebas" style="font-size:22px;margin-bottom:4px;">🔄 CAMBIA ESERCIZIO</div> <div style="font-size:12px;color:var(--mut);margin-bottom:14px;">Stessa area muscolare — serie e reps si adattano automaticamente</div> ${ST.sheetData.alts.map(alt=>{ const cur=alt.id===ST.sheetData.curId; return`<div onclick="swapEx('${ST.sheetData.slot}','${alt.id}')" style="cursor:pointer;padding:14px;border-radius:12px;border:1.5px solid ${cur?'var(--acc)':'var(--bord)'};background:${cur?'rgba(197,241,53,.08)':'var(--surf)'};margin-bottom:7px;transition:.15s;">
-  <div class="r"><div><div style="font-weight:700;font-size:14px;color:${cur?'var(--acc)':'var(--text)'};">${alt.name||alt.id}</div><div style="font-size:11px;color:var(--mut);margin-top:2px;">${alt.mus||''} · ${alt.t==='compound'?'Multi-articolare':'Isolamento'}</div></div>${cur?`<span style="color:var(--acc);font-size:12px;font-weight:700;">✓ ATTUALE</span>`:''}</div>
-  ${alt.cues?.[0]?`<div style="font-size:11px;color:var(--mut);margin-top:6px;">💡 ${alt.cues[0]}</div>`:''}
-  </div>`; }).join('')} <button class="btn btn-action" style="margin-top:10px;width:100%;padding:13px;" onclick="closeSheet()">ANNULLA</button> </div></div>`:'';
+  const sheetH=ST.sheet==='swap'&&ST.sheetData?`<div class="sh-ov" onclick="if(event.target===this)closeSheet()">
+    <div class="sh"><div class="sh-h"></div>
+      <div class="bebas" style="font-size:22px;margin-bottom:4px;">🔄 CAMBIA ESERCIZIO</div>
+      <div style="font-size:12px;color:var(--mut);margin-bottom:14px;">Stessa area muscolare — serie e reps si adattano automaticamente</div>
+      ${ST.sheetData.alts.map(alt=>{
+        const cur=alt.id===ST.sheetData.curId;
+        return`<div onclick="swapEx('${ST.sheetData.slot}','${alt.id}')" style="cursor:pointer;padding:14px;border-radius:12px;border:1.5px solid ${cur?'var(--acc)':'var(--bord)'};background:${cur?'rgba(197,241,53,.08)':'var(--surf)'};margin-bottom:7px;transition:.15s;">
+          <div class="r"><div><div style="font-weight:700;font-size:14px;color:${cur?'var(--acc)':'var(--text)'};">${alt.name||alt.id}</div><div style="font-size:11px;color:var(--mut);margin-top:2px;">${alt.mus||''} · ${alt.t==='compound'?'Multi-articolare':'Isolamento'}</div></div>${cur?`<span style="color:var(--acc);font-size:12px;font-weight:700;">✓ ATTUALE</span>`:''}</div>
+          ${alt.cues?.[0]?`<div style="font-size:11px;color:var(--mut);margin-top:6px;">💡 ${alt.cues[0]}</div>`:''}
+        </div>`;
+      }).join('')}
+      <button class="btn btn-action" style="margin-top:12px; width:100%; padding:12px;" onclick="closeSheet()">ANNULLA</button>
+    </div></div>`:'';
 
   let H=`<div class="tnav">
-  <div class="ni ${ST.tab==='home'?'on':''}" onclick="ST.tab='home';render()"><span class="ic">🏠</span>HOME</div>
-  <div class="ni ${ST.tab==='work'?'on':''}" onclick="ST.tab='work';render()"><span class="ic">🏋️</span>SCHEDE</div>
-  <div class="ni ${ST.tab==='diet'?'on':''}" onclick="ST.tab='diet';render()"><span class="ic">🥗</span>DIETA</div>
-  <div class="ni ${ST.tab==='body'?'on':''}" onclick="ST.tab='body';render()"><span class="ic">📊</span>DATI</div>
-  <div class="ni ${ST.tab==='coach'?'on':''}" onclick="ST.tab='coach';render()"><span class="ic">🤖</span>AI</div>
-  <div class="ni ${ST.tab==='set'?'on':''}" onclick="ST.tab='set';render()"><span class="ic">⚙️</span>CONFIG.</div>
+    <div class="ni ${ST.tab==='home'?'on':''}" onclick="ST.tab='home';render()"><span class="ic">🏠</span>HOME</div>
+    <div class="ni ${ST.tab==='work'?'on':''}" onclick="ST.tab='work';render()"><span class="ic">🏋️</span>SCHEDE</div>
+    <div class="ni ${ST.tab==='diet'?'on':''}" onclick="ST.tab='diet';render()"><span class="ic">🥗</span>DIETA</div>
+    <div class="ni ${ST.tab==='body'?'on':''}" onclick="ST.tab='body';render()"><span class="ic">📊</span>DATI</div>
+    <div class="ni ${ST.tab==='coach'?'on':''}" onclick="ST.tab='coach';render()"><span class="ic">🤖</span>AI</div>
+    <div class="ni ${ST.tab==='set'?'on':''}" onclick="ST.tab='set';render()"><span class="ic">⚙️</span>CONFIG.</div>
   </div>
-  <div style="position:fixed;top:48px;left:0;width:100%;background:rgba(15,15,15,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--bord);z-index:900;display:flex;justify-content:center;align-items:center;padding:9px 14px;gap:12px;">
-    <input type="date" value="${currentDateStr}" max="${getToday()}" onchange="changeCurrentDate(this.value)" style="width:auto;margin:0;padding:6px 12px;font-size:15px;border:1.5px solid var(--acc);border-radius:8px;color:var(--acc);background:transparent;font-weight:bold;outline:none;cursor:pointer;">
-    <span style="font-size:11px;font-weight:700;color:${currentDateStr===getToday()?'var(--acc)':'var(--ora)'};letter-spacing:1px;text-transform:uppercase;">${currentDateStr===getToday()?'OGGI':'STORICO'}</span>
+  
+  <div style="position:fixed; top:48px; left:0; width:100%; background:rgba(15,15,15,0.9); backdrop-filter:blur(10px); border-bottom:1px solid var(--bord); z-index:900; display:flex; justify-content:center; align-items:center; padding:10px;">
+    <input type="date" value="${currentDateStr}" max="${getToday()}" onchange="changeCurrentDate(this.value)" style="width:auto; margin:0; padding:6px 12px; font-size:15px; border:1.5px solid var(--acc); border-radius:8px; color:var(--acc); background:transparent; font-weight:bold; outline:none;">
+    <span style="font-size:12px; font-weight:700; color:var(--mut); margin-left:12px; letter-spacing:1px; text-transform:uppercase;">${currentDateStr===getToday()?'Oggi':'Storico Passato'}</span>
   </div>
+  
   <div class="content" style="padding-top:105px;"><div class="wrap">`;
 
   if(!ST.p){H+=renderSetup();H+=`</div></div>`;root.innerHTML=H+sheetH;return;}
+
   if(ST.tab==='home') H+=renderHome(currentDateStr,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,todayLog);
   else if(ST.tab==='work') H+=renderWork(currentDateStr,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,todayLog);
   else if(ST.tab==='diet') H+=renderDiet(currentDateStr,mac,an,sx);
   else if(ST.tab==='body') H+=renderBody(cW,mac,theme,pWeek,sx);
   else if(ST.tab==='coach') H+=renderCoach();
   else if(ST.tab==='set') H+=renderSettings(mac);
+
   H+=`</div></div>`;root.innerHTML=H+sheetH;
   if(ST.tab==='coach') setTimeout(()=>{const c=el('chatArea');if(c)c.scrollTop=c.scrollHeight;},50);
 }
@@ -1048,7 +1068,7 @@ function renderAuth(root){
   let content='';
   if(AU.tab==='forgot'){
     if(AU.fgStep===1) content=`<div class="card"><div class="bebas" style="font-size:20px;color:var(--ora);margin-bottom:14px;">🔑 RECUPERA PASSWORD</div><span class="lbl">IL TUO USERNAME</span><input id="fgU" placeholder="Es. mario_rossi (in minuscolo)"><button class="btn" onclick="doForgotStep1()">CONTINUA ▸</button><div style="text-align:center;margin-top:12px;"><span onclick="AU.tab='login';AU.msg='';render()" style="font-size:13px;color:var(--mut);cursor:pointer;text-decoration:underline;">← Torna al Login</span></div></div>`;
-    else if(AU.fgStep===2) content=`<div class="card"><div class="bebas" style="font-size:18px;color:var(--ora);margin-bottom:4px;">🔑 VERIFICA EMAIL</div><div style="font-size:12px;color:var(--mut);margin-bottom:14px;">Account: <strong style="color:var(--text)">${AU.fgUser}</strong></div><span class="lbl">EMAIL COLLEGATA ALL'ACCOUNT</span><input id="fgE" type="email" placeholder="es. mario@email.it"><button class="btn" onclick="doForgotStep2()">VERIFICA ▸</button><div style="text-align:center;margin-top:10px;"><span onclick="AU.tab='forgot';AU.fgStep=1;AU.msg='';render()" style="font-size:13px;color:var(--mut);cursor:pointer;text-decoration:underline;">← Indietro</span></div></div>`;
+    else if(AU.fgStep===2) content=`<div class="card"><div class="bebas" style="font-size:18px;color:var(--ora);margin-bottom:4px;">🔑 VERIFICA EMAIL</div><div style="font-size:12px;color:var(--mut);margin-bottom:14px;">Account: <strong style="color:var(--text)">${AU.fgUser}</strong></div><span class="lbl">INSERISCI L'EMAIL COLLEGATA ALL'ACCOUNT</span><input id="fgE" type="email" placeholder="es. mario@email.it"><button class="btn" onclick="doForgotStep2()">VERIFICA ▸</button><div style="text-align:center;margin-top:10px;"><span onclick="AU.tab='forgot';AU.fgStep=1;AU.msg='';render()" style="font-size:13px;color:var(--mut);cursor:pointer;text-decoration:underline;">← Indietro</span></div></div>`;
     else content=`<div class="card"><div class="bebas" style="font-size:18px;color:var(--acc);margin-bottom:4px;">🔑 NUOVA PASSWORD</div><div style="font-size:12px;color:var(--gre);margin-bottom:14px;">✅ Identità verificata: <strong>${AU.fgUser}</strong></div><span class="lbl">NUOVA PASSWORD</span><input id="fgNP" type="password" placeholder="Minimo 4 caratteri"><span class="lbl">CONFERMA NUOVA PASSWORD</span><input id="fgNP2" type="password" placeholder="Ripeti la nuova password"><button class="btn" onclick="doForgotStep3()">SALVA NUOVA PASSWORD</button></div>`;
   } else {
     content=`<div style="display:flex;background:var(--surf);border-radius:12px;padding:3px;margin-bottom:14px;"><button class="atab ${AU.tab==='login'?'on':''}" onclick="AU.tab='login';AU.msg='';render()">ACCEDI</button><button class="atab ${AU.tab==='reg'?'on':''}" onclick="AU.tab='reg';AU.msg='';render()">REGISTRATI</button></div> ${AU.tab==='login'?`<div class="card">
@@ -1115,7 +1135,7 @@ function renderHome(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,todayLog
   <div class="g2" style="margin-bottom:11px;">
     <div class="card" style="margin:0;padding:16px;text-align:center;border-top:3px solid ${remK<=0?'var(--red)':'var(--acc)'};">
       <div class="lbl" style="margin-bottom:4px;">KCAL RIMANENTI</div>
-      <div class="bebas" style="font-size:32px;color:${remK<=0?'var(--red)':'var(--acc)'};line-height:1;">${remK}</div>
+      <div class="bebas" style="font-size:32px;color:${dLog.k>mac.kcal?'var(--red)':'var(--acc)'};line-height:1;">${remK}</div>
     </div>
     <div class="card" style="margin:0;padding:16px;text-align:center;border-top:3px solid var(--mut);">
       <div class="lbl" style="margin-bottom:4px;">TARGET GIORNO</div>
@@ -1213,12 +1233,12 @@ function renderDiet(t2,mac,an,sx){
   <div class="card card-hi">
     <div class="r" style="margin-bottom:14px;">
       <div><div class="bebas" style="font-size:20px;">BILANCIO DEL GIORNO</div><div style="font-size:11px;color:var(--mut);">Target adattato: ${mac.kcal} kcal</div></div>
-      <div style="text-align:right;"><div class="bebas" style="font-size:38px;line-height:1;color:${remK<=0?'var(--red)':'var(--acc)'};">${remK}</div><div style="font-size:10px;color:var(--mut);">kcal rimaste</div></div>
+      <div style="text-align:right;"><div class="bebas" style="font-size:38px;line-height:1;color:${dLog.k>mac.kcal?'var(--red)':'var(--acc)'};">${remK}</div><div style="font-size:10px;color:var(--mut);">kcal rimaste</div></div>
     </div>
     <div class="g3" style="margin-bottom:10px;">
       ${[['PROT',mac.prot-dLog.p,'var(--acc)','g'],['CARB',mac.carb-dLog.c,'var(--blu)','g'],['GRASSI',mac.fat-dLog.f,'var(--yel)','g']].map(([l,v,c,u])=>`<div style="text-align:center;background:var(--surf);border-radius:9px;padding:10px 4px;"><div class="bebas" style="font-size:20px;color:${c};line-height:1;">${Math.max(0,Math.round(v))}${u}</div><div style="font-size:9px;color:var(--mut);margin-top:2px;">${l} rimasti</div></div>`).join('')}
     </div>
-    ${dLog.k>0||dLog.skipped?.length>0?`<div style="text-align:center;"><button class="btn-s btn-out" style="font-size:12px;" onclick="resetMacros()">Azzera pasti di oggi</button></div>`:''}
+    ${dLog.k>0?`<div style="text-align:center;"><button class="btn-s btn-out" style="font-size:12px;" onclick="resetMacros()">Azzera pasti di oggi</button></div>`:''}
   </div>
   <div class="card card-warn">
     <div class="badge" style="background:var(--ora);color:#000;">CHEAT DETECTOR AI</div>
@@ -1351,7 +1371,7 @@ function renderSettings(mac){
 }
 
 // ══════════════════════════════════════════════════════════════
-// BOOTSTRAP 
+// BOOT
 // ══════════════════════════════════════════════════════════════
 async function bootApp(){
   const saved=window.SS.get();
@@ -1371,11 +1391,12 @@ const _startCheck=setInterval(()=>{
   if(window.DB&&window.SS){
     clearInterval(_startCheck);
     bootApp();
-  } else if(_initAttempts>100){ 
-    clearInterval(_startCheck);
-    alert('Impossibile connettersi al database Firebase. Controlla la connessione e ricarica.');
   }
-}, 50);
+  else if(_initAttempts>60){
+    clearInterval(_startCheck);
+    alert('Impossibile connettersi al database Firebase. Controlla la tua connessione internet e ricarica la pagina.');
+  }
+},100);
 
 </script>
 </body>
