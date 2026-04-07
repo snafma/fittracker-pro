@@ -121,10 +121,16 @@ select option { background: var(--card); }
 .auth-w { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; background: radial-gradient(circle at 50% 0%, rgba(197,241,53,0.08), transparent 70%); }
 .atab { flex: 1; padding: 14px; background: none; border: none; color: var(--mut); font-family: 'Bebas Neue'; font-size: 20px; letter-spacing: 1.5px; cursor: pointer; border-bottom: 3px solid transparent; transition: 0.2s; }
 .atab.on { color: var(--acc); border-bottom-color: var(--acc); }
+
+/* SEX PICKER */
 .sx-btn { flex: 1; padding: 20px 10px; border-radius: 16px; border: 2px solid var(--bord); background: var(--surf); color: var(--mut); cursor: pointer; text-align: center; transition: 0.2s; font-family: 'DM Sans', sans-serif; }
 .sx-btn.on { border-color: var(--acc); background: var(--acc-glow); color: var(--text); box-shadow: 0 0 15px var(--acc-glow); }
+
+/* INTOLERANCE CHIPS */
 .intol-chip { padding: 10px 16px; border-radius: 12px; border: 1.5px solid var(--bord); background: var(--surf); color: var(--mut); cursor: pointer; font-size: 13px; font-weight: 600; transition: 0.2s; }
 .intol-chip.on { border-color: var(--red); background: rgba(255,71,87,0.15); color: var(--red); box-shadow: 0 0 10px rgba(255,71,87,0.15); }
+
+/* MISC */
 .step-n { width: 26px; height: 26px; border-radius: 50%; background: var(--acc); color: #000; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; flex-shrink: 0; }
 .cue-box { background: rgba(197,241,53,0.08); border-left: 4px solid var(--acc); padding: 12px 16px; border-radius: 0 12px 12px 0; font-size: 14px; color: var(--text); line-height: 1.6; margin-bottom: 8px; }
 .err-box { background: rgba(255,71,87,0.1); border: 1px solid var(--red); border-radius: 12px; padding: 14px; font-size: 14px; color: var(--red); margin-bottom: 16px; text-align: center; font-weight: 500; }
@@ -140,7 +146,6 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
   import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-  // 🔴 LE TUE CHIAVI FIREBASE
   const firebaseConfig = {
     apiKey: "AIzaSyD7M6tX2diy6R-AuOPpG-VZQFO_MzPVSuQ",
     authDomain: "fittracker-pro-27296.firebaseapp.com",
@@ -164,6 +169,7 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
   };
   window.SS = { get:()=>localStorage.getItem('ft_session'), set:u=>localStorage.setItem('ft_session',u), clr:()=>localStorage.removeItem('ft_session') };
 </script>
+
 </head>
 <body>
 <div id="app">
@@ -178,16 +184,16 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
 'use strict';
 
 // ══════════════════════════════════════════════════════════════
-// GLOBALS & HELPERS
+// FUNZIONI GLOBALI E LIBRERIE
 // ══════════════════════════════════════════════════════════════
-const hp=s=>{let h=0;for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return 'h'+Math.abs(h).toString(36)+s.length;};
-const getToday=()=>new Date().toISOString().split('T')[0];
+function hp(s) { let h=0; for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;} return 'h'+Math.abs(h).toString(36)+s.length; }
+function getToday() { return new Date().toISOString().split('T')[0]; }
 
-window.togglePw = function(el) {
+function togglePw(el) {
   const inp = el.previousElementSibling;
-  if(inp.type === 'password') { inp.type = 'text'; el.textContent = '🙈'; }
+  if (inp.type === 'password') { inp.type = 'text'; el.textContent = '🙈'; }
   else { inp.type = 'password'; el.textContent = '👁️'; }
-};
+}
 
 const pwRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*.,\-_?]).{8,}$/; 
 
@@ -203,27 +209,27 @@ const EX={
   ch_incl:{cat:'chest',t:'compound',name:'Panca Inclinata — Manubri',mus:'Petto Alto',steps:['Regola la panca a 30-45°','Posiziona i manubri all\'altezza della clavicola','Abbassa controllato fino a quasi toccare le spalle','Spingi verso l\'alto e leggermente verso il centro'],cues:['Più la panca è inclinata più lavora il deltoide anteriore','Mantieni i gomiti a 45-60° dal corpo']},
   ch_croci:{cat:'chest',t:'isolation',name:'Croci con Manubri',mus:'Petto Medio',steps:['Sdraiati, manubri sopra il petto con palme affacciate','Abbassa le braccia ad arco ampio fino al livello del petto','Senti bene lo stretch al petto in basso','Torna su stringendo il petto — non spingere'],cues:['Leggera flessione del gomito per proteggere le articolazioni','Peso leggero: questo è un esercizio di allungamento']},
   ch_pieg:{cat:'chest',t:'compound',name:'Piegamenti a Terra',mus:'Petto / Tricipiti',steps:['Mani leggermente più larghe delle spalle','Corpo perfettamente in linea: testa-spalle-glutei-caviglie','Scendi sfiorando il petto a terra','Spingi esplosivamente fino alla quasi-estensione del gomito'],cues:['Addome contratto per tutta la serie','Per aumentare la difficoltà: eleva i piedi su una sedia']},
-  ch_pieg_inc:{cat:'chest',t:'compound',name:'Piegamenti Inclinati (Mani su Rialzo)',mus:'Petto Basso',steps:['Appoggia le mani su una sedia o divano (altezza 30-50cm)','Corpo in linea perfetta','Scendi fino a sfiorare il rialzo con il petto','Spingi su'],cues:['Più il rialzo è alto, più è facile','Utile per i principianti o come riscaldamento']},
-  ch_pieg_dec:{cat:'chest',t:'compound',name:'Piegamenti Declinati (Piedi su Rialzo)',mus:'Petto Alto',steps:['Appoggia i piedi su una sedia, le mani a terra','Corpo in linea','Scendi fino a sfiorare terra con il mento','Spingi su'],cues:['Molto intenso sulle spalle oltre che sul petto alto','Progredisci lentamente']},
-  tri_fr:{cat:'triceps',t:'isolation',name:'French Press — Manubri',mus:'Tricipiti (Testa Lunga)',steps:['Sdraiato sulla panca, manubri sopra il petto con palme verso l\'interno','Gomiti puntati al soffitto — questa è la posizione fissa','Abbassa verso le orecchie piegando SOLO i gomiti','Estendi tornando su senza muovere i gomiti'],cues:['I gomiti sono il perno — NON si muovono mai','Peso moderato: tecnica prima di tutto']},
-  tri_push:{cat:'triceps',t:'isolation',name:'Pushdown — Cavo/Asta',mus:'Tricipiti',steps:['In piedi davanti al cavo, presa prona sull\'asta','Gomiti strettamente bloccati ai fianchi','Spingi verso il basso fino alla completa estensione','Risali controllato senza alzare i gomiti'],cues:['Non dondolare il busto — isola il tricipite','Con la corda: spalanca le mani in basso per la massima contrazione']},
-  tri_dips:{cat:'triceps',t:'compound',name:'Dips alle Parallele',mus:'Tricipiti / Petto Basso',steps:['Impugna le parallele, corpo con leggera inclinazione avanti','Abbassati piegando i gomiti fino a 90°','Spingi su tornando alla posizione iniziale'],cues:['Busto più verticale = più tricipiti','Avere più inclinazione in avanti = più petto','Evita se hai problemi alle spalle']},
-  tri_oh:{cat:'triceps',t:'isolation',name:'Overhead Extension — Manubrio',mus:'Tricipiti (Testa Lunga)',steps:['Seduto o in piedi, un manubrio a due mani sopra la testa','Abbassa il manubrio dietro la testa piegando i gomiti','Estendi tornando su'],cues:['Mantieni i gomiti vicini alla testa tutto il tempo','Ottimo per la testa lunga del tricipite']},
+  ch_pieg_inc:{cat:'chest',t:'compound',name:'Piegamenti Inclinati (Rialzo)',mus:'Petto Basso',steps:['Appoggia le mani su una sedia o divano','Corpo in linea perfetta','Scendi fino a sfiorare il rialzo con il petto','Spingi su'],cues:['Più il rialzo è alto, più è facile','Utile per i principianti o come riscaldamento']},
+  ch_pieg_dec:{cat:'chest',t:'compound',name:'Piegamenti Declinati (Piedi Rialzo)',mus:'Petto Alto',steps:['Appoggia i piedi su una sedia, le mani a terra','Corpo in linea','Scendi fino a sfiorare terra con il mento','Spingi su'],cues:['Molto intenso sulle spalle oltre che sul petto alto','Progredisci lentamente']},
+  tri_fr:{cat:'triceps',t:'isolation',name:'French Press — Manubri',mus:'Tricipiti',steps:['Sdraiato sulla panca, manubri sopra il petto con palme verso l\'interno','Gomiti puntati al soffitto — questa è la posizione fissa','Abbassa verso le orecchie piegando SOLO i gomiti','Estendi tornando su senza muovere i gomiti'],cues:['I gomiti sono il perno — NON si muovono mai','Peso moderato: tecnica prima di tutto']},
+  tri_push:{cat:'triceps',t:'isolation',name:'Pushdown — Cavo/Asta',mus:'Tricipiti',steps:['In piedi davanti al cavo, presa prona sull\'asta','Gomiti strettamente bloccati ai fianchi','Spingi verso il basso fino alla completa estensione','Risali controllato senza alzare i gomiti'],cues:['Non dondolare il busto — isola il tricipite']},
+  tri_dips:{cat:'triceps',t:'compound',name:'Dips alle Parallele',mus:'Tricipiti / Petto Basso',steps:['Impugna le parallele, corpo con leggera inclinazione avanti','Abbassati piegando i gomiti fino a 90°','Spingi su tornando alla posizione iniziale'],cues:['Busto più verticale = più tricipiti','Evita se hai problemi alle spalle']},
+  tri_oh:{cat:'triceps',t:'isolation',name:'Overhead Extension — Manubrio',mus:'Tricipiti',steps:['Seduto o in piedi, un manubrio a due mani sopra la testa','Abbassa il manubrio dietro la testa piegando i gomiti','Estendi tornando su'],cues:['Mantieni i gomiti vicini alla testa tutto il tempo']},
   tri_dips_chair:{cat:'triceps',t:'compound',name:'Dips su Sedia',mus:'Tricipiti',steps:['Appoggia le mani sul bordo di una sedia dietro di te','Gambe distese avanti (più difficile) o piegate (più facile)','Abbassati piegando i gomiti fino a 90°','Spingi su'],cues:['Mantieni la schiena vicina alla sedia']},
-  sh_mil:{cat:'shoulders',t:'compound',name:'Military Press — Manubri',mus:'Deltoidi / Trapezio',steps:['Seduto o in piedi, manubri all\'altezza delle orecchie gomiti a 90°','Spingi i manubri verso il soffitto avvicinandoli sopra la testa','Abbassa controllato tornando a 90°'],cues:['Attiva il core — non inarcare la schiena','Spingi dritto su, non in avanti']},
-  sh_lat:{cat:'shoulders',t:'isolation',name:'Alzate Laterali',mus:'Deltoide Mediale',steps:['In piedi, manubri ai fianchi con leggera flessione del gomito','Alza le braccia lateralmente fino all\'altezza delle spalle','Abbassa lentamente in 3 secondi'],cues:['Immagina di versare acqua da un secchio in cima al movimento','Mignolo leggermente sopra il pollice per attivare il deltoide medio','NON usare inerzia: pesi leggeri, tecnica perfetta']},
+  sh_mil:{cat:'shoulders',t:'compound',name:'Military Press — Manubri',mus:'Deltoidi',steps:['Seduto o in piedi, manubri all\'altezza delle orecchie gomiti a 90°','Spingi i manubri verso il soffitto avvicinandoli sopra la testa','Abbassa controllato tornando a 90°'],cues:['Attiva il core — non inarcare la schiena','Spingi dritto su, non in avanti']},
+  sh_lat:{cat:'shoulders',t:'isolation',name:'Alzate Laterali',mus:'Deltoide Mediale',steps:['In piedi, manubri ai fianchi con leggera flessione del gomito','Alza le braccia lateralmente fino all\'altezza delle spalle','Abbassa lentamente in 3 secondi'],cues:['Immagina di versare acqua da un secchio in cima al movimento','NON usare inerzia: pesi leggeri, tecnica perfetta']},
   sh_frt:{cat:'shoulders',t:'isolation',name:'Alzate Frontali',mus:'Deltoide Anteriore',steps:['In piedi, manubri davanti alle cosce palme verso il basso','Alza un braccio alla volta fino all\'altezza delle spalle','Abbassa controllato e alterna'],cues:['Pollice verso l\'alto durante il movimento','Evita di oscillare il busto']},
-  sh_fp:{cat:'shoulders',t:'isolation',name:'Face Pull — Elastico/Cavo',mus:'Deltoide Posteriore / Rotatori',steps:['Fissa l\'elastico all\'altezza del viso','Tira verso il viso allargando i gomiti verso l\'alto e i lati','Contrai tra le scapole in cima'],cues:['Fondamentale per la salute delle spalle','Bilancia il lavoro di tutte le spinte in avanti']},
+  sh_fp:{cat:'shoulders',t:'isolation',name:'Face Pull — Elastico/Cavo',mus:'Deltoide Posteriore',steps:['Fissa l\'elastico all\'altezza del viso','Tira verso il viso allargando i gomiti verso l\'alto e i lati','Contrai tra le scapole in cima'],cues:['Fondamentale per la salute delle spalle']},
   sh_pike:{cat:'shoulders',t:'compound',name:'Pike Push-ups',mus:'Spalle',steps:['Posizione a V invertita (bacino alto, gambe dritte)','Piega i gomiti portando la testa verso terra tra le mani','Spingi su'],cues:['Ottimo sostituto del Military Press senza attrezzi']},
   sh_lat_home:{cat:'shoulders',t:'isolation',name:'Alzate Laterali (Bottiglie)',mus:'Deltoide Mediale',steps:['Usa bottiglie d\'acqua piene (0.5-1.5L)','Stessa tecnica delle alzate con manubri'],cues:['Movimento lento e controllato — senti il muscolo lavorare']},
   bk_rb:{cat:'back',t:'compound',name:'Rematore — Bilancere',mus:'Dorsali / Romboidi',steps:['In piedi, bilancere impugnato, busto inclinato a 45°','Tira il bilancere verso l\'ombelico senza alzare il busto','Stringi bene le scapole in cima','Abbassa lentamente controllando il peso'],cues:['Schiena SEMPRE piatta — regola principale assoluta','Il movimento parte dai gomiti, non dalle mani']},
-  bk_rm:{cat:'back',t:'compound',name:'Rematore — Manubrio su Panca',mus:'Dorsale / Romboide',steps:['Appoggia ginocchio e mano dello stesso lato su una panca','Tira il manubrio verso l\'anca (non verso la spalla)','Abbassa lentamente fino alla piena estensione del braccio'],cues:['Il gomito deve sfiorare il fianco in cima','Mantieni il dorso piatto e parallelo al pavimento']},
-  bk_traz:{cat:'back',t:'compound',name:'Trazioni alla Sbarra',mus:'Dorsali / Bicipiti',steps:['Impugna la sbarra con presa prona, mani leggermente più larghe','Parti con le braccia distese e le scapole attive (abbassate)','Tira portando il mento sopra la sbarra','Abbassa lentamente in 2-3 secondi'],cues:['Le scapole devono essere attive già prima di tirare','Se non riesci: usa un elastico di assistenza']},
+  bk_rm:{cat:'back',t:'compound',name:'Rematore — Manubrio su Panca',mus:'Dorsale / Romboide',steps:['Appoggia ginocchio e mano dello stesso lato su una panca','Tira il manubrio verso l\'anca (non verso la spalla)','Abbassa lentamente fino alla piena estensione del braccio'],cues:['Il gomito deve sfiorare il fianco in cima']},
+  bk_traz:{cat:'back',t:'compound',name:'Trazioni alla Sbarra',mus:'Dorsali / Bicipiti',steps:['Impugna la sbarra con presa prona, mani leggermente più larghe','Parti con le braccia distese e le scapole attive (abbassate)','Tira portando il mento sopra la sbarra','Abbassa lentamente in 2-3 secondi'],cues:['Se non riesci: usa un elastico di assistenza']},
   bk_lat:{cat:'back',t:'compound',name:'Lat Machine — Pulldown',mus:'Dorsali Larghi',steps:['Siediti e blocca le ginocchia sotto i pad','Impugna la barra leggermente più larga delle spalle','Tira la barra verso il mento inclinando leggermente il busto','Risali lentamente con le braccia quasi distese'],cues:['Immagina di portare i gomiti verso i fianchi','Il movimento deve partire dalla schiena non dalle braccia']},
-  bk_st:{cat:'back',t:'compound',name:'Stacchi a Schiena Rigida',mus:'Lombari / Femorali / Glutei',steps:['In piedi, pesi davanti alle cosce','Piega il busto in avanti abbassando i pesi lungo le gambe','Ginocchia solo leggermente sbloccate','Ritorna su contraendo glutei e femorali'],cues:['Schiena SEMPRE piatta — è la regola d\'oro','I pesi scorrono vicinissimi alle gambe durante tutto il movimento']},
-  bk_super:{cat:'back',t:'isometric',name:'Superman Hold',mus:'Lombari / Dorso',steps:['Sdraiati a pancia in giù, braccia tese in avanti','Solleva contemporaneamente petto, braccia e gambe da terra','Contrai il dorso e mantieni la posizione','Respira regolarmente'],cues:['Non strattonare il collo — testa in posizione neutra','Aumenta la durata progressivamente']},
+  bk_st:{cat:'back',t:'compound',name:'Stacchi a Schiena Rigida',mus:'Lombari / Femorali',steps:['In piedi, pesi davanti alle cosce','Piega il busto in avanti abbassando i pesi lungo le gambe','Ginocchia solo leggermente sbloccate','Ritorna su contraendo glutei e femorali'],cues:['Schiena SEMPRE piatta — è la regola d\'oro']},
+  bk_super:{cat:'back',t:'isometric',name:'Superman Hold',mus:'Lombari / Dorso',steps:['Sdraiati a pancia in giù, braccia tese in avanti','Solleva contemporaneamente petto, braccia e gambe da terra','Contrai il dorso e mantieni la posizione','Respira regolarmente'],cues:['Non strattonare il collo — testa in posizione neutra']},
   bk_door:{cat:'back',t:'compound',name:'Trazioni allo Stipite',mus:'Dorsali',steps:['Afferra lo stipite di una porta o una colonna solida','Inclinati all\'indietro con le braccia tese','Tira il corpo verso le mani piegando i gomiti','Abbassa controllato'],cues:['Usa le gambe per regolare la difficoltà (più vicino = più facile)']},
-  bi_cb:{cat:'biceps',t:'compound',name:'Curl con Bilancere',mus:'Bicipiti',steps:['In piedi, bilancere a presa supina (palme verso l\'alto)','Gomiti bloccati ai fianchi per tutta la serie','Piega portando il bilancere verso le spalle','Abbassa lentamente in 2-3 secondi'],cues:['NON dondolare la schiena — è la regola più importante','L\'abbassamento lento vale quanto la salita per la crescita muscolare']},
+  bi_cb:{cat:'biceps',t:'compound',name:'Curl con Bilancere',mus:'Bicipiti',steps:['In piedi, bilancere a presa supina (palme verso l\'alto)','Gomiti bloccati ai fianchi per tutta la serie','Piega portando il bilancere verso le spalle','Abbassa lentamente in 2-3 secondi'],cues:['NON dondolare la schiena — è la regola più importante']},
   bi_cm:{cat:'biceps',t:'compound',name:'Curl Alternato — Manubri',mus:'Bicipiti',steps:['In piedi, un manubrio per mano ai fianchi','Porta un manubrio alla volta verso la spalla ruotando il polso','Abbassa controllato','Alterna i lati ad ogni ripetizione'],cues:['La rotazione del polso in salita aumenta l\'attivazione del bicipite']},
   bi_mar:{cat:'biceps',t:'isolation',name:'Curl a Martello',mus:'Bicipiti / Avambraccio',steps:['Manubri tenuti in verticale (pollice verso l\'alto) per tutta la serie','Porta verso la spalla senza ruotare il polso','Abbassa controllato'],cues:['Ottimo per aumentare lo spessore e la larghezza del braccio']},
   bi_con:{cat:'biceps',t:'isolation',name:'Curl Concentrato',mus:'Picco Bicipite',steps:['Seduto su panca, gomito appoggiato all\'interno della coscia','Porta il manubrio verso la spalla senza muovere il gomito','Abbassa molto lentamente'],cues:['Il miglior esercizio per massimizzare il picco del bicipite']},
@@ -282,7 +288,7 @@ const FOOD_LIST=[
   {terms:['pasta al pesto','pesto'],kcal:550,label:'Pasta al Pesto'},
   {terms:['pasta alla norma','norma'],kcal:520,label:'Pasta alla Norma'},
   {terms:['pasta al sugo','pasta al pomodoro','sugo di pomodoro'],kcal:380,label:'Pasta al Sugo'},
-  {terms:['lasagna','lasagne'],kcal:580,label:'Lasagne'},
+  {terms:['lasagna','lasagne'],kcal:580,label:'Lasagne (porzione)'},
   {terms:['risotto ai funghi','risotto'],kcal:450,label:'Risotto'},
   {terms:['pasta'],kcal:400,label:'Pasta (generica)'},
   {terms:['bistecca alla fiorentina','fiorentina'],kcal:600,label:'Bistecca Fiorentina'},
@@ -478,6 +484,39 @@ window.estimateCalories=function(text){
   const totalKcal=Math.round(results.reduce((s,r)=>s+r.kcal,0)*multiplier);
   return{kcal:totalKcal,foods:results.map(r=>r.label),multiplier};
 }
+window.buildMeals=function(macros,intol=[],sex='m'){
+  const haG=intol.includes('gluten'),haL=intol.includes('lactose'),haE=intol.includes('eggs'),haN=intol.includes('nuts'),haF=intol.includes('fish');
+  const cP=macros.kcal<1800?'70g':'100g',cR=macros.kcal<1800?'60g':'90g',olio='1-2 cucchiai EVO';
+  let colOpts=[];
+  if(!haL) colOpts.push({lbl:'🥛 Proteica classica',items:['Shaker 30g Whey/Isolate','Caffè amaro','15g Cioccolato Fondente 85%']});
+  if(!haL) colOpts.push({lbl:'🥣 Yogurt & Avena',items:['200g Yogurt Greco 0%','50g Avena integrale',(!haN?'15g Mandorle':'1 frutto'),'Caffè']});
+  if(haL) colOpts.push({lbl:'🌱 Senza Lattosio',items:['200g Yogurt di soia/cocco',(!haG?'50g Avena':'50g Riso soffiato senza glutine'),'1 banana','Caffè']});
+  if(haL&&!haE) colOpts.push({lbl:'🍳 Uova & Frutta',items:['2 uova strapazzate','1 banana matura','Caffè']});
+  if(!colOpts.length) colOpts.push({lbl:'🍌 Base',items:['2 banane','1 tazza tè verde','30g semi di zucca']});
+  let sp1Opts=[];
+  if(!haN) sp1Opts.push({lbl:'🥜 Frutta & Noci',items:['1 mela o pera','15g Noci o Mandorle']});
+  sp1Opts.push({lbl:'🍌 Frutto',items:['1 banana matura','1 tazza tè verde']});
+  if(!haL) sp1Opts.push({lbl:'🥛 Fiocchi di Latte',items:['200g Fiocchi di Latte 0%','1 kiwi']});
+  let praOpts=[];
+  praOpts.push({lbl:'🍗 Pollo + Riso',items:[`150-200g Petto di pollo`,`${cR} Riso integrale`,olio,'Verdure a piacere']});
+  praOpts.push({lbl:'🦃 Tacchino',items:['150g Tacchino',(!haG?`${cR} Farro integrale`:`${cP} Patate bollite`),olio,'Verdure']});
+  if(!haF) praOpts.push({lbl:'🐟 Tonno + Riso',items:['150g Tonno al naturale',`${cR} Riso`,olio,'Pomodori, cetrioli']});
+  if(!haE) praOpts.push({lbl:'🥚 Uova + Pasta',items:['3 uova sode',(!haG?`${cP} Pasta integrale`:`${cP} Pasta di riso`),olio,'Insalata']});
+  let sp2Opts=[];
+  sp2Opts.push({lbl:'⚡ Pre-WO base',items:['1 banana','Caffè nero (opzionale)']});
+  if(!haL) sp2Opts.push({lbl:'🥛 Pre-WO proteico',items:['Shaker 20g Whey','1 banana']});
+  let cenOpts=[];
+  if(!haF) cenOpts.push({lbl:'🐟 Pesce Bianco',items:['250g Merluzzo/Orata/Branzino','Verdure abbondanti',(!haG?'1 fetta pane integrale':'1 patata bollita'),olio]});
+  cenOpts.push({lbl:'🥩 Carne Magra',items:['200g Pollo/Tacchino/Manzo magro',(!haG?`${cP} Pane integrale`:`${cP} Riso o Patate`),'Verdure',olio]});
+  cenOpts.push({lbl:'🫘 Legumi',items:['200g Lenticchie o Ceci',(!haE?'2 uova strapazzate':'30g Tofu'),'Verdure saltate',olio]});
+  return[
+    {id:'col',pct:.20,n:'🌅 COLAZIONE  07:00',kcal:Math.round(macros.kcal*.20),opts:colOpts},
+    {id:'sp1',pct:.10,n:'🍎 SPUNTINO  10:30',kcal:Math.round(macros.kcal*.10),opts:sp1Opts},
+    {id:'pra',pct:.35,n:'🍽️ PRANZO  13:00',kcal:Math.round(macros.kcal*.35),opts:praOpts},
+    {id:'sp2',pct:.10,n:'⚡ PRE-WORKOUT  16:00',kcal:Math.round(macros.kcal*.10),opts:sp2Opts},
+    {id:'cen',pct:.35,n:'🌙 CENA  19:30',kcal:Math.round(macros.kcal*.35),opts:cenOpts},
+  ];
+}
 
 // ══════════════════════════════════════════════════════════════
 // STATE & STORAGE
@@ -497,16 +536,16 @@ window.ST=defST();
 window._sv=false;
 
 window.saveU=async function(){
-  if(!AU.user||_sv) return;_sv=true;
+  if(!window.AU.user||window._sv) return;window._sv=true;
   if(window.DB){
-    await window.DB.s('ft_u_'+AU.user,{
+    await window.DB.s('ft_u_'+window.AU.user,{
       p:ST.p,h:ST.h,wLog:ST.wLog,nutri:ST.nutri,water:ST.water,life:ST.life,
       cheatDebt:ST.cheatDebt,measures:ST.measures,notes:ST.notes,suppLog:ST.suppLog,
       chatHistory:ST.chatHistory,exPrefs:ST.exPrefs,wHistory:ST.wHistory,
       programStart:ST.programStart,mealOpts:ST.mealOpts
     });
   }
-  _sv=false;
+  window._sv=false;
 }
 window.save=async function(){await saveU();render();}
 window.el=id=>document.getElementById(id);
@@ -994,7 +1033,7 @@ window.renderDiet = function(t2,mac,an,sx){
   <div class="card card-hi">
     <div class="r" style="margin-bottom:14px;">
       <div><div class="bebas" style="font-size:20px;">BILANCIO DEL GIORNO</div><div style="font-size:11px;color:var(--mut);">Target adattato: ${mac.kcal} kcal</div></div>
-      <div style="text-align:right;"><div class="bebas" style="font-size:38px;line-height:1;color:${remK<=0?'var(--red)':'var(--acc)'};">${remK}</div><div style="font-size:10px;color:var(--mut);">kcal rimaste</div></div>
+      <div style="text-align:right;"><div class="bebas" style="font-size:38px;line-height:1;color:${dLog.k>mac.kcal?'var(--red)':'var(--acc)'};">${remK}</div><div style="font-size:10px;color:var(--mut);">kcal rimaste</div></div>
     </div>
     
     <div class="bw" style="height:12px;background:var(--surf);border:1px solid var(--bord);margin-bottom:16px;">
@@ -1010,12 +1049,12 @@ window.renderDiet = function(t2,mac,an,sx){
   <div class="card card-warn">
     <div class="badge" style="background:var(--ora);color:#000;">CHEAT DETECTOR AI</div>
     <div class="bebas" style="font-size:20px;color:var(--ora);margin-bottom:7px;">🍔 SGARRO O PASTO SALTATO?</div>
-    <p style="font-size:13px;line-height:1.55;margin:0 0 10px;">Scrivi cosa hai mangiato (es. "pizza margherita e birra") oppure "ho saltato il pranzo". L'AI compenserà per non bloccare il metabolismo.</p>
+    <p style="font-size:13px;line-height:1.55;margin:0 0 10px;">Scrivi esattamente cosa hai mangiato (es. "pizza margherita e birra") oppure "ho saltato il pranzo". L'AI riconosce il cibo e calcola le calorie reali.</p>
     <textarea id="cheatInput" rows="2" placeholder="Es. 'pizza diavola e due birre' oppure 'ho saltato la cena'"></textarea>
     <button class="btn-s btn-ora" style="width:100%;padding:13px;font-size:17px;" onclick="logCheat()">🧠 ANALIZZA E ADATTA IL PIANO</button>
     ${dLog.cheatTxt?`<div style="margin-top:12px;padding:12px;background:rgba(255,104,53,.1);border-radius:8px;border:1px solid var(--ora);">
       <div style="font-size:12px;color:var(--ora);font-weight:bold;margin-bottom:8px;">📌 REGISTRATO:</div>
-      <div style="font-size:14px;color:var(--text);margin-bottom:12px;">"${dLog.cheatTxt}"</div>
+      <div style="font-size:13px;color:var(--text);margin-bottom:10px;">"${dLog.cheatTxt}"</div>
       <button class="btn-s btn-red" style="width:100%;padding:8px;font-size:12px;" onclick="removeCheat()">✕ ANNULLA E RICALCOLA</button>
     </div>`:''}
   </div>
@@ -1028,7 +1067,7 @@ window.renderDiet = function(t2,mac,an,sx){
     const selIdx=ST.mealOpts?.[m.id]||0,opt=m.opts[selIdx]||m.opts[0];
     return`<div class="card" style="opacity:${isL||isS?.55:1};">
       <div class="r" style="margin-bottom:10px;">
-        <div><div style="font-size:15px;font-weight:700;">${m.n}</div></div>
+        <div><div style="font-size:15px;font-weight:700;">${m.n}</div><div style="font-size:11px;color:var(--mut);">~${m.kcal} kcal</div></div>
         ${isL?`<div class="rc"><span style="color:var(--acc);font-size:12px;font-weight:700;">✅ FATTO</span><button class="btn-s btn-action" style="padding:4px 8px;font-size:10px;margin-left:6px;" onclick="uncheckMeal('${m.id}',${m.pct},${mac.kcal},${mac.prot},${mac.carb},${mac.fat})">annulla</button></div>`:
          isS?`<div class="rc"><span style="color:var(--red);font-size:12px;font-weight:700;">❌ SALTATO</span><button class="btn-s btn-action" style="padding:4px 8px;font-size:10px;margin-left:6px;" onclick="uncheckMeal('${m.id}')">annulla</button></div>`:
         `<div style="display:flex;gap:5px;">
@@ -1190,7 +1229,7 @@ window.render = function() {
         <div style="margin-top:24px;text-align:center;"><div style="font-size:13px;color:var(--mut);margin-bottom:6px;">PROSSIMA SERIE:</div><div class="bebas" style="font-size:28px;color:var(--text);">SERIE ${ST.currentSet+1} DI ${totalSets}</div><div style="font-size:14px;color:${wo.col||'var(--acc)'};margin-top:4px;font-weight:700;">${ex.name}</div></div>
         <div style="display:flex;gap:10px;margin-top:20px;">${Array(totalSets).fill(0).map((_,i)=>`<div class="set-dot ${i<ST.currentSet?'done':i===ST.currentSet?'current':''}"></div>`).join('')}</div>
       </div>
-      <div style="padding:14px;border-top:1px solid var(--bord);"><button class="btn btn-action" style="height:60px;font-size:18px;" onclick="skipRest()">⏭ SALTA RECUPERO</button></div></div>`;return;
+      <div style="padding:14px;border-top:1px solid var(--bord);"><button class="btn btn-action" style="width:100%;height:60px;font-size:18px;" onclick="skipRest()">⏭ SALTA RECUPERO</button></div></div>`;return;
     }
 
     if(ST.woPhase==='exercise_done'){
@@ -1241,7 +1280,11 @@ window.render = function() {
   </div>
   <div class="content" style="padding-top:105px;"><div class="wrap">`;
 
-  if(!ST.p){H+=renderSetup();H+=`</div></div>`;root.innerHTML=H+sheetH;return;}
+  if(!ST.p){
+    H+=renderSetup();H+=`</div></div>`;
+    root.innerHTML=H+sheetH;return;
+  }
+
   if(ST.tab==='home') H+=renderHome(currentDateStr,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,todayLog);
   else if(ST.tab==='work') H+=renderWork(currentDateStr,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,todayLog);
   else if(ST.tab==='diet') H+=renderDiet(currentDateStr,mac,an,sx);
@@ -1253,6 +1296,9 @@ window.render = function() {
   if(ST.tab==='coach') setTimeout(()=>{const c=el('chatArea');if(c)c.scrollTop=c.scrollHeight;},50);
 }
 
+// ══════════════════════════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════════════════════════
 window.bootApp = async function() {
   try {
     const saved=window.SS.get();
