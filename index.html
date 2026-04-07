@@ -403,11 +403,11 @@ function buildMeals(macros,intol=[],sex='m'){
   if(haF&&!haL) cenOpts.push({lbl:'🍳 Uova & Verdure',items:['3 uova all\'occhio di bue','Verdure grigliate abbondanti','1 patata bollita',olio]});
 
   return[
-    {id:'col',pct:.20,n:'🌅 COLAZIONE',kcal:Math.round(macros.kcal*.20),opts:colOpts},
-    {id:'sp1',pct:.10,n:'🍎 SPUNTINO',kcal:Math.round(macros.kcal*.10),opts:sp1Opts},
-    {id:'pra',pct:.35,n:'🍽️ PRANZO',kcal:Math.round(macros.kcal*.35),opts:praOpts},
-    {id:'sp2',pct:.10,n:'⚡ PRE-WORKOUT',kcal:Math.round(macros.kcal*.10),opts:sp2Opts},
-    {id:'cen',pct:.35,n:'🌙 CENA',kcal:Math.round(macros.kcal*.35),opts:cenOpts},
+    {id:'col',pct:.20,n:'🌅 COLAZIONE  07:00',kcal:Math.round(macros.kcal*.20),opts:colOpts},
+    {id:'sp1',pct:.10,n:'🍎 SPUNTINO  10:30',kcal:Math.round(macros.kcal*.10),opts:sp1Opts},
+    {id:'pra',pct:.35,n:'🍽️ PRANZO  13:00',kcal:Math.round(macros.kcal*.35),opts:praOpts},
+    {id:'sp2',pct:.10,n:'⚡ PRE-WORKOUT  16:00',kcal:Math.round(macros.kcal*.10),opts:sp2Opts},
+    {id:'cen',pct:.35,n:'🌙 CENA  19:30',kcal:Math.round(macros.kcal*.35),opts:cenOpts},
   ];
 }
 
@@ -424,6 +424,7 @@ const cheatKcal=t=>{let k=0,tx=t.toLowerCase();CHEAT_DB.forEach(i=>{if(i.k.some(
 // AUTH STATE E DATE GLOBALI
 // ══════════════════════════════════
 const AU={user:null,tab:'login',msg:'',fgStep:1,fgUser:'',fgEmail:'',fgSecOk:false};
+
 let currentDateStr = getToday();
 
 function defST(){return{p:null,h:[],wLog:[],nutri:{},water:{},life:{},cheatDebt:0,measures:{},notes:[],suppLog:{},chatHistory:[],exPrefs:{},wHistory:{},programStart:null,mealOpts:{},tab:'home',aWo:null,step:0,isRest:false,tmr:0,tmrId:null,currVol:0,chatLoading:false,sheet:null,sheetData:null};}
@@ -591,9 +592,15 @@ function logCheat(){
   const txt=el('cheatInput')?.value;if(!txt||txt.length<2) return alert('Scrivi cosa hai mangiato diversamente!');
   const est=cheatKcal(txt);
   if(!ST.nutri[currentDateStr]) ST.nutri[currentDateStr]={k:0,p:0,c:0,f:0,logged:[],skipped:[],cheatTxt:''};
-  ST.nutri[currentDateStr].k+=est;ST.nutri[currentDateStr].c+=Math.round(est*.4/4);ST.nutri[currentDateStr].f+=Math.round(est*.5/9);ST.nutri[currentDateStr].cheatTxt=txt;
-  ST.cheatDebt=1;
-  alert(`🤖 AI Cheat Detector:\n~${est} kcal stimate.\nAggiunte al bilancio del giorno. HIIT inserito nella prossima scheda!`);
+  
+  if(txt.toLowerCase().includes('saltato') || txt.toLowerCase().includes('niente')){
+     ST.nutri[currentDateStr].cheatTxt = "Pasto saltato: " + txt;
+     alert("Pasto saltato. L'AI bilancerà i macros nelle prossime ore per non mandarti in stallo metabolico.");
+  } else {
+     ST.nutri[currentDateStr].k+=est;ST.nutri[currentDateStr].c+=Math.round(est*.4/4);ST.nutri[currentDateStr].f+=Math.round(est*.5/9);ST.nutri[currentDateStr].cheatTxt=txt;
+     ST.cheatDebt=1;
+     alert(`🤖 AI Cheat Detector:\n~${est} kcal stimate.\nAggiunte al bilancio del giorno. HIIT inserito nella prossima scheda!`);
+  }
   if(el('cheatInput'))el('cheatInput').value='';save();
 }
 
@@ -820,7 +827,7 @@ function render(){
   
   <div style="position:fixed; top:48px; left:0; width:100%; background:rgba(15,15,15,0.9); backdrop-filter:blur(10px); border-bottom:1px solid var(--bord); z-index:900; display:flex; justify-content:center; align-items:center; padding:10px;">
     <input type="date" value="${currentDateStr}" max="${getToday()}" onchange="changeCurrentDate(this.value)" style="width:auto; margin:0; padding:6px 12px; font-size:15px; border:1.5px solid var(--acc); border-radius:8px; color:var(--acc); background:transparent; font-weight:bold; outline:none;">
-    <span style="font-size:12px; font-weight:700; color:var(--mut); margin-left:12px; letter-spacing:1px; text-transform:uppercase;">${currentDateStr===getToday()?'Oggi':'Storico'}</span>
+    <span style="font-size:12px; font-weight:700; color:var(--mut); margin-left:12px; letter-spacing:1px; text-transform:uppercase;">${currentDateStr===getToday()?'Oggi':'Storico Passato'}</span>
   </div>
   
   <div class="content" style="padding-top:105px;"><div class="wrap">`;
@@ -878,7 +885,7 @@ function renderAuth(root){
         <div style="text-align:center;margin-top:12px;"><span onclick="AU.tab='forgot';AU.fgStep=1;AU.msg='';render()" style="font-size:13px;color:var(--mut);cursor:pointer;text-decoration:underline;">🔑 Ho dimenticato la password</span></div>
       </div>`:`<div class="card">
         <span class="lbl">USERNAME (min 3 car.)</span><input id="aU" placeholder="Es. marco_fit">
-        <span class="lbl">EMAIL (Per recupero password)</span><input id="aE" type="email" placeholder="La tua vera email">
+        <span class="lbl">EMAIL DI RECUPERO SICUREZZA</span><input id="aE" type="email" placeholder="La tua vera email">
         <span class="lbl">PASSWORD</span><input id="aP" type="password" placeholder="Crea password">
         <span class="lbl">CONFERMA PASSWORD</span><input id="aP2" type="password" placeholder="Ripeti la password">
         <span class="lbl" style="margin-bottom:8px;">SEI UN UOMO O UNA DONNA?</span>
@@ -935,7 +942,7 @@ function renderSetup(){
       <select id="iDur"><option value="45">45 min</option><option value="60" selected>60 min</option><option value="90">90 min</option></select>
       <span class="lbl">SESSIONI CARDIO BASE / SETTIMANA</span>
       <select id="iCardio"><option value="0">0 — Solo pesi</option><option value="1" selected>1 — Leggero</option><option value="2">2 — Moderato</option><option value="3">3 — Intenso</option></select>
-      <span class="lbl" style="margin-bottom:8px;">INTOLLERANZE ALIMENTARI</span>
+      <span class="lbl" style="margin-bottom:8px;">INTOLLERANZE ALIMENTARI (tocca per selezionare)</span>
       <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;">
         ${INTOL_LIST.map(i=>`<span class="intol-chip" data-id="${i.id}" onclick="this.classList.toggle('on')">${i.icon} ${i.label}</span>`).join('')}
       </div>
@@ -950,7 +957,6 @@ function renderHome(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,todayLog
   const progress=Math.min(100,Math.max(0,(ST.p.s-cW)/(ST.p.s-ST.p.g)*100));
   const isD=(pWeek-1)%4===3;
   const todayWater=ST.water[t2]||0;
-  const stepsTarget=ST.p.sessions===0?10000:8000;
   
   const dLog=ST.nutri[t2]||{k:0};
   const remK=Math.max(0,mac.kcal-dLog.k);
@@ -1077,9 +1083,9 @@ function renderDiet(t2,mac,an,sx){
 
   <div class="card card-warn">
     <div class="badge" style="background:var(--ora);color:#000;">CHEAT DETECTOR</div>
-    <div class="bebas" style="font-size:20px;color:var(--ora);margin-bottom:7px;">🍔 HAI SGARRATO?</div>
+    <div class="bebas" style="font-size:20px;color:var(--ora);margin-bottom:7px;">🍔 HAI SGARRATO O SALTATO UN PASTO?</div>
     <p style="font-size:13px;line-height:1.55;margin:0 0 10px;">L'AI stimerà le calorie e compenserà per non bloccare il metabolismo.</p>
-    <textarea id="cheatInput" rows="2" placeholder="Es. 'Pizza margherita e birra'"></textarea>
+    <textarea id="cheatInput" rows="2" placeholder="Es. 'Pizza margherita e birra' oppure 'Saltato il pranzo'"></textarea>
     <button class="btn-s btn-ora" style="width:100%;padding:13px;font-size:17px;" onclick="logCheat()">🧠 CALCOLA E ADATTA</button>
     ${dLog.cheatTxt?`<div style="margin-top:8px;padding:8px 11px;background:rgba(255,104,53,.1);border-radius:8px;font-size:12px;color:var(--ora);">📌 ${dLog.cheatTxt}</div>`:''}
   </div>
@@ -1205,6 +1211,18 @@ function renderSettings(mac){
     <button class="btn btn-red" onclick="if(confirm('Sei ASSOLUTAMENTE sicuro? Tutti i dati verranno eliminati dal server.')){window.DB.d('ft_u_'+AU.user);doLogout();}">CANCELLA IL MIO ACCOUNT</button>
   </div>`;
 }
+
+window.main = async function() {
+  const saved = window.SS.get();
+  if(saved){
+    AU.user = saved;
+    const data = await window.DB.g('ft_u_'+saved);
+    if(data) Object.assign(ST, {...defST(), ...data});
+    const reg = (await window.DB.g('ft_reg')) || [];
+    AU.profile = reg.find(u => u.un === saved) || {sx:'m', ht:170, ag:25};
+  }
+  render();
+};
 
 let initAttempts = 0;
 const startApp = setInterval(() => {
