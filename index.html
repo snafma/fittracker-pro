@@ -30,12 +30,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);pad
 /* BUTTONS */
 .btn{background:var(--acc);color:#000;border:none;padding:15px;border-radius:12px;font-weight:700;width:100%;cursor:pointer;font-family:'Bebas Neue';font-size:20px;letter-spacing:1px;transition:.12s;display:block;touch-action:manipulation;}
 .btn:active{transform:scale(.97);}
-.btn-s{padding:9px 15px;font-size:14px;width:auto;border-radius:9px;border:none;cursor:pointer;font-family:'Bebas Neue';letter-spacing:1px;}
+.btn-s{padding:9px 15px;font-size:14px;width:auto;border-radius:9px;border:none;cursor:pointer;font-family:'Bebas Neue';letter-spacing:1px;transition:.15s;}
+.btn-s:active{transform:scale(.97);}
 .btn-out{background:transparent;border:1.5px solid var(--bord);color:var(--mut);}
-.btn-dim{background:var(--dim);color:var(--mut);border:1px solid var(--bord);}
+.btn-dim{background:var(--surf);color:var(--mut);border:1px solid var(--bord);}
 .btn-red{background:var(--red);color:#fff;}
 .btn-ora{background:var(--ora);color:#000;}
 .btn-blu{background:var(--blu);color:#000;}
+.btn-action { background: var(--surf); border: 1.5px solid var(--bord); color: var(--text); font-family: 'DM Sans', sans-serif; font-weight: 600; }
 /* INPUTS */
 input,select,textarea{width:100%;padding:13px 14px;background:var(--surf);border:1.5px solid var(--bord);color:var(--text);border-radius:10px;font-size:15px;outline:none;font-family:'DM Sans',sans-serif;margin-bottom:10px;-webkit-appearance:none;resize:none;transition:border-color .2s;}
 input:focus,select:focus,textarea:focus{border-color:var(--acc);}
@@ -427,7 +429,7 @@ const AU={user:null,tab:'login',msg:'',fgStep:1,fgUser:'',fgEmail:'',fgSecOk:fal
 
 let currentDateStr = getToday();
 
-function defST(){return{p:null,h:[],wLog:[],nutri:{},water:{},life:{},cheatDebt:0,measures:{},notes:[],suppLog:{},chatHistory:[],exPrefs:{},wHistory:{},programStart:null,mealOpts:{},tab:'home',aWo:null,step:0,isRest:false,tmr:0,tmrId:null,currVol:0,chatLoading:false,sheet:null,sheetData:null};}
+function defST(){return{p:null,h:[],wLog:[],nutri:{},water:{},life:{},cheatDebt:0,measures:{},notes:[],suppLog:{},chatHistory:[],exPrefs:{},wHistory:{},programStart:null,mealOpts:{},tab:'home',aWo:null,step:0,isRest:false,tmr:0,tmrId:null,currVol:0,chatLoading:false,sheet:null,sheetData:null,activeSeriesTmr:0,activeSeriesTmrId:null};}
 const ST=defST();
 let _sv=false;
 
@@ -588,6 +590,8 @@ function logRestDay(){
     ST.wLog.sort((a,b)=>new Date(a.d)-new Date(b.d)); save();
   }
 }
+
+// AZIONI DIETA
 function logCheat(){
   const txt=el('cheatInput')?.value;if(!txt||txt.length<2) return alert('Scrivi cosa hai mangiato diversamente!');
   const est=cheatKcal(txt);
@@ -603,8 +607,18 @@ function logCheat(){
   }
   if(el('cheatInput'))el('cheatInput').value='';save();
 }
-
-// AZIONI DIETA
+function removeCheat() {
+  if(confirm('Annullare lo sgarro registrato e ricalcolare?')){
+    const txt = ST.nutri[currentDateStr].cheatTxt;
+    if(!txt.toLowerCase().includes('saltato') && !txt.toLowerCase().includes('niente')){
+       const est = cheatKcal(txt);
+       ST.nutri[currentDateStr].k -= est; ST.nutri[currentDateStr].c -= Math.round(est*.4/4); ST.nutri[currentDateStr].f -= Math.round(est*.5/9);
+       ST.cheatDebt = 0; // Togliamo il debito per l'allenamento
+    }
+    ST.nutri[currentDateStr].cheatTxt = '';
+    save();
+  }
+}
 function logMeal(id,pct,k,p,c,f){
   if(!ST.nutri[currentDateStr]) ST.nutri[currentDateStr]={k:0,p:0,c:0,f:0,logged:[],skipped:[],cheatTxt:''};
   if(ST.nutri[currentDateStr].logged.includes(id) || ST.nutri[currentDateStr].skipped?.includes(id)) return;
@@ -619,7 +633,18 @@ function skipMeal(id){
   save();
   alert("Pasto saltato. L'AI ha preso nota. Le calorie rimanenti per oggi rimangono a tua disposizione.");
 }
-function resetMacros(){if(confirm('Azzera pasti per questa giornata?')){ST.nutri[currentDateStr]={k:0,p:0,c:0,f:0,logged:[],skipped:[],cheatTxt:''};ST.cheatDebt=0;save();}}
+function uncheckMeal(id,pct,k,p,c,f) {
+  if(!ST.nutri[currentDateStr]) return;
+  if(ST.nutri[currentDateStr].logged.includes(id)){
+    ST.nutri[currentDateStr].k-=Math.round(k*pct);ST.nutri[currentDateStr].p-=Math.round(p*pct);ST.nutri[currentDateStr].c-=Math.round(c*pct);ST.nutri[currentDateStr].f-=Math.round(f*pct);
+    ST.nutri[currentDateStr].logged = ST.nutri[currentDateStr].logged.filter(m => m !== id);
+  } else if(ST.nutri[currentDateStr].skipped?.includes(id)){
+    ST.nutri[currentDateStr].skipped = ST.nutri[currentDateStr].skipped.filter(m => m !== id);
+  }
+  save();
+}
+function resetMacros(){if(confirm('Azzera tutti i pasti di oggi?')){ST.nutri[currentDateStr]={k:0,p:0,c:0,f:0,logged:[],skipped:[],cheatTxt:''};ST.cheatDebt=0;save();}}
+function pickMealOpt(mealId,optIdx){if(!ST.mealOpts)ST.mealOpts={};ST.mealOpts[mealId]=optIdx;save();}
 
 function saveMeasures(){
   if(!ST.measures[currentDateStr]) ST.measures[currentDateStr]={};
@@ -627,20 +652,9 @@ function saveMeasures(){
   save();alert('Misure salvate per questa giornata!');
 }
 
-function saveNote(){
-  const txt=el('noteIn')?.value?.trim();if(!txt) return;
-  const mood=document.querySelector('.mood-btn.sel')?.dataset?.mood||'😐';
-  ST.notes.unshift({d:new Date(currentDateStr).toISOString(),text:txt,mood});
-  if(el('noteIn'))el('noteIn').value='';document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('sel'));
-  save();
-}
-function pickMood(el_){document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('sel'));el_.classList.add('sel');}
-function delNote(i){if(confirm('Eliminare?')){ST.notes.splice(i,1);save();}}
-function pickMealOpt(mealId,optIdx){if(!ST.mealOpts)ST.mealOpts={};ST.mealOpts[mealId]=optIdx;save();}
-
 // Workout session
-function startWo(id){ST.aWo=id;ST.step=0;ST.isRest=false;ST.currVol=0;render();}
-function closeWo(){clearInterval(ST.tmrId);ST.aWo=null;render();}
+function startWo(id){ST.aWo=id;ST.step=0;ST.isRest=false;ST.currVol=0;ST.activeSeriesTmr=0;startSeriesTimer();render();}
+function closeWo(){clearInterval(ST.tmrId);clearInterval(ST.activeSeriesTmrId);ST.aWo=null;render();}
 function getWo(){
   const p=pw(ST.programStart);
   const an=analyze(ST.h,ST.p);
@@ -648,25 +662,47 @@ function getWo(){
   return buildWorkout(ST.aWo,ST.p,p,ST.exPrefs,sx,an);
 }
 function getEx(){return getWo().exercises[ST.step];}
+
+function startSeriesTimer() {
+  clearInterval(ST.activeSeriesTmrId);
+  ST.activeSeriesTmrId = setInterval(()=>{
+    ST.activeSeriesTmr++;
+    const e = el('seriesTmrUI');
+    if(e) {
+      const m = Math.floor(ST.activeSeriesTmr/60).toString().padStart(2,'0');
+      const s = (ST.activeSeriesTmr%60).toString().padStart(2,'0');
+      e.textContent = `${m}:${s}`;
+    }
+  }, 1000);
+}
+
 function doneEx(){
+  clearInterval(ST.activeSeriesTmrId); // Ferma il cronometro serie
   const kg=parseFloat(el('wkW')?.value||0);
   const ex=getEx();
   if(!ST.wHistory[currentDateStr]) ST.wHistory[currentDateStr]={};
   ST.wHistory[currentDateStr][ex.id]={kg:kg>0?kg:null,ok:true};
   if(kg>0) ST.currVol+=kg*10;
-  ST.isRest=true;ST.tmr=ex.rest||60;render();
-  ST.tmrId=setInterval(()=>{ST.tmr--;const e=el('tmrUI');if(e)e.textContent=ST.tmr;if(ST.tmr<=0){clearInterval(ST.tmrId);nextEx();}},1000);
+  
+  ST.isRest=true; ST.tmr=ex.rest||60; render();
+  ST.tmrId=setInterval(()=>{
+    ST.tmr--; const e=el('tmrUI'); if(e) e.textContent=ST.tmr;
+    if(ST.tmr<=0){ clearInterval(ST.tmrId); nextEx(); }
+  }, 1000);
 }
+
 function nextEx(){
   clearInterval(ST.tmrId);
   const wo=getWo();
-  if(ST.step<wo.exercises.length-1){ST.step++;ST.isRest=false;render();}
+  if(ST.step<wo.exercises.length-1){
+    ST.step++; ST.isRest=false; ST.activeSeriesTmr=0; startSeriesTimer(); render();
+  }
   else{
     const e = ST.wLog.findIndex(x => x.d === currentDateStr);
     if(e >= 0) ST.wLog.splice(e, 1);
     ST.wLog.push({d:currentDateStr,t:wo.name,vol:ST.currVol,dur:ST.p.dur,isRest:false,woId:ST.aWo});
     ST.wLog.sort((a,b)=>new Date(a.d)-new Date(b.d));
-    ST.cheatDebt=0;ST.aWo=null;save();alert(`🏆 ALLENAMENTO COMPLETATO!\nVolume: ${ST.currVol} kg`);
+    ST.cheatDebt=0; ST.aWo=null; save(); alert(`🏆 ALLENAMENTO COMPLETATO!\nVolume: ${ST.currVol} kg`);
   }
 }
 function openSwap(slot){
@@ -757,7 +793,7 @@ function render(){
   if(ST.aWo&&ST.p){
     const wo=getWo(),ex=getEx();
     if(ST.isRest){
-      root.innerHTML=`<div class="wo"><div class="wo-head"><div class="bebas" style="font-size:24px;color:${theme};">⏸ RECUPERO IN CORSO</div><button class="btn-s btn-dim" onclick="nextEx()">SALTA ▸</button></div>
+      root.innerHTML=`<div class="wo"><div class="wo-head"><div class="bebas" style="font-size:24px;color:${theme};">⏸ RECUPERO IN CORSO</div><button class="btn-s btn-action" onclick="nextEx()">SALTA ▸</button></div>
       <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;">
         <div style="width:200px;height:200px;border-radius:50%;border:8px solid ${theme};display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 20px;">
           <div id="tmrUI" style="font-size:80px;font-family:monospace;font-weight:700;color:${theme};">${ST.tmr}</div>
@@ -769,8 +805,14 @@ function render(){
     root.innerHTML=`<div class="wo"><div class="wo-head">
       <div><div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;text-transform:uppercase;">${wo.name} · ${ST.step+1}/${wo.exercises.length}</div>
       <div class="bebas" style="font-size:24px;color:${wo.col||theme};">${ex.name}</div></div>
-      <button class="btn-s btn-dim" onclick="closeWo()">✕ ESCI</button>
+      <button class="btn-s btn-action" onclick="closeWo()">✕ ESCI</button>
     </div>
+    
+    <div style="background:var(--surf); border-bottom:1px solid var(--bord); padding:10px; display:flex; justify-content:center; align-items:center; gap:10px;">
+        <div style="font-size:12px; color:var(--mut); font-weight:bold;">⏱ TEMPO SERIE:</div>
+        <div id="seriesTmrUI" style="font-family:monospace; font-size:18px; color:var(--text); font-weight:bold;">00:00</div>
+    </div>
+
     <div style="padding:16px;flex:1;overflow-y:auto;">
       <div class="bw" style="height:4px;margin-bottom:16px;"><div class="bf" style="width:${((ST.step+1)/wo.exercises.length*100).toFixed(0)}%;height:4px;background:${wo.col||theme}"></div></div>
       
@@ -779,7 +821,7 @@ function render(){
         <div class="bebas" style="font-size:42px;color:var(--text);line-height:1;">
           ${ex.sets?`${ex.sets} <span style="font-size:20px;color:var(--mut);">SERIE</span> × ${ex.reps}`:'SFINIMENTO'}
         </div>
-        ${ex.rest?`<div style="font-size:14px;color:var(--blu);margin-top:4px;font-weight:bold;">⏱ Riposo: ${ex.rest}s</div>`:''}
+        ${ex.rest?`<div style="font-size:14px;color:var(--blu);margin-top:4px;font-weight:bold;">⏱ Riposo richiesto: ${ex.rest}s</div>`:''}
         ${ex.note?`<div style="font-size:12px;color:var(--yel);margin-top:4px;">⚠️ ${ex.note}</div>`:''}
       </div>
 
@@ -796,9 +838,9 @@ function render(){
         </div>
         <input type="number" id="wkW" placeholder="${sug.kg||'Es. 12'}" step=".5" style="margin:0;font-size:24px;font-weight:700;text-align:center;">
       </div>
-      <button class="btn btn-out" style="margin-top:8px;font-size:14px;" onclick="openSwap('${ex.slot||''}')">🔄 CAMBIA ESERCIZIO</button>
+      <button class="btn btn-action" style="margin-top:8px;font-size:16px; width:100%; padding:12px;" onclick="openSwap('${ex.slot||''}')">🔄 CAMBIA ESERCIZIO</button>
     </div>
-    <div style="padding:14px;border-top:1px solid var(--bord);"><button class="btn" style="height:68px;font-size:26px;" onclick="doneEx()">✅ SERIE COMPLETATA</button></div>
+    <div style="padding:14px;border-top:1px solid var(--bord);"><button class="btn" style="height:68px;font-size:26px;" onclick="doneEx()">✅ SERIE COMPLETATA (AVVIA RIPOSO)</button></div>
     </div>`;return;
   }
 
@@ -813,7 +855,7 @@ function render(){
           ${alt.cues?.[0]?`<div style="font-size:11px;color:var(--mut);margin-top:6px;">${alt.cues[0]}</div>`:''}
         </div>`;
       }).join('')}
-      <button class="btn btn-out" style="margin-top:8px;" onclick="closeSheet()">ANNULLA</button>
+      <button class="btn btn-action" style="margin-top:12px; width:100%; padding:12px;" onclick="closeSheet()">ANNULLA</button>
     </div></div>`:'';
 
   let H=`<div class="tnav">
@@ -970,7 +1012,7 @@ function renderHome(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,todayLog
         <div style="font-size:12px;color:var(--mut);">obiettivo <strong style="color:var(--text)">${ST.p.g}kg</strong> · mancano <strong style="color:var(--ora)">${kgLeft}kg</strong></div>
       </div>
       <div style="text-align:right;">
-        <div style="width:44px;height:44px;border-radius:50%;background:var(--dim);border:2px solid var(--bord);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:22px;color:${theme};cursor:pointer;margin-left:auto;" onclick="doLogout()">${AU.user.charAt(0).toUpperCase()}</div>
+        <div style="width:44px;height:44px;border-radius:50%;background:var(--dim);border:2px solid var(--bord);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:22px;color:${theme};cursor:pointer;margin-left:auto;" onclick="ST.tab='set'; render()">${AU.user.charAt(0).toUpperCase()}</div>
         ${stk>0?`<div style="margin-top:8px;background:rgba(255,104,53,.15);color:var(--ora);padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;">🔥 ${stk}d streak</div>`:''}
       </div>
     </div>
@@ -1006,7 +1048,7 @@ function renderHome(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,todayLog
       <span class="lbl" style="color:var(--gre);">🚶 PASSI</span>
       <div style="display:flex;gap:6px;align-items:center;">
         <input type="number" id="nStep" value="${ST.life[t2]?.steps||0}" style="margin:0;padding:9px;font-size:15px;flex:1;">
-        <button class="btn-s" style="background:var(--gre);color:#000;" onclick="logSteps()">OK</button>
+        <button class="btn-s btn-action" style="background:var(--surf);" onclick="logSteps()">OK</button>
       </div>
     </div>
     <div class="card" style="padding:14px;border-top:4px solid var(--purp);">
@@ -1062,7 +1104,7 @@ function renderWork(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,todayLog){
     </div>`;
   }).join('')}
 
-  ${!todayLog&&todayWoId!=='free'&&todayWoId!=='steps'?`<button class="btn btn-out" style="border-color:var(--purp);color:var(--purp);padding:14px;font-size:15px;border-radius:12px;width:100%;" onclick="logRestDay()">💤 REGISTRA RIPOSO PER IL ${new Date(t2).toLocaleDateString('it-IT')}</button>`:''} `;
+  ${!todayLog&&todayWoId!=='free'&&todayWoId!=='steps'?`<button class="btn btn-action" style="padding:14px;font-size:15px;border-radius:12px;width:100%;" onclick="logRestDay()">💤 REGISTRA RIPOSO PER IL ${new Date(t2).toLocaleDateString('it-IT')}</button>`:''} `;
 }
 
 function renderDiet(t2,mac,an,sx){
@@ -1078,7 +1120,6 @@ function renderDiet(t2,mac,an,sx){
     <div class="g3" style="margin-bottom:12px;">
       ${[['PROT',mac.prot-dLog.p,'var(--acc)','g'],['CARB',mac.carb-dLog.c,'var(--blu)','g'],['GRASSI',mac.fat-dLog.f,'var(--yel)','g']].map(([l,v,c,u])=>`<div style="text-align:center;background:var(--surf);border-radius:9px;padding:10px 4px;"><div class="bebas" style="font-size:20px;color:${c};line-height:1;">${Math.max(0,Math.round(v))}${u}</div><div style="font-size:9px;color:var(--mut);margin-top:2px;">${l}</div></div>`).join('')}
     </div>
-    ${dLog.k>0||dLog.skipped?.length>0?`<div style="text-align:center;margin-top:10px;"><button class="btn-s btn-out" style="font-size:12px;" onclick="resetMacros()">Azzera log di questa giornata</button></div>`:''}
   </div>
 
   <div class="card card-warn">
@@ -1087,7 +1128,11 @@ function renderDiet(t2,mac,an,sx){
     <p style="font-size:13px;line-height:1.55;margin:0 0 10px;">L'AI stimerà le calorie e compenserà per non bloccare il metabolismo.</p>
     <textarea id="cheatInput" rows="2" placeholder="Es. 'Pizza margherita e birra' oppure 'Saltato il pranzo'"></textarea>
     <button class="btn-s btn-ora" style="width:100%;padding:13px;font-size:17px;" onclick="logCheat()">🧠 CALCOLA E ADATTA</button>
-    ${dLog.cheatTxt?`<div style="margin-top:8px;padding:8px 11px;background:rgba(255,104,53,.1);border-radius:8px;font-size:12px;color:var(--ora);">📌 ${dLog.cheatTxt}</div>`:''}
+    ${dLog.cheatTxt?`<div style="margin-top:12px;padding:12px;background:rgba(255,104,53,.1);border-radius:8px;border:1px solid var(--ora);">
+      <div style="font-size:12px;color:var(--ora);font-weight:bold;margin-bottom:8px;">📌 SGARRO REGISTRATO:</div>
+      <div style="font-size:14px;color:var(--text);margin-bottom:12px;">"${dLog.cheatTxt}"</div>
+      <button class="btn-s btn-red" style="width:100%;padding:8px;font-size:12px;" onclick="removeCheat()">✕ ANNULLA E RICALCOLA</button>
+    </div>`:''}
   </div>
 
   <div class="bebas" style="font-size:18px;color:var(--mut);margin:16px 0 10px;letter-spacing:1px;">MENU DELLA GIORNATA</div>
@@ -1096,13 +1141,13 @@ function renderDiet(t2,mac,an,sx){
     const isSkipped=dLog.skipped?.includes(m.id);
     const selIdx=ST.mealOpts?.[m.id]||0;
     const opt=m.opts[selIdx]||m.opts[0];
-    return`<div class="card" style="opacity:${isLogged||isSkipped?.5:1};">
+    return`<div class="card" style="opacity:${isLogged||isSkipped?.6:1};">
       <div class="r" style="margin-bottom:10px;">
         <div><div style="font-size:15px;font-weight:700;">${m.n}</div></div>
-        ${isLogged?`<span style="color:var(--acc);font-size:12px;padding:6px 11px;border:1px solid var(--acc);border-radius:8px;font-weight:700;">✅ FATTO</span>` : 
-          isSkipped?`<span style="color:var(--red);font-size:12px;padding:6px 11px;border:1px solid var(--red);border-radius:8px;font-weight:700;">❌ SALTATO</span>` :
+        ${isLogged?`<div class="rc"><span style="color:var(--acc);font-size:12px;font-weight:700;">✅ FATTO</span><button class="btn-s btn-action" style="padding:4px 8px;font-size:10px;" onclick="uncheckMeal('${m.id}',${m.pct},${mac.kcal},${mac.prot},${mac.carb},${mac.fat})">ANNULLA</button></div>` : 
+          isSkipped?`<div class="rc"><span style="color:var(--red);font-size:12px;font-weight:700;">❌ SALTATO</span><button class="btn-s btn-action" style="padding:4px 8px;font-size:10px;" onclick="uncheckMeal('${m.id}')">ANNULLA</button></div>` :
         `<div style="display:flex;gap:5px;">
-          <button class="btn-s" style="background:var(--surf);color:var(--mut);border:1px solid var(--bord);font-family:'Bebas Neue';font-size:12px;padding:6px 10px;" onclick="skipMeal('${m.id}')">⏭️ SALTA</button>
+          <button class="btn-s btn-action" style="font-size:12px;padding:6px 10px;" onclick="skipMeal('${m.id}')">⏭️ SALTA</button>
           <button class="btn-s" style="background:var(--surf);color:var(--acc);border:1px solid var(--acc);font-family:'Bebas Neue';font-size:13px;" onclick="logMeal('${m.id}',${m.pct},${mac.kcal},${mac.prot},${mac.carb},${mac.fat})">FATTO ✓</button>
         </div>`}
       </div>
@@ -1142,22 +1187,28 @@ function renderBody(cW,mac,theme,pWeek,sx){
 
 function renderCoach(){
   const sx=AU.profile?.sx||'m';
-  return`<div style="position:fixed;top:90px;left:50%;transform:translateX(-50%);width:100%;max-width:500px;z-index:10;background:var(--bg);padding:12px 14px 0;">
-    <div class="card card-hi" style="padding:13px;">
-      <div class="r"><div class="rc"><div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--acc),#7ab300);display:flex;align-items:center;justify-content:center;font-size:18px;">🤖</div><div><div class="bebas" style="font-size:18px;color:var(--acc);">MARCELLO — AI COACH</div><div style="font-size:10px;color:var(--mut);">Esperto in Adattamento Dinamico</div></div></div>${ST.chatHistory.length?`<button class="btn-s btn-dim" style="font-size:11px;" onclick="clearChat()">🗑</button>`:''}</div>
+  return`
+  <div style="display:flex;flex-direction:column;height:calc(100vh - 105px);padding-top:10px;">
+    <div style="text-align:center;padding:10px 14px;">
+      <div style="font-size:40px;margin-bottom:5px;">🤖</div>
+      <div class="bebas" style="font-size:24px;color:var(--acc);">MARCELLO — AI COACH</div>
+      <div style="font-size:12px;color:var(--mut);">Esperto in Adattamento Dinamico</div>
     </div>
-  </div>
-  <div id="chatArea" style="display:flex;flex-direction:column;padding:14px;gap:4px;overflow-y:auto;margin-top:165px;padding-bottom:90px;min-height:50vh;">
-    ${ST.chatHistory.length===0?`<div style="text-align:center;padding:20px 14px;">
-      <div style="font-size:36px;margin-bottom:10px;">💬</div>
-      <div class="bebas" style="font-size:22px;color:var(--acc);margin-bottom:6px;">Ciao ${AU.user}!</div>
-      <div style="font-size:13px;color:var(--mut);line-height:1.65;margin-bottom:16px;">Sono Marcello, l'AI che controlla il tuo piano. Chiedimi qualsiasi cosa su alimentazione, schede o come gestire i tuoi imprevisti di oggi.</div>
-    </div>`:ST.chatHistory.map(m=>`<div style="display:flex;justify-content:${m.role==='user'?'flex-end':'flex-start'};"><div class="bbl ${m.role==='user'?'bbl-u':'bbl-ai'}">${m.content.replace(/\n/g,'<br>')}</div></div>`).join('')}
-    ${ST.chatLoading?`<div style="display:flex;"><div class="bbl bbl-ai"><span style="letter-spacing:3px;animation:blink 1s infinite">●●●</span></div></div>`:''}
-  </div>
-  <div style="position:fixed;bottom:84px;left:50%;transform:translateX(-50%);width:100%;max-width:500px;padding:0 14px 8px;background:var(--bg);border-top:1px solid var(--bord);">
-    <div style="display:flex;gap:8px;"><input id="aiIn" placeholder="Es. Ho saltato il pranzo, cosa faccio stasera?" style="flex:1;margin:0;" onkeydown="if(event.key==='Enter')sendMsg();">
-    <button class="btn" style="width:auto;padding:0 18px;margin:0;font-size:18px;${ST.chatLoading?'opacity:.5;pointer-events:none':''}" onclick="sendMsg()">➤</button></div>
+    
+    <div id="chatArea" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;">
+      ${ST.chatHistory.length===0?`<div style="text-align:center;margin-top:20px;">
+        <div style="font-size:14px;color:var(--text);line-height:1.65;margin-bottom:20px;padding:20px;background:var(--card);border:1px solid var(--bord);border-radius:12px;">Sono Marcello, l'AI che controlla il tuo piano. Chiedimi qualsiasi cosa su alimentazione, schede o come gestire i tuoi imprevisti.</div>
+      </div>`:ST.chatHistory.map(m=>`<div style="display:flex;justify-content:${m.role==='user'?'flex-end':'flex-start'};"><div class="bbl ${m.role==='user'?'bbl-u':'bbl-ai'}">${m.content.replace(/\n/g,'<br>')}</div></div>`).join('')}
+      ${ST.chatLoading?`<div style="display:flex;"><div class="bbl bbl-ai"><span style="letter-spacing:3px;animation:blink 1s infinite">●●●</span></div></div>`:''}
+    </div>
+
+    <div style="padding:14px;background:var(--bg);border-top:1px solid var(--bord);">
+      <div style="display:flex;gap:8px;">
+        <input id="aiIn" placeholder="Es. Ho saltato il pranzo, cosa faccio?" style="flex:1;margin:0;" onkeydown="if(event.key==='Enter')sendMsg();">
+        <button class="btn" style="width:auto;padding:0 18px;margin:0;font-size:18px;${ST.chatLoading?'opacity:.5;pointer-events:none':''}" onclick="sendMsg()">➤</button>
+      </div>
+      ${ST.chatHistory.length>0 ? `<div style="text-align:center;margin-top:10px;"><button class="btn-s btn-action" style="font-size:10px;padding:4px 8px;" onclick="clearChat()">🗑 SVUOTA CHAT</button></div>` : ''}
+    </div>
   </div>`;
 }
 
@@ -1202,7 +1253,7 @@ function renderSettings(mac){
   </div>
 
   <div class="card">
-    <button class="btn-s btn-out" style="width:100%;padding:13px;font-family:'Bebas Neue';font-size:18px;" onclick="doLogout()">🚪 LOGOUT</button>
+    <button class="btn-s btn-action" style="width:100%;padding:13px;font-family:'Bebas Neue';font-size:18px;" onclick="doLogout()">🚪 LOGOUT</button>
   </div>
   
   <div class="card card-red">
@@ -1211,18 +1262,6 @@ function renderSettings(mac){
     <button class="btn btn-red" onclick="if(confirm('Sei ASSOLUTAMENTE sicuro? Tutti i dati verranno eliminati dal server.')){window.DB.d('ft_u_'+AU.user);doLogout();}">CANCELLA IL MIO ACCOUNT</button>
   </div>`;
 }
-
-window.main = async function() {
-  const saved = window.SS.get();
-  if(saved){
-    AU.user = saved;
-    const data = await window.DB.g('ft_u_'+saved);
-    if(data) Object.assign(ST, {...defST(), ...data});
-    const reg = (await window.DB.g('ft_reg')) || [];
-    AU.profile = reg.find(u => u.un === saved) || {sx:'m', ht:170, ag:25};
-  }
-  render();
-};
 
 let initAttempts = 0;
 const startApp = setInterval(() => {
