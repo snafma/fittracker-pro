@@ -92,7 +92,6 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
   import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-  // LE TUE CHIAVI FIREBASE
   const firebaseConfig = {
     apiKey: "AIzaSyD7M6tX2diy6R-AuOPpG-VZQFO_MzPVSuQ",
     authDomain: "fittracker-pro-27296.firebaseapp.com",
@@ -613,7 +612,7 @@ function removeCheat() {
     if(!txt.toLowerCase().includes('saltato') && !txt.toLowerCase().includes('niente')){
        const est = cheatKcal(txt);
        ST.nutri[currentDateStr].k -= est; ST.nutri[currentDateStr].c -= Math.round(est*.4/4); ST.nutri[currentDateStr].f -= Math.round(est*.5/9);
-       ST.cheatDebt = 0; // Togliamo il debito per l'allenamento
+       ST.cheatDebt = 0; 
     }
     ST.nutri[currentDateStr].cheatTxt = '';
     save();
@@ -677,7 +676,7 @@ function startSeriesTimer() {
 }
 
 function doneEx(){
-  clearInterval(ST.activeSeriesTmrId); // Ferma il cronometro serie
+  clearInterval(ST.activeSeriesTmrId); 
   const kg=parseFloat(el('wkW')?.value||0);
   const ex=getEx();
   if(!ST.wHistory[currentDateStr]) ST.wHistory[currentDateStr]={};
@@ -1263,11 +1262,23 @@ function renderSettings(mac){
   </div>`;
 }
 
+async function bootApp() {
+  const saved = window.SS.get();
+  if(saved){
+    AU.user = saved;
+    const data = await window.DB.g('ft_u_'+saved);
+    if(data) Object.assign(ST, {...defST(), ...data});
+    const reg = (await window.DB.g('ft_reg')) || [];
+    AU.profile = reg.find(u => u.un === saved) || {sx:'m', ht:170, ag:25};
+  }
+  render();
+}
+
 let initAttempts = 0;
 const startApp = setInterval(() => {
   if (window.DB) {
     clearInterval(startApp);
-    window.main();
+    bootApp();
   } else if(initAttempts > 50) { 
     clearInterval(startApp);
     alert("Impossibile connettersi al database. Controlla la tua connessione e ricarica la pagina.");
