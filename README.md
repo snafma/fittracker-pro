@@ -11,5 +11,5 @@ App web per il monitoraggio di allenamento, dieta e progressi fisici.
 - Funziona da telefono come una vera app
 
 ## Come usarla
-Vai su: https://tuousername.github.io/fittracker-pro/
+Vai su: https://snafma.github.io/fittracker-pro/
 Registra un account e inizia!
