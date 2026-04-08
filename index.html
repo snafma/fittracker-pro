@@ -196,6 +196,12 @@ const EX={
   cd_liss:{cat:'cardio',t:'cardio',name:'Cardio LISS (Bici/Camminata)',mus:'Cardio',steps:['Mantieni il 60-65% della FC max','Devi poter tenere una conversazione','Ritmo costante per tutta la durata','Durata: 25-40 minuti'],cues:['Brucia principalmente grassi a questa intensità','FC target: 110-130 bpm']},
   cd_hiit:{cat:'cardio',t:'cardio',name:'HIIT — Scatti',mus:'Cardio Metabolico',steps:['Riscaldamento 5 minuti','30 secondi al massimo sforzo (80-90% FC max)','30 secondi di recupero attivo','Ripeti il ciclo 10-15 volte'],cues:['Molto più efficiente del LISS per il metabolismo','Max 3 volte a settimana']},
   cd_burp:{cat:'cardio',t:'cardio',name:'Circuito HIIT a Corpo Libero',mus:'Corpo Completo',steps:['30s Burpees → 30s Riposo','30s Mountain Climbers → 30s Riposo','30s Jumping Jacks → 30s Riposo','Ripeti 5-8 volte'],cues:['Ottimo per bruciare calorie in poco tempo']},
+  // RISCALDAMENTO
+  wu_general:{cat:'warmup',t:'warmup',name:'🔥 RISCALDAMENTO (5 min)',mus:'Tutto il corpo',isWarmup:true,sets:1,reps:'5 minuti',rest:0,steps:['1 min — Jumping Jacks (saltelli con braccia e gambe allargate)','1 min — Arm Circles (rotazioni delle braccia avanti e indietro)','1 min — Leg Swings (oscillazioni delle gambe avanti/indietro e laterali)','1 min — Hip Circles (rotazioni delle anche in cerchio)','1 min — Torso Rotations (rotazioni del busto con mani alle spalle)'],cues:['Il riscaldamento riduce le lesioni del 50% — non saltarlo mai','Aumenta gradualmente l\'intensità nei primi 5 minuti','Il corpo deve essere sudato leggermente prima di iniziare a caricare']},
+  wu_cut:{cat:'warmup',t:'warmup',name:'🔥 RISCALDAMENTO + CARDIO (8 min)',mus:'Tutto il corpo + Cardio',isWarmup:true,sets:1,reps:'8 minuti',rest:0,steps:['3 min — Camminata veloce o bici leggera (50-55% FC max)','1 min — Jumping Jacks','1 min — Arm Circles','1 min — Leg Swings','1 min — Hip Circles','1 min — Jump Rope o Marcia sul posto veloce'],cues:['Per la definizione: 3 minuti di cardio leggero prima dei pesi accelera il metabolismo fin dall\'inizio','Non esaurirti — il cardio di riscaldamento è leggero, non intenso']},
+  wu_bulk:{cat:'warmup',t:'warmup',name:'🔥 RISCALDAMENTO SPECIFICO (6 min)',mus:'Tutto il corpo',isWarmup:true,sets:1,reps:'6 minuti',rest:0,steps:['2 min — Camminata veloce o bici molto leggera','1 min — Rotazioni delle spalle e circoli con le braccia','1 min — Squat a corpo libero lenti (non carichi)','1 min — Affondi alternarti lenti','1 min — Plank 30 sec + Cat-Cow Stretch'],cues:['Per la massa: il riscaldamento specifico prepara i muscoli a sollevare carichi pesanti','Esegui 1 serie di riscaldamento leggera di ogni esercizio prima di caricare il peso vero']},
+  // DEFATICAMENTO E STRETCHING
+  cd_stretch:{cat:'cooldown',t:'cooldown',name:'🧘 DEFATICAMENTO & STRETCHING (5 min)',mus:'Tutto il corpo',isCooldown:true,sets:1,reps:'5 minuti',rest:0,steps:['45 sec — Child\'s Pose: inginocchiati, porta le braccia in avanti e la testa a terra','45 sec — Quad Stretch: in piedi, porta il piede verso il gluteo tenendo la caviglia','45 sec — Chest Opener: mani intrecciate dietro la schiena, apri il petto verso l\'alto','45 sec — Hamstring Stretch: seduto, gambe dritte, raggiungi le punte dei piedi','45 sec — Pigeon Pose (o Figura 4): allungamento intenso dei flessori dell\'anca','45 sec — Spinal Twist: seduto, ruota il busto con un ginocchio piegato al petto'],cues:['Lo stretching post-workout migliora il recupero del 30%','Ogni posizione si mantiene 30-45 secondi — senti lo stretch, mai dolore','Respira profondamente durante ogni posizione: l\'espirazione aiuta il rilassamento muscolare','Non rimandare: lo stretching va fatto caldo, subito dopo l\'allenamento']},
 };
 
 const EX_G={
@@ -383,6 +389,37 @@ window.getSetsReps=function(type,goal,pw2){
     return{sets:3,reps:cyc>=1?'8-10':'10-12',rest:90};
   }
 }
+// ── MESSAGGIO MOTIVAZIONALE in base ai risultati reali ──
+window.getMotivationalMsg=function(an,ST,cW,mac,pWeek){
+  const stk=streak(ST.wLog);
+  const wLogF=ST.wLog.filter(w=>!w.isRest);
+  const lost=ST.h.length>1?(ST.h[0].w-cW):0;
+  const kgLeft=Math.max(0,ST.p.t==='cut'?cW-ST.p.g:ST.p.g-cW);
+  const progress=Math.min(100,Math.max(0,(ST.p.s-cW)/(ST.p.s-ST.p.g)*100));
+  const dLog=ST.nutri[getToday()]||{k:0};
+  const mealsDone=dLog.logged?.length||0;
+  const today=new Date().getDay(); // 0=dom
+  const isMonday=today===1;
+
+  // Priorità messaggi: situazioni speciali prima
+  if(an.status==='stalled') return {emoji:'🚨',color:'var(--red)',title:'METABOLISMO IN STALLO',msg:`Il peso è fermo da giorni. L'AI ha già adeguato calorie e cardio. Bevi più acqua, dormi 7-8h e segui il piano: lo stallo si sblocca sempre.`};
+  if(an.status==='tfast') return {emoji:'⚠️',color:'var(--yel)',title:'ATTENZIONE ALLA VELOCITÀ',msg:`Stai perdendo peso troppo velocemente — rischi di perdere massa muscolare. L'AI ha aumentato le calorie. Mangia di più, allena con i pesi.`};
+  if(stk>=7) return {emoji:'🔥',color:'var(--ora)',title:`${stk} GIORNI DI STREAK!`,msg:`Una settimana intera di costanza. Questo è il vero segreto: non i giorni perfetti, ma non mollare mai.`};
+  if(stk>=3&&stk<7) return {emoji:'⚡',color:'var(--acc)',title:`${stk} GIORNI CONSECUTIVI`,msg:`La consistenza sta diventando un'abitudine. Continua così: ogni giorno che completi vale doppio.`};
+  if(progress>=75) return {emoji:'🏁',color:'var(--acc)',title:'QUASI ARRIVATO!',msg:`Sei al ${Math.round(progress)}% dell'obiettivo. Mancano solo ${kgLeft.toFixed(1)}kg. Il traguardo è lì — non fermarti adesso.`};
+  if(progress>=50) return {emoji:'💪',color:'var(--acc)',title:'METÀ STRADA SUPERATA',msg:`${Math.round(progress)}% completato. Hai già dimostrato di poterlo fare. La seconda metà è sempre più facile: sai già come si fa.`};
+  if(progress>=25) return {emoji:'📈',color:'var(--acc)',title:'MOMENTUM IN CRESCITA',msg:`${lost.toFixed(1)}kg eliminati, ${kgLeft.toFixed(1)}kg mancano. Il corpo si sta adattando — continua a essere costante.`};
+  if(an.status==='perfect') return {emoji:'🎯',color:'var(--acc)',title:'RITMO PERFETTO',msg:`L'AI conferma: sei esattamente nella traiettoria giusta. Non cambiare nulla — il piano sta funzionando alla perfezione.`};
+  if(an.status==='good') return {emoji:'✅',color:'var(--acc)',title:'PIANO IN LINEA',msg:`Progressi regolari e costanti. Non servono eroismi: la consistenza quotidiana porta ai risultati. Stai facendo bene.`};
+  if(an.status==='fast') return {emoji:'⚡',color:'var(--yel)',title:'ANDAMENTO VELOCE',msg:`L'AI ha aumentato le calorie per proteggere i muscoli. Mangia ciò che ti viene assegnato: la massa muscolare è oro.`};
+  if(wLogF.length===0&&pWeek>=2) return {emoji:'🏋️',color:'var(--purp)',title:'INIZIA OGGI',msg:`Nessun allenamento registrato. Il momento migliore per iniziare è adesso. Anche 20 minuti fanno la differenza.`};
+  if(isMonday) return {emoji:'🗓️',color:'var(--blu)',title:'SETTIMANA ${pWeek} — NUOVA PARTENZA',msg:`Ogni settimana è una nuova opportunità. L'AI ha ricalcolato il piano in base ai tuoi progressi. Partiamo.`};
+  if(mealsDone===0&&new Date().getHours()>10) return {emoji:'🥗',color:'var(--ora)',title:'NESSUN PASTO REGISTRATO',msg:`Registrare i pasti non è burocrazia — è il segnale che il tuo cervello resta in controllo. Prenditi 30 secondi.`};
+  // Default basato sulla settimana
+  if(pWeek<=2) return {emoji:'🚀',color:'var(--blu)',title:'SETTIMANA ${pWeek} — SI PARTE',msg:`Nelle prime settimane il corpo si adatta. Potresti non vedere subito i risultati sul peso, ma dentro qualcosa sta già cambiando.`};
+  return {emoji:'💡',color:'var(--mut)',title:'RIMANI COSTANTE',msg:`I risultati non arrivano in un giorno ma in settimane. Ogni pasto rispettato, ogni allenamento completato si accumula. Vai avanti.`};
+}
+
 window.buildWorkout=function(woId,goal,pw2,exPrefs,sex,analysis){
   const sch=WO_SCH[woId];
   const defs=getDefs(sex,goal.loc);
@@ -392,9 +429,15 @@ window.buildWorkout=function(woId,goal,pw2,exPrefs,sex,analysis){
     const sr=getSetsReps(ex.t,goal.t,pw2);
     return{...ex,id:exId,slot:sl.k,cat:sl.cat,...sr};
   });
+  // Aggiungi HIIT bonus in caso di stallo
   if(analysis?.alert==='stalled'){
     exercises.push({...EX['cd_hiit'],id:'cd_hiit',slot:'bonus',cat:'cardio',sets:1,reps:'15 min HIIT',rest:0,isBonus:true});
   }
+  // RISCALDAMENTO in testa: adattato all'obiettivo
+  const warmupKey = goal.t==='cut' ? 'wu_cut' : goal.t==='bulk' ? 'wu_bulk' : 'wu_general';
+  exercises.unshift({...EX[warmupKey], id:warmupKey, slot:'warmup', cat:'warmup'});
+  // STRETCHING in coda: sempre
+  exercises.push({...EX['cd_stretch'], id:'cd_stretch', slot:'cooldown', cat:'cooldown'});
   return{...sch,exercises};
 }
 window.getSuggest=function(exId,wHist){
@@ -751,13 +794,17 @@ window.startSet=function(){
 }
 window.completeSet=function(){
   clearInterval(ST.setTmrId);
-  const kg=parseFloat(el('wkW')?.value||0);
   const wo=getWo();const ex=wo.exercises[ST.step];
-  if(!ST.wHistory[currentDateStr]) ST.wHistory[currentDateStr]={};
-  ST.wHistory[currentDateStr][ex.id]={kg:kg>0?kg:null,ok:true};
-  if(kg>0) ST.currVol+=Math.round(kg*parseMeanReps(ex.reps));
+  // Per riscaldamento e stretching: nessun peso, salta il conteggio volume
+  const isSpecial=ex.isWarmup||ex.isCooldown||ex.isBonus;
+  if(!isSpecial){
+    const kg=parseFloat(el('wkW')?.value||0);
+    if(!ST.wHistory[currentDateStr]) ST.wHistory[currentDateStr]={};
+    ST.wHistory[currentDateStr][ex.id]={kg:kg>0?kg:null,ok:true};
+    if(kg>0) ST.currVol+=Math.round(kg*parseMeanReps(ex.reps));
+  }
   ST.currentSet++;
-  const totalSets=parseInt(ex.sets)||3;
+  const totalSets=parseInt(ex.sets)||1;
   if(ST.currentSet>=totalSets){ST.woPhase='exercise_done';render();}
   else{
     ST.woPhase='rest';ST.tmr=ex.rest||60;render();
@@ -857,7 +904,7 @@ window.renderSetup = function(){
   const defDate=new Date(new Date().getTime()+12*7*864e5).toISOString().split('T')[0];
   const cW=ST.h.length?ST.h[ST.h.length-1].w:70;
   const sx=AU.profile?.sx||'m';
-  return`<div style="padding:10px 0 0;"> <div class="bebas" style="font-size:36px;color:var(--acc);margin-bottom:4px;">CIAO ${AU.user.toUpperCase()}!</div> <div style="color:var(--mut);font-size:13px;margin-bottom:16px;">Configura il tuo programma personale. L'AI lo adatterà ogni settimana.</div> <div class="card"> <span class="lbl">PESO ATTUALE (KG)</span><input type="number" id="iW" value="${cW}" step=".1"> <span class="lbl">PESO OBIETTIVO (KG)</span><input type="number" id="gW" value="${sx==='f'?62:80}" step=".1"> <span class="lbl">DATA OBIETTIVO (PREVISTA)</span><input type="date" id="iDate" value="${defDate}"> <span class="lbl">STRATEGIA</span> <select id="iT"><option value="cut">Definizione (Perdita Grasso)</option><option value="bulk">Massa (Aumento Muscolo)</option></select> <span class="lbl">DOVE TI ALLENI?</span> <select id="iLoc"><option value="gym" selected>🏋️ In Palestra (con attrezzi)</option><option value="home">🏠 A Casa (corpo libero)</option></select> <span class="lbl">SESSIONI DI ALLENAMENTO A SETTIMANA</span> <select id="iSess"> <option value="0">0 — Solo Dieta &amp; Passi (nessuna palestra)</option> <option value="1">1 sessione/settimana</option> <option value="2">2 sessioni/settimana</option> <option value="3" selected>3 sessioni/settimana (consigliato)</option> <option value="4">4 sessioni/settimana</option> <option value="5">5 sessioni/settimana</option> <option value="6">6 sessioni/settimana (intenso)</option> </select> <span class="lbl">DURATA OGNI SESSIONE</span> <select id="iDur"><option value="45">45 minuti</option><option value="60" selected>60 minuti (ideale)</option><option value="90">90 minuti</option></select> <span class="lbl">SESSIONI CARDIO DI BASE A SETTIMANA</span> <select id="iCardio"><option value="0">0 — Solo pesi</option><option value="1" selected>1 — Leggero</option><option value="2">2 — Moderato</option><option value="3">3 — Intenso</option></select> <span class="lbl" style="margin-bottom:8px;">INTOLLERANZE ALIMENTARI (tocca per selezionare)</span> <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;"> ${INTOL_LIST.map(i=>`<span class="intol-chip" data-id="${i.id}" onclick="this.classList.toggle('on')">${i.icon} ${i.label}</span>`).join('')}
+  return`<div style="padding:10px 0 0;"> <div class="bebas" style="font-size:36px;color:var(--acc);margin-bottom:4px;">CIAO ${AU.user.toUpperCase()}!</div> <div style="color:var(--mut);font-size:13px;margin-bottom:16px;">Configura il tuo programma personale. L'AI lo adatterà ogni settimana.</div> <div class="card"> <span class="lbl">PESO ATTUALE (KG)</span><input type="number" id="iW" value="${cW}" step=".1"> <span class="lbl">PESO OBIETTIVO (KG)</span><input type="number" id="gW" placeholder="Es. ${sx==='f'?'60':'78'} — inserisci il tuo obiettivo" step=".1"> <span class="lbl">DATA OBIETTIVO (PREVISTA)</span><input type="date" id="iDate" value="${defDate}"> <span class="lbl">STRATEGIA</span> <select id="iT"><option value="cut">Definizione (Perdita Grasso)</option><option value="bulk">Massa (Aumento Muscolo)</option></select> <span class="lbl">DOVE TI ALLENI?</span> <select id="iLoc"><option value="gym" selected>🏋️ In Palestra (con attrezzi)</option><option value="home">🏠 A Casa (corpo libero)</option></select> <span class="lbl">SESSIONI DI ALLENAMENTO A SETTIMANA</span> <select id="iSess"> <option value="0">0 — Solo Dieta &amp; Passi (nessuna palestra)</option> <option value="1">1 sessione/settimana</option> <option value="2">2 sessioni/settimana</option> <option value="3" selected>3 sessioni/settimana (consigliato)</option> <option value="4">4 sessioni/settimana</option> <option value="5">5 sessioni/settimana</option> <option value="6">6 sessioni/settimana (intenso)</option> </select> <span class="lbl">DURATA OGNI SESSIONE</span> <select id="iDur"><option value="45">45 minuti</option><option value="60" selected>60 minuti (ideale)</option><option value="90">90 minuti</option></select> <span class="lbl">SESSIONI CARDIO DI BASE A SETTIMANA</span> <select id="iCardio"><option value="0">0 — Solo pesi</option><option value="1" selected>1 — Leggero</option><option value="2">2 — Moderato</option><option value="3">3 — Intenso</option></select> <span class="lbl" style="margin-bottom:8px;">INTOLLERANZE ALIMENTARI (tocca per selezionare)</span> <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;"> ${INTOL_LIST.map(i=>`<span class="intol-chip" data-id="${i.id}" onclick="this.classList.toggle('on')">${i.icon} ${i.label}</span>`).join('')}
   </div>
   <button class="btn" onclick="initProgram()">ATTIVA IL SISTEMA ▸</button>
   </div></div>`;
@@ -904,6 +951,18 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
     <div style="font-size:13px;line-height:1.55;padding-right:70px;">${an.msg||'Inserisci almeno 4 pesate per attivare l\'analisi adattiva.'}</div>
     ${an.proj?`<div style="font-size:11px;color:var(--mut);margin-top:8px;border-top:1px solid var(--bord);padding-top:8px;">📅 Proiezione obiettivo: <strong style="color:var(--text)">${an.proj.toLocaleDateString('it-IT')}</strong> (${an.wkNeed} settimane)</div>`:an.status==='new'?'':''}
   </div>
+  ${(()=>{
+    const motiv=getMotivationalMsg(an,ST,cW,mac,pWeek);
+    return`<div class="card" style="border-left:5px solid ${motiv.color};background:linear-gradient(145deg,${motiv.color}08,transparent);padding:18px;">
+      <div style="display:flex;align-items:flex-start;gap:12px;">
+        <div style="font-size:32px;line-height:1;flex-shrink:0;">${motiv.emoji}</div>
+        <div>
+          <div class="bebas" style="font-size:16px;color:${motiv.color};letter-spacing:1px;margin-bottom:4px;">${motiv.title.replace('${pWeek}',pWeek)}</div>
+          <div style="font-size:13px;color:var(--text);line-height:1.6;">${motiv.msg.replace('${pWeek}',pWeek)}</div>
+        </div>
+      </div>
+    </div>`;
+  })()}
   <div class="card" style="padding:16px;">
     <span class="lbl">PESATA DEL GIORNO</span>
     <div style="display:flex;gap:8px;">
@@ -1254,8 +1313,13 @@ window.render = function() {
       <div style="display:flex;gap:8px;justify-content:center;margin-bottom:16px;">${Array(totalSets).fill(0).map((_,i)=>`<div class="set-dot ${i<ST.currentSet?'done':i===ST.currentSet?'current':''}"></div>`).join('')}</div>
       <div class="card" style="padding:16px;margin-bottom:10px;"><div class="lbl" style="margin-bottom:10px;">📋 ESECUZIONE:</div>${(ex.steps||[]).map((s,i)=>`<div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;"><div class="step-n">${i+1}</div><div style="font-size:13px;line-height:1.5;color:var(--text);padding-top:2px;">${s}</div></div>`).join('')}</div>
       ${(ex.cues||[]).length?`<div style="margin-bottom:12px;"><div class="lbl">💡 TIPS:</div>${ex.cues.map(c=>`<div class="cue-box">${c}</div>`).join('')}</div>`:''}
+      ${(ex.isWarmup||ex.isCooldown)?`
+      <div class="card" style="padding:14px;background:${ex.isWarmup?'rgba(197,241,53,.04)':'rgba(167,139,250,.04)'};border-color:${ex.isWarmup?'var(--acc)':'var(--purp)'};">
+        <div style="font-size:12px;color:${ex.isWarmup?'var(--acc)':'var(--purp)'};font-weight:700;letter-spacing:1px;margin-bottom:4px;">${ex.isWarmup?'⏱ TEMPO STIMATO: '+ex.reps:'⏱ TEMPO STIMATO: '+ex.reps}</div>
+        <div style="font-size:12px;color:var(--mut);line-height:1.5;">${ex.isWarmup?'Nessun peso — esegui a corpo libero rispettando i tempi indicati':'Nessun peso — allungamento statico. Non forzare mai oltre la soglia del dolore.'}</div>
+      </div>`:`
       <div class="card" style="padding:14px;margin-bottom:10px;"><div class="r" style="margin-bottom:8px;"><div><div class="lbl" style="margin-bottom:2px;">PESO USATO (KG)</div><div style="font-size:11px;color:var(--mut);">${sug.hint}</div></div>${sug.kg?`<div class="bebas" style="font-size:26px;color:${theme};">${sug.kg}kg</div>`:''}</div><input type="number" id="wkW" placeholder="${sug.kg||'Es. 12'}" step=".5" style="margin:0;font-size:24px;font-weight:700;text-align:center;"></div>
-      <button class="btn btn-action" style="font-size:14px;width:100%;" onclick="openSwap('${ex.slot||''}')">🔄 SOSTITUISCI QUESTO ESERCIZIO</button>
+      <button class="btn btn-action" style="font-size:14px;width:100%;" onclick="openSwap('${ex.slot||''}')">🔄 SOSTITUISCI QUESTO ESERCIZIO</button>`}
     </div>
     <div style="position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--bord);padding:14px;">${!isActive?`<button class="btn btn-gre" style="height:72px;font-size:24px;" onclick="startSet()">▶ INIZIA SERIE ${ST.currentSet+1}/${totalSets}</button>`:`<button class="btn" style="height:72px;font-size:22px;" onclick="completeSet()">✅ SERIE COMPLETATA</button>`}</div></div>`;return;
   }
