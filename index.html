@@ -1618,6 +1618,35 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
 }
 
 
+// Helper: costruisce la griglia del calendario settimanale da weekStatus
+window.buildLegendGrid=function(weekStatus,DAY_NAMES,dOfW){
+  return weekStatus.map((ws,i)=>{
+    const isT=i===dOfW;
+    const planned=ws.planned||'rest';
+    const actual=ws.actual;
+    const planCol=planned&&WO_SCH[planned]?WO_SCH[planned].col:planned==='cardio'?'var(--blu)':planned==='steps'?'var(--gre)':planned==='free'?'var(--ora)':'var(--dim)';
+    const displayId=actual||planned;
+    const displayCol=actual&&WO_SCH[actual]?WO_SCH[actual].col:actual==='rest'?'var(--purp)':planCol;
+    const label=displayId==='free'?'🎉':displayId==='steps'?'🚶':displayId==='cardio'?'🏃':displayId==='rest'?'—':displayId||'—';
+    let statusDot='';
+    if(ws.completed) statusDot=`<div style="width:6px;height:6px;border-radius:50%;background:var(--acc);margin:2px auto 0;"></div>`;
+    else if(ws.isRest) statusDot=`<div style="width:6px;height:6px;border-radius:50%;background:var(--purp);margin:2px auto 0;"></div>`;
+    else if(ws.d<getToday()&&planned!=='free'&&planned!=='rest') statusDot=`<div style="width:6px;height:6px;border-radius:50%;background:var(--red);margin:2px auto 0;opacity:.5;"></div>`;
+    return`<div style="text-align:center;padding:8px 2px;border-radius:9px;background:${isT?displayCol+'15':'var(--surf)'};border:1px solid ${isT?displayCol:'var(--bord)'};">
+      <div style="font-size:8px;font-weight:700;color:${isT?'var(--text)':'var(--mut)'};margin-bottom:2px;">${DAY_NAMES[i]}</div>
+      <div style="font-family:'Bebas Neue';font-size:${displayId&&WO_SCH[displayId]?'15px':'12px'};color:${displayCol};">${label}</div>
+      ${statusDot}
+    </div>`;
+  }).join('');
+}
+window.buildLegendFooter=function(){
+  return`<div style="display:flex;gap:12px;margin-top:8px;font-size:10px;color:var(--mut);flex-wrap:wrap;">
+    <span><div style="width:6px;height:6px;border-radius:50%;background:var(--acc);display:inline-block;margin-right:3px;"></div>Completato</span>
+    <span><div style="width:6px;height:6px;border-radius:50%;background:var(--purp);display:inline-block;margin-right:3px;"></div>Riposo</span>
+    <span><div style="width:6px;height:6px;border-radius:50%;background:var(--red);display:inline-block;margin-right:3px;opacity:.5;"></div>Saltato</span>
+  </div>`;
+}
+
 // ── renderWork: FIX 1 (riposo=niente schede), FIX 2 (sequenza A→B→C), FIX 3 (calendario reale) ──
 window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,todayLog){
   const isD=(pWeek-1)%4===3;
