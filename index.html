@@ -8,6 +8,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<!-- Firebase Compat SDK — caricamento sincrono, affidabile su tutti i browser/GitHub Pages -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
 :root {
   --bg: #09090b; --surf: #121214; --card: #18181b; --bord: #27272a;
@@ -93,32 +96,69 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left;}
 input[type="date"]::-webkit-datetime-edit{display:block;padding:0;}
 </style>
 
-<script type="module">
-import{initializeApp}from"https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import{getFirestore,doc,getDoc,setDoc,deleteDoc}from"https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-const firebaseConfig={apiKey:"AIzaSyD7M6tX2diy6R-AuOPpG-VZQFO_MzPVSuQ",authDomain:"fittracker-pro-27296.firebaseapp.com",projectId:"fittracker-pro-27296",storageBucket:"fittracker-pro-27296.firebasestorage.app",messagingSenderId:"645700555123",appId:"1:645700555123:web:995606f200eb37d6a8b506"};
-let firestore;
-try{const app=initializeApp(firebaseConfig);firestore=getFirestore(app);}catch(e){console.error(e);}
-window.DB={
-  async g(k){if(!firestore)return null;try{const s=await getDoc(doc(firestore,"fittracker_data",k));return s.exists()?s.data().value:null;}catch(e){return null;}},
-  async s(k,v){if(!firestore)return;try{await setDoc(doc(firestore,"fittracker_data",k),{value:v});}catch(e){}},
-  async d(k){if(!firestore)return;try{await deleteDoc(doc(firestore,"fittracker_data",k));}catch(e){}}
-};
-window.SS={get:()=>localStorage.getItem('ft_session'),set:u=>localStorage.setItem('ft_session',u),clr:()=>localStorage.removeItem('ft_session')};
-</script>
-
 </head>
 <body>
 <div id="app">
   <div class="loader-wrap">
     <div class="spinner"></div>
-    <div class="bebas" style="color:var(--text);font-size:28px;letter-spacing:3px;">SYSTEM BOOTING</div>
-    <div style="color:var(--mut);font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:1px;">Connessione al Cloud Secure Database...</div>
+    <div class="bebas" style="color:var(--text);font-size:28px;letter-spacing:3px;">FITTRACKER PRO</div>
+    <div id="_loaderMsg" style="color:var(--mut);font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:1px;">Connessione al database...</div>
+    <button onclick="location.reload()" style="margin-top:28px;padding:10px 24px;background:transparent;border:1.5px solid #27272a;color:#a1a1aa;border-radius:10px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;display:none;" id="_retryBtn">↺ Ricarica</button>
+    <script>setTimeout(()=>{const b=document.getElementById('_retryBtn');if(b)b.style.display='block';},5000);</script>
   </div>
 </div>
 
 <script>
 'use strict';
+
+// ═══════════════════════════════════════════════════════════
+// FIREBASE COMPAT INIT — sincrono, funziona su GitHub Pages
+// ═══════════════════════════════════════════════════════════
+(function() {
+  try {
+    const cfg = {
+      apiKey: "AIzaSyD7M6tX2diy6R-AuOPpG-VZQFO_MzPVSuQ",
+      authDomain: "fittracker-pro-27296.firebaseapp.com",
+      projectId: "fittracker-pro-27296",
+      storageBucket: "fittracker-pro-27296.firebasestorage.app",
+      messagingSenderId: "645700555123",
+      appId: "1:645700555123:web:995606f200eb37d6a8b506"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(cfg);
+    const db = firebase.firestore();
+    // Abilita persistenza offline (funziona anche senza connessione)
+    db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
+    window.DB = {
+      async g(k) {
+        try { const d = await db.collection('fittracker_data').doc(k).get(); return d.exists ? d.data().value : null; }
+        catch(e) { console.warn('DB.g', e); return null; }
+      },
+      async s(k, v) {
+        try { await db.collection('fittracker_data').doc(k).set({ value: v }); }
+        catch(e) { console.warn('DB.s', e); }
+      },
+      async d(k) {
+        try { await db.collection('fittracker_data').doc(k).delete(); }
+        catch(e) { console.warn('DB.d', e); }
+      }
+    };
+    console.log('✅ Firebase Compat inizializzato');
+  } catch(e) {
+    console.error('❌ Firebase init error:', e);
+    // Fallback: localStorage solo (niente Cloud, ma l'app funziona)
+    window.DB = {
+      async g(k) { try { const v = localStorage.getItem('db_'+k); return v ? JSON.parse(v) : null; } catch{ return null; } },
+      async s(k, v) { try { localStorage.setItem('db_'+k, JSON.stringify(v)); } catch{} },
+      async d(k) { try { localStorage.removeItem('db_'+k); } catch{} }
+    };
+    console.warn('⚠️ Modalità offline: dati salvati solo localmente');
+  }
+  window.SS = {
+    get: () => localStorage.getItem('ft_session'),
+    set: u => localStorage.setItem('ft_session', u),
+    clr: () => localStorage.removeItem('ft_session')
+  };
+})();
 
 function hp(s){let h=0;for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return'h'+Math.abs(h).toString(36)+s.length;}
 function getToday(){return new Date().toISOString().split('T')[0];}
@@ -1354,11 +1394,14 @@ if(ST.tab===‘coach’) setTimeout(()=>{const c=el(‘chatArea’);if(c)c.scrol
 
 // ── BOOT ──────────────────────────────────────────────────────
 window.bootApp=async function(){
+// Aggiorna il loader con messaggio di stato
+const loaderMsg = document.getElementById(’*loaderMsg’);
+if(loaderMsg) loaderMsg.textContent = ‘Caricamento dati utente…’;
 try{
 const saved=window.SS.get();
 if(saved){
 AU.user=saved;
-const data=await window.DB.g(‘ft_u_’+saved);
+const data=await window.DB.g(’ft_u*’+saved);
 if(data){Object.assign(ST,{…defST(),…data});if(!ST.chartFilter)ST.chartFilter=30;}
 const reg=(await window.DB.g(‘ft_reg’))||[];
 AU.profile=reg.find(u=>u.un===saved)||{sx:‘m’,ht:170,ag:25};
@@ -1368,12 +1411,17 @@ if(!ST.p) ST.tab=‘home’;
 finally{render();}
 }
 
-let _initAttempts=0;
-const _startCheck=setInterval(()=>{
-_initAttempts++;
-if(window.DB&&window.SS){clearInterval(_startCheck);bootApp();}
-else if(_initAttempts>60){clearInterval(_startCheck);alert(‘Impossibile connettersi a Firebase. Ricarica la pagina.’);renderAuth(document.getElementById(‘app’));}
-},100);
+// Firebase Compat è sincrono: window.DB è disponibile immediatamente
+// Usiamo un piccolo delay solo per permettere al DOM di essere pronto
+setTimeout(()=>{
+if(window.DB && window.SS){
+bootApp();
+} else {
+// Fallback estremo (non dovrebbe mai succedere)
+console.error(‘DB non disponibile dopo delay’);
+render();
+}
+}, 50);
 </script>
 
 </body>
