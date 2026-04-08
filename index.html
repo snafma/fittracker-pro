@@ -86,6 +86,8 @@ select option { background: var(--card); }
 .sx-btn.on { border-color: var(--acc); background: var(--acc-glow); color: var(--text); box-shadow: 0 0 15px var(--acc-glow); }
 .intol-chip { padding: 10px 16px; border-radius: 12px; border: 1.5px solid var(--bord); background: var(--surf); color: var(--mut); cursor: pointer; font-size: 13px; font-weight: 600; transition: 0.2s; }
 .intol-chip.on { border-color: var(--red); background: rgba(255,71,87,0.15); color: var(--red); box-shadow: 0 0 10px rgba(255,71,87,0.15); }
+.focus-chip { padding: 12px 10px; border-radius: 14px; border: 2px solid var(--bord); background: var(--surf); color: var(--mut); cursor: pointer; text-align: center; transition: 0.2s; font-family: 'DM Sans',sans-serif; flex: 1; min-width: 0; }
+.focus-chip.on { color: var(--text); }
 .step-n { width: 26px; height: 26px; border-radius: 50%; background: var(--acc); color: #000; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; flex-shrink: 0; }
 .cue-box { background: rgba(197,241,53,0.08); border-left: 4px solid var(--acc); padding: 12px 16px; border-radius: 0 12px 12px 0; font-size: 14px; color: var(--text); line-height: 1.6; margin-bottom: 8px; }
 .err-box { background: rgba(255,71,87,0.1); border: 1px solid var(--red); border-radius: 12px; padding: 14px; font-size: 14px; color: var(--red); margin-bottom: 16px; text-align: center; font-weight: 500; }
@@ -147,6 +149,16 @@ const INTOL_LIST=[
   {id:'gluten',label:'Glutine',icon:'🌾'},{id:'lactose',label:'Lattosio',icon:'🥛'},
   {id:'eggs',label:'Uova',icon:'🥚'},{id:'nuts',label:'Frutta Secca',icon:'🥜'},
   {id:'fish',label:'Pesce/Crostacei',icon:'🐟'},{id:'soy',label:'Soia',icon:'🫘'}
+];
+
+// ── Focus di allenamento ──
+const FOCUS_LIST=[
+  {id:'total',   label:'Total Body',      icon:'⚡', col:'#c5f135', desc:'Piano bilanciato — tutti i gruppi muscolari coperti ogni settimana'},
+  {id:'upper',   label:'Upper Body',      icon:'💪', col:'#60a5fa', desc:'Focus su petto, schiena, spalle e braccia. Gambe mantenute'},
+  {id:'lower',   label:'Lower Body',      icon:'🦵', col:'#ff6835', desc:'Focus su gambe, femorali, glutei. Upper body mantenuto'},
+  {id:'glutes',  label:'Glutei & Core',   icon:'🍑', col:'#f472b6', desc:'Focus massimo su glutei, femorali, addome e stabilità'},
+  {id:'hyp',     label:'Ipertrofia Max',  icon:'🏋️', col:'#a78bfa', desc:'Volume elevato per massimizzare la crescita muscolare'},
+  {id:'strength',label:'Forza Pura',      icon:'🔱', col:'#fbbf24', desc:'Carichi pesanti, meno reps, più recupero. Guadagni di forza'},
 ];
 
 const EX={
@@ -334,15 +346,24 @@ window.buildWeeklyPlanWithCardio=function(sessions,cardioLevel,analysis){
   return result;
 }
 
-// ── Rotazione workout in base alle sessioni ──
-window.getRotation=function(sessions){
-  const r={1:['D'],2:['A','C'],3:['A','B','C'],4:['A','B','C','D'],5:['A','B','C','A','B']};
-  return r[Math.min(sessions||3,5)]||['A','B','C','A','B','C'];
+// ── Rotazione workout in base alle sessioni e al focus ──
+window.getRotation=function(sessions,focus){
+  const f=focus||'total';
+  const byFocus={
+    total:   {1:['D'],2:['A','C'],3:['A','B','C'],4:['A','B','C','D'],5:['A','B','C','A','B'],6:['A','B','C','A','B','C']},
+    upper:   {1:['A'],2:['A','C'],3:['A','C','A'],4:['A','C','A','C'],5:['A','C','A','C','A'],6:['A','C','A','C','A','C']},
+    lower:   {1:['B'],2:['B','E'],3:['B','E','B'],4:['B','E','B','E'],5:['B','E','B','E','B'],6:['B','E','B','E','B','E']},
+    glutes:  {1:['E'],2:['E','B'],3:['E','B','E'],4:['E','B','E','B'],5:['E','B','E','B','E'],6:['E','B','E','B','E','B']},
+    hyp:     {1:['D'],2:['A','C'],3:['A','B','C'],4:['A','B','C','A'],5:['A','B','C','A','B'],6:['A','B','C','A','B','C']},
+    strength:{1:['D'],2:['A','C'],3:['A','B','C'],4:['A','C','B','D'],5:['A','B','C','A','C'],6:['A','B','C','A','B','C']},
+  };
+  const map=byFocus[f]||byFocus.total;
+  return map[Math.min(sessions||3,6)]||['A','B','C'];
 }
 
 // ── FIX 2: Workout di oggi basato sulla sequenza storica, non sul giorno della settimana ──
-window.getNextWorkoutForDay=function(wLog,sessions,programStart,currentDateStr){
-  const rotation=getRotation(sessions);
+window.getNextWorkoutForDay=function(wLog,sessions,programStart,currentDateStr,focus){
+  const rotation=getRotation(sessions,focus);
   if(!rotation.length) return null;
   // Tutti i workout completati dalla data start, in ordine cronologico
   const done=wLog.filter(w=>!w.isRest&&w.woId&&w.d>=(programStart||'')).sort((a,b)=>new Date(a.d)-new Date(b.d));
@@ -357,7 +378,7 @@ window.getNextWorkoutForDay=function(wLog,sessions,programStart,currentDateStr){
 }
 
 // ── FIX 3: Stato reale della settimana corrente (pianificato vs effettivo) ──
-window.getWeekStatus=function(currentDateStr,wLog,sessions,programStart,cardioLevel,analysis){
+window.getWeekStatus=function(currentDateStr,wLog,sessions,programStart,cardioLevel,analysis,focus){
   const today=new Date(currentDateStr+'T12:00:00');
   const dow=(today.getDay()+6)%7; // 0=Lun
   const monday=new Date(today);
@@ -369,7 +390,7 @@ window.getWeekStatus=function(currentDateStr,wLog,sessions,programStart,cardioLe
     return{d:d.toISOString().split('T')[0],planned:'steps',actual:null,isToday:d.toISOString().split('T')[0]===currentDateStr};
   });
 
-  const rotation=getRotation(sessions);
+  const rotation=getRotation(sessions,focus);
   const prgStart=programStart||weekStart;
 
   // Template posizioni allenamento (quale giorno 0..5 = Lun..Sab è training day)
@@ -481,18 +502,29 @@ window.analyze=function(history,goal,wLog){
 
   return{status,msg,col,calAdj,cardioAdj,wRate:wRate.toFixed(2),tRate,ratio:ratio.toFixed(2),proj,wkNeed:wkNeed.toFixed(1),alert,missed,adherencePct};
 }
-window.getSetsReps=function(type,goal,pw2){
+window.getSetsReps=function(type,goal,pw2,focus){
   const cyc=Math.floor((pw2-1)/4),wic=(pw2-1)%4,isD=wic===3;
+  const isHyp=focus==='hyp', isStr=focus==='strength';
   if(goal==='cut'){
     if(isD) return{sets:2,reps:'12-15',rest:60,note:'⟳ Deload (Scarico)'};
-    if(type==='compound') return{sets:3+Math.min(cyc,1),reps:cyc>=2?'8-10':'10-12',rest:cyc>=2?90:75};
+    if(type==='compound'){
+      const sets=isHyp?4+Math.min(cyc,1):3+Math.min(cyc,1);
+      const reps=isStr?(cyc>=2?'5-6':'6-8'):(cyc>=2?'8-10':'10-12');
+      const rest=isStr?(cyc>=2?120:90):(cyc>=2?90:75);
+      return{sets,reps,rest};
+    }
     if(type==='isometric') return{sets:3,reps:'30-45s',rest:45};
-    return{sets:3,reps:cyc>=1?'12-15':'15-20',rest:50};
+    return{sets:isHyp?4:3,reps:cyc>=1?'12-15':'15-20',rest:50};
   }else{
     if(isD) return{sets:3,reps:'8-10',rest:90,note:'⟳ Deload (Scarico)'};
-    if(type==='compound') return{sets:4+Math.min(cyc,1),reps:cyc>=2?'4-6':cyc>=1?'6-8':'8-10',rest:cyc>=2?180:cyc>=1?150:120};
+    if(type==='compound'){
+      const sets=isHyp?5+Math.min(cyc,1):4+Math.min(cyc,1);
+      const reps=isStr?(cyc>=2?'3-5':cyc>=1?'4-6':'5-7'):(cyc>=2?'4-6':cyc>=1?'6-8':'8-10');
+      const rest=isStr?(cyc>=2?240:cyc>=1?180:150):(cyc>=2?180:cyc>=1?150:120);
+      return{sets,reps,rest};
+    }
     if(type==='isometric') return{sets:3,reps:'30-45s',rest:45};
-    return{sets:3,reps:cyc>=1?'8-10':'10-12',rest:90};
+    return{sets:isHyp?4:3,reps:cyc>=1?'8-10':'10-12',rest:isStr?120:90};
   }
 }
 // ── MESSAGGIO MOTIVAZIONALE in base ai risultati reali ──
@@ -532,7 +564,7 @@ window.buildWorkout=function(woId,goal,pw2,exPrefs,sex,analysis){
   const exercises=sch.slots.map(sl=>{
     const exId=(exPrefs&&exPrefs[sl.k])||defs[sl.k];
     const ex=EX[exId]||EX[defs[sl.k]];
-    const sr=getSetsReps(ex.t,goal.t,pw2);
+    const sr=getSetsReps(ex.t,goal.t,pw2,goal.focus);
     return{...ex,id:exId,slot:sl.k,cat:sl.cat,...sr};
   });
   // Aggiungi HIIT bonus in caso di stallo
@@ -758,13 +790,14 @@ window.initProgram=function(){
   const w=parseFloat(vv('iW')),g=parseFloat(vv('gW')),t=vv('iT'),dur=parseInt(vv('iDur')),tRaw=vv('iDate'),loc=vv('iLoc');
   const sess=parseInt(vv('iSess'))||3,cl=parseInt(vv('iCardio'))||1;
   const intol=[...document.querySelectorAll('.intol-chip.on')].map(c=>c.dataset.id);
+  const focus=document.querySelector('.focus-chip.on')?.dataset?.focus||'total';
   if(!w||!g||!tRaw) return alert('Compila tutto!');
   if(sess===0&&t==='bulk') return alert('⚠️ Con 0 sessioni non fai massa.');
   if(sess===1&&t==='bulk') return alert('⚠️ Per massa servono almeno 2 sessioni.');
   let tDate=new Date(tRaw);
   const minWk=t==='cut'?Math.abs(w-g)/0.8:Math.abs(w-g)/0.3;
   if((tDate-new Date())/(7*864e5)<minWk){tDate=new Date(new Date().getTime()+minWk*7*864e5);alert('Data corretta dall\'AI.');}
-  ST.p={s:w,g:g,t,dur,targetD:tDate.toISOString().split('T')[0],sessions:sess,cardioLevel:cl,intol,loc};
+  ST.p={s:w,g:g,t,dur,targetD:tDate.toISOString().split('T')[0],sessions:sess,cardioLevel:cl,intol,loc,focus};
   ST.programStart=currentDateStr||getToday();
   if(!ST.h.length) ST.h=[{d:ST.programStart,w:w}];
   save();
@@ -772,6 +805,7 @@ window.initProgram=function(){
 window.updateProgram=function(){
   const g=parseFloat(vv('eG')),t=vv('eT'),dur=parseInt(vv('eDur')),tRaw=vv('eDate'),sess=parseInt(vv('eSess'))||3,cl=parseInt(vv('eCardio'))||1,loc=vv('eLoc');
   const intol=[...document.querySelectorAll('.intol-chip2.on')].map(c=>c.dataset.id);
+  const focus=document.querySelector('.focus-chip2.on')?.dataset?.focus||ST.p.focus||'total';
   if(!g||!tRaw) return alert('Compila campi!');
   if(sess===0&&t==='bulk') return alert('⚠️ Con 0 sessioni niente massa.');
   if(sess===1&&t==='bulk') return alert('⚠️ Almeno 2 sessioni per massa.');
@@ -779,7 +813,7 @@ window.updateProgram=function(){
   const currW=ST.h[ST.h.length-1]?.w||70;
   const minWk=t==='cut'?Math.abs(currW-g)/0.8:Math.abs(currW-g)/0.3;
   if((tDate-new Date())/(7*864e5)<minWk){tDate=new Date(new Date().getTime()+minWk*7*864e5);alert('Data corretta dall\'AI.');}
-  ST.p.g=g;ST.p.t=t;ST.p.dur=dur;ST.p.targetD=tDate.toISOString().split('T')[0];ST.p.sessions=sess;ST.p.cardioLevel=cl;ST.p.intol=intol;ST.p.loc=loc;
+  ST.p.g=g;ST.p.t=t;ST.p.dur=dur;ST.p.targetD=tDate.toISOString().split('T')[0];ST.p.sessions=sess;ST.p.cardioLevel=cl;ST.p.intol=intol;ST.p.loc=loc;ST.p.focus=focus;
   save();alert('Programma aggiornato!');
 }
 window.changeCurrentDate=function(dStr){currentDateStr=dStr;render();}
@@ -866,8 +900,17 @@ window.resetMacros=function(){if(confirm('Azzera tutti i pasti di oggi?')){ST.nu
 window.pickMealOpt=function(mealId,optIdx){if(!ST.mealOpts)ST.mealOpts={};ST.mealOpts[mealId]=optIdx;save();}
 window.saveMeasures=function(){
   if(!ST.measures[currentDateStr]) ST.measures[currentDateStr]={};
-  ['chest','waist','hips','arm','thigh','neck'].forEach(f=>{const v=parseFloat(vv('m_'+f));if(v>0)ST.measures[currentDateStr][f]=v;});
-  save();alert('Misure salvate!');
+  const fields=['neck','shoulders','chest','waist','abdomen','hips',
+    'arm_r','arm_r_flex','arm_l','arm_l_flex','forearm_r','forearm_l',
+    'thigh_r','thigh_l','calf_r','calf_l','bodyfat'];
+  fields.forEach(f=>{const v=parseFloat(vv('m_'+f));if(v>0) ST.measures[currentDateStr][f]=v;});
+  // Compat: map old fields
+  if(!ST.measures[currentDateStr].arm_r){const old=ST.measures[currentDateStr].arm;if(old>0)ST.measures[currentDateStr].arm_r=old;}
+  if(!ST.measures[currentDateStr].thigh_r){const old=ST.measures[currentDateStr].thigh;if(old>0)ST.measures[currentDateStr].thigh_r=old;}
+  save();alert('✅ Misure salvate!');
+}
+window.getMeasureArr=function(field){
+  return Object.keys(ST.measures).sort().filter(d=>ST.measures[d]?.[field]>0).map(d=>({d,v:ST.measures[d][field]})).slice(-(ST.chartFilter||30));
 }
 window.setChartFlt=function(d){ST.chartFilter=d;render();}
 
@@ -1011,6 +1054,12 @@ window.renderSetup = function(){
   const cW=ST.h.length?ST.h[ST.h.length-1].w:70;
   const sx=AU.profile?.sx||'m';
   return`<div style="padding:10px 0 0;"> <div class="bebas" style="font-size:36px;color:var(--acc);margin-bottom:4px;">CIAO ${AU.user.toUpperCase()}!</div> <div style="color:var(--mut);font-size:13px;margin-bottom:16px;">Configura il tuo programma personale. L'AI lo adatterà ogni settimana.</div> <div class="card"> <span class="lbl">PESO ATTUALE (KG)</span><input type="number" id="iW" value="${cW}" step=".1"> <span class="lbl">PESO OBIETTIVO (KG)</span><input type="number" id="gW" placeholder="Es. ${sx==='f'?'60':'78'} — inserisci il tuo obiettivo" step=".1"> <span class="lbl">DATA OBIETTIVO (PREVISTA)</span><input type="date" id="iDate" value="${defDate}"> <span class="lbl">STRATEGIA</span> <select id="iT"><option value="cut">Definizione (Perdita Grasso)</option><option value="bulk">Massa (Aumento Muscolo)</option></select> <span class="lbl">DOVE TI ALLENI?</span> <select id="iLoc"><option value="gym" selected>🏋️ In Palestra (con attrezzi)</option><option value="home">🏠 A Casa (corpo libero)</option></select> <span class="lbl">SESSIONI DI ALLENAMENTO A SETTIMANA</span> <select id="iSess"> <option value="0">0 — Solo Dieta &amp; Passi (nessuna palestra)</option> <option value="1">1 sessione/settimana</option> <option value="2">2 sessioni/settimana</option> <option value="3" selected>3 sessioni/settimana (consigliato)</option> <option value="4">4 sessioni/settimana</option> <option value="5">5 sessioni/settimana</option> <option value="6">6 sessioni/settimana (intenso)</option> </select> <span class="lbl">DURATA OGNI SESSIONE</span> <select id="iDur"><option value="45">45 minuti</option><option value="60" selected>60 minuti (ideale)</option><option value="90">90 minuti</option></select> <span class="lbl">SESSIONI CARDIO DI BASE A SETTIMANA</span> <select id="iCardio"><option value="0">0 — Solo pesi</option><option value="1" selected>1 — Leggero</option><option value="2">2 — Moderato</option><option value="3">3 — Intenso</option></select> <span class="lbl" style="margin-bottom:8px;">INTOLLERANZE ALIMENTARI (tocca per selezionare)</span> <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;"> ${INTOL_LIST.map(i=>`<span class="intol-chip" data-id="${i.id}" onclick="this.classList.toggle('on')">${i.icon} ${i.label}</span>`).join('')}
+
+  <span class="lbl" style="margin-bottom:8px;">FOCUS DI ALLENAMENTO — cosa vuoi sviluppare?</span>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:14px;">
+    ${FOCUS_LIST.map((f,i)=>`<div class="focus-chip ${i===0?'on':''}" data-focus="${f.id}" style="border-color:${i===0?f.col:'var(--bord)'};background:${i===0?f.col+'12':'var(--surf)'};" onclick="document.querySelectorAll('.focus-chip').forEach(x=>{x.classList.remove('on');x.style.borderColor='var(--bord)';x.style.background='var(--surf)';});this.classList.add('on');this.style.borderColor=FOCUS_LIST.find(x=>x.id===this.dataset.focus).col;this.style.background=FOCUS_LIST.find(x=>x.id===this.dataset.focus).col+'12';"><div style="font-size:18px;margin-bottom:2px;">${f.icon}</div><div style="font-size:10px;font-weight:700;line-height:1.2;">${f.label}</div></div>`).join('')}
+  </div>
+  <div id="focusDesc" style="font-size:12px;color:var(--mut);margin-bottom:14px;padding:8px 12px;background:var(--bg);border-radius:8px;">${FOCUS_LIST[0].desc}</div>
   </div>
   <button class="btn" onclick="initProgram()">ATTIVA IL SISTEMA ▸</button>
   </div></div>`;
@@ -1146,9 +1195,9 @@ window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,to
   // ── FIX 1: Se oggi è riposo → mostra solo il messaggio, niente schede ──
   if(todayLog?.isRest){
     // Calcola il prossimo workout in sequenza
-    const nextWo=getNextWorkoutForDay(ST.wLog,ST.p.sessions||3,ST.programStart,currentDateStr);
+    const nextWo=getNextWorkoutForDay(ST.wLog,ST.p.sessions||3,ST.programStart,currentDateStr,ST.p.focus||'total');
     const nextWoName=nextWo&&WO_SCH[nextWo]?`${WO_SCH[nextWo].emoji} ${WO_SCH[nextWo].name}`:'—';
-    const weekStatus2=getWeekStatus(currentDateStr,ST.wLog,ST.p.sessions||3,ST.programStart,ST.p.cardioLevel||1,an);
+    const weekStatus2=getWeekStatus(currentDateStr,ST.wLog,ST.p.sessions||3,ST.programStart,ST.p.cardioLevel||1,an,ST.p.focus||'total');
     const legendGrid2=buildLegendGrid(weekStatus2,DAY_NAMES,dOfW);
     return`
     <div class="r" style="margin-bottom:14px;"><div class="bebas" style="font-size:26px;">ALLENAMENTO</div><div style="font-size:11px;color:var(--mut);">Sett.${pWeek}${isD?' · DELOAD':''}</div></div>
@@ -1191,11 +1240,11 @@ window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,to
   </div>`:'' ;
 
   // ── FIX 3: Calendario con stato REALE della settimana ──
-  const weekStatus=getWeekStatus(currentDateStr,ST.wLog,ST.p.sessions||3,ST.programStart,ST.p.cardioLevel||1,an);
+  const weekStatus=getWeekStatus(currentDateStr,ST.wLog,ST.p.sessions||3,ST.programStart,ST.p.cardioLevel||1,an,ST.p.focus||'total');
   const legendGrid=buildLegendGrid(weekStatus,DAY_NAMES,dOfW);
 
   // Mostra allenamento di oggi + workout disponibili (FIX 2: in sequenza)
-  const rotation=getRotation(ST.p.sessions||3);
+  const rotation=getRotation(ST.p.sessions||3,ST.p.focus||'total');
   const uniqueWoKeys=rotation.filter((v,i,a)=>a.indexOf(v)===i).filter(k=>WO_SCH[k]);
 
   // Allenamenti mancati
@@ -1295,35 +1344,183 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
 }
 
 window.renderBody = function(cW,mac,theme,pWeek,sx){
-  if(!ST.chartFilter) ST.chartFilter = 30;
+  if(!ST.chartFilter) ST.chartFilter=30;
   const wArr=ST.h.slice(-ST.chartFilter);
-  const lastM=Object.values(ST.measures).pop()||{};
-  const waistArr=Object.keys(ST.measures).sort().filter(d=>ST.measures[d]?.waist>0).map(d=>({v:ST.measures[d].waist})).slice(-ST.chartFilter);
   const wLogF=ST.wLog.filter(w=>!w.isRest).slice(-ST.chartFilter);
   const lost=(ST.h[0]?.w||cW)-cW;
   const avg7=ST.h.length>=7?((ST.h.slice(-7).reduce((a,b)=>a+b.w,0))/7).toFixed(1):cW;
+
+  // Ultima misurazione disponibile (backward compat: arm→arm_r, thigh→thigh_r)
+  const sortedDates=Object.keys(ST.measures).sort();
+  const lastDate=sortedDates.filter(d=>d<currentDateStr).pop()||sortedDates[sortedDates.length-1]||null;
+  const lastM=lastDate?{...ST.measures[lastDate]}:{};
+  if(!lastM.arm_r&&lastM.arm) lastM.arm_r=lastM.arm;
+  if(!lastM.thigh_r&&lastM.thigh) lastM.thigh_r=lastM.thigh;
+  const todayM=ST.measures[currentDateStr]||{};
+
+  // Helper: mostra input + confronto vs ultima misurazione
+  function mField(id,label,hint,unit='cm'){
+    const todayVal=todayM[id]||'';
+    const lastVal=lastM[id]||0;
+    const diff=todayVal&&lastVal?parseFloat(todayVal)-lastVal:null;
+    const arrow=diff===null?'':`<span style="font-size:11px;color:${diff<0?'var(--acc)':diff>0?'var(--red)':'var(--mut)'};margin-left:4px;">${diff>0?'+':''}${diff.toFixed(1)} ${unit} ${diff<0?'↓':diff>0?'↑':'='}</span>`;
+    const lastTxt=lastVal>0?`<span style="font-size:10px;color:var(--mut);">prec. ${lastVal}${unit}</span>${arrow}`:'';
+    return`<div style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
+        <span style="font-size:11px;font-weight:700;color:var(--mut);letter-spacing:1px;text-transform:uppercase;">${label}</span>
+        ${lastTxt}
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <input type="number" id="m_${id}" value="${todayVal}" placeholder="${lastVal||'—'}" step="${unit==='%'?'.1':'.5'}" style="margin:0;padding:9px 12px;font-size:15px;font-weight:600;flex:1;">
+        <span style="font-size:12px;color:var(--mut);white-space:nowrap;">${unit}</span>
+      </div>
+      ${hint?`<div style="font-size:10px;color:var(--mut);margin-top:3px;padding-left:2px;">${hint}</div>`:''}
+    </div>`;
+  }
+
+  // Helper: coppia bilaterale (dx/sx affiancati)
+  function mPair(idR,idL,labelBase,hint=''){
+    const vR=todayM[idR]||'',vL=todayM[idL]||'';
+    const lR=lastM[idR]||0,lL=lastM[idL]||0;
+    const dR=vR&&lR?parseFloat(vR)-lR:null;
+    const dL=vL&&lL?parseFloat(vL)-lL:null;
+    const arrowR=dR===null?'':`<span style="font-size:10px;color:${dR<0?'var(--acc)':dR>0?'var(--red)':'var(--mut)'};">${dR>0?'+':''}${dR.toFixed(1)}</span>`;
+    const arrowL=dL===null?'':`<span style="font-size:10px;color:${dL<0?'var(--acc)':dL>0?'var(--red)':'var(--mut)'};">${dL>0?'+':''}${dL.toFixed(1)}</span>`;
+    return`<div style="margin-bottom:10px;">
+      <div style="font-size:11px;font-weight:700;color:var(--mut);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">${labelBase}</div>
+      ${hint?`<div style="font-size:10px;color:var(--mut);margin-bottom:6px;">${hint}</div>`:''}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--mut);margin-bottom:3px;"><span>DESTRA</span><span>${lR>0?`prec. ${lR} cm`:''} ${arrowR}</span></div>
+          <input type="number" id="m_${idR}" value="${vR}" placeholder="${lR||'—'}" step=".5" style="margin:0;padding:9px;font-size:15px;font-weight:600;width:100%;">
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--mut);margin-bottom:3px;"><span>SINISTRA</span><span>${lL>0?`prec. ${lL} cm`:''} ${arrowL}</span></div>
+          <input type="number" id="m_${idL}" value="${vL}" placeholder="${lL||'—'}" step=".5" style="margin:0;padding:9px;font-size:15px;font-weight:600;width:100%;">
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // Helper: mini chart misura
+  function mChart(field,label,col){
+    const arr=getMeasureArr(field);
+    if(arr.length<2) return '';
+    return`<div style="margin-top:12px;"><div style="font-size:10px;color:${col};font-weight:700;letter-spacing:1px;margin-bottom:4px;">${label}</div>${svg(arr,'v',col,75)}</div>`;
+  }
+
+  const focusObj=FOCUS_LIST.find(f=>f.id===(ST.p.focus||'total'))||FOCUS_LIST[0];
+
   return`
-  <div class="bebas" style="font-size:26px;margin-bottom:14px;">BODY ANALYTICS</div>
-  <div style="display:flex; border-radius:10px; overflow:hidden; margin-bottom:14px; border:1px solid var(--bord);">
-    <button class="flt-btn ${ST.chartFilter===7?'on':''}" onclick="setChartFlt(7)">7 GIORNI</button>
-    <button class="flt-btn ${ST.chartFilter===30?'on':''}" onclick="setChartFlt(30)">30 GIORNI</button>
-    <button class="flt-btn ${ST.chartFilter===90?'on':''}" onclick="setChartFlt(90)">90 GIORNI</button>
+  <div class="bebas" style="font-size:26px;margin-bottom:4px;">BODY ANALYTICS</div>
+  <div style="font-size:11px;color:var(--mut);margin-bottom:14px;">Focus: <span style="color:${focusObj.col};font-weight:700;">${focusObj.icon} ${focusObj.label}</span> · Sett.${pWeek}</div>
+
+  <div style="display:flex;border-radius:10px;overflow:hidden;margin-bottom:14px;border:1px solid var(--bord);">
+    <button class="flt-btn ${ST.chartFilter===7?'on':''}" onclick="setChartFlt(7)">7 GG</button>
+    <button class="flt-btn ${ST.chartFilter===30?'on':''}" onclick="setChartFlt(30)">30 GG</button>
+    <button class="flt-btn ${ST.chartFilter===90?'on':''}" onclick="setChartFlt(90)">90 GG</button>
+    <button class="flt-btn ${ST.chartFilter===180?'on':''}" onclick="setChartFlt(180)">6 MESI</button>
   </div>
+
   <div class="g2" style="margin-bottom:10px;">
-    ${[['KG PERSI',`${lost>=0?'-':'+'}${Math.abs(lost).toFixed(1)}kg`,'var(--acc)'],['MANCANTI',Math.abs(ST.p.g-cW).toFixed(1)+' kg','var(--ora)'],['MEDIA 7G',avg7+' kg','var(--blu)'],['SESSIONI',wLogF.length,'var(--purp)']].map(([l,v,c])=>`<div class="card" style="text-align:center;padding:14px;border-top:3px solid ${c};"><div class="bebas" style="font-size:28px;color:${c};line-height:1;">${v}</div><div style="font-size:9px;color:var(--mut);letter-spacing:1.5px;margin-top:2px;">${l}</div></div>`).join('')}
+    ${[['KG PERSI',`${lost>=0?'-':'+'}${Math.abs(lost).toFixed(1)}kg`,'var(--acc)'],['MANCANTI',Math.abs(ST.p.g-cW).toFixed(1)+' kg','var(--ora)'],['MEDIA 7G',avg7+' kg','var(--blu)'],['SESSIONI',wLogF.length,'var(--purp)']].map(([l,v,col])=>`<div class="card" style="text-align:center;padding:14px;border-top:3px solid ${col};"><div class="bebas" style="font-size:28px;color:${col};line-height:1;">${v}</div><div style="font-size:9px;color:var(--mut);letter-spacing:1.5px;margin-top:2px;">${l}</div></div>`).join('')}
   </div>
-  <div class="card"><span class="lbl">ANDAMENTO PESO (${ST.chartFilter} gg)</span>${svg(wArr,'w',theme,110,ST.p.g)}</div>
-  <div class="card">
-    <div class="r" style="margin-bottom:14px;"><div><div class="bebas" style="font-size:18px;">📐 MISURE CORPOREE</div><div style="font-size:11px;color:var(--mut);">Salva regolarmente per tracciare i progressi</div></div><button class="btn-s btn-blu" onclick="saveMeasures()">SALVA</button></div>
-    <div class="g2">${[['waist','Vita (ombelico)'],['chest','Torace'],['hips','Fianchi'],['arm','Braccio dx'],['thigh','Coscia dx'],['neck','Collo']].map(([f,l])=>`<div><span class="lbl">${l}</span><input type="number" id="m_${f}" placeholder="cm" value="${ST.measures[currentDateStr]?.[f]||lastM[f]||''}" style="margin:0;padding:10px;font-size:14px;"></div>`).join('')}</div>
-    ${waistArr.length>=2?`<div style="margin-top:12px;border-top:1px solid var(--bord);padding-top:12px;"><span class="lbl" style="color:var(--blu);">TREND GIROVITA</span>${svg(waistArr,'v','var(--blu)',80)}</div>`:''}
+
+  <div class="card"><span class="lbl">PESO CORPOREO (${ST.chartFilter} gg)</span>${svg(wArr,'w',theme,110,ST.p.g)}</div>
+
+  <!-- ═══ MISURE CORPOREE — INSERIMENTO PROFESSIONALE ═══ -->
+  <div class="card card-hi" style="padding:18px;">
+    <div class="r" style="margin-bottom:4px;">
+      <div>
+        <div class="bebas" style="font-size:20px;">📐 MISURE CORPOREE</div>
+        <div style="font-size:11px;color:var(--mut);">Data: ${currentDateStr===getToday()?'Oggi':currentDateStr}${lastDate&&lastDate!==currentDateStr?` · Ultima: ${new Date(lastDate+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'short'})}`:''}</div>
+      </div>
+      <button class="btn-s btn-blu" style="font-family:'Bebas Neue';font-size:16px;padding:10px 18px;" onclick="saveMeasures()">💾 SALVA</button>
+    </div>
+    <div style="font-size:11px;color:var(--mut);padding:8px;background:rgba(197,241,53,.05);border-radius:8px;margin-bottom:14px;line-height:1.5;">
+      ↑ = aumento &nbsp;·&nbsp; ↓ = riduzione &nbsp;·&nbsp; Le frecce confrontano con l'ultima misurazione
+    </div>
+
+    <!-- SEZIONE: CIRCONFERENZE -->
+    <div style="font-size:12px;font-weight:700;color:var(--acc);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;border-bottom:1px solid var(--bord);padding-bottom:6px;">CIRCONFERENZE</div>
+    ${mField('neck','Collo','Metà collo, misura orizzontale')}
+    ${mField('shoulders','Spalle','Larghezza massima - acromi')}
+    ${mField('chest','Petto','Linea capezzoli - fine espirazione normale')}
+    ${mField('waist','Vita','Allombelico, fine espirazione normale')}
+    ${mField('abdomen','Addome','2 cm sotto l\'ombelico')}
+    ${mField('hips','Fianchi','Massima circonferenza dei glutei')}
+
+    <!-- SEZIONE: BRACCIA -->
+    <div style="font-size:12px;font-weight:700;color:var(--blu);letter-spacing:2px;text-transform:uppercase;margin:16px 0 12px;border-bottom:1px solid var(--bord);padding-bottom:6px;">BRACCIA</div>
+    ${mPair('arm_r','arm_l','Bicipite — rilassato','Braccio disteso lungo il fianco - muscolo a riposo')}
+    ${mPair('arm_r_flex','arm_l_flex','Bicipite — contratto','Braccio flesso a 90gradi - massima contrazione')}
+    ${mPair('forearm_r','forearm_l','Avambraccio','Massima circonferenza - sotto il gomito')}
+
+    <!-- SEZIONE: GAMBE -->
+    <div style="font-size:12px;font-weight:700;color:var(--ora);letter-spacing:2px;text-transform:uppercase;margin:16px 0 12px;border-bottom:1px solid var(--bord);padding-bottom:6px;">GAMBE</div>
+    ${mPair('thigh_r','thigh_l','Coscia','Massima circonferenza - parte alta della coscia')}
+    ${mPair('calf_r','calf_l','Polpaccio','Massima circonferenza del polpaccio')}
+
+    <!-- SEZIONE: COMPOSIZIONE -->
+    <div style="font-size:12px;font-weight:700;color:var(--purp);letter-spacing:2px;text-transform:uppercase;margin:16px 0 12px;border-bottom:1px solid var(--bord);padding-bottom:6px;">COMPOSIZIONE CORPOREA</div>
+    ${mField('bodyfat','% Grasso Corporeo','Stima con plicometro o bilancia impedenziometrica (opzionale)','%')}
+
+    <button class="btn" onclick="saveMeasures()" style="margin-top:8px;">💾 SALVA TUTTE LE MISURE</button>
   </div>
+
+  <!-- ═══ GRAFICI PROGRESSI ═══ -->
+  ${(()=>{
+    const waistArr=getMeasureArr('waist');
+    const hipsArr=getMeasureArr('hips');
+    const armRArr=getMeasureArr('arm_r')||getMeasureArr('arm');
+    const armRFlexArr=getMeasureArr('arm_r_flex');
+    const thighArr=getMeasureArr('thigh_r')||getMeasureArr('thigh');
+    const bfArr=getMeasureArr('bodyfat');
+    let charts='';
+    // Vita + Fianchi
+    if(waistArr.length>=2||hipsArr.length>=2){
+      charts+=`<div class="card"><div class="r" style="margin-bottom:8px;"><span class="lbl" style="margin:0;">VITA & FIANCHI</span><span style="font-size:11px;color:var(--mut);">${waistArr.length>=1?`Vita: ${waistArr[waistArr.length-1].v}cm`:''}${hipsArr.length>=1?' · Fianchi: '+hipsArr[hipsArr.length-1].v+'cm':''}</span></div>
+        ${waistArr.length>=2?`<div style="font-size:10px;color:var(--acc);margin-bottom:2px;font-weight:700;">▼ VITA</div>${svg(waistArr,'v','var(--acc)',75)}`:''}
+        ${hipsArr.length>=2?`<div style="font-size:10px;color:var(--purp);margin-top:8px;margin-bottom:2px;font-weight:700;">▼ FIANCHI</div>${svg(hipsArr,'v','var(--purp)',75)}`:''}
+      </div>`;
+    }
+    // Braccia
+    if(armRArr.length>=2||armRFlexArr.length>=2){
+      charts+=`<div class="card"><div class="r" style="margin-bottom:8px;"><span class="lbl" style="margin:0;">BICIPITE DX</span><span style="font-size:11px;color:var(--mut);">${armRArr.length>=1?`Rilassato: ${armRArr[armRArr.length-1].v}cm`:''}${armRFlexArr.length>=1?' · Contratto: '+armRFlexArr[armRFlexArr.length-1].v+'cm':''}</span></div>
+        ${armRArr.length>=2?`<div style="font-size:10px;color:var(--blu);margin-bottom:2px;font-weight:700;">▼ RILASSATO</div>${svg(armRArr,'v','var(--blu)',70)}`:''}
+        ${armRFlexArr.length>=2?`<div style="font-size:10px;color:var(--acc);margin-top:8px;margin-bottom:2px;font-weight:700;">▼ CONTRATTO</div>${svg(armRFlexArr,'v','var(--acc)',70)}`:''}
+      </div>`;
+    }
+    // Coscia
+    if(thighArr.length>=2){
+      charts+=`<div class="card"><div class="r" style="margin-bottom:8px;"><span class="lbl" style="margin:0;">COSCIA DX</span><span style="font-size:11px;color:var(--ora);">${thighArr[thighArr.length-1].v}cm</span></div>${svg(thighArr,'v','var(--ora)',75)}</div>`;
+    }
+    // % Grasso
+    if(bfArr.length>=2){
+      charts+=`<div class="card"><div class="r" style="margin-bottom:8px;"><span class="lbl" style="margin:0;">% GRASSO CORPOREO</span><span style="font-size:11px;color:var(--yel);">${bfArr[bfArr.length-1].v}%</span></div>${svg(bfArr,'v','var(--yel)',75)}</div>`;
+    }
+    if(!charts) charts=`<div class="card" style="text-align:center;padding:20px;color:var(--mut);font-size:13px;">Inserisci almeno 2 misurazioni per vedere i grafici di progressione</div>`;
+    return`<div class="bebas" style="font-size:18px;color:var(--mut);margin:16px 0 10px;letter-spacing:1px;">📈 TREND MISURE</div>${charts}`;
+  })()}
+
   ${wLogF.length>=2?`<div class="card"><span class="lbl">VOLUME ALLENAMENTI (KG)</span>${svg(wLogF,'vol',theme,90)}</div>`:''}
-  <div class="card"><span class="lbl">DIARIO ALLENAMENTI (${ST.wLog.length} sessioni totali)</span>
+
+  <div class="card">
+    <span class="lbl">DIARIO ALLENAMENTI (${ST.wLog.filter(w=>!w.isRest).length} sessioni)</span>
     ${ST.wLog.length===0?`<div style="text-align:center;padding:14px;font-size:12px;color:var(--mut)">Nessun allenamento registrato</div>`:''}
-    ${ST.wLog.slice().reverse().slice(0,8).map(w=>`<div style="padding:10px 0;border-bottom:1px solid var(--bord);" class="r"><div class="rc"><div style="width:32px;height:32px;border-radius:8px;background:${w.isRest?'var(--surf)':'rgba(197,241,53,.1)'};border:1px solid ${w.isRest?'var(--bord)':'var(--acc)'};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:${w.isRest?'var(--mut)':'var(--acc)'};">${w.isRest?'Z':w.woId||'✓'}</div><div><div style="font-size:13px;font-weight:600;">${w.t}</div><div style="font-size:10px;color:var(--mut);">${new Date(w.d).toLocaleDateString('it-IT')}</div></div></div>${!w.isRest?`<div style="font-size:13px;"><strong style="color:var(--acc);">${w.vol}</strong><span style="color:var(--mut);"> kg</span></div>`:''}</div>`).join('')}
+    ${ST.wLog.slice().reverse().slice(0,10).map(w=>`<div style="padding:10px 0;border-bottom:1px solid var(--bord);" class="r"><div class="rc">
+      <div style="width:34px;height:34px;border-radius:9px;background:${w.isRest?'var(--surf)':w.woId&&WO_SCH[w.woId]?WO_SCH[w.woId].col+'15':'rgba(197,241,53,.1)'};border:1px solid ${w.isRest?'var(--bord)':w.woId&&WO_SCH[w.woId]?WO_SCH[w.woId].col:'var(--acc)'};display:flex;align-items:center;justify-content:center;font-size:14px;">
+        ${w.isRest?'💤':w.woId&&WO_SCH[w.woId]?WO_SCH[w.woId].emoji:'✓'}
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:600;">${w.t}</div>
+        <div style="font-size:10px;color:var(--mut);">${new Date(w.d+'T12:00:00').toLocaleDateString('it-IT',{weekday:'short',day:'2-digit',month:'short'})}</div>
+      </div>
+    </div>
+    ${!w.isRest?`<div style="text-align:right;"><div style="font-size:13px;"><strong style="color:var(--acc);">${w.vol}</strong><span style="color:var(--mut);font-size:11px;"> kg vol</span></div></div>`:''}</div>`).join('')}
   </div>`;
 }
+
 
 window.renderCoach = function(){
   const sx=AU.profile?.sx||'m';
@@ -1371,6 +1568,10 @@ window.renderSettings = function(mac){
     <span class="lbl">CARDIO BASE / SETTIMANA (l'AI ricalcola)</span><select id="eCardio"><option value="0" ${ST.p.cardioLevel===0?'selected':''}>0 — Solo pesi</option><option value="1" ${ST.p.cardioLevel===1?'selected':''}>1 — Leggero</option><option value="2" ${ST.p.cardioLevel===2?'selected':''}>2 — Moderato</option><option value="3" ${ST.p.cardioLevel===3?'selected':''}>3 — Intenso</option></select>
     <span class="lbl" style="margin-bottom:8px;">INTOLLERANZE (aggiorna)</span>
     <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;">${INTOL_LIST.map(i=>`<span class="intol-chip2 ${(ST.p.intol||[]).includes(i.id)?'on':''}" data-id="${i.id}" onclick="this.classList.toggle('on')">${i.icon} ${i.label}</span>`).join('')}</div>
+    <span class="lbl" style="margin-bottom:8px;">FOCUS DI ALLENAMENTO</span>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:14px;">
+      ${FOCUS_LIST.map(f=>{const isOn=(ST.p.focus||'total')===f.id;return`<div class="focus-chip2 ${isOn?'on':''}" data-focus="${f.id}" style="border-color:${isOn?f.col:'var(--bord)'};background:${isOn?f.col+'12':'var(--surf)'};" onclick="document.querySelectorAll('.focus-chip2').forEach(x=>{x.classList.remove('on');x.style.borderColor='var(--bord)';x.style.background='var(--surf)';});this.classList.add('on');this.style.borderColor=FOCUS_LIST.find(x=>x.id===this.dataset.focus).col;this.style.background=FOCUS_LIST.find(x=>x.id===this.dataset.focus).col+'12';"><div style="font-size:16px;margin-bottom:2px;">${f.icon}</div><div style="font-size:10px;font-weight:700;line-height:1.2;">${f.label}</div></div>`;}).join('')}
+    </div>
     <button class="btn" onclick="updateProgram()">SALVA E RICALCOLA TUTTO</button>
   </div>
   <div class="card" style="border-color:var(--purp);">
@@ -1415,11 +1616,11 @@ window.render = function() {
   const theme=ST.p?.t==='cut'?'var(--acc)':'var(--blu)';
   const dOfW=(new Date(currentDateStr).getDay()+6)%7;
   // Stato reale della settimana + sequenza workout basata sulla storia
-  const weekStatus=ST.p?getWeekStatus(currentDateStr,ST.wLog,ST.p.sessions||3,ST.programStart,ST.p.cardioLevel||1,an):Array(7).fill({planned:'rest',actual:null,isToday:false});
+  const weekStatus=ST.p?getWeekStatus(currentDateStr,ST.wLog,ST.p.sessions||3,ST.programStart,ST.p.cardioLevel||1,an,ST.p.focus||'total'):Array(7).fill({planned:'rest',actual:null,isToday:false});
   const weekPlan=weekStatus.map(d=>d.planned||'rest'); // backward compat
   const todayLog=ST.wLog.find(w=>w.d===currentDateStr);
   // FIX 2: todayWoId dalla sequenza storica, non dal giorno della settimana
-  const nextSeqWo=ST.p&&!todayLog?.isRest?getNextWorkoutForDay(ST.wLog,ST.p.sessions||3,ST.programStart,currentDateStr):null;
+  const nextSeqWo=ST.p&&!todayLog?.isRest?getNextWorkoutForDay(ST.wLog,ST.p.sessions||3,ST.programStart,currentDateStr,ST.p.focus||'total'):null;
   const todayWoId=todayLog?.isRest?'rest':(todayLog?.woId||(nextSeqWo)||(weekStatus[dOfW]?.planned)||'rest');
 
   if(ST.aWo&&ST.p){
