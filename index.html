@@ -334,6 +334,93 @@ window.buildWeeklyPlanWithCardio=function(sessions,cardioLevel,analysis){
   return result;
 }
 
+// ── Rotazione workout in base alle sessioni ──
+window.getRotation=function(sessions){
+  const r={1:['D'],2:['A','C'],3:['A','B','C'],4:['A','B','C','D'],5:['A','B','C','A','B']};
+  return r[Math.min(sessions||3,5)]||['A','B','C','A','B','C'];
+}
+
+// ── FIX 2: Workout di oggi basato sulla sequenza storica, non sul giorno della settimana ──
+window.getNextWorkoutForDay=function(wLog,sessions,programStart,currentDateStr){
+  const rotation=getRotation(sessions);
+  if(!rotation.length) return null;
+  // Tutti i workout completati dalla data start, in ordine cronologico
+  const done=wLog.filter(w=>!w.isRest&&w.woId&&w.d>=(programStart||'')).sort((a,b)=>new Date(a.d)-new Date(b.d));
+  // Già fatto oggi?
+  const todayDone=done.find(w=>w.d===currentDateStr);
+  if(todayDone) return todayDone.woId;
+  // Prossimo in sequenza
+  if(!done.length) return rotation[0]; // Primo allenamento = sempre A
+  const lastWo=done[done.length-1].woId;
+  const lastIdx=rotation.lastIndexOf(lastWo);
+  return rotation[(lastIdx>=0?lastIdx+1:0)%rotation.length];
+}
+
+// ── FIX 3: Stato reale della settimana corrente (pianificato vs effettivo) ──
+window.getWeekStatus=function(currentDateStr,wLog,sessions,programStart,cardioLevel,analysis){
+  const today=new Date(currentDateStr+'T12:00:00');
+  const dow=(today.getDay()+6)%7; // 0=Lun
+  const monday=new Date(today);
+  monday.setDate(today.getDate()-dow);
+  const weekStart=monday.toISOString().split('T')[0];
+
+  if(sessions===0) return Array(7).fill(null).map((_,i)=>{
+    const d=new Date(monday);d.setDate(monday.getDate()+i);
+    return{d:d.toISOString().split('T')[0],planned:'steps',actual:null,isToday:d.toISOString().split('T')[0]===currentDateStr};
+  });
+
+  const rotation=getRotation(sessions);
+  const prgStart=programStart||weekStart;
+
+  // Template posizioni allenamento (quale giorno 0..5 = Lun..Sab è training day)
+  const trainingPos={1:[0],2:[0,3],3:[0,2,4],4:[0,2,3,5],5:[0,1,3,4,5],6:[0,1,2,3,4,5]};
+  const tPos=trainingPos[Math.min(sessions,6)]||[0,2,4];
+
+  // Calcola indice rotazione da dove ci eravamo arrivati prima di questa settimana
+  const prevDone=wLog.filter(w=>!w.isRest&&w.woId&&w.d>=prgStart&&w.d<weekStart).sort((a,b)=>new Date(b.d)-new Date(a.d));
+  let rotIdx=0;
+  if(prevDone.length){const li=rotation.indexOf(prevDone[0].woId);rotIdx=li>=0?(li+1)%rotation.length:0;}
+
+  // Cardio nei giorni di riposo
+  const effCardio=Math.max(0,Math.min(3,(cardioLevel||1)+(analysis?.cardioAdj||0)));
+  const restPos=[0,1,2,3,4,5].filter(i=>!tPos.includes(i));
+  const cardioDays=new Set(restPos.slice(0,effCardio));
+
+  const result=[];
+  let localRotIdx=rotIdx;
+  for(let i=0;i<7;i++){
+    const d=new Date(monday);d.setDate(monday.getDate()+i);
+    const dStr=d.toISOString().split('T')[0];
+    const log=wLog.find(w=>w.d===dStr);
+    let planned;
+    if(i===6) planned='free';
+    else if(tPos.includes(i)){planned=rotation[localRotIdx%rotation.length];localRotIdx++;}
+    else if(cardioDays.has(i)) planned='cardio';
+    else planned='rest';
+    const actual=log?(log.isRest?'rest':log.woId):null;
+    result.push({d:dStr,planned,actual,isToday:dStr===currentDateStr,completed:!!(log&&!log.isRest),isRest:!!(log&&log.isRest)});
+  }
+  return result;
+}
+
+// ── FIX 4: Conta allenamenti mancati dell'ultima settimana per adattamento ──
+window.getMissedWorkouts=function(wLog,sessions,programStart){
+  if(!sessions||sessions===0) return{missed:0,done:0,target:sessions||0,adherencePct:100};
+  const prgStart=programStart||getToday();
+  // Settimana precedente (Lun-Dom)
+  const now=new Date();
+  const thisMon=new Date(now);
+  thisMon.setDate(now.getDate()-((now.getDay()+6)%7));
+  const lastMon=new Date(thisMon);lastMon.setDate(thisMon.getDate()-7);
+  const lastSun=new Date(thisMon);lastSun.setDate(thisMon.getDate()-1);
+  const lMonStr=lastMon.toISOString().split('T')[0];
+  const lSunStr=lastSun.toISOString().split('T')[0];
+  if(lMonStr<prgStart) return{missed:0,done:0,target:sessions,adherencePct:100};
+  const done=wLog.filter(w=>!w.isRest&&w.d>=lMonStr&&w.d<=lSunStr).length;
+  const missed=Math.max(0,sessions-done);
+  return{missed,done,target:sessions,adherencePct:Math.round((done/sessions)*100)};
+}
+
 window.calcBMR=function(w,h,age,sex){return sex==='m'?Math.round(10*w+6.25*h-5*age+5):Math.round(10*w+6.25*h-5*age-161);}
 window.actMultiplier=function(s){if(s===0) return 1.2;if(s<=2) return 1.375;if(s<=4) return 1.55;return 1.725;}
 window.calcMacros=function(w,h,age,sex,goal,sessions,analysis){
@@ -349,8 +436,8 @@ window.calcMacros=function(w,h,age,sex,goal,sessions,analysis){
   const effCardio=Math.max(0,Math.min(5,(goal.cardioLevel||1)+(analysis?.cardioAdj||0)));
   return{kcal,prot,fat,carb,bmr,tdee,cardioLevel:effCardio};
 }
-window.analyze=function(history,goal){
-  if(!history||history.length<4) return{status:'new',msg:'Inserisci almeno 4 pesate per l\'AI.',col:'var(--mut)',calAdj:0,cardioAdj:0,alert:null};
+window.analyze=function(history,goal,wLog){
+  if(!history||history.length<4) return{status:'new',msg:'Inserisci almeno 4 pesate per l\'AI.',col:'var(--mut)',calAdj:0,cardioAdj:0,alert:null,missed:0};
   const recent=history.slice(-14);
   const fw=recent[0].w,lw=recent[recent.length-1].w,days=Math.max(1,recent.length);
   const wRate=goal.t==='cut'?((fw-lw)/days*7):((lw-fw)/days*7);
@@ -373,7 +460,26 @@ window.analyze=function(history,goal){
     else if(ratio<=1.3){status='good';msg='✅ Buona progressione muscolare.';col='var(--acc)';}
     else{status='fast';msg='🍃 Cresci veloce. Aggiungo cardio per il grasso.';col='var(--yel)';cardioAdj=1;calAdj=-100;}
   }
-  return{status,msg,col,calAdj,cardioAdj,wRate:wRate.toFixed(2),tRate,ratio:ratio.toFixed(2),proj,wkNeed:wkNeed.toFixed(1),alert};
+
+  // ── FIX 4: Adatta calorie e cardio in base agli allenamenti mancati ──
+  let missed=0,adherencePct=100;
+  if(wLog&&goal.sessions>0){
+    const mw=getMissedWorkouts(wLog,goal.sessions||3,goal.programStart);
+    missed=mw.missed;adherencePct=mw.adherencePct;
+    if(missed>=2){
+      // Ha saltato 2+ allenamenti la settimana scorsa
+      // Non ha senso aggiungere più cardio se già fatica a rispettare il piano
+      cardioAdj=Math.min(cardioAdj,0);
+      // Riduci leggermente il deficit calorico (ha bruciato meno del previsto)
+      if(goal.t==='cut'&&calAdj<=0) calAdj=Math.min(calAdj+100,0);
+      if(missed>=goal.sessions){
+        // Ha saltato TUTTI gli allenamenti la settimana scorsa — segnala
+        msg=`⚠️ ${msg} · Settimana scorsa: ${mw.done}/${goal.sessions} allenamenti completati. Le calorie sono state adattate.`;
+      }
+    }
+  }
+
+  return{status,msg,col,calAdj,cardioAdj,wRate:wRate.toFixed(2),tRate,ratio:ratio.toFixed(2),proj,wkNeed:wkNeed.toFixed(1),alert,missed,adherencePct};
 }
 window.getSetsReps=function(type,goal,pw2){
   const cyc=Math.floor((pw2-1)/4),wic=(pw2-1)%4,isD=wic===3;
@@ -997,13 +1103,72 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
   </div>`;
 }
 
-// ── FIX 3+4: renderWork con cardio automatico e legenda aggiornata ──
+// Helper: costruisce la griglia del calendario settimanale da weekStatus
+window.buildLegendGrid=function(weekStatus,DAY_NAMES,dOfW){
+  return weekStatus.map((ws,i)=>{
+    const isT=i===dOfW;
+    const planned=ws.planned||'rest';
+    const actual=ws.actual;
+    // Colore basato su cosa è pianificato
+    const planCol=planned&&WO_SCH[planned]?WO_SCH[planned].col:planned==='cardio'?'var(--blu)':planned==='steps'?'var(--gre)':planned==='free'?'var(--ora)':'var(--dim)';
+    // Label: se c'è actual mostra quello, altrimenti il pianificato
+    const displayId=actual||planned;
+    const displayCol=actual&&WO_SCH[actual]?WO_SCH[actual].col:actual==='rest'?'var(--purp)':planCol;
+    const label=displayId==='free'?'🎉':displayId==='steps'?'🚶':displayId==='cardio'?'🏃':displayId==='rest'?'—':displayId||'—';
+    // Indicatore stato
+    let statusDot='';
+    if(ws.completed) statusDot=`<div style="width:6px;height:6px;border-radius:50%;background:var(--acc);margin:2px auto 0;" title="Completato"></div>`;
+    else if(ws.isRest) statusDot=`<div style="width:6px;height:6px;border-radius:50%;background:var(--purp);margin:2px auto 0;" title="Riposo registrato"></div>`;
+    else if(ws.d<getToday()&&planned!=='free'&&planned!=='rest') statusDot=`<div style="width:6px;height:6px;border-radius:50%;background:var(--red);margin:2px auto 0;opacity:.5;" title="Saltato"></div>`;
+    return`<div style="text-align:center;padding:8px 2px;border-radius:9px;background:${isT?displayCol+'15':'var(--surf)'};border:1px solid ${isT?displayCol:'var(--bord)'};">
+      <div style="font-size:8px;font-weight:700;color:${isT?'var(--text)':'var(--mut)'};margin-bottom:2px;">${DAY_NAMES[i]}</div>
+      <div style="font-family:'Bebas Neue';font-size:${displayId&&WO_SCH[displayId]?'15px':'12px'};color:${displayCol};">${label}</div>
+      ${statusDot}
+    </div>`;
+  }).join('');
+}
+window.buildLegendFooter=function(){
+  return`<div style="display:flex;gap:12px;margin-top:8px;font-size:10px;color:var(--mut);flex-wrap:wrap;">
+    <span><div style="width:6px;height:6px;border-radius:50%;background:var(--acc);display:inline-block;margin-right:3px;"></div>Completato</span>
+    <span><div style="width:6px;height:6px;border-radius:50%;background:var(--purp);display:inline-block;margin-right:3px;"></div>Riposo</span>
+    <span><div style="width:6px;height:6px;border-radius:50%;background:var(--red);display:inline-block;margin-right:3px;opacity:.5;"></div>Saltato</span>
+  </div>`;
+}
+
+// ── renderWork: FIX 1 (riposo=niente schede), FIX 2 (sequenza A→B→C), FIX 3 (calendario reale) ──
 window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,todayLog){
   const isD=(pWeek-1)%4===3;
   const p=pwk(ST.programStart);
   const sr=getSetsReps('compound',ST.p.t,p);
   const DAY_NAMES=['LUN','MAR','MER','GIO','VEN','SAB','DOM'];
   if(ST.p.sessions===0) return`<div class="card" style="background:linear-gradient(135deg,#0b1a00,#0a1200);border-color:#1a2800;padding:20px;"><div class="badge" style="background:var(--gre);color:#000;">SOLO PASSI</div><div class="bebas" style="font-size:28px;color:var(--gre);margin-bottom:8px;">🚶 PROGRAMMA CAMMINATA</div><div style="font-size:13px;line-height:1.65;">Hai scelto 0 sessioni in palestra. Il piano si basa su 10.000+ passi/giorno + dieta controllata.</div></div>`;
+
+  // ── FIX 1: Se oggi è riposo → mostra solo il messaggio, niente schede ──
+  if(todayLog?.isRest){
+    // Calcola il prossimo workout in sequenza
+    const nextWo=getNextWorkoutForDay(ST.wLog,ST.p.sessions||3,ST.programStart,currentDateStr);
+    const nextWoName=nextWo&&WO_SCH[nextWo]?`${WO_SCH[nextWo].emoji} ${WO_SCH[nextWo].name}`:'—';
+    const weekStatus2=getWeekStatus(currentDateStr,ST.wLog,ST.p.sessions||3,ST.programStart,ST.p.cardioLevel||1,an);
+    const legendGrid2=buildLegendGrid(weekStatus2,DAY_NAMES,dOfW);
+    return`
+    <div class="r" style="margin-bottom:14px;"><div class="bebas" style="font-size:26px;">ALLENAMENTO</div><div style="font-size:11px;color:var(--mut);">Sett.${pWeek}${isD?' · DELOAD':''}</div></div>
+    <div class="card" style="background:linear-gradient(135deg,#12001a,#0a0010);border-color:var(--purp);padding:20px;text-align:center;">
+      <div style="font-size:48px;margin-bottom:12px;">💤</div>
+      <div class="bebas" style="font-size:30px;color:var(--purp);margin-bottom:8px;">HAI SCELTO IL RIPOSO</div>
+      <div style="font-size:13px;color:var(--mut);line-height:1.6;margin-bottom:16px;">Il recupero è parte del piano. I muscoli crescono (e il grasso si brucia) durante il riposo, non durante l'allenamento.</div>
+      <div style="background:rgba(167,139,250,.08);border:1px solid var(--purp);border-radius:10px;padding:12px;margin-bottom:16px;">
+        <div style="font-size:11px;color:var(--purp);font-weight:700;letter-spacing:1px;margin-bottom:4px;">PROSSIMO ALLENAMENTO</div>
+        <div class="bebas" style="font-size:22px;color:var(--text);">${nextWoName}</div>
+        <div style="font-size:11px;color:var(--mut);margin-top:4px;">Sarà la prossima volta che torni in palestra</div>
+      </div>
+      <button class="btn-s btn-red" style="padding:8px 16px;font-size:13px;" onclick="undoRestDay()">❌ ANNULLA RIPOSO</button>
+    </div>
+    <div class="card" style="padding:16px;">
+      <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1.5px;margin-bottom:8px;">PIANO SETTIMANA CORRENTE</div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">${legendGrid2}</div>
+      ${buildLegendFooter()}
+    </div>`;
+  }
 
   // Info box allenamento di oggi
   let todayBox='';
@@ -1014,78 +1179,61 @@ window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,to
   else if(todayWoId&&WO_SCH[todayWoId]) todayBox=`<div class="bebas" style="font-size:26px;color:${WO_SCH[todayWoId].col};">${WO_SCH[todayWoId].emoji} ${WO_SCH[todayWoId].name}</div><div style="font-size:12px;color:var(--mut);margin-top:4px;">${sr.sets} serie × ${sr.reps} reps · ${sr.rest}s riposo${sr.note?' · '+sr.note:''}</div>`;
   else todayBox=`<div class="bebas" style="font-size:26px;color:var(--mut);">—</div>`;
 
-  // Card cardio giorno (se oggi è cardio day)
-  const cardioCard = todayWoId==='cardio' ? `<div class="card" style="border-left:5px solid var(--blu);padding:16px;">
+  // Card cardio giorno
+  const cardioCard=todayWoId==='cardio'?`<div class="card" style="border-left:5px solid var(--blu);padding:16px;">
     <div class="r" style="margin-bottom:10px;"><div><div class="bebas" style="font-size:22px;color:var(--blu);">🏃 CARDIO DEL GIORNO</div>
-    <div style="font-size:12px;color:var(--mut);margin-top:3px;">Sessione cardio adattiva — calcolata dall'AI in base al tuo andamento</div></div></div>
+    <div style="font-size:12px;color:var(--mut);margin-top:3px;">Sessione cardio adattiva — calcolata dall'AI</div></div></div>
     <div style="display:flex;gap:8px;margin-top:8px;">
-      <div style="flex:1;padding:12px;background:var(--surf);border:1px solid var(--bord);border-radius:10px;text-align:center;">
-        <div style="font-size:18px;margin-bottom:4px;">🚴</div>
-        <div style="font-size:12px;font-weight:600;">LISS</div>
-        <div style="font-size:10px;color:var(--mut);margin-top:2px;">Bici/Camminata<br>25-40 min</div>
-      </div>
-      <div style="flex:1;padding:12px;background:rgba(96,165,250,.07);border:1.5px solid var(--blu);border-radius:10px;text-align:center;">
-        <div style="font-size:18px;margin-bottom:4px;">⚡</div>
-        <div style="font-size:12px;font-weight:600;color:var(--blu);">HIIT</div>
-        <div style="font-size:10px;color:var(--mut);margin-top:2px;">Scatti/Corda<br>20 min</div>
-      </div>
+      <div style="flex:1;padding:12px;background:var(--surf);border:1px solid var(--bord);border-radius:10px;text-align:center;"><div style="font-size:18px;margin-bottom:4px;">🚴</div><div style="font-size:12px;font-weight:600;">LISS</div><div style="font-size:10px;color:var(--mut);margin-top:2px;">Bici/Camminata<br>25-40 min</div></div>
+      <div style="flex:1;padding:12px;background:rgba(96,165,250,.07);border:1.5px solid var(--blu);border-radius:10px;text-align:center;"><div style="font-size:18px;margin-bottom:4px;">⚡</div><div style="font-size:12px;font-weight:600;color:var(--blu);">HIIT</div><div style="font-size:10px;color:var(--mut);margin-top:2px;">Scatti/Corda<br>20 min</div></div>
     </div>
-    <div style="margin-top:10px;font-size:12px;color:var(--mut);padding:8px;background:var(--bg);border-radius:8px;">
-      💡 ${an.alert==='stalled'?'STALLO: fai HIIT oggi — è obbligatorio per sbloccare il metabolismo.':ST.p.t==='cut'?'Per la definizione preferisci LISS al mattino o HIIT se sei in forma.':'Cardio di mantenimento — LISS leggero per non influire sul recupero muscolare.'}
-    </div>
-  </div>` : '';
+    <div style="margin-top:10px;font-size:12px;color:var(--mut);padding:8px;background:var(--bg);border-radius:8px;">💡 ${an.alert==='stalled'?'STALLO: fai HIIT oggi — obbligatorio per sbloccare il metabolismo.':ST.p.t==='cut'?'Per la definizione preferisci LISS al mattino o HIIT se sei in forma.':'Cardio di mantenimento — LISS leggero per non influire sul recupero.'}</div>
+  </div>`:'' ;
 
-  // ── FIX 4: Legenda con indicazione del reale effettuato questa settimana ──
-  const legendGrid = DAY_NAMES.map((d,i)=>{
-    const plannedId=weekPlan[i];
-    const isT=i===dOfW;
-    // Calcola data corrispondente a quel giorno nella settimana corrente
-    const wStart=new Date(currentDateStr);
-    wStart.setDate(wStart.getDate()-dOfW+i);
-    const dayStr=wStart.toISOString().split('T')[0];
-    const actualLog=ST.wLog.find(x=>x.d===dayStr);
-    const planCol=plannedId&&WO_SCH[plannedId]?WO_SCH[plannedId].col:plannedId==='cardio'?'var(--blu)':plannedId==='steps'?'var(--gre)':plannedId==='free'?'var(--ora)':'var(--dim)';
-    const planLabel=plannedId==='free'?'🎉':plannedId==='steps'?'🚶':plannedId==='cardio'?'🏃':plannedId==='rest'?'—':plannedId||'—';
-    // Pallino che indica cosa è stato realmente fatto
-    let dot='';
-    if(actualLog&&!actualLog.isRest) dot=`<div style="width:6px;height:6px;border-radius:50%;background:var(--acc);margin:2px auto 0;"></div>`;
-    else if(actualLog&&actualLog.isRest) dot=`<div style="width:6px;height:6px;border-radius:50%;background:var(--purp);margin:2px auto 0;"></div>`;
-    return`<div style="text-align:center;padding:8px 2px;border-radius:9px;background:${isT?planCol+'15':'var(--surf)'};border:1px solid ${isT?planCol:'var(--bord)'};">
-      <div style="font-size:8px;font-weight:700;color:${isT?'var(--text)':'var(--mut)'};margin-bottom:2px;">${d}</div>
-      <div style="font-family:'Bebas Neue';font-size:${plannedId&&WO_SCH[plannedId]?'15px':'12px'};color:${planCol};">${planLabel}</div>
-      ${dot}
-    </div>`;
-  }).join('');
+  // ── FIX 3: Calendario con stato REALE della settimana ──
+  const weekStatus=getWeekStatus(currentDateStr,ST.wLog,ST.p.sessions||3,ST.programStart,ST.p.cardioLevel||1,an);
+  const legendGrid=buildLegendGrid(weekStatus,DAY_NAMES,dOfW);
+
+  // Mostra allenamento di oggi + workout disponibili (FIX 2: in sequenza)
+  const rotation=getRotation(ST.p.sessions||3);
+  const uniqueWoKeys=rotation.filter((v,i,a)=>a.indexOf(v)===i).filter(k=>WO_SCH[k]);
+
+  // Allenamenti mancati
+  const {missed,adherencePct}=getMissedWorkouts(ST.wLog,ST.p.sessions||3,ST.programStart);
+  const missedBanner=missed>=2?`<div class="card" style="border-color:var(--ora);background:rgba(255,104,53,.04);padding:14px;">
+    <div style="font-size:13px;color:var(--ora);font-weight:600;">⚠️ Settimana scorsa: ${ST.p.sessions-missed}/${ST.p.sessions} allenamenti completati (${adherencePct}%)</div>
+    <div style="font-size:12px;color:var(--mut);margin-top:4px;line-height:1.5;">L'AI ha adattato calorie e cardio tenendo conto degli allenamenti saltati. Cerca di rispettare il piano questa settimana.</div>
+  </div>`:'';
 
   return`
   <div class="r" style="margin-bottom:14px;"><div class="bebas" style="font-size:26px;">ALLENAMENTO</div><div style="font-size:11px;color:var(--mut);">Sett.${pWeek}${isD?' · DELOAD':''} · ${ST.p.sessions}gg pesi + ${mac.cardioLevel}gg cardio</div></div>
+  ${missedBanner}
   <div class="card" style="background:linear-gradient(135deg,#0b1200,#0c1500);border-color:#1a2400;padding:16px;margin-bottom:14px;">
     <span class="lbl">${DAY_NAMES[dOfW]} ${new Date(t2).toLocaleDateString('it-IT',{day:'2-digit',month:'short'})}</span>
     ${todayBox}
-    ${todayLog&&!todayLog.isRest?`<div style="font-size:12px;color:var(--acc);margin-top:8px;">✅ Completato! Volume: ${todayLog.vol}kg</div>`:
-      todayLog?.isRest?`<div style="font-size:12px;color:var(--purp);margin-top:12px;display:flex;justify-content:space-between;align-items:center;"><span>💤 Riposo registrato</span><button class="btn-s btn-red" style="padding:4px 8px;font-size:10px;" onclick="undoRestDay()">❌ ANNULLA RIPOSO</button></div>`:''}
+    ${todayLog&&!todayLog.isRest?`<div style="font-size:12px;color:var(--acc);margin-top:8px;">✅ Completato! Volume: ${todayLog.vol}kg</div>`:''}
   </div>
   ${cardioCard}
-  ${Object.keys(WO_SCH).filter(k=>weekPlan.includes(k)).filter((v,i,a)=>a.indexOf(v)===i).map(k=>{
-    const w=WO_SCH[k];const defs=getDefs(sx,ST.p.loc);
-    return`<div class="card" style="border-left:5px solid ${w.col};padding:16px;">
+  ${uniqueWoKeys.map(k=>{
+    const w=WO_SCH[k];const defs=getDefs(sx,ST.p.loc);const isToday=k===todayWoId;
+    return`<div class="card" style="border-left:5px solid ${w.col};padding:16px;${isToday?'box-shadow:0 0 15px '+w.col+'30;':''}">
       <div class="r" style="margin-bottom:10px;">
-        <div><div class="bebas" style="font-size:22px;color:${w.col};">${w.emoji} ${w.name}</div>
-        <div style="font-size:12px;color:var(--mut);margin-top:3px;">${w.slots.length} esercizi · ${ST.p.dur} min${an.alert==='stalled'?' + HIIT bonus 🔥':''}</div></div>
+        <div>
+          ${isToday?`<div style="font-size:10px;font-weight:700;color:${w.col};letter-spacing:1px;margin-bottom:4px;">▶ TOCCA A TE OGGI</div>`:''}
+          <div class="bebas" style="font-size:22px;color:${w.col};">${w.emoji} ${w.name}</div>
+          <div style="font-size:12px;color:var(--mut);margin-top:3px;">${w.slots.length} esercizi · ${ST.p.dur} min${an.alert==='stalled'?' + HIIT bonus 🔥':''}</div>
+        </div>
         <button class="btn-s" style="background:${w.col};color:#000;font-size:20px;padding:13px 19px;" onclick="startWo('${k}')">▶</button>
       </div>
       <div style="display:flex;gap:5px;flex-wrap:wrap;">
-        ${w.slots.map(sl=>{const exId=(ST.exPrefs&&ST.exPrefs[sl.k])||defs[sl.k];const ex=EX[exId];return`<div onclick="openSwap('${sl.k}')" style="cursor:pointer;padding:4px 8px;background:var(--surf);border:1px solid var(--bord);border-radius:7px;font-size:10px;color:var(--mut);" title="Tocca per cambiare">${ex?.name?.split('—')[0]?.trim()?.split(' ').slice(0,2).join(' ')||exId} 🔄</div>`;}).join('')}
+        ${w.slots.map(sl=>{const exId=(ST.exPrefs&&ST.exPrefs[sl.k])||defs[sl.k];const ex=EX[exId];return`<div onclick="openSwap('${sl.k}')" style="cursor:pointer;padding:4px 8px;background:var(--surf);border:1px solid var(--bord);border-radius:7px;font-size:10px;color:var(--mut);">${ex?.name?.split('—')[0]?.trim()?.split(' ').slice(0,2).join(' ')||exId} 🔄</div>`;}).join('')}
       </div>
     </div>`;
   }).join('')}
   <div class="card" style="padding:16px;">
-    <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1.5px;margin-bottom:8px;">PIANO SETTIMANALE — ${ST.p.sessions}gg PESI + ${mac.cardioLevel}gg CARDIO</div>
+    <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1.5px;margin-bottom:8px;">PIANO SETTIMANA CORRENTE — SITUAZIONE REALE</div>
     <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">${legendGrid}</div>
-    <div style="display:flex;gap:12px;margin-top:8px;font-size:10px;color:var(--mut);">
-      <span><div style="width:6px;height:6px;border-radius:50%;background:var(--acc);display:inline-block;margin-right:3px;"></div>Completato</span>
-      <span><div style="width:6px;height:6px;border-radius:50%;background:var(--purp);display:inline-block;margin-right:3px;"></div>Riposo</span>
-    </div>
+    ${buildLegendFooter()}
   </div>
   ${!todayLog&&todayWoId!=='free'&&todayWoId!=='steps'&&todayWoId!=='cardio'?`<button class="btn btn-action" style="padding:14px;font-size:15px;border-radius:12px;width:100%;" onclick="logRestDay()">💤 REGISTRA RIPOSO PER OGGI</button>`:''}`;
 }
@@ -1262,14 +1410,17 @@ window.render = function() {
   const pWeek=pwk(ST.programStart);
   let cW=ST.h.length?ST.h[ST.h.length-1].w:0;
   const wEntry=ST.h.find(x=>x.d===currentDateStr);if(wEntry) cW=wEntry.w;
-  const an=ST.p?analyze(ST.h,ST.p):{status:'new',msg:'',col:'var(--mut)',calAdj:0,cardioAdj:0,alert:null};
+  const an=ST.p?analyze(ST.h,{...ST.p,programStart:ST.programStart},ST.wLog):{status:'new',msg:'',col:'var(--mut)',calAdj:0,cardioAdj:0,alert:null,missed:0};
   const mac=ST.p?calcMacros(cW,ht,ag,sx,ST.p,ST.p.sessions||3,an):{kcal:1700,prot:120,carb:150,fat:50,bmr:0,tdee:0,cardioLevel:1};
   const theme=ST.p?.t==='cut'?'var(--acc)':'var(--blu)';
   const dOfW=(new Date(currentDateStr).getDay()+6)%7;
-  // FIX 3: usa buildWeeklyPlanWithCardio per il piano adattivo
-  const weekPlan=ST.p?buildWeeklyPlanWithCardio(ST.p.sessions||3,ST.p.cardioLevel||1,an):[];
-  const todayWoId=weekPlan[dOfW];
+  // Stato reale della settimana + sequenza workout basata sulla storia
+  const weekStatus=ST.p?getWeekStatus(currentDateStr,ST.wLog,ST.p.sessions||3,ST.programStart,ST.p.cardioLevel||1,an):Array(7).fill({planned:'rest',actual:null,isToday:false});
+  const weekPlan=weekStatus.map(d=>d.planned||'rest'); // backward compat
   const todayLog=ST.wLog.find(w=>w.d===currentDateStr);
+  // FIX 2: todayWoId dalla sequenza storica, non dal giorno della settimana
+  const nextSeqWo=ST.p&&!todayLog?.isRest?getNextWorkoutForDay(ST.wLog,ST.p.sessions||3,ST.programStart,currentDateStr):null;
+  const todayWoId=todayLog?.isRest?'rest':(todayLog?.woId||(nextSeqWo)||(weekStatus[dOfW]?.planned)||'rest');
 
   if(ST.aWo&&ST.p){
     const wo=getWo(),ex=getEx();
