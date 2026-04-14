@@ -660,7 +660,11 @@ window.calcMacros=function(w,h,age,sex,goal,sessions,analysis){
   kcal+=analysis?.calAdj||0;
   if(goal.t==='cut'&&kcal<w*22) kcal=w*22;
   kcal=Math.round(kcal);
-  const prot=Math.round(w*(sex==='f'?1.8:2.2));
+  // PUNTO 11: se 0 sessioni allenamento, niente focus proteine (target più basso)
+  // Senza pesi, proteine alte sono sprecate: con 0 sessioni usiamo 1.2g/kg uomo, 1.0g/kg donna
+  const noTraining = (sessions||0)===0;
+  const protPerKg = noTraining ? (sex==='f'?1.0:1.2) : (sex==='f'?1.8:2.2);
+  const prot=Math.round(w*protPerKg);
   const fat=Math.round(w*(sex==='f'?1.0:0.8));
   const carb=Math.max(50,Math.round((kcal-(prot*4)-(fat*9))/4));
   const effCardio=Math.max(0,Math.min(5,(goal.cardioLevel||1)+(analysis?.cardioAdj||0)));
@@ -1418,6 +1422,43 @@ window.__initAuthListener=function(){
     render();
   });
 };
+// PUNTO 11: nasconde/mostra i campi legati all'allenamento in base al numero sessioni
+window.toggleSessVisibility=function(){
+  const sess=parseInt(document.getElementById('iSess')?.value||3);
+  const showTraining=sess>0;
+  const ids=['wrapLoc','wrapDur','wrapCardio','wrapFocus'];
+  ids.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display=showTraining?'':'none';
+  });
+  // Mostra/nasconde info passi se 0 sessioni
+  const stepsInfo=document.getElementById('stepsInfoReg');
+  if(stepsInfo) stepsInfo.style.display=showTraining?'none':'';
+};
+
+// Stesso per Configurazione (Settings)
+window.toggleSessVisibilitySettings=function(){
+  const sess=parseInt(document.getElementById('eSess')?.value||3);
+  const showTraining=sess>0;
+  const ids=['wrapELoc','wrapEDur','wrapECardio','wrapEFocus'];
+  ids.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display=showTraining?'':'none';
+  });
+};
+
+// PUNTO 11/14: obiettivo passi giornaliero in base all'obiettivo dell'utente
+window.getStepsGoal=function(p){
+  if(!p) return 8000;
+  // Dimagrimento senza allenamento: target alto (camminata = principale strumento)
+  if(p.sessions===0 && p.t==='cut') return 12000;
+  // Mantenimento/massa senza allenamento: target medio
+  if(p.sessions===0) return 10000;
+  // Con allenamento: target standard 8-10k (allenamento fa il grosso)
+  if(p.t==='cut') return 10000;
+  return 8000;
+};
+
 window.initProgram=function(){
   const w=parseFloat(vv('iW')),g=parseFloat(vv('gW')),t=vv('iT'),dur=parseInt(vv('iDur')),tRaw=vv('iDate'),loc=vv('iLoc');
   const sess=parseInt(vv('iSess'))||3,cl=parseInt(vv('iCardio'))||1;
@@ -1886,7 +1927,8 @@ window.renderSetup = function(){
   const defDate=new Date(new Date().getTime()+12*7*864e5).toISOString().split('T')[0];
   const cW=ST.h.length?ST.h[ST.h.length-1].w:70;
   const sx=AU.profile?.sx||'m';
-  return`<div style="padding:10px 0 0;"> <div class="bebas" style="font-size:36px;color:var(--acc);margin-bottom:4px;">CIAO ${AU.user.toUpperCase()}!</div> <div style="color:var(--mut);font-size:13px;margin-bottom:16px;">Configura il tuo programma personale. L'AI lo adatterà ogni settimana.</div> <div class="card"> <span class="lbl">PESO ATTUALE (KG)</span><input type="number" id="iW" value="${cW}" step=".1"> <span class="lbl">PESO OBIETTIVO (KG)</span><input type="number" id="gW" placeholder="Es. ${sx==='f'?'60':'78'} — inserisci il tuo obiettivo" step=".1"> <span class="lbl">DATA OBIETTIVO (PREVISTA)</span><input type="date" id="iDate" value="${defDate}"> <span class="lbl">STRATEGIA</span> <select id="iT"><option value="cut">Definizione (Perdita Grasso)</option><option value="bulk">Massa (Aumento Muscolo)</option></select> <span class="lbl">DOVE TI ALLENI?</span> <select id="iLoc"><option value="gym" selected>🏋️ In Palestra (con attrezzi)</option><option value="home">🏠 A Casa (corpo libero)</option></select> <span class="lbl">SESSIONI DI ALLENAMENTO A SETTIMANA</span> <select id="iSess"> <option value="0">0 — Solo Nutrizione &amp; Passi (nessuna palestra)</option> <option value="1">1 sessione/settimana</option> <option value="2">2 sessioni/settimana</option> <option value="3" selected>3 sessioni/settimana (consigliato)</option> <option value="4">4 sessioni/settimana</option> <option value="5">5 sessioni/settimana</option> <option value="6">6 sessioni/settimana (intenso)</option> </select> <span class="lbl">DURATA OGNI SESSIONE</span> <select id="iDur"><option value="45">45 minuti</option><option value="60" selected>60 minuti (ideale)</option><option value="90">90 minuti</option></select> <span class="lbl">SESSIONI CARDIO DI BASE A SETTIMANA</span> <select id="iCardio"><option value="0">0 — Solo pesi</option><option value="1" selected>1 — Leggero</option><option value="2">2 — Moderato</option><option value="3">3 — Intenso</option></select> <span class="lbl" style="margin-bottom:8px;">INTOLLERANZE ALIMENTARI (tocca per selezionare)</span> <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;"> ${INTOL_LIST.map(i=>`<span class="intol-chip" data-id="${i.id}" onclick="this.classList.toggle('on')">${i.icon} ${i.label}</span>`).join('')}
+  return`<div style="padding:10px 0 0;"> <div class="bebas" style="font-size:36px;color:var(--acc);margin-bottom:4px;">CIAO ${AU.user.toUpperCase()}!</div> <div style="color:var(--mut);font-size:13px;margin-bottom:16px;">Configura il tuo programma personale. L'AI lo adatterà ogni settimana.</div> <div class="card"> <span class="lbl">PESO ATTUALE (KG)</span><input type="number" id="iW" value="${cW}" step=".1"> <span class="lbl">PESO OBIETTIVO (KG)</span><input type="number" id="gW" placeholder="Es. ${sx==='f'?'60':'78'} — inserisci il tuo obiettivo" step=".1"> <span class="lbl">DATA OBIETTIVO (PREVISTA)</span><input type="date" id="iDate" value="${defDate}"> <span class="lbl">STRATEGIA</span> <select id="iT"><option value="cut">Definizione (Perdita Grasso)</option><option value="bulk">Massa (Aumento Muscolo)</option></select> <div id="wrapLoc"><span class="lbl">DOVE TI ALLENI?</span> <select id="iLoc"><option value="gym" selected>🏋️ In Palestra (con attrezzi)</option><option value="home">🏠 A Casa (corpo libero)</option></select></div> <span class="lbl">SESSIONI DI ALLENAMENTO A SETTIMANA</span> <select id="iSess" onchange="toggleSessVisibility()"> <option value="0">0 — Solo Nutrizione &amp; Passi (nessuna palestra)</option> <option value="1">1 sessione/settimana</option> <option value="2">2 sessioni/settimana</option> <option value="3" selected>3 sessioni/settimana (consigliato)</option> <option value="4">4 sessioni/settimana</option> <option value="5">5 sessioni/settimana</option> <option value="6">6 sessioni/settimana (intenso)</option> </select><div id="stepsInfoReg" style="display:none;background:rgba(74,222,128,.05);border-left:3px solid var(--gre);padding:10px 12px;border-radius:0 10px 10px 0;margin:6px 0 12px;font-size:12px;color:var(--text);line-height:1.5;">🚶 <strong>Programma solo passi</strong>: il tuo obiettivo sarà camminare 10.000–12.000 passi/giorno + alimentazione controllata. Non avrai esercizi in palestra.</div> <div id="wrapDur"><span class="lbl">DURATA OGNI SESSIONE</span> <select id="iDur"><option value="45">45 minuti</option><option value="60" selected>60 minuti (ideale)</option><option value="90">90 minuti</option></select></div> <div id="wrapCardio"><span class="lbl">SESSIONI CARDIO DI BASE A SETTIMANA</span> <select id="iCardio"><option value="0">0 — Solo pesi</option><option value="1" selected>1 — Leggero</option><option value="2">2 — Moderato</option><option value="3">3 — Intenso</option></select></div> <span class="lbl" style="margin-bottom:8px;">INTOLLERANZE ALIMENTARI (tocca per selezionare)</span> <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;"> ${INTOL_LIST.map(i=>`<span class="intol-chip" data-id="${i.id}" onclick="this.classList.toggle('on')">${i.icon} ${i.label}</span>`).join('')}
+  <div id="wrapFocus">
   <span class="lbl" style="margin-bottom:8px;">FOCUS DI ALLENAMENTO — cosa vuoi sviluppare?</span>
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:14px;">
     ${FOCUS_LIST.map((f,i)=>`<div class="focus-chip ${i===0?'on':''}" data-focus="${f.id}" style="border-color:${i===0?f.col:'var(--bord)'};background:${i===0?f.col+'12':'var(--surf)'};" onclick="document.querySelectorAll('.focus-chip').forEach(x=>{x.classList.remove('on');x.style.borderColor='var(--bord)';x.style.background='var(--surf)';});this.classList.add('on');this.style.borderColor=FOCUS_LIST.find(x=>x.id===this.dataset.focus).col;this.style.background=FOCUS_LIST.find(x=>x.id===this.dataset.focus).col+'12';"><div style="font-size:18px;margin-bottom:2px;">${f.icon}</div><div style="font-size:10px;font-weight:700;line-height:1.2;">${f.label}</div></div>`).join('')}
@@ -2103,7 +2145,89 @@ window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,to
   const p=pwk(ST.programStart);
   const sr=getSetsReps('compound',ST.p.t,p);
   const DAY_NAMES=['LUN','MAR','MER','GIO','VEN','SAB','DOM'];
-  if(ST.p.sessions===0) return`<div class="card" style="background:linear-gradient(135deg,#0b1a00,#0a1200);border-color:#1a2800;padding:20px;"><div class="badge" style="background:var(--gre);color:#000;">SOLO PASSI</div><div class="bebas" style="font-size:28px;color:var(--gre);margin-bottom:8px;">🚶 PROGRAMMA CAMMINATA</div><div style="font-size:13px;line-height:1.65;">Hai scelto 0 sessioni in palestra. Il piano si basa su 10.000+ passi/giorno + dieta controllata.</div></div>`;
+  // PUNTO 14: rendering specifico per "solo passi" (sessions===0)
+  if(ST.p.sessions===0){
+    const stepsGoal=getStepsGoal(ST.p);
+    const stepsToday=ST.life[t2]?.steps||0;
+    const stepsPct=Math.min(100,Math.round(stepsToday/stepsGoal*100));
+    // Totale passi settimana corrente
+    const today=new Date(t2+'T12:00:00');
+    const dow=(today.getDay()+6)%7;
+    const monday=new Date(today);monday.setDate(today.getDate()-dow);
+    let weekSteps=0, daysWithSteps=0;
+    for(let i=0;i<7;i++){
+      const d=new Date(monday);d.setDate(monday.getDate()+i);
+      const dStr=d.toISOString().split('T')[0];
+      const s=ST.life[dStr]?.steps||0;
+      weekSteps+=s;
+      if(s>0) daysWithSteps++;
+    }
+    const weekGoal=stepsGoal*7;
+    const weekPct=Math.min(100,Math.round(weekSteps/weekGoal*100));
+    // Messaggio motivazionale in base al progresso di oggi
+    let motivMsg='', motivCol='var(--gre)';
+    if(stepsPct>=100){ motivMsg=`🏆 Obiettivo raggiunto! ${stepsToday.toLocaleString('it-IT')} passi oggi.`; motivCol='var(--acc)'; }
+    else if(stepsPct>=75){ motivMsg=`Quasi fatto! Mancano ${(stepsGoal-stepsToday).toLocaleString('it-IT')} passi.`; motivCol='var(--acc)'; }
+    else if(stepsPct>=50){ motivMsg=`A metà strada. Fai ancora una bella camminata di ${Math.round((stepsGoal-stepsToday)/100)*100} passi.`; motivCol='var(--gre)'; }
+    else if(stepsToday>0){ motivMsg=`Hai fatto ${stepsToday.toLocaleString('it-IT')} passi. Oggi puntiamo a ${stepsGoal.toLocaleString('it-IT')}: fai una bella camminata di almeno 30 minuti.`; motivCol='var(--blu)'; }
+    else { motivMsg=`🚶 Oggi obiettivo: ${stepsGoal.toLocaleString('it-IT')} passi. Bastano 2 camminate da 20-30 minuti per raggiungerlo.`; motivCol='var(--blu)'; }
+    return `
+    <div class="r" style="margin-bottom:14px;"><div class="bebas" style="font-size:26px;">ALLENAMENTO</div><div style="font-size:11px;color:var(--mut);">Sett.${pWeek}${isD?' · DELOAD':''}</div></div>
+
+    <!-- OBIETTIVO PASSI OGGI -->
+    <div class="card" style="background:linear-gradient(135deg,#0b1a00,#0a1200);border-color:var(--gre);padding:20px;margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--gre);letter-spacing:2px;text-transform:uppercase;margin-bottom:2px;">PROGRAMMA CAMMINATA</div>
+          <div class="bebas" style="font-size:32px;color:var(--gre);line-height:1;">🚶 PASSI OGGI</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="bebas" style="font-size:38px;color:var(--text);line-height:1;">${stepsToday.toLocaleString('it-IT')}</div>
+          <div style="font-size:11px;color:var(--mut);">/ ${stepsGoal.toLocaleString('it-IT')} obiettivo</div>
+        </div>
+      </div>
+      <div style="background:rgba(255,255,255,.06);border-radius:99px;height:10px;overflow:hidden;margin-bottom:10px;">
+        <div style="width:${stepsPct}%;height:10px;background:var(--gre);border-radius:99px;transition:width .8s;"></div>
+      </div>
+      <div style="background:rgba(0,0,0,.2);border-radius:10px;padding:10px 12px;font-size:13px;color:${motivCol};line-height:1.5;font-weight:500;">${motivMsg}</div>
+    </div>
+
+    <!-- LOG PASSI DI OGGI -->
+    <div class="card" style="padding:14px;margin-bottom:14px;">
+      <div class="lbl" style="margin-bottom:8px;">REGISTRA I PASSI DI OGGI</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="number" id="nStep" value="${stepsToday}" placeholder="Es. 8500" style="margin:0;font-size:22px;font-weight:700;text-align:center;flex:1;padding:12px;">
+        <button class="btn-s" style="background:var(--gre);color:#000;padding:12px 18px;" onclick="logSteps()">SALVA</button>
+      </div>
+      <div style="font-size:11px;color:var(--mut);margin-top:8px;line-height:1.4;">💡 Puoi prenderli dall'app Salute del tuo telefono (Google Fit / Apple Health).</div>
+    </div>
+
+    <!-- RIEPILOGO SETTIMANA -->
+    <div class="card" style="padding:16px;margin-bottom:14px;">
+      <div class="lbl" style="margin-bottom:10px;">QUESTA SETTIMANA</div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+        <span style="font-size:13px;color:var(--text);">Passi totali</span>
+        <span class="bebas" style="font-size:20px;color:var(--gre);">${weekSteps.toLocaleString('it-IT')} / ${weekGoal.toLocaleString('it-IT')}</span>
+      </div>
+      <div style="background:rgba(255,255,255,.06);border-radius:99px;height:6px;overflow:hidden;margin-bottom:10px;">
+        <div style="width:${weekPct}%;height:6px;background:var(--gre);border-radius:99px;"></div>
+      </div>
+      <div style="font-size:12px;color:var(--mut);line-height:1.5;">Hai registrato passi in <strong style="color:var(--text);">${daysWithSteps}/7 giorni</strong>. ${weekPct>=80?'Ottima costanza!':weekPct>=50?'Continua così, la costanza è tutto.':'Punta a registrare i passi ogni giorno per avere dati attendibili.'}</div>
+    </div>
+
+    <!-- TIPS CAMMINATA -->
+    <div class="card" style="padding:14px;background:rgba(74,222,128,.04);border-color:#1a2800;">
+      <div class="lbl" style="color:var(--gre);margin-bottom:8px;">💡 COME ARRIVARE A ${stepsGoal.toLocaleString('it-IT')} PASSI</div>
+      <div style="font-size:12px;color:var(--text);line-height:1.7;">
+        • <strong>Camminata mattutina</strong>: 20-30 min a passo sostenuto (~3.500-4.000 passi)<br>
+        • <strong>Spostamenti quotidiani</strong>: scale invece di ascensore, parcheggia lontano (~1.500-2.000 passi)<br>
+        • <strong>Pausa pranzo attiva</strong>: 15 min camminando (~1.500 passi)<br>
+        • <strong>Camminata serale</strong>: 20 min dopo cena (~2.500 passi) — aiuta anche la digestione<br>
+        <br>
+        ⚡ <strong>Trucco per perdere peso</strong>: cammina a passo veloce (4.5-5.5 km/h). Devi poter parlare ma non cantare.
+      </div>
+    </div>`;
+  }
   // ── FIX 1: Se oggi è riposo → mostra solo il messaggio, niente schede ──
   if(todayLog?.isRest){
     // Calcola il prossimo workout in sequenza
@@ -2162,6 +2286,22 @@ window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,to
   </div>`:'';
   return`
   <div class="r" style="margin-bottom:14px;"><div class="bebas" style="font-size:26px;">ALLENAMENTO</div><div style="font-size:11px;color:var(--mut);">Sett.${pWeek}${isD?' · DELOAD':''} · ${ST.p.sessions}gg pesi + ${mac.cardioLevel}gg cardio</div></div>
+
+  <!-- PUNTO 14: riepilogo settimana -->
+  <div class="card" style="background:linear-gradient(135deg,#0a0012,#08000a);border-color:var(--purp);padding:14px 16px;margin-bottom:14px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:10px;font-weight:700;color:var(--purp);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;">QUESTA SETTIMANA</div>
+        <div class="bebas" style="font-size:22px;color:var(--text);line-height:1.1;">${ST.p.sessions} sessioni · ${ST.p.sessions*(ST.p.dur||60)} min tot</div>
+        <div style="font-size:11px;color:var(--mut);margin-top:3px;">${ST.p.dur||60} min/sessione · focus ${(FOCUS_LIST.find(f=>f.id===(ST.p.focus||'total'))||{label:'Total'}).label}</div>
+      </div>
+      <div style="text-align:center;padding:8px 12px;background:rgba(167,139,250,.12);border-radius:10px;">
+        <div class="bebas" style="font-size:28px;color:var(--purp);line-height:1;">${ST.wLog.filter(w=>!w.isRest&&w.d>=((()=>{const d=new Date(t2+'T12:00:00');d.setDate(d.getDate()-((d.getDay()+6)%7));return d.toISOString().split('T')[0];})())).length}<span style="font-size:14px;color:var(--mut);">/${ST.p.sessions}</span></div>
+        <div style="font-size:9px;color:var(--mut);letter-spacing:1px;">FATTE</div>
+      </div>
+    </div>
+  </div>
+
   ${missedBanner}
   <div class="card" style="background:linear-gradient(135deg,#0b1200,#0c1500);border-color:#1a2400;padding:16px;margin-bottom:14px;">
     <span class="lbl">${DAY_NAMES[dOfW]} ${new Date(t2).toLocaleDateString('it-IT',{day:'2-digit',month:'short'})}</span>
@@ -2195,7 +2335,9 @@ window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,to
 // ── renderDiet con orari custom + AI loading + scelta simili + cheatLog ──
 window.renderDiet = function(t2,mac,an,sx,todayWoId){
   const loggedRest=ST.wLog.find(x=>x.d===t2)?.isRest===true;
-  const isRestDay=loggedRest||(todayWoId==='rest')||(todayWoId==='cardio');
+  // PUNTO 11: se 0 sessioni allenamento, tutti i giorni sono "rest day" (niente pre-workout)
+  const noTraining=(ST.p.sessions||0)===0;
+  const isRestDay=noTraining||loggedRest||(todayWoId==='rest')||(todayWoId==='cardio');
   const meals=buildMeals(mac,ST.p.intol||[],sx,isRestDay,ST.p.diet||'omnivore',ST.p.times,ST.p.usesSupplements||false);
   const dLog=ST.nutri[t2]||{k:0,p:0,c:0,f:0,logged:[],skipped:[],cheatLog:[]};
   if(!dLog.cheatLog) dLog.cheatLog=[];
@@ -2550,16 +2692,16 @@ window.renderSettings = function(mac){
     <span class="lbl">PESO OBIETTIVO (KG)</span><input type="number" id="eG" value="${ST.p.g}" step=".1">
     <span class="lbl">DATA OBIETTIVO</span><input type="date" id="eDate" value="${ST.p.targetD}">
     <span class="lbl">STRATEGIA</span><select id="eT"><option value="cut" ${ST.p.t==='cut'?'selected':''}>Definizione (Perdita Grasso)</option><option value="bulk" ${ST.p.t==='bulk'?'selected':''}>Massa (Aumento Muscolo)</option></select>
-    <span class="lbl">DOVE TI ALLENI?</span><select id="eLoc"><option value="gym" ${ST.p.loc==='gym'?'selected':''}>🏋️ In Palestra</option><option value="home" ${ST.p.loc==='home'?'selected':''}>🏠 A Casa</option></select>
-    <span class="lbl">SESSIONI / SETTIMANA</span><select id="eSess">${[0,1,2,3,4,5,6].map(n=>`<option value="${n}" ${(ST.p.sessions||3)===n?'selected':''}>${n===0?'0 — Solo Nutrizione & Passi':n+' sessioni'}</option>`).join('')}</select>
-    <span class="lbl">DURATA SESSIONE</span><select id="eDur"><option value="45" ${ST.p.dur===45?'selected':''}>45 minuti</option><option value="60" ${ST.p.dur===60?'selected':''}>60 minuti</option><option value="90" ${ST.p.dur===90?'selected':''}>90 minuti</option></select>
-    <span class="lbl">CARDIO BASE / SETTIMANA (l'AI ricalcola)</span><select id="eCardio"><option value="0" ${ST.p.cardioLevel===0?'selected':''}>0 — Solo pesi</option><option value="1" ${ST.p.cardioLevel===1?'selected':''}>1 — Leggero</option><option value="2" ${ST.p.cardioLevel===2?'selected':''}>2 — Moderato</option><option value="3" ${ST.p.cardioLevel===3?'selected':''}>3 — Intenso</option></select>
+    <div id="wrapELoc"><span class="lbl">DOVE TI ALLENI?</span><select id="eLoc"><option value="gym" ${ST.p.loc==='gym'?'selected':''}>🏋️ In Palestra</option><option value="home" ${ST.p.loc==='home'?'selected':''}>🏠 A Casa</option></select></div>
+    <span class="lbl">SESSIONI / SETTIMANA</span><select id="eSess" onchange="toggleSessVisibilitySettings()">${[0,1,2,3,4,5,6].map(n=>`<option value="${n}" ${(ST.p.sessions||3)===n?'selected':''}>${n===0?'0 — Solo Nutrizione & Passi':n+' sessioni'}</option>`).join('')}</select>
+    <div id="wrapEDur"><span class="lbl">DURATA SESSIONE</span><select id="eDur"><option value="45" ${ST.p.dur===45?'selected':''}>45 minuti</option><option value="60" ${ST.p.dur===60?'selected':''}>60 minuti</option><option value="90" ${ST.p.dur===90?'selected':''}>90 minuti</option></select></div>
+    <div id="wrapECardio"><span class="lbl">CARDIO BASE / SETTIMANA (l'AI ricalcola)</span><select id="eCardio"><option value="0" ${ST.p.cardioLevel===0?'selected':''}>0 — Solo pesi</option><option value="1" ${ST.p.cardioLevel===1?'selected':''}>1 — Leggero</option><option value="2" ${ST.p.cardioLevel===2?'selected':''}>2 — Moderato</option><option value="3" ${ST.p.cardioLevel===3?'selected':''}>3 — Intenso</option></select></div>
     <span class="lbl" style="margin-bottom:8px;">INTOLLERANZE (aggiorna)</span>
     <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;">${INTOL_LIST.map(i=>`<span class="intol-chip2 ${(ST.p.intol||[]).includes(i.id)?'on':''}" data-id="${i.id}" onclick="toggleIntolChip(this)">${i.icon} ${i.label}</span>`).join('')}</div>
-    <span class="lbl" style="margin-bottom:8px;">FOCUS DI ALLENAMENTO</span>
+    <div id="wrapEFocus"><span class="lbl" style="margin-bottom:8px;">FOCUS DI ALLENAMENTO</span>
     <div id="focusChips" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:14px;">
       ${FOCUS_LIST.map(f=>{const isOn=(ST.p.focus||'total')===f.id;return`<div class="focus-chip2 ${isOn?'on':''}" data-focus="${f.id}" data-col="${f.col}" style="border-color:${isOn?f.col:'var(--bord)'};background:${isOn?f.col+'12':'var(--surf)'};padding:10px 6px;border:2px solid var(--bord);border-radius:12px;cursor:pointer;text-align:center;transition:.2s;" onclick="pickFocusChip(this)"><div style="font-size:16px;margin-bottom:2px;">${f.icon}</div><div style="font-size:10px;font-weight:700;line-height:1.2;">${f.label}</div></div>`;}).join('')}
-    </div>
+    </div></div>
     <span class="lbl" style="margin-bottom:8px;">ALIMENTAZIONE</span>
     <div id="dietChips" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:14px;">
       ${[{id:'omnivore',icon:'🥩',lbl:'Onnivoro'},{id:'vegetarian',icon:'🥦',lbl:'Vegetariano'},{id:'vegan',icon:'🌱',lbl:'Vegano'}].map(d=>{const isOn=(ST.p.diet||'omnivore')===d.id;return`<div class="diet-chip2 ${isOn?'on':''}" data-diet="${d.id}" style="padding:12px 6px;border-radius:12px;border:2px solid ${isOn?'var(--acc)':'var(--bord)'};background:${isOn?'rgba(197,241,53,.08)':'var(--surf)'};cursor:pointer;text-align:center;transition:.2s;" onclick="pickDietChip(this)"><div style="font-size:20px;margin-bottom:3px;">${d.icon}</div><div style="font-size:10px;font-weight:700;">${d.lbl}</div></div>`;}).join('')}
@@ -2765,7 +2907,11 @@ window.render = function() {
     </div>
   </div>
   <div class="content"><div class="wrap">`;
-  if(!ST.p){H+=renderSetup();H+=`</div></div>`;root.innerHTML=H+sheetH;return;}
+  if(!ST.p){H+=renderSetup();H+=`</div></div>`;root.innerHTML=H+sheetH;
+    // PUNTO 11: inizializza visibilità campi form registrazione
+    setTimeout(()=>{if(window.toggleSessVisibility) toggleSessVisibility();},0);
+    return;
+  }
   if(ST.tab==='home') H+=renderHome(currentDateStr,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,todayLog);
   else if(ST.tab==='work') H+=renderWork(currentDateStr,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,todayLog);
   else if(ST.tab==='diet') H+=renderDiet(currentDateStr,mac,an,sx,todayWoId);
@@ -2775,6 +2921,8 @@ window.render = function() {
   else if(ST.tab==='set') H+=renderSettings(mac);
   H+=`</div></div>`;root.innerHTML=H+sheetH+moreSheetH+shortPickH;
   if(ST.tab==='coach') setTimeout(()=>{const c=el('chatArea');if(c)c.scrollTop=c.scrollHeight;},50);
+  // PUNTO 11: inizializza visibilità campi in Configurazione
+  if(ST.tab==='set') setTimeout(()=>{if(window.toggleSessVisibilitySettings) toggleSessVisibilitySettings();},0);
 }
 // ── BOOT — Usa Firebase Auth listener ──
 window.bootApp = async function() {
