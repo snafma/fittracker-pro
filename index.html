@@ -264,6 +264,9 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
 'use strict';
 function hp(s) { let h=0; for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;} return 'h'+Math.abs(h).toString(36)+s.length; }
 function getToday() { return new Date().toISOString().split('T')[0]; }
+// PUNTO 16+22: escape HTML per prevenire XSS quando si reinietta input utente in innerHTML
+function escapeHtml(s){ return (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
+window.escapeHtml=escapeHtml;
 function togglePw(el) {
   const inp = el.previousElementSibling;
   if (inp.type === 'password') { inp.type = 'text'; el.textContent = '🙈'; }
@@ -1117,7 +1120,7 @@ Regole:
 // Allenamento: col 22% / sp1 8% / pra 30% / sp2 10% / cen 30%  =  100%
 // Riposo:      col 22% / sp1 8% / pra 32% / sp2 8%  / cen 30%  =  100%
 // Le grammature in ogni opzione sono adattate al kcal del singolo pasto.
-window.buildMeals=function(macros,intol=[],sex='m',isRestDay=false,diet='omnivore',times,usesSupplements=false){
+window.buildMeals=function(macros,intol=[],sex='m',isRestDay=false,diet='omnivore',times,usesSupplements=false,favs=null){
   const haG=intol.includes('gluten'),haL=intol.includes('lactose'),haE=intol.includes('eggs'),haN=intol.includes('nuts'),haF=intol.includes('fish');
   const isVeg=diet==='vegetarian'||diet==='vegan',isVegan=diet==='vegan';
   // Orari personalizzati o default
@@ -1197,11 +1200,11 @@ window.buildMeals=function(macros,intol=[],sex='m',isRestDay=false,diet='omnivor
     if(!isVegan) cenOpts.push({lbl:'🥛 Ricotta & Verdure',items:[`${round10(gP_cen*0.9)}g Ricotta`,'Insalata abbondante','2 fette pane integrale',olio]});
   }
   return[
-    {id:'col',pct:PCT.col,n:`🌅 COLAZIONE  ${T.col}`,kcal:kCol,opts:colOpts},
+    {id:'col',pct:PCT.col,n:`🌅 COLAZIONE  ${T.col}`,kcal:kCol,opts:colOpts,fav:favs?.col||''},
     {id:'sp1',pct:PCT.sp1,n:`🍎 SPUNTINO  ${T.sp1}`,kcal:kSp1,opts:sp1Opts},
-    {id:'pra',pct:PCT.pra,n:`🍽️ PRANZO  ${T.pra}`,kcal:kPra,opts:praOpts},
+    {id:'pra',pct:PCT.pra,n:`🍽️ PRANZO  ${T.pra}`,kcal:kPra,opts:praOpts,fav:favs?.pra||''},
     sp2,
-    {id:'cen',pct:PCT.cen,n:`🌙 CENA  ${T.cen}`,kcal:kCen,opts:cenOpts},
+    {id:'cen',pct:PCT.cen,n:`🌙 CENA  ${T.cen}`,kcal:kCen,opts:cenOpts,fav:favs?.cen||''},
   ];
 }
 // STATE
@@ -1540,7 +1543,14 @@ window.initProgram=function(){
   if((tDate-new Date())/(7*864e5)<minWk){tDate=new Date(new Date().getTime()+minWk*7*864e5);alert('Data corretta dall\'AI.');}
   // PUNTO 12: integratori proteici (chip, default NO)
   const usesSupplements=document.querySelector('.supp-chip.on')?.dataset?.supp==='yes';
-  ST.p={s:w,g:g,t,dur,targetD:tDate.toISOString().split('T')[0],sessions:sess,cardioLevel:cl,intol,loc,focus,diet,usesSupplements};
+  // PUNTO 16: cibi preferiti (sanitizzati, max 200 char)
+  const sanitizeFav=v=>(v||'').toString().slice(0,200).replace(/[<>]/g,'').trim();
+  const favs={
+    col:sanitizeFav(vv('iFavCol')),
+    pra:sanitizeFav(vv('iFavPra')),
+    cen:sanitizeFav(vv('iFavCen'))
+  };
+  ST.p={s:w,g:g,t,dur,targetD:tDate.toISOString().split('T')[0],sessions:sess,cardioLevel:cl,intol,loc,focus,diet,usesSupplements,favs};
   ST.programStart=currentDateStr||getToday();
   if(!ST.h.length) ST.h=[{d:ST.programStart,w:w}];
   save();
@@ -1617,7 +1627,14 @@ window.updateProgram=function(){
   const currW=ST.h[ST.h.length-1]?.w||70;
   const minWk=t==='cut'?Math.abs(currW-g)/0.8:Math.abs(currW-g)/0.3;
   if((tDate-new Date())/(7*864e5)<minWk){tDate=new Date(new Date().getTime()+minWk*7*864e5);alert('Data corretta dall\'AI.');}
-  ST.p.g=g;ST.p.t=t;ST.p.dur=dur;ST.p.targetD=tDate.toISOString().split('T')[0];ST.p.sessions=sess;ST.p.cardioLevel=cl;ST.p.intol=intol;ST.p.loc=loc;ST.p.focus=focus;ST.p.diet=diet;ST.p.usesSupplements=usesSupplements;
+  // PUNTO 16: salva cibi preferiti (sanitizzati)
+  const sanitizeFav=v=>(v||'').toString().slice(0,200).replace(/[<>]/g,'').trim();
+  const newFavs={
+    col:sanitizeFav(vv('eFavCol')),
+    pra:sanitizeFav(vv('eFavPra')),
+    cen:sanitizeFav(vv('eFavCen'))
+  };
+  ST.p.g=g;ST.p.t=t;ST.p.dur=dur;ST.p.targetD=tDate.toISOString().split('T')[0];ST.p.sessions=sess;ST.p.cardioLevel=cl;ST.p.intol=intol;ST.p.loc=loc;ST.p.focus=focus;ST.p.diet=diet;ST.p.usesSupplements=usesSupplements;ST.p.favs=newFavs;
   ST.p.times=times;ST.p.workoutTime=workoutTime;
   save();alert('Programma aggiornato! Consigli nutrizionali e allenamenti ricalcolati.');
 }
@@ -2010,6 +2027,15 @@ window.renderSetup = function(){
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px;">
     ${[{id:'yes',icon:'💪',lbl:'Sì, li uso'},{id:'no',icon:'🌱',lbl:'No, solo cibi'}].map((s,i)=>`<div class="supp-chip ${i===1?'on':''}" data-supp="${s.id}" style="padding:12px 6px;border-radius:12px;border:2px solid ${i===1?'var(--acc)':'var(--bord)'};background:${i===1?'rgba(197,241,53,.08)':'var(--surf)'};cursor:pointer;text-align:center;transition:.2s;" onclick="document.querySelectorAll('.supp-chip').forEach(x=>{x.classList.remove('on');x.style.borderColor='var(--bord)';x.style.background='var(--surf)';});this.classList.add('on');this.style.borderColor='var(--acc)';this.style.background='rgba(197,241,53,.08)';"><div style="font-size:20px;margin-bottom:3px;">${s.icon}</div><div style="font-size:10px;font-weight:700;">${s.lbl}</div></div>`).join('')}
   </div>
+  <!-- PUNTO 16: cibi preferiti (opzionali) -->
+  <span class="lbl" style="margin-bottom:8px;">🍽️ I TUOI PIATTI / CIBI PREFERITI (opzionale)</span>
+  <div style="font-size:11px;color:var(--mut);line-height:1.5;margin-bottom:10px;">Scrivi 2-3 piatti o cibi che ami davvero per ciascun pasto. Cercheremo di includerli nei consigli nutrizionali, mantenendo comunque il target calorico per il tuo obiettivo. Esempi: "pasta al pomodoro, bresaola, yogurt greco". Max 200 caratteri ciascuno.</div>
+  <span class="lbl" style="margin-bottom:4px;">🌅 COLAZIONE</span>
+  <textarea id="iFavCol" maxlength="200" rows="2" placeholder="Es. cappuccino, cornetto, fette biscottate con marmellata" style="margin-bottom:10px;font-size:13px;"></textarea>
+  <span class="lbl" style="margin-bottom:4px;">🍽️ PRANZO</span>
+  <textarea id="iFavPra" maxlength="200" rows="2" placeholder="Es. pasta al pomodoro, insalata di pollo, bresaola" style="margin-bottom:10px;font-size:13px;"></textarea>
+  <span class="lbl" style="margin-bottom:4px;">🌙 CENA</span>
+  <textarea id="iFavCen" maxlength="200" rows="2" placeholder="Es. pesce alla griglia, uova, verdure di stagione" style="margin-bottom:14px;font-size:13px;"></textarea>
   <button class="btn" onclick="initProgram()">ATTIVA IL SISTEMA ▸</button>
   </div></div>`;
 }
@@ -2405,7 +2431,7 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
   // PUNTO 11: se 0 sessioni allenamento, tutti i giorni sono "rest day" (niente pre-workout)
   const noTraining=(ST.p.sessions||0)===0;
   const isRestDay=noTraining||loggedRest||(todayWoId==='rest')||(todayWoId==='cardio');
-  const meals=buildMeals(mac,ST.p.intol||[],sx,isRestDay,ST.p.diet||'omnivore',ST.p.times,ST.p.usesSupplements||false);
+  const meals=buildMeals(mac,ST.p.intol||[],sx,isRestDay,ST.p.diet||'omnivore',ST.p.times,ST.p.usesSupplements||false,ST.p.favs||null);
   const dLog=ST.nutri[t2]||{k:0,p:0,c:0,f:0,logged:[],skipped:[],cheatLog:[]};
   if(!dLog.cheatLog) dLog.cheatLog=[];
   const remK=Math.max(0,mac.kcal-dLog.k);
@@ -2473,6 +2499,11 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
           <button class="btn-s" style="background:var(--surf);color:var(--acc);border:1px solid var(--acc);font-family:'Bebas Neue';font-size:13px;" onclick="logMeal('${m.id}',${m.pct},${mac.kcal},${mac.prot},${mac.carb},${mac.fat})">FATTO ✓</button>
         </div>`}
       </div>
+      ${m.fav?`<div style="background:rgba(255,104,53,.08);border-left:3px solid var(--ora);border-radius:0 10px 10px 0;padding:10px 12px;margin-bottom:10px;">
+        <div style="font-size:10px;font-weight:700;color:var(--ora);letter-spacing:1.5px;margin-bottom:3px;">🍽️ I TUOI PREFERITI</div>
+        <div style="font-size:12px;color:var(--text);line-height:1.5;">${escapeHtml(m.fav)}</div>
+        <div style="font-size:10px;color:var(--mut);margin-top:4px;line-height:1.4;">Considera di inserirli rispettando il target kcal del pasto (~${m.kcal} kcal).</div>
+      </div>`:''}
       ${m.opts.length>1?`<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:8px;">${m.opts.map((o,i)=>`<button onclick="pickMealOpt('${m.id}',${i})" style="flex:0 0 auto;padding:6px 12px;border-radius:8px;border:1.5px solid ${selIdx===i?'var(--acc)':'var(--bord)'};background:${selIdx===i?'rgba(197,241,53,.1)':'var(--surf)'};color:${selIdx===i?'var(--acc)':'var(--mut)'};font-size:12px;font-weight:600;cursor:pointer;">${o.lbl}</button>`).join('')}</div>`:''}
       <div>${opt.items.map(item=>`<div style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--bord);"><div style="width:6px;height:6px;border-radius:50%;background:var(--acc);flex-shrink:0;margin-top:7px;"></div><div style="font-size:13px;line-height:1.4;">${item}</div></div>`).join('')}</div>
     </div>`;
@@ -2827,6 +2858,15 @@ window.renderSettings = function(mac){
     <div id="suppChips" style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px;">
       ${[{id:'yes',icon:'💪',lbl:'Sì, li uso'},{id:'no',icon:'🌱',lbl:'No, solo cibi'}].map(s=>{const cur=ST.p.usesSupplements?'yes':'no';const isOn=cur===s.id;return`<div class="supp-chip2 ${isOn?'on':''}" data-supp="${s.id}" style="padding:12px 6px;border-radius:12px;border:2px solid ${isOn?'var(--acc)':'var(--bord)'};background:${isOn?'rgba(197,241,53,.08)':'var(--surf)'};cursor:pointer;text-align:center;transition:.2s;" onclick="pickSuppChip(this)"><div style="font-size:20px;margin-bottom:3px;">${s.icon}</div><div style="font-size:10px;font-weight:700;">${s.lbl}</div></div>`;}).join('')}
     </div>
+    <!-- PUNTO 16: cibi preferiti (editabili in qualsiasi momento) -->
+    <span class="lbl" style="margin-bottom:8px;">🍽️ I TUOI PIATTI / CIBI PREFERITI (opzionale)</span>
+    <div style="font-size:11px;color:var(--mut);line-height:1.5;margin-bottom:10px;">Cercheremo di includerli nei consigli mantenendo il target calorico. Max 200 caratteri ciascuno.</div>
+    <span class="lbl" style="margin-bottom:4px;">🌅 COLAZIONE</span>
+    <textarea id="eFavCol" maxlength="200" rows="2" placeholder="Es. cappuccino, cornetto..." style="margin-bottom:10px;font-size:13px;">${escapeHtml(ST.p.favs?.col||'')}</textarea>
+    <span class="lbl" style="margin-bottom:4px;">🍽️ PRANZO</span>
+    <textarea id="eFavPra" maxlength="200" rows="2" placeholder="Es. pasta al pomodoro..." style="margin-bottom:10px;font-size:13px;">${escapeHtml(ST.p.favs?.pra||'')}</textarea>
+    <span class="lbl" style="margin-bottom:4px;">🌙 CENA</span>
+    <textarea id="eFavCen" maxlength="200" rows="2" placeholder="Es. pesce alla griglia..." style="margin-bottom:14px;font-size:13px;">${escapeHtml(ST.p.favs?.cen||'')}</textarea>
     <button class="btn" onclick="updateProgram()">SALVA E RICALCOLA TUTTO</button>
   </div>
 
