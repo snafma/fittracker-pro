@@ -735,34 +735,156 @@ window.getSetsReps=function(type,goal,pw2,focus){
   }
 }
 // ── MESSAGGIO MOTIVAZIONALE in base ai risultati reali ──
+// PUNTO 1 — Frase motivazionale DINAMICA basata su cosa è stato fatto OGGI
+// Pesa: streak, peso loggato, allenamento svolto, kcal vs target, traguardo
+// Variabilità giornaliera: seed basato su data per evitare ripetizioni nello stesso giorno
+window.__seedRandom=function(seed,arr){
+  if(!arr||!arr.length) return null;
+  let h=0; for(let i=0;i<seed.length;i++){h=((h<<5)-h)+seed.charCodeAt(i);h|=0;}
+  return arr[Math.abs(h)%arr.length];
+};
+
 window.getMotivationalMsg=function(an,ST,cW,mac,pWeek){
+  const today=getToday();
   const stk=streak(ST.wLog);
   const wLogF=ST.wLog.filter(w=>!w.isRest);
   const lost=ST.h.length>1?(ST.h[0].w-cW):0;
   const kgLeft=Math.max(0,ST.p.t==='cut'?cW-ST.p.g:ST.p.g-cW);
   const progress=Math.min(100,Math.max(0,(ST.p.s-cW)/(ST.p.s-ST.p.g)*100));
-  const dLog=ST.nutri[getToday()]||{k:0};
+  const dLog=ST.nutri[today]||{k:0};
+  const kcalToday=dLog.k||0;
+  const kcalTarget=mac.kcal||2000;
+  const kcalRatio=kcalToday/kcalTarget;
   const mealsDone=dLog.logged?.length||0;
-  const today=new Date().getDay(); // 0=dom
-  const isMonday=today===1;
-  // Priorità messaggi: situazioni speciali prima
+  const todayWoLog=ST.wLog.find(w=>w.d===today&&!w.isRest);
+  const wEntry=ST.h.find(x=>x.d===today);
+  const weightLoggedToday=!!wEntry;
+  const stepsToday=ST.life[today]?.steps||0;
+  const dayOfWeek=new Date().getDay(); // 0=dom, 1=lun
+  const isMonday=dayOfWeek===1;
+  const isFriday=dayOfWeek===5;
+  const isSunday=dayOfWeek===0;
+  const hour=new Date().getHours();
+  const seed=today+stk; // varia ogni giorno
+
+  // ════════ PRIORITÀ MASSIMA: situazioni critiche ════════
   if(an.status==='stalled') return {emoji:'🚨',color:'var(--red)',title:'METABOLISMO IN STALLO',msg:`Il peso è fermo da giorni. L'AI ha già adeguato calorie e cardio. Bevi più acqua, dormi 7-8h e segui il piano: lo stallo si sblocca sempre.`};
   if(an.status==='tfast') return {emoji:'⚠️',color:'var(--yel)',title:'ATTENZIONE ALLA VELOCITÀ',msg:`Stai perdendo peso troppo velocemente — rischi di perdere massa muscolare. L'AI ha aumentato le calorie. Mangia di più, allena con i pesi.`};
-  if(stk>=7) return {emoji:'🔥',color:'var(--ora)',title:`${stk} GIORNI DI STREAK!`,msg:`Una settimana intera di costanza. Questo è il vero segreto: non i giorni perfetti, ma non mollare mai.`};
-  if(stk>=3&&stk<7) return {emoji:'⚡',color:'var(--acc)',title:`${stk} GIORNI CONSECUTIVI`,msg:`La consistenza sta diventando un'abitudine. Continua così: ogni giorno che completi vale doppio.`};
-  if(progress>=75) return {emoji:'🏁',color:'var(--acc)',title:'QUASI ARRIVATO!',msg:`Sei al ${Math.round(progress)}% dell'obiettivo. Mancano solo ${kgLeft.toFixed(1)}kg. Il traguardo è lì — non fermarti adesso.`};
-  if(progress>=50) return {emoji:'💪',color:'var(--acc)',title:'METÀ STRADA SUPERATA',msg:`${Math.round(progress)}% completato. Hai già dimostrato di poterlo fare. La seconda metà è sempre più facile: sai già come si fa.`};
-  if(progress>=25) return {emoji:'📈',color:'var(--acc)',title:'MOMENTUM IN CRESCITA',msg:`${lost.toFixed(1)}kg eliminati, ${kgLeft.toFixed(1)}kg mancano. Il corpo si sta adattando — continua a essere costante.`};
-  if(an.status==='perfect') return {emoji:'🎯',color:'var(--acc)',title:'RITMO PERFETTO',msg:`L'AI conferma: sei esattamente nella traiettoria giusta. Non cambiare nulla — il piano sta funzionando alla perfezione.`};
-  if(an.status==='good') return {emoji:'✅',color:'var(--acc)',title:'PIANO IN LINEA',msg:`Progressi regolari e costanti. Non servono eroismi: la consistenza quotidiana porta ai risultati. Stai facendo bene.`};
-  if(an.status==='fast') return {emoji:'⚡',color:'var(--yel)',title:'ANDAMENTO VELOCE',msg:`L'AI ha aumentato le calorie per proteggere i muscoli. Mangia ciò che ti viene assegnato: la massa muscolare è oro.`};
-  if(wLogF.length===0&&pWeek>=2) return {emoji:'🏋️',color:'var(--purp)',title:'INIZIA OGGI',msg:`Nessun allenamento registrato. Il momento migliore per iniziare è adesso. Anche 20 minuti fanno la differenza.`};
-  if(isMonday) return {emoji:'🗓️',color:'var(--blu)',title:'SETTIMANA ${pWeek} — NUOVA PARTENZA',msg:`Ogni settimana è una nuova opportunità. L'AI ha ricalcolato il piano in base ai tuoi progressi. Partiamo.`};
-  if(mealsDone===0&&new Date().getHours()>10) return {emoji:'🥗',color:'var(--ora)',title:'NESSUN PASTO REGISTRATO',msg:`Registrare i pasti non è burocrazia — è il segnale che il tuo cervello resta in controllo. Prenditi 30 secondi.`};
-  // Default basato sulla settimana
-  if(pWeek<=2) return {emoji:'🚀',color:'var(--blu)',title:'SETTIMANA ${pWeek} — SI PARTE',msg:`Nelle prime settimane il corpo si adatta. Potresti non vedere subito i risultati sul peso, ma dentro qualcosa sta già cambiando.`};
-  return {emoji:'💡',color:'var(--mut)',title:'RIMANI COSTANTE',msg:`I risultati non arrivano in un giorno ma in settimane. Ogni pasto rispettato, ogni allenamento completato si accumula. Vai avanti.`};
-}
+
+  // ════════ TRAGUARDI RAGGIUNTI ════════
+  if(progress>=95) return {emoji:'🏆',color:'var(--acc)',title:'TRAGUARDO IN VISTA',msg:`Sei al ${Math.round(progress)}%. Mancano ${kgLeft.toFixed(1)}kg. Concentrati su sonno, idratazione e tecnica: il finale è il momento più delicato.`};
+  if(progress>=75) {
+    const opts=[
+      `Sei al ${Math.round(progress)}%. Mancano solo ${kgLeft.toFixed(1)}kg al traguardo. Resisti, manca poco.`,
+      `Hai fatto il 75% del lavoro. Quello che sta arrivando è il momento più gratificante.`,
+      `${kgLeft.toFixed(1)}kg dall'obiettivo. Continua come stai facendo, niente eroismi.`
+    ];
+    return {emoji:'🏁',color:'var(--acc)',title:'QUASI ARRIVATO',msg:__seedRandom(seed,opts)};
+  }
+
+  // ════════ STREAK FORTI ════════
+  if(stk>=14) return {emoji:'🔥',color:'var(--ora)',title:`${stk} GIORNI CONSECUTIVI`,msg:`Due settimane piene di costanza. È così che si costruisce davvero — non con motivazione, ma con disciplina.`};
+  if(stk>=7) return {emoji:'🔥',color:'var(--ora)',title:`${stk} GIORNI DI STREAK`,msg:`Una settimana intera senza saltare. Questo è il vero segreto del cambiamento.`};
+
+  // ════════ AZIONI FATTE OGGI (positive) ════════
+  if(weightLoggedToday && todayWoLog && (kcalToday > 0)) {
+    const opts=[
+      `Peso registrato, allenamento fatto, dieta in carreggiata. Giornata da copertina.`,
+      `Hai chiuso il triplete: peso ✓ allenamento ✓ pasti ✓. Continua così.`,
+      `Tre cose per tre. Questi sono i giorni che fanno la differenza nel lungo periodo.`
+    ];
+    return {emoji:'⭐',color:'var(--acc)',title:'GIORNATA PERFETTA',msg:__seedRandom(seed,opts)};
+  }
+  if(todayWoLog) {
+    const opts=[
+      `Allenamento di oggi completato. Adesso recupero, idratazione, e dieta in linea.`,
+      `Sessione fatta. Il prossimo passo: nutrire il corpo per ottimizzare il recupero.`,
+      `Hai chiuso l'allenamento. La parte più dura è già fatta.`
+    ];
+    return {emoji:'💪',color:'var(--acc)',title:'ALLENAMENTO FATTO',msg:__seedRandom(seed,opts)};
+  }
+
+  // ════════ AZIONI MANCANTI (gentile push) ════════
+  if(!weightLoggedToday && hour>=7) {
+    const opts=[
+      `Pesati appena puoi: tracciare il peso ogni mattina è il modo migliore per tenere il polso del progresso.`,
+      `Manca il peso di oggi. Bastano 5 secondi e la grafica del tuo trend si aggiorna.`,
+      `Senza peso giornaliero l'AI lavora alla cieca. Pesati a stomaco vuoto, dopo il bagno.`
+    ];
+    return {emoji:'⚖️',color:'var(--blu)',title:'REGISTRA IL PESO',msg:__seedRandom(seed,opts)};
+  }
+  if(mealsDone===0 && hour>=10 && hour<=22) {
+    return {emoji:'🥗',color:'var(--ora)',title:'NESSUN PASTO REGISTRATO',msg:`Tracciare i pasti è il segnale che il tuo cervello resta in controllo. Bastano 30 secondi per ogni pasto.`};
+  }
+  if(!todayWoLog && ST.p.sessions>0 && hour>=15 && !isSunday) {
+    const opts=[
+      `Hai ancora margine per allenarti oggi. Anche 30 minuti contano.`,
+      `Niente allenamento oggi? Decidi adesso: anche un workout breve vale più di uno saltato.`,
+      `Senti la stanchezza? Inizia comunque, dopo 5 minuti passa.`
+    ];
+    return {emoji:'🏋️',color:'var(--purp)',title:'IL CORPO TI ASPETTA',msg:__seedRandom(seed,opts)};
+  }
+
+  // ════════ KCAL A TARGET ════════
+  if(kcalRatio >= 0.85 && kcalRatio <= 1.10) {
+    return {emoji:'🎯',color:'var(--acc)',title:'KCAL IN LINEA',msg:`${Math.round(kcalToday)}/${Math.round(kcalTarget)} kcal: precisione chirurgica. È così che si ottengono i risultati.`};
+  }
+  if(kcalRatio < 0.5 && hour>=18) {
+    return {emoji:'🥄',color:'var(--yel)',title:'POCHE KCAL OGGI',msg:`Solo ${Math.round(kcalToday)}/${Math.round(kcalTarget)} kcal. Mangiare troppo poco rallenta il metabolismo: rispetta il piano.`};
+  }
+
+  // ════════ STREAK MEDIA ════════
+  if(stk>=3) {
+    const opts=[
+      `${stk} giorni filati. La consistenza sta diventando un'abitudine.`,
+      `${stk} giorni consecutivi. Ogni giorno che chiudi vale doppio.`,
+      `Stai costruendo la tua routine. ${stk} giorni e contando.`
+    ];
+    return {emoji:'⚡',color:'var(--acc)',title:`${stk} GIORNI CONSECUTIVI`,msg:__seedRandom(seed,opts)};
+  }
+
+  // ════════ MILESTONE PROGRESSO ════════
+  if(progress>=50 && progress<75) return {emoji:'💪',color:'var(--acc)',title:'METÀ STRADA SUPERATA',msg:`${Math.round(progress)}% completato. Hai già dimostrato di poterlo fare. La seconda metà è più facile: sai come si fa.`};
+  if(progress>=25 && progress<50) return {emoji:'📈',color:'var(--acc)',title:'MOMENTUM IN CRESCITA',msg:`${lost.toFixed(1)}kg già eliminati, ${kgLeft.toFixed(1)}kg restano. Il corpo si sta adattando — tieni la rotta.`};
+
+  // ════════ ANALISI AI ════════
+  if(an.status==='perfect') return {emoji:'🎯',color:'var(--acc)',title:'RITMO PERFETTO',msg:`L'AI conferma: sei esattamente nella traiettoria giusta. Non cambiare nulla.`};
+  if(an.status==='good') return {emoji:'✅',color:'var(--acc)',title:'PIANO IN LINEA',msg:`Progressi regolari. La consistenza quotidiana porta ai risultati.`};
+  if(an.status==='fast') return {emoji:'⚡',color:'var(--yel)',title:'ANDAMENTO VELOCE',msg:`L'AI ha aumentato le calorie per proteggere i muscoli. Mangia ciò che ti viene assegnato.`};
+
+  // ════════ CONTESTI TEMPORALI ════════
+  if(wLogF.length===0 && pWeek>=2) return {emoji:'🏋️',color:'var(--purp)',title:'INIZIA OGGI',msg:`Nessun allenamento registrato. Anche 20 minuti fanno la differenza. Inizia adesso.`};
+  if(isMonday) {
+    const opts=[
+      `Settimana ${pWeek}, nuovo inizio. Pianifica i tuoi 3 momenti chiave: peso, allenamento, pasti.`,
+      `Lunedì = reset. L'AI ha ricalcolato il piano in base alla settimana scorsa.`,
+      `Ogni lunedì è una nuova opportunità. Non aspettare il prossimo.`
+    ];
+    return {emoji:'🗓️',color:'var(--blu)',title:`SETTIMANA ${pWeek}`,msg:__seedRandom(seed,opts)};
+  }
+  if(isFriday) {
+    return {emoji:'🚀',color:'var(--blu)',title:'FINE SETTIMANA IN VISTA',msg:`Il weekend è il momento in cui i piani crollano. Pianifica adesso pasti e allenamenti dei prossimi 2 giorni.`};
+  }
+  if(isSunday) {
+    return {emoji:'🌅',color:'var(--purp)',title:'PREPARA LA PROSSIMA SETTIMANA',msg:`La domenica è il giorno del meal prep e del riposo. Pesa gli alimenti, prepara i contenitori, recupera bene.`};
+  }
+
+  // ════════ DEFAULT VARIATO ════════
+  if(pWeek<=2) {
+    const opts=[
+      `Nelle prime settimane il corpo si adatta. Non sempre vedrai i risultati subito sul peso.`,
+      `Settimana ${pWeek}: stai costruendo la base. La consistenza ora paga doppio dopo.`,
+      `Inizio percorso: l'importante è non saltare le routine, anche se i risultati tarderanno.`
+    ];
+    return {emoji:'🚀',color:'var(--blu)',title:`SETTIMANA ${pWeek}`,msg:__seedRandom(seed,opts)};
+  }
+  const opts=[
+    `I risultati arrivano in settimane, non in giorni. Ogni pasto e allenamento si accumula.`,
+    `Continua a fare quello che stai facendo. Il corpo cambia lentamente, ma cambia.`,
+    `Mantieni la rotta: peso, pasti, allenamento. Tre azioni semplici che fanno tutta la differenza.`
+  ];
+  return {emoji:'💡',color:'var(--mut)',title:'RIMANI COSTANTE',msg:__seedRandom(seed,opts)};
+};
 window.buildWorkout=function(woId,goal,pw2,exPrefs,sex,analysis){
   const sch=WO_SCH[woId];
   const defs=getDefs(sex,goal.loc);
@@ -1302,20 +1424,57 @@ window.initProgram=function(){
   if(!ST.h.length) ST.h=[{d:ST.programStart,w:w}];
   save();
 }
+// PUNTO 3: toggle autostart serie
+window.toggleAutostart=function(checked){
+  if(!ST.p) return;
+  ST.p.autostartSeries=!!checked;
+  save();
+};
+
+// PUNTO 13: toggle chip puliti (sostituiscono inline DOM hack)
+window.toggleIntolChip=function(el){
+  el.classList.toggle('on');
+};
+window.pickFocusChip=function(el){
+  document.querySelectorAll('#focusChips .focus-chip2').forEach(x=>{
+    x.classList.remove('on');
+    x.style.borderColor='var(--bord)';
+    x.style.background='var(--surf)';
+  });
+  el.classList.add('on');
+  const col=el.dataset.col||'var(--acc)';
+  el.style.borderColor=col;
+  el.style.background=col+'12';
+};
+window.pickDietChip=function(el){
+  document.querySelectorAll('#dietChips .diet-chip2').forEach(x=>{
+    x.classList.remove('on');
+    x.style.borderColor='var(--bord)';
+    x.style.background='var(--surf)';
+  });
+  el.classList.add('on');
+  el.style.borderColor='var(--acc)';
+  el.style.background='rgba(197,241,53,.08)';
+};
+
 window.updateProgram=function(){
   const g=parseFloat(vv('eG')),t=vv('eT'),dur=parseInt(vv('eDur')),tRaw=vv('eDate'),sess=parseInt(vv('eSess'))||3,cl=parseInt(vv('eCardio'))||1,loc=vv('eLoc');
-  const intol=[...document.querySelectorAll('.intol-chip2.on')].map(c=>c.dataset.id);
-  const focus=document.querySelector('.focus-chip2.on')?.dataset?.focus||ST.p.focus||'total';
-  const diet=document.querySelector('.diet-chip2.on')?.dataset?.diet||ST.p.diet||'omnivore';
-  // Orari personalizzati pasti + allenamento
+  // PUNTO 13: leggo i valori e fallback solido a quelli salvati se non leggibili dal DOM
+  const intolEls=document.querySelectorAll('.intol-chip2.on');
+  const intol=intolEls.length>0?[...intolEls].map(c=>c.dataset.id):(ST.p.intol||[]);
+  const focusEl=document.querySelector('.focus-chip2.on');
+  const focus=focusEl?.dataset?.focus||ST.p.focus||'total';
+  const dietEl=document.querySelector('.diet-chip2.on');
+  const diet=dietEl?.dataset?.diet||ST.p.diet||'omnivore';
+  // Orari personalizzati pasti + allenamento (preservo valori salvati se input non presenti)
   const times={
-    col:vv('tCol')||'07:00',
-    sp1:vv('tSp1')||'10:30',
-    pra:vv('tPra')||'13:00',
-    sp2:vv('tSp2')||'16:00',
-    cen:vv('tCen')||'19:30',
+    col:vv('tCol')||ST.p.times?.col||'07:00',
+    sp1:vv('tSp1')||ST.p.times?.sp1||'10:30',
+    pra:vv('tPra')||ST.p.times?.pra||'13:00',
+    sp2:vv('tSp2')||ST.p.times?.sp2||'16:00',
+    cen:vv('tCen')||ST.p.times?.cen||'19:30',
   };
-  const workoutTime=vv('tWo')||'18:00';
+  const workoutTime=vv('tWo')||ST.p.workoutTime||'18:00';
   if(!g||!tRaw) return alert('Compila campi!');
   if(sess===0&&t==='bulk') return alert('⚠️ Con 0 sessioni niente massa.');
   if(sess===1&&t==='bulk') return alert('⚠️ Almeno 2 sessioni per massa.');
@@ -1540,7 +1699,14 @@ window.completeSet=function(){
         clearInterval(ST.tmrId);
         BeepPlayer.endOfRest();  // PUNTO 4: beep "fine pausa"
         ST.woPhase='ready';
-        render();
+        // PUNTO 3: se autostart attivo, parte automaticamente la serie successiva
+        if (ST.p?.autostartSeries) {
+          render();
+          // Mini-delay per dare percezione del beep prima di partire
+          setTimeout(() => { if (ST.aWo && ST.woPhase === 'ready') startSet(); }, 800);
+        } else {
+          render();
+        }
       }
     },1000);
   }
@@ -1717,8 +1883,9 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
   const waterGoal=sx==='f'?10:12;
   const dLog=ST.nutri[t2]||{k:0};
   const remK=Math.max(0,mac.kcal-(dLog.k||0));
+  const excessK=Math.max(0,(dLog.k||0)-mac.kcal); // PUNTO 19: kcal in eccesso
   const calPct=Math.min(100,((dLog.k||0)/mac.kcal)*100);
-  const motiv=(an.status!=='new'&&typeof getMotivationalMsg==='function')?getMotivationalMsg(an,ST,cW,mac,pWeek):null;
+  const motiv=(typeof getMotivationalMsg==='function')?getMotivationalMsg(an,ST,cW,mac,pWeek):null;
   // Stato salvato dei dati di oggi
   const wEntry=ST.h.find(x=>x.d===t2);
   const weightSaved=!!wEntry;
@@ -1751,6 +1918,22 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
       <span>${ST.p.g}kg</span>
     </div>
   </div>
+
+  <!-- PUNTO 19: ALERT KCAL IN ECCESSO -->
+  ${excessK>0?`<div style="background:linear-gradient(145deg,rgba(255,71,87,.10),rgba(255,71,87,.04));border:1.5px solid var(--red);border-radius:16px;padding:14px 16px;margin-bottom:14px;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+      <div style="font-size:30px;flex-shrink:0;line-height:1;">⚠️</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:11px;font-weight:700;color:var(--red);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">CALORIE SUPERATE</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.5;">Hai consumato <strong style="color:var(--red);">+${Math.round(excessK)} kcal</strong> oltre il target di oggi.</div>
+      </div>
+    </div>
+    <div style="background:rgba(0,0,0,.25);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--mut);line-height:1.5;">
+      📊 Oggi: <strong style="color:var(--text);">${Math.round(dLog.k||0)}</strong> / ${Math.round(mac.kcal)} kcal target<br>
+      🎯 Per il resto della giornata: <strong style="color:var(--ora);">target raggiunto</strong>, ferma qui i pasti se possibile.<br>
+      💡 ${excessK<200?'Eccesso piccolo, recupera con +15 min di camminata oggi.':excessK<500?`Recupera con +30 min cardio oggi o riduci di ~${Math.round(excessK/3)} kcal/giorno per i prossimi 3 giorni.`:`Eccesso importante. Riduci di ~${Math.round(excessK/4)} kcal/giorno per i prossimi 4 giorni e aggiungi 30 min cardio domani.`}
+    </div>
+  </div>`:''}
 
   <!-- MESSAGGIO MOTIVAZIONALE ADATTIVO -->
   ${motiv?`<div style="background:var(--card);border-left:4px solid ${motiv.color};border-radius:0 16px 16px 0;padding:16px 18px;margin-bottom:14px;display:flex;gap:14px;align-items:flex-start;">
@@ -2341,16 +2524,33 @@ window.renderSettings = function(mac){
     <span class="lbl">DURATA SESSIONE</span><select id="eDur"><option value="45" ${ST.p.dur===45?'selected':''}>45 minuti</option><option value="60" ${ST.p.dur===60?'selected':''}>60 minuti</option><option value="90" ${ST.p.dur===90?'selected':''}>90 minuti</option></select>
     <span class="lbl">CARDIO BASE / SETTIMANA (l'AI ricalcola)</span><select id="eCardio"><option value="0" ${ST.p.cardioLevel===0?'selected':''}>0 — Solo pesi</option><option value="1" ${ST.p.cardioLevel===1?'selected':''}>1 — Leggero</option><option value="2" ${ST.p.cardioLevel===2?'selected':''}>2 — Moderato</option><option value="3" ${ST.p.cardioLevel===3?'selected':''}>3 — Intenso</option></select>
     <span class="lbl" style="margin-bottom:8px;">INTOLLERANZE (aggiorna)</span>
-    <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;">${INTOL_LIST.map(i=>`<span class="intol-chip2 ${(ST.p.intol||[]).includes(i.id)?'on':''}" data-id="${i.id}" onclick="this.classList.toggle('on')">${i.icon} ${i.label}</span>`).join('')}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;">${INTOL_LIST.map(i=>`<span class="intol-chip2 ${(ST.p.intol||[]).includes(i.id)?'on':''}" data-id="${i.id}" onclick="toggleIntolChip(this)">${i.icon} ${i.label}</span>`).join('')}</div>
     <span class="lbl" style="margin-bottom:8px;">FOCUS DI ALLENAMENTO</span>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:14px;">
-      ${FOCUS_LIST.map(f=>{const isOn=(ST.p.focus||'total')===f.id;return`<div class="focus-chip2 ${isOn?'on':''}" data-focus="${f.id}" style="border-color:${isOn?f.col:'var(--bord)'};background:${isOn?f.col+'12':'var(--surf)'};" onclick="document.querySelectorAll('.focus-chip2').forEach(x=>{x.classList.remove('on');x.style.borderColor='var(--bord)';x.style.background='var(--surf)';});this.classList.add('on');this.style.borderColor=FOCUS_LIST.find(x=>x.id===this.dataset.focus).col;this.style.background=FOCUS_LIST.find(x=>x.id===this.dataset.focus).col+'12';"><div style="font-size:16px;margin-bottom:2px;">${f.icon}</div><div style="font-size:10px;font-weight:700;line-height:1.2;">${f.label}</div></div>`;}).join('')}
+    <div id="focusChips" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:14px;">
+      ${FOCUS_LIST.map(f=>{const isOn=(ST.p.focus||'total')===f.id;return`<div class="focus-chip2 ${isOn?'on':''}" data-focus="${f.id}" data-col="${f.col}" style="border-color:${isOn?f.col:'var(--bord)'};background:${isOn?f.col+'12':'var(--surf)'};padding:10px 6px;border:2px solid var(--bord);border-radius:12px;cursor:pointer;text-align:center;transition:.2s;" onclick="pickFocusChip(this)"><div style="font-size:16px;margin-bottom:2px;">${f.icon}</div><div style="font-size:10px;font-weight:700;line-height:1.2;">${f.label}</div></div>`;}).join('')}
     </div>
     <span class="lbl" style="margin-bottom:8px;">ALIMENTAZIONE</span>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:14px;">
-      ${[{id:'omnivore',icon:'🥩',lbl:'Onnivoro'},{id:'vegetarian',icon:'🥦',lbl:'Vegetariano'},{id:'vegan',icon:'🌱',lbl:'Vegano'}].map(d=>{const isOn=(ST.p.diet||'omnivore')===d.id;return`<div class="diet-chip2 ${isOn?'on':''}" data-diet="${d.id}" style="padding:12px 6px;border-radius:12px;border:2px solid ${isOn?'var(--acc)':'var(--bord)'};background:${isOn?'rgba(197,241,53,.08)':'var(--surf)'};cursor:pointer;text-align:center;transition:.2s;" onclick="document.querySelectorAll('.diet-chip2').forEach(x=>{x.classList.remove('on');x.style.borderColor='var(--bord)';x.style.background='var(--surf)';});this.classList.add('on');this.style.borderColor='var(--acc)';this.style.background='rgba(197,241,53,.08);'"><div style='font-size:20px;margin-bottom:3px;'>${d.icon}</div><div style='font-size:10px;font-weight:700;'>${d.lbl}</div></div>`;}).join('')}
+    <div id="dietChips" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:14px;">
+      ${[{id:'omnivore',icon:'🥩',lbl:'Onnivoro'},{id:'vegetarian',icon:'🥦',lbl:'Vegetariano'},{id:'vegan',icon:'🌱',lbl:'Vegano'}].map(d=>{const isOn=(ST.p.diet||'omnivore')===d.id;return`<div class="diet-chip2 ${isOn?'on':''}" data-diet="${d.id}" style="padding:12px 6px;border-radius:12px;border:2px solid ${isOn?'var(--acc)':'var(--bord)'};background:${isOn?'rgba(197,241,53,.08)':'var(--surf)'};cursor:pointer;text-align:center;transition:.2s;" onclick="pickDietChip(this)"><div style="font-size:20px;margin-bottom:3px;">${d.icon}</div><div style="font-size:10px;font-weight:700;">${d.lbl}</div></div>`;}).join('')}
     </div>
     <button class="btn" onclick="updateProgram()">SALVA E RICALCOLA TUTTO</button>
+  </div>
+
+  <!-- PREFERENZE ALLENAMENTO -->
+  <div class="card" style="border-color:var(--gre);">
+    <div class="bebas" style="font-size:20px;color:var(--gre);margin-bottom:10px;">🏋️ PREFERENZE ALLENAMENTO</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--bord);">
+      <div style="flex:1;padding-right:10px;">
+        <div style="font-size:14px;font-weight:600;color:var(--text);">Avvia automaticamente la serie</div>
+        <div style="font-size:11px;color:var(--mut);margin-top:2px;line-height:1.4;">Quando finisce la pausa, parte subito la serie successiva senza dover toccare lo schermo.</div>
+      </div>
+      <label class="switch-wrap" style="position:relative;display:inline-block;width:50px;height:28px;flex-shrink:0;">
+        <input type="checkbox" id="setAutostart" ${ST.p.autostartSeries?'checked':''} onchange="toggleAutostart(this.checked)" style="opacity:0;width:0;height:0;">
+        <span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${ST.p.autostartSeries?'var(--gre)':'var(--bord)'};border-radius:28px;transition:.2s;"></span>
+        <span style="position:absolute;height:22px;width:22px;left:${ST.p.autostartSeries?'25px':'3px'};top:3px;background:#fff;border-radius:50%;transition:.2s;"></span>
+      </label>
+    </div>
+    <div style="font-size:11px;color:var(--mut);margin-top:10px;line-height:1.4;">💡 Quando attivo, partirà un beep e dopo 0.8 sec inizia la serie. Premi "ESCI" per interrompere in qualsiasi momento.</div>
   </div>
 
   <!-- ORARI PERSONALIZZATI -->
