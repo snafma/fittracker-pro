@@ -1042,11 +1042,11 @@ Regole:
     return{items:local.items||[],total:local.kcal,unknown:!!local.unknown,fallback:true};
   }
 }
-// ── DIETA: percentuali calibrate per somma totale = 100% delle kcal target ──
+// ── CONSIGLI NUTRIZIONALI: percentuali calibrate per somma totale = 100% delle kcal target ──
 // Allenamento: col 22% / sp1 8% / pra 30% / sp2 10% / cen 30%  =  100%
 // Riposo:      col 22% / sp1 8% / pra 32% / sp2 8%  / cen 30%  =  100%
 // Le grammature in ogni opzione sono adattate al kcal del singolo pasto.
-window.buildMeals=function(macros,intol=[],sex='m',isRestDay=false,diet='omnivore',times){
+window.buildMeals=function(macros,intol=[],sex='m',isRestDay=false,diet='omnivore',times,usesSupplements=false){
   const haG=intol.includes('gluten'),haL=intol.includes('lactose'),haE=intol.includes('eggs'),haN=intol.includes('nuts'),haF=intol.includes('fish');
   const isVeg=diet==='vegetarian'||diet==='vegan',isVegan=diet==='vegan';
   // Orari personalizzati o default
@@ -1061,18 +1061,28 @@ window.buildMeals=function(macros,intol=[],sex='m',isRestDay=false,diet='omnivor
   const kPra=Math.round(macros.kcal*PCT.pra);
   const kSp2=Math.round(macros.kcal*PCT.sp2);
   const kCen=macros.kcal-kCol-kSp1-kPra-kSp2; // residuo per garantire somma esatta
-  // Helper grammature in base alle kcal del pasto
-  const gramRice=k=>Math.max(40,Math.round(k*0.18));    // ~18g riso ogni 100kcal pasto totale
-  const gramPasta=k=>Math.max(50,Math.round(k*0.20));   // pasta cruda
-  const gramProt=k=>Math.max(100,Math.round(k*0.22));   // carne/pesce
+  // PUNTO 20: helper grammature SEMPRE arrotondate alla decina (10, 20, 30...)
+  // Le kcal vengono ricalcolate sui grammi arrotondati per restare nel target.
+  // Densità kcal/g approssimative: riso crudo 3.5, pasta cruda 3.6, carne magra 1.5,
+  // olio EVO 9.0, avena 3.8, pane integrale 2.5
+  const round10=g=>Math.max(10,Math.round(g/10)*10);
+  const gramRice=k=>round10(Math.max(40,k*0.18));
+  const gramPasta=k=>round10(Math.max(50,k*0.20));
+  const gramProt=k=>round10(Math.max(100,k*0.22));
+  const gramOat=k=>round10(Math.max(20,k*0.12));      // avena
+  const gramYog=k=>round10(Math.max(100,k*0.30));     // yogurt
+  const gramLeg=k=>round10(Math.max(80,k*0.30));      // legumi cotti (densità ~1 kcal/g)
+  const gramTofu=k=>round10(Math.max(80,k*0.18));     // tofu
   const olio='1 cucchiaio EVO (~10g)';
   // ── COLAZIONE ──
   let colOpts=[];
-  if(!haL&&!isVegan) colOpts.push({lbl:'🥛 Proteica classica',items:[`Shaker 30g Whey/Isolate (~120 kcal)`,'Caffè amaro','15g Cioccolato fondente 85%','1 fetta pane integrale tostato']});
-  if(!haL&&!isVegan) colOpts.push({lbl:'🥣 Yogurt & Avena',items:[`200g Yogurt Greco 0%`,`${Math.round(kCol*0.12)}g Avena integrale`,(!haN?'15g Mandorle':'1 frutto'),'Caffè']});
+  if(!haL&&!isVegan&&usesSupplements) colOpts.push({lbl:'🥛 Proteica con Shaker',items:[`Shaker 30g Whey/Isolate (~120 kcal)`,'Caffè amaro','15g Cioccolato fondente 85%','1 fetta pane integrale tostato']});
+  if(!haL&&!isVegan&&!usesSupplements) colOpts.push({lbl:'🧀 Proteica classica',items:[`${round10(kCol*0.20)}g Ricotta o Fiocchi di Latte 0%`,'Caffè amaro','15g Cioccolato fondente 85%','1 fetta pane integrale tostato']});
+  if(!haL&&!isVegan) colOpts.push({lbl:'🥣 Yogurt & Avena',items:[`200g Yogurt Greco 0%`,`${round10(kCol*0.12)}g Avena integrale`,(!haN?'15g Mandorle':'1 frutto'),'Caffè']});
   if(haL||isVegan) colOpts.push({lbl:'🌱 Vegana / Plant-based',items:['200g Yogurt soia o cocco',(!haG?'40g Avena':'40g Riso soffiato'),'1 banana','Caffè o Tè verde']});
   if(!haE&&!isVegan) colOpts.push({lbl:'🍳 Uova & Toast',items:['2 uova strapazzate',(!haG?'1 fetta pane integrale':'1 gallette di riso'),'1 frutto','Caffè']});
-  if(isVegan) colOpts.push({lbl:'🌿 Proteica Vegana',items:['30g Proteine vegetali in polvere','200ml Latte vegetale',(!haN?'20g Mandorle':'2 Datteri'),'Caffè']});
+  if(isVegan&&usesSupplements) colOpts.push({lbl:'🌿 Proteica Vegana (polvere)',items:['30g Proteine vegetali in polvere','200ml Latte vegetale',(!haN?'20g Mandorle':'2 Datteri'),'Caffè']});
+  if(isVegan&&!usesSupplements) colOpts.push({lbl:'🌿 Vegana ad alto contenuto proteico',items:['200g Yogurt di soia','40g Fiocchi d\'avena','30g Semi misti (lino, chia, canapa)',(!haN?'20g Mandorle':'1 cucchiaino burro di mandorle'),'Caffè']});
   if(!colOpts.length) colOpts.push({lbl:'🍌 Base',items:['2 banane','1 tazza tè verde','30g semi di zucca']});
   // ── SPUNTINO MATTINA ──
   let sp1Opts=[];
@@ -1084,12 +1094,12 @@ window.buildMeals=function(macros,intol=[],sex='m',isRestDay=false,diet='omnivor
   let praOpts=[];
   if(!isVeg){
     praOpts.push({lbl:'🍗 Pollo + Riso',items:[`${gP_pra}g Petto di pollo`,`${gR_pra}g Riso integrale (peso crudo)`,olio,'Verdure a piacere']});
-    if(!haF) praOpts.push({lbl:'🐟 Tonno + Riso',items:[`${Math.round(gP_pra*0.8)}g Tonno al naturale`,`${gR_pra}g Riso (crudo)`,olio,'Pomodori e insalata']});
-    praOpts.push({lbl:'🥩 Manzo magro + Patate',items:[`${gP_pra}g Tagliata di manzo magro`,`${Math.round(gR_pra*2.5)}g Patate lesse`,olio,'Verdure grigliate']});
+    if(!haF) praOpts.push({lbl:'🐟 Tonno + Riso',items:[`${round10(gP_pra*0.8)}g Tonno al naturale`,`${gR_pra}g Riso (crudo)`,olio,'Pomodori e insalata']});
+    praOpts.push({lbl:'🥩 Manzo magro + Patate',items:[`${gP_pra}g Tagliata di manzo magro`,`${round10(gR_pra*2.5)}g Patate lesse`,olio,'Verdure grigliate']});
   }
   if(!haE&&!isVegan) praOpts.push({lbl:'🥚 Uova + Pasta',items:['3 uova sode',(!haG?`${gC_pra}g Pasta integrale (cruda)`:`${gC_pra}g Pasta di riso (cruda)`),olio,'Insalata mista']});
   if(isVeg){
-    praOpts.push({lbl:'🫘 Legumi + Cereali',items:[`${Math.round(gP_pra*1.3)}g Lenticchie o ceci cotti`,(!haG?`${gR_pra}g Farro (crudo)`:`${gR_pra}g Riso (crudo)`),olio,'Verdure']});
+    praOpts.push({lbl:'🫘 Legumi + Cereali',items:[`${round10(gP_pra*1.3)}g Lenticchie o ceci cotti`,(!haG?`${gR_pra}g Farro (crudo)`:`${gR_pra}g Riso (crudo)`),olio,'Verdure']});
     praOpts.push({lbl:'🟡 Tofu Grigliato',items:[`${gP_pra}g Tofu marinato`,`${gR_pra}g Riso basmati (crudo)`,'Verdure miste',olio]});
     praOpts.push({lbl:'🌿 Quinoa Bowl',items:[`${gR_pra}g Quinoa (cruda)`,(!haN?'20g Noci':'30g Semi misti'),'½ Avocado','Verdure crude']});
   }
@@ -1102,17 +1112,18 @@ window.buildMeals=function(macros,intol=[],sex='m',isRestDay=false,diet='omnivor
       ],isRestSnack:true}
     : {id:'sp2',pct:PCT.sp2,n:`⚡ PRE-WORKOUT  ${T.sp2}`,kcal:kSp2,opts:[
         {lbl:'⚡ Pre-WO base',items:['1 banana','Caffè nero (opzionale)','1 fetta pane integrale + miele']},
-        ...(!haL?[{lbl:'🥛 Pre-WO proteico',items:['Shaker 20g Whey','1 banana','5g Avena']}]:[]),
+        ...(!haL&&usesSupplements?[{lbl:'🥛 Pre-WO proteico (shaker)',items:['Shaker 20g Whey','1 banana','5g Avena']}]:[]),
+        ...(!haL&&!usesSupplements?[{lbl:'🍶 Pre-WO cibo solido',items:['200g Yogurt Greco 0%','1 banana','5g Avena','1 cucchiaino miele']}]:[]),
       ]};
   // ── CENA ──
   const gP_cen=gramProt(kCen),gR_cen=gramRice(kCen);
   let cenOpts=[];
-  if(!isVeg&&!haF) cenOpts.push({lbl:'🐟 Pesce Bianco',items:[`${Math.round(gP_cen*1.2)}g Merluzzo / Orata / Branzino`,'Verdure cotte abbondanti',(!haG?'1 fetta pane integrale':`${Math.round(gR_cen*1.5)}g Patate lesse`),olio]});
-  if(!isVeg) cenOpts.push({lbl:'🥩 Carne Magra',items:[`${gP_cen}g Pollo / Tacchino / Manzo magro`,(!haG?`${Math.round(gR_cen*0.8)}g Pane integrale`:`${gR_cen}g Riso o Patate (crudo)`),'Verdure',olio]});
-  cenOpts.push({lbl:'🫘 Legumi & Verdure',items:[`${Math.round(gP_cen*1.3)}g Lenticchie o ceci cotti`,(!haE&&!isVegan?'1-2 uova alla coque':`${Math.round(gP_cen*0.5)}g Tofu grigliato`),'Verdure saltate',olio]});
+  if(!isVeg&&!haF) cenOpts.push({lbl:'🐟 Pesce Bianco',items:[`${round10(gP_cen*1.2)}g Merluzzo / Orata / Branzino`,'Verdure cotte abbondanti',(!haG?'1 fetta pane integrale':`${round10(gR_cen*1.5)}g Patate lesse`),olio]});
+  if(!isVeg) cenOpts.push({lbl:'🥩 Carne Magra',items:[`${gP_cen}g Pollo / Tacchino / Manzo magro`,(!haG?`${round10(gR_cen*0.8)}g Pane integrale`:`${gR_cen}g Riso o Patate (crudo)`),'Verdure',olio]});
+  cenOpts.push({lbl:'🫘 Legumi & Verdure',items:[`${round10(gP_cen*1.3)}g Lenticchie o ceci cotti`,(!haE&&!isVegan?'1-2 uova alla coque':`${round10(gP_cen*0.5)}g Tofu grigliato`),'Verdure saltate',olio]});
   if(isVeg){
     cenOpts.push({lbl:'🟡 Tofu & Verdure',items:[`${gP_cen}g Tofu o Tempeh`,'Wok di verdure colorate',(!haG?'1 fetta pane integrale':`${gR_cen}g Patate lesse`),olio]});
-    if(!isVegan) cenOpts.push({lbl:'🥛 Ricotta & Verdure',items:[`${Math.round(gP_cen*0.9)}g Ricotta`,'Insalata abbondante','2 fette pane integrale',olio]});
+    if(!isVegan) cenOpts.push({lbl:'🥛 Ricotta & Verdure',items:[`${round10(gP_cen*0.9)}g Ricotta`,'Insalata abbondante','2 fette pane integrale',olio]});
   }
   return[
     {id:'col',pct:PCT.col,n:`🌅 COLAZIONE  ${T.col}`,kcal:kCol,opts:colOpts},
@@ -1419,7 +1430,9 @@ window.initProgram=function(){
   let tDate=new Date(tRaw);
   const minWk=t==='cut'?Math.abs(w-g)/0.8:Math.abs(w-g)/0.3;
   if((tDate-new Date())/(7*864e5)<minWk){tDate=new Date(new Date().getTime()+minWk*7*864e5);alert('Data corretta dall\'AI.');}
-  ST.p={s:w,g:g,t,dur,targetD:tDate.toISOString().split('T')[0],sessions:sess,cardioLevel:cl,intol,loc,focus,diet:'omnivore'};
+  // PUNTO 12: integratori proteici (chip, default NO)
+  const usesSupplements=document.querySelector('.supp-chip.on')?.dataset?.supp==='yes';
+  ST.p={s:w,g:g,t,dur,targetD:tDate.toISOString().split('T')[0],sessions:sess,cardioLevel:cl,intol,loc,focus,diet,usesSupplements};
   ST.programStart=currentDateStr||getToday();
   if(!ST.h.length) ST.h=[{d:ST.programStart,w:w}];
   save();
@@ -1456,6 +1469,17 @@ window.pickDietChip=function(el){
   el.style.borderColor='var(--acc)';
   el.style.background='rgba(197,241,53,.08)';
 };
+// PUNTO 12: toggle integratori
+window.pickSuppChip=function(el){
+  document.querySelectorAll('#suppChips .supp-chip2').forEach(x=>{
+    x.classList.remove('on');
+    x.style.borderColor='var(--bord)';
+    x.style.background='var(--surf)';
+  });
+  el.classList.add('on');
+  el.style.borderColor='var(--acc)';
+  el.style.background='rgba(197,241,53,.08)';
+};
 
 window.updateProgram=function(){
   const g=parseFloat(vv('eG')),t=vv('eT'),dur=parseInt(vv('eDur')),tRaw=vv('eDate'),sess=parseInt(vv('eSess'))||3,cl=parseInt(vv('eCardio'))||1,loc=vv('eLoc');
@@ -1466,6 +1490,9 @@ window.updateProgram=function(){
   const focus=focusEl?.dataset?.focus||ST.p.focus||'total';
   const dietEl=document.querySelector('.diet-chip2.on');
   const diet=dietEl?.dataset?.diet||ST.p.diet||'omnivore';
+  // PUNTO 12: legge usesSupplements, con fallback al valore salvato
+  const suppEl=document.querySelector('.supp-chip2.on');
+  const usesSupplements=suppEl?(suppEl.dataset?.supp==='yes'):(ST.p.usesSupplements||false);
   // Orari personalizzati pasti + allenamento (preservo valori salvati se input non presenti)
   const times={
     col:vv('tCol')||ST.p.times?.col||'07:00',
@@ -1482,9 +1509,9 @@ window.updateProgram=function(){
   const currW=ST.h[ST.h.length-1]?.w||70;
   const minWk=t==='cut'?Math.abs(currW-g)/0.8:Math.abs(currW-g)/0.3;
   if((tDate-new Date())/(7*864e5)<minWk){tDate=new Date(new Date().getTime()+minWk*7*864e5);alert('Data corretta dall\'AI.');}
-  ST.p.g=g;ST.p.t=t;ST.p.dur=dur;ST.p.targetD=tDate.toISOString().split('T')[0];ST.p.sessions=sess;ST.p.cardioLevel=cl;ST.p.intol=intol;ST.p.loc=loc;ST.p.focus=focus;ST.p.diet=diet;
+  ST.p.g=g;ST.p.t=t;ST.p.dur=dur;ST.p.targetD=tDate.toISOString().split('T')[0];ST.p.sessions=sess;ST.p.cardioLevel=cl;ST.p.intol=intol;ST.p.loc=loc;ST.p.focus=focus;ST.p.diet=diet;ST.p.usesSupplements=usesSupplements;
   ST.p.times=times;ST.p.workoutTime=workoutTime;
-  save();alert('Programma aggiornato! Dieta e allenamenti ricalcolati.');
+  save();alert('Programma aggiornato! Consigli nutrizionali e allenamenti ricalcolati.');
 }
 window.changeCurrentDate=function(dStr){currentDateStr=dStr;render();}
 window.logWeight=function(){
@@ -1859,7 +1886,7 @@ window.renderSetup = function(){
   const defDate=new Date(new Date().getTime()+12*7*864e5).toISOString().split('T')[0];
   const cW=ST.h.length?ST.h[ST.h.length-1].w:70;
   const sx=AU.profile?.sx||'m';
-  return`<div style="padding:10px 0 0;"> <div class="bebas" style="font-size:36px;color:var(--acc);margin-bottom:4px;">CIAO ${AU.user.toUpperCase()}!</div> <div style="color:var(--mut);font-size:13px;margin-bottom:16px;">Configura il tuo programma personale. L'AI lo adatterà ogni settimana.</div> <div class="card"> <span class="lbl">PESO ATTUALE (KG)</span><input type="number" id="iW" value="${cW}" step=".1"> <span class="lbl">PESO OBIETTIVO (KG)</span><input type="number" id="gW" placeholder="Es. ${sx==='f'?'60':'78'} — inserisci il tuo obiettivo" step=".1"> <span class="lbl">DATA OBIETTIVO (PREVISTA)</span><input type="date" id="iDate" value="${defDate}"> <span class="lbl">STRATEGIA</span> <select id="iT"><option value="cut">Definizione (Perdita Grasso)</option><option value="bulk">Massa (Aumento Muscolo)</option></select> <span class="lbl">DOVE TI ALLENI?</span> <select id="iLoc"><option value="gym" selected>🏋️ In Palestra (con attrezzi)</option><option value="home">🏠 A Casa (corpo libero)</option></select> <span class="lbl">SESSIONI DI ALLENAMENTO A SETTIMANA</span> <select id="iSess"> <option value="0">0 — Solo Dieta &amp; Passi (nessuna palestra)</option> <option value="1">1 sessione/settimana</option> <option value="2">2 sessioni/settimana</option> <option value="3" selected>3 sessioni/settimana (consigliato)</option> <option value="4">4 sessioni/settimana</option> <option value="5">5 sessioni/settimana</option> <option value="6">6 sessioni/settimana (intenso)</option> </select> <span class="lbl">DURATA OGNI SESSIONE</span> <select id="iDur"><option value="45">45 minuti</option><option value="60" selected>60 minuti (ideale)</option><option value="90">90 minuti</option></select> <span class="lbl">SESSIONI CARDIO DI BASE A SETTIMANA</span> <select id="iCardio"><option value="0">0 — Solo pesi</option><option value="1" selected>1 — Leggero</option><option value="2">2 — Moderato</option><option value="3">3 — Intenso</option></select> <span class="lbl" style="margin-bottom:8px;">INTOLLERANZE ALIMENTARI (tocca per selezionare)</span> <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;"> ${INTOL_LIST.map(i=>`<span class="intol-chip" data-id="${i.id}" onclick="this.classList.toggle('on')">${i.icon} ${i.label}</span>`).join('')}
+  return`<div style="padding:10px 0 0;"> <div class="bebas" style="font-size:36px;color:var(--acc);margin-bottom:4px;">CIAO ${AU.user.toUpperCase()}!</div> <div style="color:var(--mut);font-size:13px;margin-bottom:16px;">Configura il tuo programma personale. L'AI lo adatterà ogni settimana.</div> <div class="card"> <span class="lbl">PESO ATTUALE (KG)</span><input type="number" id="iW" value="${cW}" step=".1"> <span class="lbl">PESO OBIETTIVO (KG)</span><input type="number" id="gW" placeholder="Es. ${sx==='f'?'60':'78'} — inserisci il tuo obiettivo" step=".1"> <span class="lbl">DATA OBIETTIVO (PREVISTA)</span><input type="date" id="iDate" value="${defDate}"> <span class="lbl">STRATEGIA</span> <select id="iT"><option value="cut">Definizione (Perdita Grasso)</option><option value="bulk">Massa (Aumento Muscolo)</option></select> <span class="lbl">DOVE TI ALLENI?</span> <select id="iLoc"><option value="gym" selected>🏋️ In Palestra (con attrezzi)</option><option value="home">🏠 A Casa (corpo libero)</option></select> <span class="lbl">SESSIONI DI ALLENAMENTO A SETTIMANA</span> <select id="iSess"> <option value="0">0 — Solo Nutrizione &amp; Passi (nessuna palestra)</option> <option value="1">1 sessione/settimana</option> <option value="2">2 sessioni/settimana</option> <option value="3" selected>3 sessioni/settimana (consigliato)</option> <option value="4">4 sessioni/settimana</option> <option value="5">5 sessioni/settimana</option> <option value="6">6 sessioni/settimana (intenso)</option> </select> <span class="lbl">DURATA OGNI SESSIONE</span> <select id="iDur"><option value="45">45 minuti</option><option value="60" selected>60 minuti (ideale)</option><option value="90">90 minuti</option></select> <span class="lbl">SESSIONI CARDIO DI BASE A SETTIMANA</span> <select id="iCardio"><option value="0">0 — Solo pesi</option><option value="1" selected>1 — Leggero</option><option value="2">2 — Moderato</option><option value="3">3 — Intenso</option></select> <span class="lbl" style="margin-bottom:8px;">INTOLLERANZE ALIMENTARI (tocca per selezionare)</span> <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;"> ${INTOL_LIST.map(i=>`<span class="intol-chip" data-id="${i.id}" onclick="this.classList.toggle('on')">${i.icon} ${i.label}</span>`).join('')}
   <span class="lbl" style="margin-bottom:8px;">FOCUS DI ALLENAMENTO — cosa vuoi sviluppare?</span>
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:14px;">
     ${FOCUS_LIST.map((f,i)=>`<div class="focus-chip ${i===0?'on':''}" data-focus="${f.id}" style="border-color:${i===0?f.col:'var(--bord)'};background:${i===0?f.col+'12':'var(--surf)'};" onclick="document.querySelectorAll('.focus-chip').forEach(x=>{x.classList.remove('on');x.style.borderColor='var(--bord)';x.style.background='var(--surf)';});this.classList.add('on');this.style.borderColor=FOCUS_LIST.find(x=>x.id===this.dataset.focus).col;this.style.background=FOCUS_LIST.find(x=>x.id===this.dataset.focus).col+'12';"><div style="font-size:18px;margin-bottom:2px;">${f.icon}</div><div style="font-size:10px;font-weight:700;line-height:1.2;">${f.label}</div></div>`).join('')}
@@ -1869,6 +1896,10 @@ window.renderSetup = function(){
   <span class="lbl" style="margin-bottom:8px;">TIPO DI ALIMENTAZIONE</span>
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:14px;">
     ${[{id:'omnivore',icon:'🥩',lbl:'Onnivoro'},{id:'vegetarian',icon:'🥦',lbl:'Vegetariano'},{id:'vegan',icon:'🌱',lbl:'Vegano'}].map((d,i)=>`<div class="diet-chip ${i===0?'on':''}" data-diet="${d.id}" style="padding:12px 6px;border-radius:12px;border:2px solid ${i===0?'var(--acc)':'var(--bord)'};background:${i===0?'rgba(197,241,53,.08)':'var(--surf)'};cursor:pointer;text-align:center;transition:.2s;" onclick="document.querySelectorAll('.diet-chip').forEach(x=>{x.classList.remove('on');x.style.borderColor='var(--bord)';x.style.background='var(--surf)';});this.classList.add('on');this.style.borderColor='var(--acc)';this.style.background='rgba(197,241,53,.08);'"><div style='font-size:20px;margin-bottom:3px;'>${d.icon}</div><div style='font-size:10px;font-weight:700;'>${d.lbl}</div></div>`).join('')}
+  </div>
+  <span class="lbl" style="margin-bottom:8px;">USI INTEGRATORI PROTEICI? (whey, proteine in polvere)</span>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px;">
+    ${[{id:'yes',icon:'💪',lbl:'Sì, li uso'},{id:'no',icon:'🌱',lbl:'No, solo cibi'}].map((s,i)=>`<div class="supp-chip ${i===1?'on':''}" data-supp="${s.id}" style="padding:12px 6px;border-radius:12px;border:2px solid ${i===1?'var(--acc)':'var(--bord)'};background:${i===1?'rgba(197,241,53,.08)':'var(--surf)'};cursor:pointer;text-align:center;transition:.2s;" onclick="document.querySelectorAll('.supp-chip').forEach(x=>{x.classList.remove('on');x.style.borderColor='var(--bord)';x.style.background='var(--surf)';});this.classList.add('on');this.style.borderColor='var(--acc)';this.style.background='rgba(197,241,53,.08)';"><div style="font-size:20px;margin-bottom:3px;">${s.icon}</div><div style="font-size:10px;font-weight:700;">${s.lbl}</div></div>`).join('')}
   </div>
   <button class="btn" onclick="initProgram()">ATTIVA IL SISTEMA ▸</button>
   </div></div>`;
@@ -2165,7 +2196,7 @@ window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,to
 window.renderDiet = function(t2,mac,an,sx,todayWoId){
   const loggedRest=ST.wLog.find(x=>x.d===t2)?.isRest===true;
   const isRestDay=loggedRest||(todayWoId==='rest')||(todayWoId==='cardio');
-  const meals=buildMeals(mac,ST.p.intol||[],sx,isRestDay,ST.p.diet||'omnivore',ST.p.times);
+  const meals=buildMeals(mac,ST.p.intol||[],sx,isRestDay,ST.p.diet||'omnivore',ST.p.times,ST.p.usesSupplements||false);
   const dLog=ST.nutri[t2]||{k:0,p:0,c:0,f:0,logged:[],skipped:[],cheatLog:[]};
   if(!dLog.cheatLog) dLog.cheatLog=[];
   const remK=Math.max(0,mac.kcal-dLog.k);
@@ -2520,7 +2551,7 @@ window.renderSettings = function(mac){
     <span class="lbl">DATA OBIETTIVO</span><input type="date" id="eDate" value="${ST.p.targetD}">
     <span class="lbl">STRATEGIA</span><select id="eT"><option value="cut" ${ST.p.t==='cut'?'selected':''}>Definizione (Perdita Grasso)</option><option value="bulk" ${ST.p.t==='bulk'?'selected':''}>Massa (Aumento Muscolo)</option></select>
     <span class="lbl">DOVE TI ALLENI?</span><select id="eLoc"><option value="gym" ${ST.p.loc==='gym'?'selected':''}>🏋️ In Palestra</option><option value="home" ${ST.p.loc==='home'?'selected':''}>🏠 A Casa</option></select>
-    <span class="lbl">SESSIONI / SETTIMANA</span><select id="eSess">${[0,1,2,3,4,5,6].map(n=>`<option value="${n}" ${(ST.p.sessions||3)===n?'selected':''}>${n===0?'0 — Solo Dieta & Passi':n+' sessioni'}</option>`).join('')}</select>
+    <span class="lbl">SESSIONI / SETTIMANA</span><select id="eSess">${[0,1,2,3,4,5,6].map(n=>`<option value="${n}" ${(ST.p.sessions||3)===n?'selected':''}>${n===0?'0 — Solo Nutrizione & Passi':n+' sessioni'}</option>`).join('')}</select>
     <span class="lbl">DURATA SESSIONE</span><select id="eDur"><option value="45" ${ST.p.dur===45?'selected':''}>45 minuti</option><option value="60" ${ST.p.dur===60?'selected':''}>60 minuti</option><option value="90" ${ST.p.dur===90?'selected':''}>90 minuti</option></select>
     <span class="lbl">CARDIO BASE / SETTIMANA (l'AI ricalcola)</span><select id="eCardio"><option value="0" ${ST.p.cardioLevel===0?'selected':''}>0 — Solo pesi</option><option value="1" ${ST.p.cardioLevel===1?'selected':''}>1 — Leggero</option><option value="2" ${ST.p.cardioLevel===2?'selected':''}>2 — Moderato</option><option value="3" ${ST.p.cardioLevel===3?'selected':''}>3 — Intenso</option></select>
     <span class="lbl" style="margin-bottom:8px;">INTOLLERANZE (aggiorna)</span>
@@ -2532,6 +2563,10 @@ window.renderSettings = function(mac){
     <span class="lbl" style="margin-bottom:8px;">ALIMENTAZIONE</span>
     <div id="dietChips" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:14px;">
       ${[{id:'omnivore',icon:'🥩',lbl:'Onnivoro'},{id:'vegetarian',icon:'🥦',lbl:'Vegetariano'},{id:'vegan',icon:'🌱',lbl:'Vegano'}].map(d=>{const isOn=(ST.p.diet||'omnivore')===d.id;return`<div class="diet-chip2 ${isOn?'on':''}" data-diet="${d.id}" style="padding:12px 6px;border-radius:12px;border:2px solid ${isOn?'var(--acc)':'var(--bord)'};background:${isOn?'rgba(197,241,53,.08)':'var(--surf)'};cursor:pointer;text-align:center;transition:.2s;" onclick="pickDietChip(this)"><div style="font-size:20px;margin-bottom:3px;">${d.icon}</div><div style="font-size:10px;font-weight:700;">${d.lbl}</div></div>`;}).join('')}
+    </div>
+    <span class="lbl" style="margin-bottom:8px;">INTEGRATORI PROTEICI</span>
+    <div id="suppChips" style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px;">
+      ${[{id:'yes',icon:'💪',lbl:'Sì, li uso'},{id:'no',icon:'🌱',lbl:'No, solo cibi'}].map(s=>{const cur=ST.p.usesSupplements?'yes':'no';const isOn=cur===s.id;return`<div class="supp-chip2 ${isOn?'on':''}" data-supp="${s.id}" style="padding:12px 6px;border-radius:12px;border:2px solid ${isOn?'var(--acc)':'var(--bord)'};background:${isOn?'rgba(197,241,53,.08)':'var(--surf)'};cursor:pointer;text-align:center;transition:.2s;" onclick="pickSuppChip(this)"><div style="font-size:20px;margin-bottom:3px;">${s.icon}</div><div style="font-size:10px;font-weight:700;">${s.lbl}</div></div>`;}).join('')}
     </div>
     <button class="btn" onclick="updateProgram()">SALVA E RICALCOLA TUTTO</button>
   </div>
@@ -2556,7 +2591,7 @@ window.renderSettings = function(mac){
   <!-- ORARI PERSONALIZZATI -->
   <div class="card" style="border-color:var(--ora);">
     <div class="bebas" style="font-size:20px;color:var(--ora);margin-bottom:6px;">🕐 ORARI PERSONALIZZATI</div>
-    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:14px;">Imposta i TUOI orari di pasti e allenamento. La dieta e il piano si adattano: lo "spuntino delle 16" diventa "pre-workout" automaticamente nelle ore prima del tuo allenamento.</div>
+    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:14px;">Imposta i TUOI orari di pasti e allenamento. I consigli nutrizionali e il piano si adattano: lo "spuntino delle 16" diventa "pre-workout" automaticamente nelle ore prima del tuo allenamento.</div>
     <div class="g2">
       <div><span class="lbl">🌅 COLAZIONE</span><input type="time" id="tCol" value="${ST.p.times?.col||'07:00'}"></div>
       <div><span class="lbl">🍎 SPUNTINO MATTINA</span><input type="time" id="tSp1" value="${ST.p.times?.sp1||'10:30'}"></div>
@@ -2575,7 +2610,7 @@ window.renderSettings = function(mac){
   <!-- AI RICALCOLO PIANO -->
   <div class="card" style="border-color:var(--acc);">
     <div class="bebas" style="font-size:20px;color:var(--acc);margin-bottom:6px;">🤖 RICALCOLO AI</div>
-    <div style="font-size:12px;color:var(--mut);line-height:1.55;margin-bottom:12px;">L'AI analizza i tuoi progressi reali (peso, allenamenti completati, sgarri, costanza) e ti propone aggiustamenti su calorie, cardio e dieta come farebbe un coach esperto.</div>
+    <div style="font-size:12px;color:var(--mut);line-height:1.55;margin-bottom:12px;">L'AI analizza i tuoi progressi reali (peso, allenamenti completati, sgarri, costanza) e ti propone aggiustamenti su calorie, cardio e nutrizione come farebbe un coach esperto.</div>
     ${ST.aiPlan?`<div style="background:rgba(197,241,53,.06);border:1px solid var(--acc);border-radius:10px;padding:12px;margin-bottom:12px;">
       <div style="font-size:11px;color:var(--acc);font-weight:700;margin-bottom:6px;">ULTIMO CONSIGLIO AI · ${ST.aiPlan.date||''}</div>
       <div style="font-size:12px;color:var(--text);line-height:1.55;white-space:pre-wrap;">${(ST.aiPlan.advice||'').replace(/</g,'&lt;')}</div>
@@ -2697,7 +2732,7 @@ window.render = function() {
   const NAV_ITEMS=[
     {id:'home',ic:'🏠',lbl:'Home'},
     {id:'work',ic:'🏋️',lbl:'Allenamento'},
-    {id:'diet',ic:'🥗',lbl:'Dieta'},
+    {id:'diet',ic:'🥗',lbl:'Consigli Nutrizionali'},
     {id:'body',ic:'📊',lbl:'Analisi & Progressi'},
     {id:'measures',ic:'📐',lbl:'Misure Corporee'},
     {id:'coach',ic:'🤖',lbl:'AI Coach'},
