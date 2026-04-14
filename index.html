@@ -942,6 +942,73 @@ window.parseMeanReps=function(repsStr){
   if(!nums||nums.length===0) return 10;
   return Math.round(nums.reduce((s,n)=>s+parseInt(n),0)/nums.length);
 }
+
+// ═════════════════════════════════════════════════════════════
+// PUNTO 6 — Analytics granulari per singolo esercizio
+// Calcola per ogni esercizio: PR (peso max), 1RM stimato (Epley),
+// volume settimana corrente, numero sessioni, progressione %
+// Restituisce array ordinato per numero di sessioni (top usati)
+// ═════════════════════════════════════════════════════════════
+window.buildExerciseStats = function(wHistory) {
+  if (!wHistory || typeof wHistory !== 'object') return [];
+  const stats = {};  // exId → {sessions, maxKg, last, first, best1RM, unit, history: [{d, kg, sec, reps}]}
+
+  // Costruisco indice per esercizio
+  Object.keys(wHistory).sort().forEach(date => {
+    const dayData = wHistory[date];
+    if (!dayData || typeof dayData !== 'object') return;
+    Object.keys(dayData).forEach(exId => {
+      const entry = dayData[exId];
+      if (!entry || !entry.ok) return;
+      if (!stats[exId]) stats[exId] = { exId, sessions: 0, maxKg: 0, maxSec: 0, maxReps: 0, best1RM: 0, unit: entry.unit || 'kg', history: [] };
+      const s = stats[exId];
+      s.sessions++;
+      s.history.push({ d: date, kg: entry.kg || 0, sec: entry.sec || 0, reps: entry.reps || 0 });
+      if (entry.kg && entry.kg > s.maxKg) s.maxKg = entry.kg;
+      if (entry.sec && entry.sec > s.maxSec) s.maxSec = entry.sec;
+      if (entry.reps && entry.reps > s.maxReps) s.maxReps = entry.reps;
+    });
+  });
+
+  // Calcolo 1RM stimato (Epley) per esercizi con peso, usando reps medie dall'EX[exId]
+  const today = new Date();
+  const weekAgo = new Date(today); weekAgo.setDate(today.getDate() - 7);
+  const weekAgoStr = weekAgo.toISOString().split('T')[0];
+
+  Object.values(stats).forEach(s => {
+    const exData = (typeof EX !== 'undefined') ? EX[s.exId] : null;
+    const meanReps = exData && exData.reps ? parseMeanReps(exData.reps) : 10;
+    s.name = exData?.name || s.exId;
+    s.mus = exData?.mus || '—';
+    // 1RM Epley solo per esercizi con kg: 1RM ≈ peso × (1 + reps/30)
+    if (s.maxKg > 0) {
+      s.best1RM = Math.round(s.maxKg * (1 + meanReps / 30) * 10) / 10;
+    }
+    // Progressione: confronto primo peso vs ultimo peso registrato
+    const withKg = s.history.filter(h => h.kg > 0);
+    if (withKg.length >= 2) {
+      s.first = withKg[0].kg;
+      s.last = withKg[withKg.length - 1].kg;
+      s.progressPct = Math.round(((s.last - s.first) / s.first) * 100);
+    } else if (withKg.length === 1) {
+      s.first = withKg[0].kg; s.last = withKg[0].kg; s.progressPct = 0;
+    }
+    // Volume settimana corrente (ultimi 7 gg) per esercizi con kg
+    s.weekVolume = 0;
+    s.history.forEach(h => {
+      if (h.d >= weekAgoStr && h.kg > 0) {
+        s.weekVolume += Math.round(h.kg * meanReps);
+      }
+    });
+    // Ultima data
+    s.lastDate = s.history[s.history.length - 1]?.d || null;
+  });
+
+  // Ordina per sessioni (desc) e filtra esercizi molto poco usati
+  return Object.values(stats)
+    .filter(s => s.sessions >= 1)
+    .sort((a, b) => b.sessions - a.sessions);
+};
 // ─── FALLBACK LOCALE: usato SOLO se l'AI non risponde ───
 window.estimateCalories=function(text){
   const lower=text.toLowerCase();
@@ -2638,6 +2705,56 @@ window.renderBody = function(cW,mac,theme,pWeek,sx){
     return`<div class="bebas" style="font-size:18px;color:var(--mut);margin:16px 0 10px;letter-spacing:1px;">📈 TREND MISURE</div>${charts}`;
   })()}
   ${wLogF.length>=2?`<div class="card"><span class="lbl">VOLUME ALLENAMENTI (KG)</span>${svg(wLogF,'vol',theme,90)}</div>`:''}
+
+  <!-- PUNTO 6: ANALISI GRANULARE PER ESERCIZIO -->
+  ${(() => {
+    const exStats = buildExerciseStats(ST.wHistory || {});
+    if (exStats.length === 0) return '';
+    const top = exStats.slice(0, 8); // top 8 esercizi più frequenti
+    return `<div class="bebas" style="font-size:18px;color:var(--mut);margin:16px 0 10px;letter-spacing:1px;">📊 PROGRESSI PER ESERCIZIO</div>
+    <div class="card" style="padding:14px;">
+      <div style="font-size:11px;color:var(--mut);line-height:1.5;margin-bottom:12px;">Top ${top.length} esercizi più eseguiti. Il <strong style="color:var(--acc);">1RM stimato</strong> è il peso massimo teorico per una singola ripetizione (formula Epley).</div>
+      ${top.map(s => {
+        const unit = s.unit || 'kg';
+        const isKg = unit === 'kg' && s.maxKg > 0;
+        const isSec = unit === 'sec' && s.maxSec > 0;
+        const isReps = unit === 'reps' && s.maxReps > 0;
+        const progCol = s.progressPct > 0 ? 'var(--acc)' : s.progressPct < 0 ? 'var(--red)' : 'var(--mut)';
+        const progText = s.progressPct != null ? `${s.progressPct > 0 ? '+' : ''}${s.progressPct}%` : '—';
+        return `<div style="padding:12px 0;border-bottom:1px solid var(--bord);">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+            <div style="flex:1;min-width:0;padding-right:8px;">
+              <div style="font-size:13px;font-weight:700;color:var(--text);line-height:1.3;">${s.name}</div>
+              <div style="font-size:10px;color:var(--mut);margin-top:2px;">${s.mus} · ${s.sessions} sessioni</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+              ${isKg ? `<div class="bebas" style="font-size:22px;color:var(--acc);line-height:1;">${s.maxKg}<span style="font-size:11px;color:var(--mut);">kg PR</span></div>` : ''}
+              ${isSec ? `<div class="bebas" style="font-size:22px;color:var(--blu);line-height:1;">${s.maxSec}<span style="font-size:11px;color:var(--mut);">s PR</span></div>` : ''}
+              ${isReps ? `<div class="bebas" style="font-size:22px;color:var(--purp);line-height:1;">${s.maxReps}<span style="font-size:11px;color:var(--mut);">reps PR</span></div>` : ''}
+              ${!isKg && !isSec && !isReps ? `<div style="font-size:11px;color:var(--mut);">nessun dato</div>` : ''}
+            </div>
+          </div>
+          ${isKg ? `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:6px;">
+            <div style="background:var(--bg);padding:6px 8px;border-radius:6px;text-align:center;">
+              <div style="font-size:9px;color:var(--mut);letter-spacing:1px;">1RM STIM.</div>
+              <div style="font-size:13px;font-weight:700;color:var(--yel);">${s.best1RM}kg</div>
+            </div>
+            <div style="background:var(--bg);padding:6px 8px;border-radius:6px;text-align:center;">
+              <div style="font-size:9px;color:var(--mut);letter-spacing:1px;">VOL. 7GG</div>
+              <div style="font-size:13px;font-weight:700;color:var(--ora);">${s.weekVolume.toLocaleString('it-IT')}kg</div>
+            </div>
+            <div style="background:var(--bg);padding:6px 8px;border-radius:6px;text-align:center;">
+              <div style="font-size:9px;color:var(--mut);letter-spacing:1px;">PROGR.</div>
+              <div style="font-size:13px;font-weight:700;color:${progCol};">${progText}</div>
+            </div>
+          </div>` : ''}
+          ${isKg && s.first && s.last && s.first !== s.last ? `<div style="font-size:10px;color:var(--mut);margin-top:6px;line-height:1.4;">Da <strong style="color:var(--text);">${s.first}kg</strong> → <strong style="color:${progCol};">${s.last}kg</strong> ${s.progressPct >= 10 ? '🔥' : s.progressPct > 0 ? '📈' : s.progressPct < 0 ? '📉' : ''}</div>` : ''}
+        </div>`;
+      }).join('')}
+      ${exStats.length > 8 ? `<div style="font-size:11px;color:var(--mut);text-align:center;padding-top:10px;">... e altri ${exStats.length - 8} esercizi meno frequenti</div>` : ''}
+    </div>`;
+  })()}
+
   <div class="card">
     <span class="lbl">DIARIO ALLENAMENTI (${ST.wLog.filter(w=>!w.isRest).length} sessioni)</span>
     ${ST.wLog.length===0?`<div style="text-align:center;padding:14px;font-size:12px;color:var(--mut)">Nessun allenamento registrato</div>`:''}
