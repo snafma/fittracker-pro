@@ -118,10 +118,18 @@ select option { background: var(--card); }
 input[type="date"]::-webkit-date-and-time-value { text-align: left; }
 input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
 </style>
-<!-- ═══ FIREBASE ES MODULE — IDENTICO AL CODICE ORIGINALE CHE FUNZIONAVA ═══ -->
+<!-- ═══ FIREBASE ES MODULE — CON FIREBASE AUTHENTICATION + AUTO-MIGRAZIONE ═══ -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
   import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+  import {
+    getAuth, onAuthStateChanged,
+    createUserWithEmailAndPassword, signInWithEmailAndPassword,
+    signOut, sendPasswordResetEmail, sendEmailVerification,
+    updateProfile, updatePassword, reauthenticateWithCredential,
+    EmailAuthProvider, deleteUser, setPersistence, browserLocalPersistence
+  } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
   const firebaseConfig = {
     apiKey: "AIzaSyD7M6tX2diy6R-AuOPpG-VZQFO_MzPVSuQ",
     authDomain: "fittracker-pro-27296.firebaseapp.com",
@@ -130,18 +138,118 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
     messagingSenderId: "645700555123",
     appId: "1:645700555123:web:995606f200eb37d6a8b506"
   };
-  let firestore;
+
+  let firestore, auth;
   try {
     const app = initializeApp(firebaseConfig);
     firestore = getFirestore(app);
-    console.log("🚀 Firebase Inizializzato (Elite)");
-  } catch(e) { console.error(e); }
+    auth = getAuth(app);
+    await setPersistence(auth, browserLocalPersistence);
+    console.log("🚀 Firebase Inizializzato (Auth+Firestore)");
+  } catch(e) { console.error("Init Firebase:", e); }
+
+  // Helper: path sicuro basato su uid dell'utente autenticato.
+  // Il resto del codice chiama DB.g('ft_u_'+un) senza sapere che dietro c'è uid.
+  function resolveKey(k) {
+    if (!auth || !auth.currentUser) return null;
+    const uid = auth.currentUser.uid;
+    if (k && k.startsWith('ft_u_')) return 'ft_u_' + uid;
+    if (k === 'ft_ai_cache') return 'ft_ai_cache';
+    return null;
+  }
+
   window.DB = {
-    async g(k) { if(!firestore) return null; try { const s=await getDoc(doc(firestore,"fittracker_data",k)); return s.exists()?s.data().value:null; } catch(e){ return null; } },
-    async s(k,v) { if(!firestore) return; try { await setDoc(doc(firestore,"fittracker_data",k),{value:v}); } catch(e){} },
-    async d(k) { if(!firestore) return; try { await deleteDoc(doc(firestore,"fittracker_data",k)); } catch(e){} }
+    async g(k) {
+      if(!firestore) return null;
+      const safeK = resolveKey(k);
+      if (!safeK) return null;
+      try {
+        const s = await getDoc(doc(firestore,"fittracker_data",safeK));
+        return s.exists() ? s.data().value : null;
+      } catch(e){ console.warn('DB.g', e?.code||e); return null; }
+    },
+    async s(k, v) {
+      if(!firestore) return;
+      const safeK = resolveKey(k);
+      if (!safeK) return;
+      try {
+        await setDoc(doc(firestore,"fittracker_data",safeK), { value: v });
+      } catch(e){ console.warn('DB.s', e?.code||e); }
+    },
+    async d(k) {
+      if(!firestore) return;
+      const safeK = resolveKey(k);
+      if (!safeK) return;
+      try {
+        await deleteDoc(doc(firestore,"fittracker_data",safeK));
+      } catch(e){ console.warn('DB.d', e?.code||e); }
+    }
   };
-  window.SS = { get:()=>localStorage.getItem('ft_session'), set:u=>localStorage.setItem('ft_session',u), clr:()=>localStorage.removeItem('ft_session') };
+
+  // ── LEGACY DB: accesso SENZA Auth alle vecchie chiavi (ft_reg, ft_u_<username>)
+  //    Serve SOLO per l'auto-migrazione. Le Rules devono permetterlo finché la
+  //    migrazione non è finita per tutti i 4 utenti. Dopo, disattiveremo.
+  window.LEGACY_DB = {
+    async readReg() {
+      try {
+        const s = await getDoc(doc(firestore,"fittracker_data","ft_reg"));
+        return s.exists() ? (s.data().value || []) : [];
+      } catch(e){ console.warn('LEGACY readReg', e?.code||e); return []; }
+    },
+    async readUserData(un) {
+      try {
+        const s = await getDoc(doc(firestore,"fittracker_data","ft_u_"+un));
+        return s.exists() ? s.data().value : null;
+      } catch(e){ console.warn('LEGACY readUserData', e?.code||e); return null; }
+    },
+    async markMigrated(un) {
+      // Rinomina ft_u_<username> in _MIG_ft_u_<username> come backup
+      try {
+        const oldDoc = await getDoc(doc(firestore,"fittracker_data","ft_u_"+un));
+        if (oldDoc.exists()) {
+          await setDoc(doc(firestore,"fittracker_data","_MIG_ft_u_"+un), oldDoc.data());
+          await deleteDoc(doc(firestore,"fittracker_data","ft_u_"+un));
+        }
+        // Rimuovi utente da ft_reg
+        const reg = await this.readReg();
+        const filtered = reg.filter(u => u.un !== un);
+        await setDoc(doc(firestore,"fittracker_data","ft_reg"), { value: filtered });
+      } catch(e){ console.warn('LEGACY markMigrated', e?.code||e); }
+    }
+  };
+
+  window.FBAuth = {
+    auth,
+    onAuthStateChanged: (cb) => onAuthStateChanged(auth, cb),
+    signUp: (email, pw) => createUserWithEmailAndPassword(auth, email, pw),
+    signIn: (email, pw) => signInWithEmailAndPassword(auth, email, pw),
+    signOut: () => signOut(auth),
+    resetPw: (email) => sendPasswordResetEmail(auth, email),
+    sendVerify: (user) => sendEmailVerification(user),
+    setName: (user, name) => updateProfile(user, { displayName: name }),
+    changePw: async (currentPw, newPw) => {
+      const u = auth.currentUser;
+      if(!u || !u.email) throw new Error('Non autenticato');
+      const cred = EmailAuthProvider.credential(u.email, currentPw);
+      await reauthenticateWithCredential(u, cred);
+      await updatePassword(u, newPw);
+    },
+    deleteAccount: async (currentPw) => {
+      const u = auth.currentUser;
+      if(!u || !u.email) throw new Error('Non autenticato');
+      const cred = EmailAuthProvider.credential(u.email, currentPw);
+      await reauthenticateWithCredential(u, cred);
+      await deleteUser(u);
+    }
+  };
+
+  window.SS = {
+    get: () => auth?.currentUser ? (auth.currentUser.displayName || auth.currentUser.email?.split('@')[0] || 'user') : null,
+    set: () => {},
+    clr: () => {}
+  };
+
+  window.__FB_READY__ = true;
 </script>
 </head>
 <body>
@@ -802,22 +910,124 @@ window._sv=false;
 window.saveU=async function(){
   if(!window.AU.user||window._sv) return;window._sv=true;
   if(window.DB){
-    await window.DB.s('ft_u_'+window.AU.user,{
+    const payload={
       p:ST.p,h:ST.h,wLog:ST.wLog,nutri:ST.nutri,water:ST.water,life:ST.life,
       cheatDebt:ST.cheatDebt,measures:ST.measures,notes:ST.notes,suppLog:ST.suppLog,
       chatHistory:ST.chatHistory,exPrefs:ST.exPrefs,wHistory:ST.wHistory,
       programStart:ST.programStart,mealOpts:ST.mealOpts,aiPlan:ST.aiPlan
-    });
+    };
+    if(AU.profile) payload.profile=AU.profile;
+    await window.DB.s('ft_u_'+window.AU.user,payload);
   }
   window._sv=false;
 }
 window.save=async function(){await saveU();render();}
 window.el=id=>document.getElementById(id);
 window.vv=id=>el(id)?.value;
-// ACTIONS (identici al codice originale)
+// ═══════════════════════════════════════════════════════════════
+// AUTH con Firebase Authentication + AUTO-MIGRAZIONE dei vecchi utenti
+// Al primo login dei 4 utenti esistenti:
+//  1. Verifica username+password nel vecchio sistema (ft_reg)
+//  2. Crea account Firebase Auth con STESSA password
+//  3. Copia i dati da ft_u_<username> a ft_u_<uid>
+//  4. Fa login Firebase Auth
+// L'utente non si accorge di niente: usa le stesse credenziali.
+// ═══════════════════════════════════════════════════════════════
+
+window.__fbErr=function(e){
+  const c=e?.code||'';
+  if(c==='auth/invalid-email') return 'Email non valida.';
+  if(c==='auth/email-already-in-use') return '⚠️ Email già registrata.';
+  if(c==='auth/weak-password') return 'Password troppo debole.';
+  if(c==='auth/user-not-found'||c==='auth/wrong-password'||c==='auth/invalid-credential') return '❌ Credenziali errate.';
+  if(c==='auth/too-many-requests') return '⏱️ Troppi tentativi. Riprova tra qualche minuto.';
+  if(c==='auth/network-request-failed') return '🌐 Connessione assente.';
+  if(c==='auth/requires-recent-login') return '🔐 Per sicurezza, rifai il login e riprova.';
+  console.warn('Auth err:',c,e);
+  return 'Errore. Riprova.';
+};
+
+// ── AUTO-MIGRAZIONE: chiamata da doLogin se serve ──────────────
+// Restituisce {ok:true} se ha migrato con successo, {ok:false, msg} altrimenti
+window.__tryLegacyMigration = async function(ident, pw){
+  try {
+    const reg = await window.LEGACY_DB.readReg();
+    if (!reg || !reg.length) return {ok:false, msg:'not-found'};
+
+    // Cerca per username O email
+    const isEmail = ident.includes('@');
+    const user = reg.find(u =>
+      isEmail ? (u.email||'').toLowerCase() === ident
+              : (u.un||'').toLowerCase() === ident
+    );
+    if (!user) return {ok:false, msg:'not-found'};
+
+    // Verifica vecchia password con lo stesso hp() del vecchio sistema
+    if (user.pw !== hp(pw)) return {ok:false, msg:'wrong-pw'};
+
+    // ✅ Vecchie credenziali corrette — migriamo
+    console.log('🔄 Auto-migrazione utente:', user.un);
+
+    // 1. Crea account Firebase Auth con STESSA password
+    let cred;
+    try {
+      cred = await window.FBAuth.signUp(user.email, pw);
+    } catch(e) {
+      if (e?.code === 'auth/email-already-in-use') {
+        // Già migrato in precedenza ma ft_reg non era stato ripulito.
+        // Proviamo login diretto.
+        try {
+          await window.FBAuth.signIn(user.email, pw);
+          // Se arriva qui è loggato. Pulisci ft_reg per sicurezza.
+          await window.LEGACY_DB.markMigrated(user.un);
+          return {ok:true};
+        } catch(e2) {
+          return {ok:false, msg:__fbErr(e2)};
+        }
+      }
+      if (e?.code === 'auth/weak-password') {
+        return {ok:false, msg:'La tua password non soddisfa i nuovi standard. Usa "Password dimenticata" per crearne una nuova.'};
+      }
+      return {ok:false, msg:__fbErr(e)};
+    }
+
+    // 2. Imposta displayName = vecchio username
+    try { await window.FBAuth.setName(cred.user, user.un); } catch(_){}
+
+    // 3. Leggi i vecchi dati utente
+    const oldData = await window.LEGACY_DB.readUserData(user.un);
+
+    // 4. Costruisci il nuovo documento includendo il profilo
+    const newData = oldData ? {...oldData} : {
+      p:null,h:[],wLog:[],nutri:{},water:{},life:{},cheatDebt:0,measures:{},
+      notes:[],suppLog:{},chatHistory:[],exPrefs:{},wHistory:{},
+      programStart:null,mealOpts:{}
+    };
+    newData.profile = {
+      un: user.un, email: user.email,
+      ht: user.ht||170, ag: user.ag||30, sx: user.sx||'m',
+      created: user.created || getToday()
+    };
+
+    // 5. Scrivi nel nuovo documento ft_u_<uid>
+    //    (DB.s lo fa in automatico grazie a resolveKey)
+    await window.DB.s('ft_u_'+user.un, newData);
+
+    // 6. Archivia il vecchio documento come backup e rimuovi da ft_reg
+    await window.LEGACY_DB.markMigrated(user.un);
+
+    console.log('✅ Auto-migrazione completata per', user.un);
+    return {ok:true};
+
+  } catch(e) {
+    console.error('Auto-migrazione fallita:', e);
+    return {ok:false, msg:'Errore durante la migrazione. Riprova.'};
+  }
+};
+
 window.doReg=async function(){
   try{
-    if(!window.DB) return setMsg('Attendi database...');
+    if(!window.FBAuth) return setMsg('Attendi database...');
     const rawUn=vv('aU')?.trim()||'';
     if(rawUn.length<3) return setMsg('Username: min 3 caratteri.');
     const un=rawUn.toLowerCase().replace(/[^a-z0-9_]/g,'');
@@ -829,80 +1039,141 @@ window.doReg=async function(){
     if(pw2!==p2) return setMsg('Password non coincidono!');
     if(!pwRegex.test(pw2)) return setMsg('Password debole: min 8 char, 1 num, 1 spec.');
     if(!/^\S+@\S+\.\S+$/.test(email)) return setMsg('Email non valida!');
-    const reg=(await window.DB.g('ft_reg'))||[];
-    if(reg.find(u=>u.un===un)) return setMsg('⚠️ Username già in uso.');
-    if(reg.find(u=>u.email===email)) return setMsg('⚠️ Email già in uso.');
-    reg.push({un,pw:hp(pw2),email,ht,ag,sx,created:getToday()});
-    await window.DB.s('ft_reg',reg);
-    AU.user=un;AU.msg='';
-    const ini={...defST(),h:[{d:getToday(),w:wt}],programStart:getToday()};
-    Object.assign(ST,ini);ST.p=null;
-    await window.DB.s('ft_u_'+un,{p:null,h:[{d:getToday(),w:wt}],wLog:[],nutri:{},water:{},life:{},cheatDebt:0,measures:{},notes:[],suppLog:{},chatHistory:[],exPrefs:{},wHistory:{},programStart:getToday(),mealOpts:{}});
-    window.SS.set(un);render();
-  }catch(e){console.error(e);setMsg('Errore connessione.');}
-}
+
+    setMsg('Creazione account in corso...');
+    const cred=await window.FBAuth.signUp(email,pw2);
+    await window.FBAuth.setName(cred.user,un);
+    try{ await window.FBAuth.sendVerify(cred.user); }catch(_){}
+    const today=getToday();
+    const initialData={
+      p:null,h:[{d:today,w:wt}],wLog:[],nutri:{},water:{},life:{},
+      cheatDebt:0,measures:{},notes:[],suppLog:{},chatHistory:[],
+      exPrefs:{},wHistory:{},programStart:today,mealOpts:{},
+      profile:{un,email,ht,ag,sx,created:today}
+    };
+    await window.DB.s('ft_u_'+un,initialData);
+    AU.msg='';
+  }catch(e){setMsg(__fbErr(e));}
+};
+
 window.doLogin=async function(){
-  if(!window.DB) return setMsg('Attendi database...');
-  const un=vv('lU')?.trim().toLowerCase();
-  const pw2=vv('lP');
-  if(!un||!pw2) return setMsg('Inserisci credenziali!');
-  const reg=(await window.DB.g('ft_reg'))||[];
-  const user=reg.find(u=>u.un===un&&u.pw===hp(pw2));
-  if(!user) return setMsg('Credenziali errate.');
-  AU.user=un;AU.msg='';
-  const data=await window.DB.g('ft_u_'+un);
-  if(data){Object.assign(ST,{...defST(),...data});if(!ST.chartFilter)ST.chartFilter=30;}
-  AU.profile=user;window.SS.set(un);render();
-}
-window.doLogout=async function(){await saveU();AU.user=null;AU.profile=null;window.SS.clr();Object.assign(ST,defST());currentDateStr=getToday();render();}
-window.setMsg=function(m){AU.msg=m;render();}
-window.pickSex=function(btn){document.querySelectorAll('.sx-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');}
+  try{
+    if(!window.FBAuth) return setMsg('Attendi database...');
+    const ident=vv('lU')?.trim().toLowerCase();
+    const pw2=vv('lP');
+    if(!ident||!pw2) return setMsg('Inserisci credenziali!');
+
+    setMsg('Accesso in corso...');
+
+    // STRATEGIA: se ident è un'email, proviamo Firebase Auth diretto.
+    // Se fallisce OPPURE se ident è uno username (legacy), tentiamo auto-migrazione.
+    const isEmail = ident.includes('@');
+
+    if (isEmail) {
+      try {
+        await window.FBAuth.signIn(ident, pw2);
+        return; // loggato, onAuthStateChanged farà il resto
+      } catch(e) {
+        // Se credenziali errate, prova auto-migrazione (caso: email conosciuta, ma in ft_reg)
+        if (e?.code === 'auth/user-not-found' || e?.code === 'auth/invalid-credential' || e?.code === 'auth/wrong-password') {
+          const mig = await window.__tryLegacyMigration(ident, pw2);
+          if (mig.ok) return;
+          return setMsg('❌ Credenziali errate.');
+        }
+        return setMsg(__fbErr(e));
+      }
+    } else {
+      // Login con username → tenta SOLO auto-migrazione legacy
+      const mig = await window.__tryLegacyMigration(ident, pw2);
+      if (mig.ok) return;
+      if (mig.msg === 'not-found') return setMsg('❌ Account non trovato. Se ti sei registrato dopo l\'aggiornamento, usa l\'email.');
+      if (mig.msg === 'wrong-pw') return setMsg('❌ Credenziali errate.');
+      return setMsg(mig.msg || '❌ Credenziali errate.');
+    }
+  }catch(e){setMsg(__fbErr(e));}
+};
+
+window.doLogout=async function(){
+  try{
+    await saveU();
+    await window.FBAuth.signOut();
+    AU.user=null;AU.profile=null;
+    Object.assign(ST,defST());
+    currentDateStr=getToday();
+    render();
+  }catch(e){console.warn('logout',e);}
+};
+
+window.setMsg=function(m){AU.msg=m;render();};
+window.pickSex=function(btn){document.querySelectorAll('.sx-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');};
+
+// Reset password: email tramite Firebase
 window.doForgotStep1=async function(){
-  if(!window.DB) return setMsg('Attendi...');
-  const un=vv('fgU')?.trim().toLowerCase();
-  if(!un) return setMsg('Inserisci username!');
-  const reg=(await window.DB.g('ft_reg'))||[];
-  const user=reg.find(u=>u.un===un);
-  if(!user) return setMsg('❌ Account non trovato.');
-  AU.fgUser=user.un;AU.fgStep=2;AU.msg='';render();
-}
-window.doForgotStep2=async function(){
-  if(!window.DB) return setMsg('Attendi...');
-  const email=vv('fgE')?.trim().toLowerCase();
-  if(!email) return setMsg('Inserisci email!');
-  const reg=(await window.DB.g('ft_reg'))||[];
-  const user=reg.find(u=>u.un===AU.fgUser);
-  if(!user||user.email!==email) return setMsg('❌ Email errata.');
-  AU.fgSecOk=true;AU.fgStep=3;AU.msg='';render();
-}
-window.doForgotStep3=async function(){
-  if(!window.DB) return setMsg('Attendi...');
-  const np=vv('fgNP'),np2=vv('fgNP2');
-  if(!np||!np2) return setMsg('Compila campi.');
-  if(!pwRegex.test(np)) return setMsg('Password debole: min 8 char, 1 num, 1 spec.');
-  if(np!==np2) return setMsg('Password non coincidono!');
-  const reg=(await window.DB.g('ft_reg'))||[];
-  const idx=reg.findIndex(u=>u.un===AU.fgUser);
-  if(idx<0) return setMsg('Errore.');
-  reg[idx].pw=hp(np);
-  await window.DB.s('ft_reg',reg);
-  AU.fgStep=1;AU.fgUser='';AU.fgSecOk=false;AU.tab='login';
-  AU.msg='✅ Password aggiornata! Accedi.';render();
-}
+  try{
+    if(!window.FBAuth) return setMsg('Attendi...');
+    const email=vv('fgE')?.trim().toLowerCase();
+    if(!email||!/^\S+@\S+\.\S+$/.test(email)) return setMsg('Inserisci un\'email valida!');
+    setMsg('Invio email di reset...');
+    try { await window.FBAuth.resetPw(email); } catch(_){}
+    // Risposta generica per privacy
+    AU.fgStep=1;AU.fgUser='';AU.fgSecOk=false;AU.tab='login';
+    AU.msg='✉️ Se l\'email è registrata, riceverai un link di reset. Controlla la posta (anche spam).';
+    render();
+  }catch(e){
+    AU.fgStep=1;AU.tab='login';
+    AU.msg='✉️ Se l\'email è registrata, riceverai un link di reset. Controlla la posta (anche spam).';
+    render();
+  }
+};
+window.doForgotStep2=window.doForgotStep1;
+window.doForgotStep3=window.doForgotStep1;
+
 window.doChangePassword=async function(){
-  if(!window.DB) return alert('Attendi...');
-  const cur=vv('cpCur'),np=vv('cpNew'),np2=vv('cpNew2');
-  if(!cur||!np||!np2) return alert('Compila tutto!');
-  if(!pwRegex.test(np)) return alert('Password debole: min 8 char, 1 num, 1 spec.');
-  if(np!==np2) return alert('Non coincidono!');
-  const reg=(await window.DB.g('ft_reg'))||[];
-  const idx=reg.findIndex(u=>u.un===AU.user);
-  if(idx<0) return alert('Utente non trovato.');
-  if(reg[idx].pw!==hp(cur)) return alert('❌ Password attuale errata!');
-  reg[idx].pw=hp(np);
-  await window.DB.s('ft_reg',reg);
-  alert('✅ Password cambiata!');render();
-}
+  try{
+    if(!window.FBAuth) return alert('Attendi...');
+    const cur=vv('cpCur'),np=vv('cpNew'),np2=vv('cpNew2');
+    if(!cur||!np||!np2) return alert('Compila tutto!');
+    if(!pwRegex.test(np)) return alert('Password debole: min 8 char, 1 num, 1 spec.');
+    if(np!==np2) return alert('Non coincidono!');
+    await window.FBAuth.changePw(cur,np);
+    alert('✅ Password cambiata!');
+  }catch(e){alert(__fbErr(e));}
+};
+
+window.doDeleteAccount=async function(){
+  const pw=prompt('Per cancellare l\'account inserisci la tua password:');
+  if(!pw) return;
+  if(!confirm('Sei ASSOLUTAMENTE sicuro? Tutti i dati verranno eliminati definitivamente.')) return;
+  try{
+    if(window.DB && AU.user) await window.DB.d('ft_u_'+AU.user);
+    await window.FBAuth.deleteAccount(pw);
+    AU.user=null;AU.profile=null;
+    Object.assign(ST,defST());
+    alert('✅ Account cancellato.');
+    render();
+  }catch(e){alert(__fbErr(e));}
+};
+
+window.__initAuthListener=function(){
+  if(!window.FBAuth) return;
+  window.FBAuth.onAuthStateChanged(async (user)=>{
+    if(user){
+      const un=user.displayName||user.email?.split('@')[0]||'user';
+      AU.user=un;
+      const data=await window.DB.g('ft_u_'+un);
+      if(data){
+        Object.assign(ST,{...defST(),...data});
+        if(!ST.chartFilter) ST.chartFilter=30;
+        AU.profile=data.profile||null;
+      }
+      AU.msg='';
+    }else{
+      AU.user=null;AU.profile=null;
+      Object.assign(ST,defST());
+    }
+    render();
+  });
+};
 window.initProgram=function(){
   const w=parseFloat(vv('iW')),g=parseFloat(vv('gW')),t=vv('iT'),dur=parseInt(vv('iDur')),tRaw=vv('iDate'),loc=vv('iLoc');
   const sess=parseInt(vv('iSess'))||3,cl=parseInt(vv('iCardio'))||1;
@@ -1244,12 +1515,10 @@ window.svg=function(data,key,col,H,goal){
 window.renderAuth = function(root){
   let content='';
   if(AU.tab==='forgot'){
-    if(AU.fgStep===1) content=`<div class="card"><div class="bebas" style="font-size:20px;color:var(--ora);margin-bottom:14px;">🔑 RECUPERA PASSWORD</div><span class="lbl">IL TUO USERNAME</span><input id="fgU" placeholder="Es. mario_rossi (in minuscolo)"><button class="btn" onclick="doForgotStep1()">CONTINUA ▸</button><div style="text-align:center;margin-top:12px;"><span onclick="AU.tab='login';AU.msg='';render()" style="font-size:13px;color:var(--mut);cursor:pointer;text-decoration:underline;">← Torna al Login</span></div></div>`;
-    else if(AU.fgStep===2) content=`<div class="card"><div class="bebas" style="font-size:18px;color:var(--ora);margin-bottom:4px;">🔑 VERIFICA EMAIL</div><div style="font-size:12px;color:var(--mut);margin-bottom:14px;">Account: <strong style="color:var(--text)">${AU.fgUser}</strong></div><span class="lbl">INSERISCI L'EMAIL COLLEGATA</span><input id="fgE" type="email" placeholder="es. mario@email.it"><button class="btn" onclick="doForgotStep2()">VERIFICA ▸</button><div style="text-align:center;margin-top:10px;"><span onclick="AU.tab='forgot';AU.fgStep=1;AU.msg='';render()" style="font-size:13px;color:var(--mut);cursor:pointer;text-decoration:underline;">← Indietro</span></div></div>`;
-    else content=`<div class="card"><div class="bebas" style="font-size:18px;color:var(--acc);margin-bottom:4px;">🔑 NUOVA PASSWORD</div><div style="font-size:12px;color:var(--gre);margin-bottom:14px;">✅ Identità verificata: <strong>${AU.fgUser}</strong></div><span class="lbl">NUOVA PASSWORD</span><div class="pw-wrap"><input id="fgNP" type="password" placeholder="Minimo 8 caratteri, 1 num, 1 spec."><span class="pw-eye" onclick="togglePw(this)">👁️</span></div><span class="lbl">CONFERMA NUOVA PASSWORD</span><div class="pw-wrap"><input id="fgNP2" type="password" placeholder="Ripeti la nuova password"><span class="pw-eye" onclick="togglePw(this)">👁️</span></div><button class="btn" onclick="doForgotStep3()">SALVA NUOVA PASSWORD</button></div>`;
+    content=`<div class="card"><div class="bebas" style="font-size:20px;color:var(--ora);margin-bottom:8px;">🔑 RECUPERA PASSWORD</div><div style="font-size:13px;color:var(--mut);margin-bottom:14px;">Inserisci l'email del tuo account. Ti invieremo un link per reimpostare la password.</div><span class="lbl">LA TUA EMAIL</span><input id="fgE" type="email" autocomplete="email" placeholder="es. mario@email.it"><button class="btn" onclick="doForgotStep1()">INVIA LINK DI RESET ▸</button><div style="text-align:center;margin-top:12px;"><span onclick="AU.tab='login';AU.msg='';render()" style="font-size:13px;color:var(--mut);cursor:pointer;text-decoration:underline;">← Torna al Login</span></div></div>`;
   } else {
     content=`<div style="display:flex;background:var(--surf);border-radius:12px;padding:3px;margin-bottom:14px;"><button class="atab ${AU.tab==='login'?'on':''}" onclick="AU.tab='login';AU.msg='';render()">ACCEDI</button><button class="atab ${AU.tab==='reg'?'on':''}" onclick="AU.tab='reg';AU.msg='';render()">REGISTRATI</button></div> ${AU.tab==='login'?`<div class="card">
-    <span class="lbl">USERNAME</span><input id="lU" placeholder="Il tuo username (minuscolo)" autocomplete="username">
+    <span class="lbl">EMAIL O USERNAME</span><input id="lU" placeholder="La tua email o username" autocomplete="username">
     <span class="lbl">PASSWORD</span><div class="pw-wrap"><input id="lP" type="password" placeholder="Password" autocomplete="current-password"><span class="pw-eye" onclick="togglePw(this)">👁️</span></div>
     <button class="btn" onclick="doLogin()">ACCEDI</button>
     <div style="text-align:center;margin-top:12px;"><span onclick="AU.tab='forgot';AU.fgStep=1;AU.msg='';render()" style="font-size:13px;color:var(--mut);cursor:pointer;text-decoration:underline;">🔑 Password dimenticata?</span></div>
@@ -1991,7 +2260,7 @@ window.renderSettings = function(mac){
   <div class="card card-red">
     <div class="bebas" style="color:var(--red);font-size:20px;margin-bottom:8px;">⚠️ ZONA PERICOLOSA</div>
     <p style="font-size:13px;line-height:1.5;margin-bottom:12px;">Azione irreversibile. Tutti i tuoi dati verranno distrutti dal Cloud.</p>
-    <button class="btn btn-red" onclick="if(confirm('Sei ASSOLUTAMENTE sicuro? Tutti i dati verranno eliminati.')){window.DB.d('ft_u_'+AU.user);doLogout();}">CANCELLA IL MIO ACCOUNT</button>
+    <button class="btn btn-red" onclick="doDeleteAccount()">CANCELLA IL MIO ACCOUNT</button>
   </div>`;
 }
 // ── RENDER PRINCIPALE ─────────────────────────────────────────
@@ -2125,28 +2394,19 @@ window.render = function() {
   H+=`</div></div>`;root.innerHTML=H+sheetH+moreSheetH+shortPickH;
   if(ST.tab==='coach') setTimeout(()=>{const c=el('chatArea');if(c)c.scrollTop=c.scrollHeight;},50);
 }
-// ── BOOT — IDENTICO AL CODICE ORIGINALE CHE FUNZIONAVA ──
+// ── BOOT — Usa Firebase Auth listener ──
 window.bootApp = async function() {
   try {
-    const saved=window.SS.get();
-    if(saved){
-      AU.user=saved;
-      const data=await window.DB.g('ft_u_'+saved);
-      if(data) Object.assign(ST,{...defST(),...data});
-      const reg=(await window.DB.g('ft_reg'))||[];
-      AU.profile=reg.find(u=>u.un===saved)||{sx:'m',ht:170,ag:25};
-      if(!ST.p) ST.tab = 'home';
-    }
+    window.__initAuthListener();
   } catch(e) {
     console.error("Boot Error", e);
-  } finally {
     render();
   }
 }
 let _initAttempts=0;
 const _startCheck=setInterval(()=>{
   _initAttempts++;
-  if(window.DB && window.SS){
+  if(window.DB && window.FBAuth){
     clearInterval(_startCheck);
     bootApp();
   } else if(_initAttempts>60){
