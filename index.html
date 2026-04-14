@@ -270,6 +270,105 @@ function togglePw(el) {
   else { inp.type = 'password'; el.textContent = '👁️'; }
 }
 const pwRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*.,\-_?]).{8,}$/;
+// ═════════════════════════════════════════════════════════════
+// PUNTO 2 — Wake Lock: tiene lo schermo acceso durante l'allenamento
+// ═════════════════════════════════════════════════════════════
+window.WakeLockMgr = {
+  _lock: null,
+  _enabled: false,
+  async enable() {
+    if (this._enabled) return;
+    this._enabled = true;
+    if ('wakeLock' in navigator) {
+      try {
+        this._lock = await navigator.wakeLock.request('screen');
+        console.log('🔆 Wake Lock attivo');
+        this._lock.addEventListener('release', () => { this._lock = null; });
+        // Re-acquire al ritorno in foreground (Android sospende il lock in background)
+        document.addEventListener('visibilitychange', this._onVis = async () => {
+          if (this._enabled && document.visibilityState === 'visible' && !this._lock) {
+            try { this._lock = await navigator.wakeLock.request('screen'); } catch(_){}
+          }
+        });
+      } catch(e) { console.warn('Wake Lock fallito:', e?.message); }
+    } else {
+      console.log('Wake Lock API non supportata (probabilmente iOS Safari < 16.4)');
+    }
+  },
+  async disable() {
+    this._enabled = false;
+    if (this._lock) { try { await this._lock.release(); } catch(_){} this._lock = null; }
+    if (this._onVis) { document.removeEventListener('visibilitychange', this._onVis); this._onVis = null; }
+    console.log('🔅 Wake Lock disattivato');
+  }
+};
+
+// ═════════════════════════════════════════════════════════════
+// PUNTO 4 — Beep player: suona alla fine della pausa fra serie
+// Web Audio API: nessun file da caricare, generato in tempo reale.
+// Su Android suona anche con suoneria silenziata; su iOS rispetta il silenzioso.
+// ═════════════════════════════════════════════════════════════
+window.BeepPlayer = {
+  _ctx: null,
+  _ensureCtx() {
+    if (!this._ctx) {
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        this._ctx = new AC();
+      } catch(e) { console.warn('Audio non disponibile', e); return null; }
+    }
+    if (this._ctx.state === 'suspended') this._ctx.resume();
+    return this._ctx;
+  },
+  // Va chiamato una volta su un gesto utente (es. click "INIZIA SERIE") per
+  // sbloccare l'audio sui browser mobile (autoplay policy).
+  unlock() { this._ensureCtx(); },
+  beep(frequency = 880, duration = 0.18, type = 'sine', volume = 0.4) {
+    const ctx = this._ensureCtx();
+    if (!ctx) return;
+    try {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.value = frequency;
+      gain.gain.setValueAtTime(volume, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + duration);
+    } catch(e) { /* noop */ }
+  },
+  // Sequenza "fine pausa": tre beep crescenti
+  endOfRest() {
+    this.beep(660, 0.12, 'sine', 0.35);
+    setTimeout(() => this.beep(880, 0.12, 'sine', 0.4), 160);
+    setTimeout(() => this.beep(1175, 0.22, 'sine', 0.45), 320);
+  },
+  // Tick degli ultimi 3 secondi (più discreto)
+  tick() {
+    this.beep(440, 0.06, 'square', 0.2);
+  }
+};
+
+// ═════════════════════════════════════════════════════════════
+// PUNTO 7 — Determina l'unità di misura di un esercizio
+// Restituisce 'kg' (peso), 'sec' (durata), 'reps' (solo ripetizioni).
+// ═════════════════════════════════════════════════════════════
+window.getExerciseUnit = function(ex) {
+  if (!ex) return 'kg';
+  if (ex.isWarmup || ex.isCooldown) return 'time';
+  // Esercizi a corpo libero / isometrici / cardio → durata in secondi
+  if (ex.t === 'isometric' || ex.t === 'cardio' || ex.t === 'cooldown' || ex.t === 'warmup') return 'sec';
+  // Reps che includono "s" (es. "30s", "5 minuti") → secondi
+  const r = (ex.reps || '').toString().toLowerCase();
+  if (r.includes('s') || r.includes('min')) return 'sec';
+  // Esercizi a corpo libero senza peso (piegamenti, dips a sedia, etc.)
+  const bodyweight = ['ch_pieg','ch_pieg_inc','ch_pieg_dec','tri_dips_chair','sh_pike','sh_lat_home',
+                      'bk_super','bk_door','bi_towel','lg_bridge','lg_sq_jump','co_plk','co_cr','co_rus','co_lr','co_plkl'];
+  if (bodyweight.includes(ex.id)) return 'reps';
+  return 'kg';
+};
+
 const INTOL_LIST=[
   {id:'gluten',label:'Glutine',icon:'🌾'},{id:'lactose',label:'Lattosio',icon:'🥛'},
   {id:'eggs',label:'Uova',icon:'🥚'},{id:'nuts',label:'Frutta Secca',icon:'🥜'},
@@ -684,12 +783,24 @@ window.buildWorkout=function(woId,goal,pw2,exPrefs,sex,analysis){
   exercises.push({...EX['cd_stretch'], id:'cd_stretch', slot:'cooldown', cat:'cooldown'});
   return{...sch,exercises};
 }
-window.getSuggest=function(exId,wHist){
+window.getSuggest=function(exId,wHist,unitOverride){
   const entries=Object.keys(wHist||{}).sort().reverse().slice(0,6).map(d=>wHist[d]).filter(s=>s&&s[exId]);
-  if(!entries.length) return{kg:null,hint:'Prima volta — inizia leggero e calibra'};
+  if(!entries.length) return{kg:null,val:null,unit:unitOverride||'kg',hint:'Prima volta — inizia leggero e calibra'};
   const last=entries[0][exId];
-  if(entries.length>=3&&entries.slice(0,3).every(e=>e[exId]?.ok)&&last.kg>0) return{kg:+(last.kg*1.05).toFixed(1),hint:`🔼 Tenta ${+(last.kg*1.05).toFixed(1)} kg (+5%)`};
-  return last.kg>0?{kg:last.kg,hint:`Ultima sessione: ${last.kg} kg`}:{kg:null,hint:'Calibra il peso'};
+  // Determino il tipo: usa l'unit salvata se c'è (nuovo schema), altrimenti deduce
+  const unit = last.unit || (last.kg != null ? 'kg' : (last.sec != null ? 'sec' : 'reps'));
+  const val = last.kg ?? last.sec ?? last.reps ?? null;
+  // Suggerimento progressivo: se 3+ sessioni completate ok consecutivamente, suggerisci +5%
+  if (entries.length >= 3 && entries.slice(0,3).every(e => e[exId]?.ok) && val > 0) {
+    const next = +(val * 1.05).toFixed(1);
+    const u = unit === 'sec' ? 's' : (unit === 'reps' ? ' reps' : ' kg');
+    return {kg: unit === 'kg' ? next : null, val: next, unit, hint: `🔼 Tenta ${next}${u} (+5%)`};
+  }
+  if (val > 0) {
+    const u = unit === 'sec' ? 's' : (unit === 'reps' ? ' reps' : ' kg');
+    return {kg: unit === 'kg' ? val : null, val, unit, hint: `Ultima sessione: ${val}${u}`};
+  }
+  return {kg: null, val: null, unit, hint: 'Calibra il valore'};
 }
 window.pwk=function(start){if(!start) return 1;return Math.max(1,Math.ceil((new Date()-new Date(start))/864e5/7));}
 window.streak=function(log){
@@ -1368,11 +1479,17 @@ window.startWo=function(id){
   ST.aWo=id;ST.step=0;ST.currVol=0;ST.woPhase='ready';ST.currentSet=0;ST.setElapsed=0;ST.tmr=0;
   const e=ST.wLog.findIndex(x=>x.d===currentDateStr&&x.isRest===true);
   if(e>=0) ST.wLog.splice(e,1);
+  // PUNTO 2: tieni schermo acceso durante l'allenamento
+  WakeLockMgr.enable();
+  // PUNTO 4: sblocca audio (richiede gesto utente, qui c'è il click su "INIZIA")
+  BeepPlayer.unlock();
   render();
 }
 window.closeWo=function(){
   if(!confirm('Uscire dall\'allenamento?')) return;
-  clearInterval(ST.tmrId);clearInterval(ST.setTmrId);ST.aWo=null;render();
+  clearInterval(ST.tmrId);clearInterval(ST.setTmrId);
+  WakeLockMgr.disable();
+  ST.aWo=null;render();
 }
 window.startSet=function(){
   ST.woPhase='active';ST.setElapsed=0;clearInterval(ST.setTmrId);
@@ -1387,19 +1504,44 @@ window.completeSet=function(){
   // Per riscaldamento e stretching: nessun peso, salta il conteggio volume
   const isSpecial=ex.isWarmup||ex.isCooldown||ex.isBonus;
   if(!isSpecial){
-    const kg=parseFloat(el('wkW')?.value||0);
+    // PUNTO 7: leggi il valore corretto in base al tipo di esercizio
+    const unit = getExerciseUnit(ex);
+    const inputEl = el('wkW');
+    let value = parseFloat(inputEl?.value || 0);
+    // Se l'esercizio è a tempo e l'utente non ha inserito nulla, usa il timer della serie
+    if (unit === 'sec' && (!value || value <= 0) && ST.setElapsed > 0) {
+      value = ST.setElapsed;
+    }
     if(!ST.wHistory[currentDateStr]) ST.wHistory[currentDateStr]={};
-    ST.wHistory[currentDateStr][ex.id]={kg:kg>0?kg:null,ok:true};
-    if(kg>0) ST.currVol+=Math.round(kg*parseMeanReps(ex.reps));
+    // PUNTO 5+8: salvo struttura completa (val + unit) per memoria precisa
+    ST.wHistory[currentDateStr][ex.id] = {
+      kg: unit === 'kg' && value > 0 ? value : null,
+      sec: unit === 'sec' && value > 0 ? value : null,
+      reps: unit === 'reps' && value > 0 ? value : null,
+      unit: unit,
+      ok: true
+    };
+    if (unit === 'kg' && value > 0) ST.currVol += Math.round(value * parseMeanReps(ex.reps));
   }
   ST.currentSet++;
   const totalSets=parseInt(ex.sets)||1;
-  if(ST.currentSet>=totalSets){ST.woPhase='exercise_done';render();}
+  if(ST.currentSet>=totalSets){
+    ST.woPhase='exercise_done';
+    BeepPlayer.beep(880, 0.25, 'sine', 0.4); // beep esercizio completato
+    render();
+  }
   else{
     ST.woPhase='rest';ST.tmr=ex.rest||60;render();
     ST.tmrId=setInterval(()=>{
       ST.tmr--;const e=el('tmrUI');if(e)e.textContent=ST.tmr;
-      if(ST.tmr<=0){clearInterval(ST.tmrId);ST.woPhase='ready';render();}
+      // PUNTO 4: tick negli ultimi 3 secondi
+      if (ST.tmr === 3 || ST.tmr === 2 || ST.tmr === 1) BeepPlayer.tick();
+      if(ST.tmr<=0){
+        clearInterval(ST.tmrId);
+        BeepPlayer.endOfRest();  // PUNTO 4: beep "fine pausa"
+        ST.woPhase='ready';
+        render();
+      }
     },1000);
   }
 }
@@ -1413,6 +1555,10 @@ window.advanceExercise=function(){
     if(e>=0) ST.wLog.splice(e,1);
     ST.wLog.push({d:currentDateStr,t:wo.name,vol:ST.currVol,dur:ST.p.dur,isRest:false,woId:ST.aWo});
     ST.wLog.sort((a,b)=>new Date(a.d)-new Date(b.d));ST.cheatDebt=0;ST.aWo=null;save();
+    WakeLockMgr.disable();  // PUNTO 2: rilascia wake lock a fine workout
+    BeepPlayer.beep(523, 0.15, 'sine', 0.35);
+    setTimeout(() => BeepPlayer.beep(659, 0.15, 'sine', 0.4), 180);
+    setTimeout(() => BeepPlayer.beep(784, 0.4, 'sine', 0.45), 360);
     alert(`🏆 ALLENAMENTO COMPLETATO!\n\nVolume totale: ${ST.currVol} kg`);
   }
 }
@@ -2287,7 +2433,8 @@ window.render = function() {
     const wo=getWo(),ex=getEx();
     const totalSets=parseInt(ex.sets)||3;
     const isTimeExercise=ex.t==='isometric'||(ex.reps&&ex.reps.toString().includes('s'));
-    const sug=getSuggest(ex.id,ST.wHistory||{});
+    const exUnit = getExerciseUnit(ex);  // PUNTO 7: kg/sec/reps
+    const sug=getSuggest(ex.id,ST.wHistory||{},exUnit);
     if(ST.woPhase==='rest'){
       root.innerHTML=`<div class="wo"><div class="wo-head"><div><div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;text-transform:uppercase;">${wo.name} · Es. ${ST.step+1}/${wo.exercises.length}</div><div class="bebas" style="font-size:18px;color:var(--blu);">⏸ RECUPERO — SERIE ${ST.currentSet}/${totalSets}</div></div><button class="btn-s btn-action" onclick="skipRest()">SALTA ▸</button></div>
       <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;">
@@ -2327,7 +2474,7 @@ window.render = function() {
         <div style="font-size:12px;color:${ex.isWarmup?'var(--acc)':'var(--purp)'};font-weight:700;letter-spacing:1px;margin-bottom:4px;">${ex.isWarmup?'⏱ TEMPO STIMATO: '+ex.reps:'⏱ TEMPO STIMATO: '+ex.reps}</div>
         <div style="font-size:12px;color:var(--mut);line-height:1.5;">${ex.isWarmup?'Nessun peso — esegui a corpo libero rispettando i tempi indicati':'Nessun peso — allungamento statico. Non forzare mai oltre la soglia del dolore.'}</div>
       </div>`:`
-      <div class="card" style="padding:14px;margin-bottom:10px;"><div class="r" style="margin-bottom:8px;"><div><div class="lbl" style="margin-bottom:2px;">PESO USATO (KG)</div><div style="font-size:11px;color:var(--mut);">${sug.hint}</div></div>${sug.kg?`<div class="bebas" style="font-size:26px;color:${theme};">${sug.kg}kg</div>`:''}</div><input type="number" id="wkW" placeholder="${sug.kg||'Es. 12'}" step=".5" style="margin:0;font-size:24px;font-weight:700;text-align:center;"></div>
+      <div class="card" style="padding:14px;margin-bottom:10px;"><div class="r" style="margin-bottom:8px;"><div><div class="lbl" style="margin-bottom:2px;">${exUnit==='sec'?'DURATA (SECONDI)':exUnit==='reps'?'RIPETIZIONI EFFETTUATE':'PESO USATO (KG)'}</div><div style="font-size:11px;color:var(--mut);">${sug.hint}</div></div>${sug.val?`<div class="bebas" style="font-size:26px;color:${theme};">${sug.val}${exUnit==='sec'?'s':exUnit==='reps'?' reps':'kg'}</div>`:''}</div><input type="number" id="wkW" placeholder="${sug.val||(exUnit==='sec'?'Es. 30':exUnit==='reps'?'Es. 10':'Es. 12')}" step="${exUnit==='kg'?'.5':'1'}" value="${sug.val||''}" style="margin:0;font-size:24px;font-weight:700;text-align:center;">${exUnit==='sec'&&ST.setElapsed>0?`<div style="font-size:11px;color:var(--blu);text-align:center;margin-top:6px;">⏱ Timer corrente: ${ST.setElapsed}s — premi "Serie completata" per registrare</div>`:''}</div>
       <button class="btn btn-action" style="font-size:14px;width:100%;" onclick="openSwap('${ex.slot||''}')">🔄 SOSTITUISCI QUESTO ESERCIZIO</button>`}
     </div>
     <div style="position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--bord);padding:14px;">${!isActive?`<button class="btn btn-gre" style="height:72px;font-size:24px;" onclick="startSet()">▶ INIZIA SERIE ${ST.currentSet+1}/${totalSets}</button>`:`<button class="btn" style="height:72px;font-size:22px;" onclick="completeSet()">✅ SERIE COMPLETATA</button>`}</div></div>`;return;
