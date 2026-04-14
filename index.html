@@ -1199,12 +1199,23 @@ window.buildMeals=function(macros,intol=[],sex='m',isRestDay=false,diet='omnivor
     cenOpts.push({lbl:'🟡 Tofu & Verdure',items:[`${gP_cen}g Tofu o Tempeh`,'Wok di verdure colorate',(!haG?'1 fetta pane integrale':`${gR_cen}g Patate lesse`),olio]});
     if(!isVegan) cenOpts.push({lbl:'🥛 Ricotta & Verdure',items:[`${round10(gP_cen*0.9)}g Ricotta`,'Insalata abbondante','2 fette pane integrale',olio]});
   }
+  // PUNTO 17: se l'utente ha un meal custom per questo pasto, sostituisce opts
+  const customMeals=ST.p?.customMeals||{};
+  const mkOpts=(id,origOpts)=>{
+    const cm=customMeals[id];
+    if(cm && cm.length>0){
+      const items=cm.map(it=>`${it.grams}g ${escapeHtml(it.name)} (${it.kcal} kcal)`);
+      const totalK=cm.reduce((s,i)=>s+(i.kcal||0),0);
+      return [{lbl:`✏️ Personalizzato (~${totalK} kcal)`,items,isCustom:true}];
+    }
+    return origOpts;
+  };
   return[
-    {id:'col',pct:PCT.col,n:`🌅 COLAZIONE  ${T.col}`,kcal:kCol,opts:colOpts,fav:favs?.col||''},
-    {id:'sp1',pct:PCT.sp1,n:`🍎 SPUNTINO  ${T.sp1}`,kcal:kSp1,opts:sp1Opts},
-    {id:'pra',pct:PCT.pra,n:`🍽️ PRANZO  ${T.pra}`,kcal:kPra,opts:praOpts,fav:favs?.pra||''},
-    sp2,
-    {id:'cen',pct:PCT.cen,n:`🌙 CENA  ${T.cen}`,kcal:kCen,opts:cenOpts,fav:favs?.cen||''},
+    {id:'col',pct:PCT.col,n:`🌅 COLAZIONE  ${T.col}`,kcal:kCol,opts:mkOpts('col',colOpts),fav:favs?.col||'',isCustom:!!customMeals.col?.length},
+    {id:'sp1',pct:PCT.sp1,n:`🍎 SPUNTINO  ${T.sp1}`,kcal:kSp1,opts:mkOpts('sp1',sp1Opts),isCustom:!!customMeals.sp1?.length},
+    {id:'pra',pct:PCT.pra,n:`🍽️ PRANZO  ${T.pra}`,kcal:kPra,opts:mkOpts('pra',praOpts),fav:favs?.pra||'',isCustom:!!customMeals.pra?.length},
+    {...sp2,opts:mkOpts('sp2',sp2.opts),isCustom:!!customMeals.sp2?.length},
+    {id:'cen',pct:PCT.cen,n:`🌙 CENA  ${T.cen}`,kcal:kCen,opts:mkOpts('cen',cenOpts),fav:favs?.cen||'',isCustom:!!customMeals.cen?.length},
   ];
 }
 // STATE
@@ -1760,6 +1771,150 @@ window.uncheckMeal=function(id,pct,k,p,c,f){
 }
 window.resetMacros=function(){if(confirm('Azzera tutti i pasti di oggi?')){ST.nutri[currentDateStr]={k:0,p:0,c:0,f:0,logged:[],skipped:[],cheatTxt:''};ST.cheatDebt=0;save();}}
 window.pickMealOpt=function(mealId,optIdx){if(!ST.mealOpts)ST.mealOpts={};ST.mealOpts[mealId]=optIdx;save();}
+
+// ═════════════════════════════════════════════════════════════
+// PUNTO 17 — Dieta personalizzata (custom meals override)
+// Schema: ST.p.customMeals = { col: [{name, grams, kcal}, ...], pra: [...], ... }
+// Se un pasto ha items custom, sostituisce completamente l'opzione AI.
+// ═════════════════════════════════════════════════════════════
+
+// Apre l'editor del pasto custom (bottom sheet)
+window.openCustomMealEditor=function(mealId,targetKcal){
+  if(!ST.p.customMeals) ST.p.customMeals={};
+  // Se non c'è ancora un custom, iniziamo con array vuoto (edit from scratch)
+  ST.sheet='customMeal';
+  ST.sheetData={mealId,targetKcal,draft:[...(ST.p.customMeals[mealId]||[])]};
+  render();
+};
+
+// Aggiunge un cibo al draft corrente
+window.addCustomMealItem=function(){
+  if(!ST.sheetData) return;
+  const name=(document.getElementById('cmName')?.value||'').trim().slice(0,80);
+  const grams=parseInt(document.getElementById('cmGrams')?.value||0);
+  const kcal=parseInt(document.getElementById('cmKcal')?.value||0);
+  if(!name) return alert('Inserisci il nome del cibo.');
+  if(!grams||grams<1||grams>2000) return alert('Grammi: deve essere tra 1 e 2000.');
+  if(!kcal||kcal<1||kcal>3000) return alert('Kcal: deve essere tra 1 e 3000.');
+  // Sanitizzazione nome (niente <>)
+  const safeName=name.replace(/[<>]/g,'');
+  ST.sheetData.draft.push({name:safeName,grams,kcal});
+  // Clear campi
+  document.getElementById('cmName').value='';
+  document.getElementById('cmGrams').value='';
+  document.getElementById('cmKcal').value='';
+  render();
+};
+
+// Rimuove un cibo dal draft
+window.removeCustomMealItem=function(idx){
+  if(!ST.sheetData) return;
+  ST.sheetData.draft.splice(idx,1);
+  render();
+};
+
+// Salva il pasto custom e ricalcola data obiettivo se necessario
+window.saveCustomMeal=function(){
+  if(!ST.sheetData) return;
+  const mealId=ST.sheetData.mealId;
+  const draft=ST.sheetData.draft;
+  if(!ST.p.customMeals) ST.p.customMeals={};
+  if(draft.length===0){
+    // Se vuoto, rimuovo la custom (torna ai consigli AI)
+    delete ST.p.customMeals[mealId];
+  } else {
+    ST.p.customMeals[mealId]=draft;
+  }
+  // Ricalcolo proiezione data obiettivo
+  const proj=computeCustomProjection();
+  if(proj && proj.divergePct>15){
+    // Chiedo conferma all'utente
+    const msg=`⚠️ Con queste quantità, le kcal giornaliere sono ${proj.totalKcal} (target: ${proj.targetKcal}).\n\n${proj.advice}\n\nVuoi salvare comunque?`;
+    if(!confirm(msg)){
+      render();
+      return;
+    }
+    // Se accetta: aggiorno la data obiettivo
+    if(proj.newTargetD){
+      ST.p.targetD=proj.newTargetD;
+    }
+  }
+  closeSheet();
+  save();
+};
+
+// Ripristina il pasto AI (elimina custom)
+window.restoreMealAI=function(mealId){
+  if(!confirm('Ripristinare i consigli automatici per questo pasto?')) return;
+  if(ST.p.customMeals) delete ST.p.customMeals[mealId];
+  save();
+};
+
+// Calcola proiezione data obiettivo dati i custom meals attuali
+// Ritorna {totalKcal, targetKcal, divergePct, newTargetD, advice} oppure null
+window.computeCustomProjection=function(){
+  if(!ST.p.customMeals) return null;
+  const customIds=Object.keys(ST.p.customMeals).filter(id=>ST.p.customMeals[id]?.length>0);
+  if(customIds.length===0) return null;
+  const cW=ST.h.length?ST.h[ST.h.length-1].w:70;
+  const sx=AU.profile?.sx||'m';
+  const an=analyze(ST.h,ST.p);
+  const mac=calcMacros(cW,AU.profile?.ht||170,AU.profile?.ag||30,sx,ST.p,ST.p.sessions||3,an);
+  // Stima kcal di ogni pasto non customizzato (da PCT buildMeals)
+  const PCT={col:.22,sp1:.08,pra:.30,sp2:.10,cen:.30};
+  let totalKcal=0;
+  ['col','sp1','pra','sp2','cen'].forEach(id=>{
+    if(ST.p.customMeals[id]?.length>0){
+      totalKcal+=ST.p.customMeals[id].reduce((s,i)=>s+(i.kcal||0),0);
+    } else {
+      totalKcal+=Math.round(mac.kcal*PCT[id]);
+    }
+  });
+  const targetKcal=mac.kcal;
+  const diff=totalKcal-targetKcal;
+  const divergePct=Math.abs(diff/targetKcal*100);
+  let advice='', newTargetD=null;
+  if(divergePct<=15){
+    advice=`Divergenza contenuta (${Math.round(divergePct)}%) — l'obiettivo resta raggiungibile nella data prevista.`;
+  } else {
+    // Calcolo impatto sulla data
+    // Dimagrimento: 500 kcal/gg deficit → 0.5 kg/settimana. Se deficit scende, rallenta.
+    // Massa: 300 kcal/gg surplus → 0.3 kg/settimana. Se surplus cala, rallenta.
+    if(ST.p.t==='cut' && diff>0){
+      // Consuma MENO deficit del previsto → dimagrimento più lento
+      const cW2=ST.h.length?ST.h[ST.h.length-1].w:70;
+      const kgRemain=Math.max(0.1,cW2-ST.p.g);
+      const effectiveDeficit=Math.max(100, (mac.tdee - totalKcal));
+      const weeklyLoss=effectiveDeficit*7/7700; // 7700 kcal = 1 kg
+      if(weeklyLoss<0.1){
+        advice=`Con queste quantità non c'è abbastanza deficit calorico per perdere peso. Serve un deficit di almeno 200-300 kcal/giorno sotto il tuo TDEE (${mac.tdee} kcal).`;
+      } else {
+        const weeksNeeded=Math.ceil(kgRemain/weeklyLoss);
+        const newD=new Date();newD.setDate(newD.getDate()+weeksNeeded*7);
+        newTargetD=newD.toISOString().split('T')[0];
+        advice=`Con ${totalKcal} kcal/giorno il dimagrimento sarà più lento del previsto. Nuova data stimata: ${newD.toLocaleDateString('it-IT')} (~${weeksNeeded} settimane).`;
+      }
+    } else if(ST.p.t==='cut' && diff<0){
+      advice=`Stai consumando ${Math.abs(diff)} kcal sotto il target. Attenzione: deficit troppo aggressivo rallenta il metabolismo. Considera di aumentare leggermente.`;
+    } else if(ST.p.t==='bulk' && diff<0){
+      // Surplus inferiore al previsto → massa più lenta
+      const kgRemain=Math.max(0.1,ST.p.g-cW);
+      const effectiveSurplus=Math.max(100,totalKcal-mac.tdee);
+      const weeklyGain=effectiveSurplus*7/7700;
+      if(weeklyGain<0.05){
+        advice=`Con queste quantità non c'è abbastanza surplus calorico per aumentare massa. Serve un surplus di almeno 200-300 kcal/giorno sopra il tuo TDEE (${mac.tdee} kcal).`;
+      } else {
+        const weeksNeeded=Math.ceil(kgRemain/weeklyGain);
+        const newD=new Date();newD.setDate(newD.getDate()+weeksNeeded*7);
+        newTargetD=newD.toISOString().split('T')[0];
+        advice=`Con ${totalKcal} kcal/giorno l'aumento di massa sarà più lento del previsto. Nuova data stimata: ${newD.toLocaleDateString('it-IT')} (~${weeksNeeded} settimane).`;
+      }
+    } else if(ST.p.t==='bulk' && diff>0){
+      advice=`Stai consumando ${diff} kcal sopra il target. Surplus eccessivo = grasso invece di muscolo. Considera di ridurre.`;
+    }
+  }
+  return{totalKcal,targetKcal,divergePct,diff,newTargetD,advice};
+};
 window.setShortcut=function(pos,tab){if(!ST.shortcuts)ST.shortcuts=['work','diet'];ST.shortcuts[pos]=tab;ST.sheet=null;save();}
 window.openShortcutPicker=function(pos){ST.sheet='shortcutPick';ST.sheetData={pos};render();}
 window.saveMeasures=function(){
@@ -2486,6 +2641,17 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
   </div>
   ${ST.p.intol?.length?`<div class="card" style="border-color:var(--red);background:rgba(255,71,87,.03);padding:14px;"><div class="badge" style="background:var(--red);color:#fff;">MENU ADATTATO</div><div style="font-size:12px;color:var(--text);line-height:1.6;padding-right:60px;">Pasti adattati per: <strong>${ST.p.intol.map(i=>INTOL_LIST.find(x=>x.id===i)?.label||i).join(', ')}</strong></div></div>`:''}
   <div class="bebas" style="font-size:18px;color:var(--mut);margin:16px 0 10px;letter-spacing:1px;">MENU DELLA GIORNATA</div>
+  <!-- PUNTO 17: banner proiezione obiettivo se dieta custom -->
+  ${(()=>{const proj=computeCustomProjection();if(!proj)return '';const diverg=proj.divergePct;const col=diverg<=10?'var(--acc)':diverg<=20?'var(--yel)':'var(--red)';const emo=diverg<=10?'✅':diverg<=20?'⚠️':'🚨';return`<div style="background:rgba(255,71,87,${diverg>20?'.08':'.04'});border:1.5px solid ${col};border-radius:14px;padding:12px 14px;margin-bottom:12px;">
+    <div style="display:flex;gap:10px;align-items:flex-start;">
+      <div style="font-size:22px;flex-shrink:0;line-height:1;">${emo}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:11px;font-weight:700;color:${col};letter-spacing:1px;margin-bottom:3px;">DIETA PERSONALIZZATA ATTIVA</div>
+        <div style="font-size:12px;color:var(--text);line-height:1.5;">Totale: <strong>${proj.totalKcal} kcal</strong> (target: ${proj.targetKcal})</div>
+        <div style="font-size:11px;color:var(--mut);line-height:1.4;margin-top:4px;">${proj.advice}</div>
+      </div>
+    </div>
+  </div>`;})()}
   ${meals.map(m=>{
     const isL=dLog.logged.includes(m.id),isS=dLog.skipped?.includes(m.id);
     const selIdx=ST.mealOpts?.[m.id]||0,opt=m.opts[selIdx]||m.opts[0];
@@ -2504,6 +2670,12 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
         <div style="font-size:12px;color:var(--text);line-height:1.5;">${escapeHtml(m.fav)}</div>
         <div style="font-size:10px;color:var(--mut);margin-top:4px;line-height:1.4;">Considera di inserirli rispettando il target kcal del pasto (~${m.kcal} kcal).</div>
       </div>`:''}
+      <!-- PUNTO 17: bottone personalizza pasto -->
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        ${m.isCustom?`<button class="btn-s btn-action" style="font-size:11px;padding:6px 10px;flex:1;" onclick="openCustomMealEditor('${m.id}',${m.kcal})">✏️ MODIFICA PERSONALIZZAZIONE</button>
+        <button class="btn-s btn-action" style="font-size:11px;padding:6px 10px;color:var(--mut);" onclick="restoreMealAI('${m.id}')">🤖 Ripristina auto</button>`:
+        `<button class="btn-s btn-action" style="font-size:11px;padding:6px 10px;flex:1;color:var(--purp);border-color:var(--purp);" onclick="openCustomMealEditor('${m.id}',${m.kcal})">✏️ PERSONALIZZA QUESTO PASTO</button>`}
+      </div>
       ${m.opts.length>1?`<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:8px;">${m.opts.map((o,i)=>`<button onclick="pickMealOpt('${m.id}',${i})" style="flex:0 0 auto;padding:6px 12px;border-radius:8px;border:1.5px solid ${selIdx===i?'var(--acc)':'var(--bord)'};background:${selIdx===i?'rgba(197,241,53,.1)':'var(--surf)'};color:${selIdx===i?'var(--acc)':'var(--mut)'};font-size:12px;font-weight:600;cursor:pointer;">${o.lbl}</button>`).join('')}</div>`:''}
       <div>${opt.items.map(item=>`<div style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--bord);"><div style="width:6px;height:6px;border-radius:50%;background:var(--acc);flex-shrink:0;margin-top:7px;"></div><div style="font-size:13px;line-height:1.4;">${item}</div></div>`).join('')}</div>
     </div>`;
@@ -3023,7 +3195,66 @@ window.render = function() {
     <div style="font-size:11px;color:var(--mut);margin-bottom:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Muscolo: ${EX[ST.sheetData.curId]?.mus||'—'}</div>
     ${ST.sheetData.alts.map(alt=>{const cur=alt.id===ST.sheetData.curId;return`<div onclick="swapEx('${ST.sheetData.slot}','${alt.id}')" style="cursor:pointer;padding:14px;border-radius:12px;border:1.5px solid ${cur?'var(--acc)':'var(--bord)'};background:${cur?'rgba(197,241,53,.08)':'var(--surf)'};margin-bottom:7px;transition:.15s;"><div class="r"><div><div style="font-weight:700;font-size:14px;color:${cur?'var(--acc)':'var(--text)'};">${alt.name||alt.id}</div><div style="font-size:11px;color:var(--mut);margin-top:2px;">${alt.mus||''} · ${alt.t==='compound'?'Multi-articolare':alt.t==='isometric'?'Isometrico':'Isolamento'}</div></div>${cur?`<span style="background:var(--acc);color:#000;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;">✓ ATTUALE</span>`:''}</div>${alt.cues?.[0]?`<div style="font-size:11px;color:var(--mut);margin-top:8px;padding:6px 10px;background:var(--bg);border-radius:6px;">💡 ${alt.cues[0]}</div>`:''}</div>`;}).join('')}
     <button class="btn btn-action" style="margin-top:12px;width:100%;padding:12px;" onclick="closeSheet()">ANNULLA</button>
-  </div></div>`:'';
+  </div></div>`:
+  // PUNTO 17: editor pasto personalizzato
+  ST.sheet==='customMeal'&&ST.sheetData?(()=>{
+    const d=ST.sheetData;
+    const draft=d.draft||[];
+    const totalK=draft.reduce((s,i)=>s+(i.kcal||0),0);
+    const totalG=draft.reduce((s,i)=>s+(i.grams||0),0);
+    const target=d.targetKcal||0;
+    const diff=totalK-target;
+    const diffPct=target>0?Math.round(Math.abs(diff)/target*100):0;
+    const diffCol=diffPct<=10?'var(--acc)':diffPct<=20?'var(--yel)':'var(--red)';
+    const diffText=Math.abs(diff)<5?'in linea':(diff>0?`+${diff} kcal sopra`:`${diff} kcal sotto`);
+    return`<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div>
+      <div class="bebas" style="font-size:22px;margin-bottom:4px;">✏️ PERSONALIZZA PASTO</div>
+      <div style="font-size:12px;color:var(--mut);margin-bottom:14px;">Aggiungi i cibi che mangi davvero con le quantità e le kcal. Target del pasto: <strong style="color:var(--text);">${target} kcal</strong>.</div>
+
+      <!-- Totali correnti -->
+      <div style="background:var(--bg);border:1.5px solid ${diffCol};border-radius:12px;padding:12px;margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;">
+          <div>
+            <div style="font-size:11px;color:var(--mut);letter-spacing:1px;">TOTALE ATTUALE</div>
+            <div class="bebas" style="font-size:26px;color:${diffCol};">${totalK}<span style="font-size:14px;color:var(--mut);"> kcal</span></div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:11px;color:var(--mut);">${totalG}g tot</div>
+            <div style="font-size:12px;font-weight:700;color:${diffCol};">${diffText}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lista cibi attuale -->
+      ${draft.length>0?`<div style="margin-bottom:14px;">
+        ${draft.map((it,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surf);border:1px solid var(--bord);border-radius:10px;margin-bottom:6px;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:600;color:var(--text);">${escapeHtml(it.name)}</div>
+            <div style="font-size:11px;color:var(--mut);">${it.grams}g · ${it.kcal} kcal</div>
+          </div>
+          <button class="btn-s" style="background:var(--red);color:#fff;padding:6px 10px;font-size:11px;" onclick="removeCustomMealItem(${i})">✕</button>
+        </div>`).join('')}
+      </div>`:`<div style="text-align:center;padding:16px;font-size:12px;color:var(--mut);">Nessun cibo aggiunto. Inserisci almeno 1 cibo sotto.</div>`}
+
+      <!-- Form nuovo cibo -->
+      <div style="background:rgba(167,139,250,.06);border:1.5px solid var(--purp);border-radius:12px;padding:12px;margin-bottom:14px;">
+        <div style="font-size:11px;font-weight:700;color:var(--purp);letter-spacing:1px;margin-bottom:8px;">+ AGGIUNGI CIBO</div>
+        <input id="cmName" type="text" maxlength="80" placeholder="Nome cibo (es. Pasta al sugo)" style="margin-bottom:8px;font-size:14px;padding:10px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <input id="cmGrams" type="number" min="1" max="2000" placeholder="Grammi" style="margin:0;font-size:14px;padding:10px;text-align:center;">
+          <input id="cmKcal" type="number" min="1" max="3000" placeholder="Kcal tot" style="margin:0;font-size:14px;padding:10px;text-align:center;">
+        </div>
+        <button class="btn-s" style="background:var(--purp);color:#fff;width:100%;padding:10px;font-size:13px;" onclick="addCustomMealItem()">+ Aggiungi al pasto</button>
+      </div>
+
+      <!-- Azioni -->
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-action" style="flex:1;padding:12px;" onclick="closeSheet()">ANNULLA</button>
+        <button class="btn" style="flex:1;padding:12px;" onclick="saveCustomMeal()">SALVA</button>
+      </div>
+      <div style="font-size:10px;color:var(--mut);text-align:center;margin-top:10px;line-height:1.4;">💡 Se lasci vuoto il pasto e salvi, torni ai consigli automatici.</div>
+    </div></div>`;
+  })():'';
   // Sheets extra (legacy rimossi: ora c'è il drawer laterale)
   const moreSheetH='';
   const shortPickH='';
