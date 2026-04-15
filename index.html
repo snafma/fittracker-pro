@@ -1724,7 +1724,7 @@ window.initProgram=function(){
     pra:sanitizeFav(vv('iFavPra')),
     cen:sanitizeFav(vv('iFavCen'))
   };
-  ST.p={s:w,g:g,t,dur,targetD:tDate.toISOString().split('T')[0],sessions:sess,cardioLevel:cl,intol,loc,focus,diet,usesSupplements,favs};
+  ST.p={s:w,g:g,t,dur,targetD:tDate.toISOString().split('T')[0],sessions:sess,cardioLevel:cl,intol,loc,focus,diet,usesSupplements,favs,tourCompleted:false};
   ST.programStart=currentDateStr||getToday();
   if(!ST.h.length) ST.h=[{d:ST.programStart,w:w}];
   save();
@@ -2208,6 +2208,106 @@ window.openSwap=function(slot){
 }
 window.swapEx=function(slot,newId){if(!ST.exPrefs)ST.exPrefs={};ST.exPrefs[slot]=newId;ST.sheet=null;save();}
 window.closeSheet=function(){ST.sheet=null;ST.sheetData=null;render();}
+
+// PUNTO 15: tour guidato per nuovi utenti
+window.TOUR_STEPS=[
+  {
+    icon:'👋',
+    title:'Benvenuto in FitTracker PRO!',
+    body:'Hai appena creato il tuo programma personalizzato. Ti facciamo vedere in 5 passi rapidi come usare l\'app al meglio.',
+    color:'var(--acc)'
+  },
+  {
+    icon:'🏋️',
+    title:'Tab "Allenamento"',
+    body:'Qui trovi le schede di allenamento del giorno (riscaldamento, esercizi, stretching). Premi ▶ per iniziare: registra peso e ripetizioni di ogni serie. L\'AI suggerisce il peso giusto in base al tuo storico.',
+    color:'var(--gre)'
+  },
+  {
+    icon:'🥗',
+    title:'Tab "Consigli Nutrizionali"',
+    body:'Il tuo piano alimentare giornaliero con kcal e macro target. Per ogni pasto vedi diverse opzioni — scegli quella che preferisci. Puoi personalizzare ogni pasto cliccando "✏️ Personalizza" se vuoi inserire i tuoi cibi.',
+    color:'var(--ora)'
+  },
+  {
+    icon:'📐',
+    title:'Tab "Misure" + "Analisi"',
+    body:'Registra peso e circonferenze (vita, braccia, cosce) ogni 1-2 settimane. In "Analisi & Progressi" vedi grafici, PR per esercizio e progressione nel tempo. Più dati registri, più l\'app diventa precisa.',
+    color:'var(--blu)'
+  },
+  {
+    icon:'⚙️',
+    title:'Tab "Configurazione"',
+    body:'Cambia obiettivo, dieta, integratori, cibi preferiti, schede personalizzate, orari pasti. Tutto è modificabile in qualsiasi momento — l\'AI ricalcola automaticamente. Buon allenamento! 💪',
+    color:'var(--purp)'
+  }
+];
+
+window.tourStep=0;
+window.startTour=function(){
+  window.tourStep=0;
+  if(!ST.p) return;
+  ST.p.tourCompleted=false;
+  save();
+};
+window.tourNext=function(){
+  if(window.tourStep<TOUR_STEPS.length-1){
+    window.tourStep++;
+    render();
+  } else {
+    window.completeTour();
+  }
+};
+window.tourPrev=function(){
+  if(window.tourStep>0){
+    window.tourStep--;
+    render();
+  }
+};
+window.completeTour=function(){
+  if(!ST.p) return;
+  ST.p.tourCompleted=true;
+  window.tourStep=0;
+  save();
+};
+window.skipTour=function(){
+  if(confirm('Saltare il tour? Potrai rivederlo da Configurazione → "Rivedi tour".')){
+    completeTour();
+  }
+};
+// Render dell'overlay tour (chiamato dopo il render principale)
+window.renderTour=function(){
+  if(!ST.p) return '';
+  if(ST.p.tourCompleted) return '';
+  const s=TOUR_STEPS[window.tourStep||0];
+  if(!s) return '';
+  const total=TOUR_STEPS.length;
+  const cur=(window.tourStep||0)+1;
+  return `<div style="position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:var(--bg);border:2px solid ${s.color};border-radius:20px;max-width:420px;width:100%;padding:24px;box-shadow:0 0 40px ${s.color}40;">
+      <!-- Skip button -->
+      <div style="text-align:right;margin-bottom:8px;">
+        <button class="btn-s" style="background:transparent;color:var(--mut);font-size:11px;padding:4px 8px;border:1px solid var(--bord);" onclick="skipTour()">Salta tour ✕</button>
+      </div>
+      <!-- Icon -->
+      <div style="text-align:center;font-size:64px;margin:8px 0 14px;line-height:1;">${s.icon}</div>
+      <!-- Title -->
+      <div class="bebas" style="text-align:center;font-size:26px;color:${s.color};margin-bottom:12px;line-height:1.1;">${s.title}</div>
+      <!-- Body -->
+      <div style="font-size:14px;color:var(--text);line-height:1.6;text-align:center;margin-bottom:20px;">${s.body}</div>
+      <!-- Dots indicator -->
+      <div style="display:flex;justify-content:center;gap:6px;margin-bottom:18px;">
+        ${TOUR_STEPS.map((_,i)=>`<div style="width:${i===(window.tourStep||0)?'18px':'8px'};height:8px;border-radius:99px;background:${i===(window.tourStep||0)?s.color:'var(--bord)'};transition:.3s;"></div>`).join('')}
+      </div>
+      <!-- Navigation -->
+      <div style="display:flex;gap:8px;align-items:center;">
+        ${(window.tourStep||0)>0?`<button class="btn btn-action" style="flex:1;padding:12px;font-family:'Bebas Neue';font-size:15px;" onclick="tourPrev()">← INDIETRO</button>`:`<div style="flex:1;"></div>`}
+        <div style="font-size:11px;color:var(--mut);padding:0 8px;">${cur} / ${total}</div>
+        <button class="btn" style="flex:1;padding:12px;font-family:'Bebas Neue';font-size:15px;background:${s.color};color:${s.color==='var(--acc)'?'#000':'#fff'};" onclick="tourNext()">${cur===total?'INIZIA! ✓':'AVANTI →'}</button>
+      </div>
+    </div>
+  </div>`;
+};
 window.sendMsg=async function(){
   const inp=el('aiIn');const msg=inp?.value?.trim();if(!msg||ST.chatLoading) return;
   ST.chatHistory.push({role:'user',content:msg});inp.value='';ST.chatLoading=true;render();
@@ -2282,6 +2382,20 @@ window.aiRecalculatePlan=async function(){
 }
 window.copyLink=function(){const url=window.location.href.split('?')[0];navigator.clipboard?navigator.clipboard.writeText(url).then(()=>alert('✅ Link copiato!')):alert(url);}
 window.shareViaEmail=function(){const url=window.location.href.split('?')[0];const b=encodeURIComponent(`Ciao! Unisciti a FitTracker PRO:\n${url}`);window.location.href=`mailto:?subject=${encodeURIComponent('FitTracker PRO')}&body=${b}`;}
+// PUNTO 10: condivisione WhatsApp + condivisione nativa mobile
+window.shareViaWhatsApp=function(){
+  const url=window.location.href.split('?')[0];
+  const txt=encodeURIComponent(`Ciao! Sto usando FitTracker PRO per i miei allenamenti e la mia dieta. Provala anche tu: ${url}`);
+  window.open(`https://wa.me/?text=${txt}`,'_blank');
+}
+window.shareViaNative=function(){
+  const url=window.location.href.split('?')[0];
+  if(navigator.share){
+    navigator.share({title:'FitTracker PRO',text:'Allenamenti, dieta e progressi tracciati con AI',url}).catch(()=>{});
+  } else {
+    alert('Condivisione nativa non disponibile su questo dispositivo. Usa WhatsApp, email o copia link.');
+  }
+}
 window.svg=function(data,key,col,H,goal){
   if(data.length<2) return`<div style="text-align:center;padding:14px;font-size:12px;color:var(--mut)">Aggiungi almeno 2 dati per il grafico</div>`;
   const W=320,pl=28,pr=10,pt=8,pb=18;
@@ -3154,6 +3268,64 @@ window.renderBody = function(cW,mac,theme,pWeek,sx){
     ${!w.isRest?`<div style="text-align:right;"><div style="font-size:13px;"><strong style="color:var(--acc);">${w.vol}</strong><span style="color:var(--mut);font-size:11px;"> kg vol</span></div></div>`:''}</div>`).join('')}
   </div>`;
 }
+// PUNTO 10: tab "Condividi App" dedicata
+window.renderShare = function(){
+  return `
+  <div class="bebas" style="font-size:30px;color:var(--blu);margin:8px 0 4px;">📤 CONDIVIDI L'APP</div>
+  <div style="font-size:13px;color:var(--mut);margin-bottom:18px;line-height:1.5;">Invita amici e familiari a usare FitTracker PRO. Ognuno avrà il proprio account privato salvato nel Cloud.</div>
+
+  <!-- WhatsApp (più usato in Italia) -->
+  <div class="card" style="border-color:#25D366;padding:16px;margin-bottom:10px;">
+    <div class="r" style="margin-bottom:8px;">
+      <div>
+        <div class="bebas" style="font-size:20px;color:#25D366;">💬 WHATSAPP</div>
+        <div style="font-size:11px;color:var(--mut);margin-top:2px;">Più veloce — apre la chat con il messaggio già pronto</div>
+      </div>
+    </div>
+    <button class="btn" style="background:#25D366;color:#fff;width:100%;padding:14px;font-family:'Bebas Neue';font-size:18px;" onclick="shareViaWhatsApp()">CONDIVIDI SU WHATSAPP</button>
+  </div>
+
+  <!-- Condivisione nativa (iOS/Android share sheet) -->
+  ${navigator.share?`<div class="card" style="border-color:var(--purp);padding:16px;margin-bottom:10px;">
+    <div class="r" style="margin-bottom:8px;">
+      <div>
+        <div class="bebas" style="font-size:20px;color:var(--purp);">📲 CONDIVISIONE RAPIDA</div>
+        <div style="font-size:11px;color:var(--mut);margin-top:2px;">Apre il menu di condivisione del tuo telefono (Telegram, Messenger, SMS...)</div>
+      </div>
+    </div>
+    <button class="btn" style="background:var(--purp);color:#fff;width:100%;padding:14px;font-family:'Bebas Neue';font-size:18px;" onclick="shareViaNative()">SCEGLI APP DI CONDIVISIONE</button>
+  </div>`:''}
+
+  <!-- Email -->
+  <div class="card" style="border-color:var(--ora);padding:16px;margin-bottom:10px;">
+    <div class="r" style="margin-bottom:8px;">
+      <div>
+        <div class="bebas" style="font-size:20px;color:var(--ora);">✉️ EMAIL</div>
+        <div style="font-size:11px;color:var(--mut);margin-top:2px;">Apre la tua app email con messaggio già pronto</div>
+      </div>
+    </div>
+    <button class="btn" style="background:var(--ora);color:#fff;width:100%;padding:14px;font-family:'Bebas Neue';font-size:18px;" onclick="shareViaEmail()">INVIA VIA EMAIL</button>
+  </div>
+
+  <!-- Copia link -->
+  <div class="card" style="border-color:var(--blu);padding:16px;margin-bottom:14px;">
+    <div class="r" style="margin-bottom:8px;">
+      <div>
+        <div class="bebas" style="font-size:20px;color:var(--blu);">📋 COPIA LINK</div>
+        <div style="font-size:11px;color:var(--mut);margin-top:2px;">Per incollarlo dove vuoi (Telegram, social, note...)</div>
+      </div>
+    </div>
+    <div style="background:var(--surf);border:1px solid var(--bord);border-radius:8px;padding:10px 12px;margin-bottom:10px;font-family:monospace;font-size:11px;color:var(--mut);overflow-wrap:anywhere;">${escapeHtml(window.location.href.split('?')[0])}</div>
+    <button class="btn" style="background:var(--blu);color:#fff;width:100%;padding:14px;font-family:'Bebas Neue';font-size:18px;" onclick="copyLink()">COPIA NEGLI APPUNTI</button>
+  </div>
+
+  <!-- Info gratuita -->
+  <div class="card" style="background:rgba(197,241,53,.04);border-color:#1a2400;padding:14px;">
+    <div class="lbl" style="color:var(--acc);margin-bottom:6px;">💡 BUONO A SAPERSI</div>
+    <div style="font-size:12px;color:var(--text);line-height:1.6;">FitTracker PRO è <strong>gratuita</strong> e senza pubblicità. Ogni utente ha un proprio account privato e protetto sul Cloud. I dati di un utente non sono mai visibili agli altri.</div>
+  </div>`;
+};
+
 window.renderCoach = function(){
   const sx=AU.profile?.sx||'m';
   return`
@@ -3301,13 +3473,11 @@ window.renderSettings = function(mac){
     <div class="pw-wrap"><input type="password" id="cpNew2" placeholder="Ripeti la nuova password"><span class="pw-eye" onclick="togglePw(this)">👁️</span></div>
     <button class="btn-s btn-purp" style="width:100%;padding:13px;font-family:'Bebas Neue';font-size:18px;" onclick="doChangePassword()">AGGIORNA PASSWORD</button>
   </div>
-  <div class="card" style="border-color:var(--blu);">
-    <div class="bebas" style="font-size:20px;color:var(--blu);margin-bottom:8px;">📤 CONDIVIDI L'APP</div>
-    <div style="font-size:13px;color:var(--mut);line-height:1.6;margin-bottom:12px;">Ogni utente che apre il link può registrare il proprio account privato nel Cloud.</div>
-    <div style="display:flex;gap:8px;">
-      <button class="btn-s btn-blu" style="flex:1;padding:13px;font-family:'Bebas Neue';font-size:16px;" onclick="copyLink()">📋 COPIA LINK</button>
-      <button class="btn-s btn-ora" style="flex:1;padding:13px;font-family:'Bebas Neue';font-size:16px;" onclick="shareViaEmail()">✉️ INVIA EMAIL</button>
-    </div>
+  <!-- PUNTO 15: bottone rivedi tour -->
+  <div class="card" style="border-color:var(--purp);">
+    <div class="bebas" style="font-size:18px;color:var(--purp);margin-bottom:6px;">🎓 TUTORIAL APP</div>
+    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:10px;">Rivedi il tour guidato di benvenuto in 5 passi.</div>
+    <button class="btn-s btn-action" style="width:100%;padding:11px;font-size:13px;" onclick="startTour();render();">▶ RIVEDI TOUR</button>
   </div>
   <div class="card">
     <button class="btn btn-action" style="padding:14px;width:100%;font-family:'Bebas Neue';font-size:18px;" onclick="doLogout()">🚪 LOGOUT</button>
@@ -3566,6 +3736,7 @@ window.render = function() {
     {id:'body',ic:'📊',lbl:'Analisi & Progressi'},
     {id:'measures',ic:'📐',lbl:'Misure Corporee'},
     {id:'coach',ic:'🤖',lbl:'AI Coach'},
+    {id:'share',ic:'📤',lbl:'Condividi App'},
     {id:'set',ic:'⚙️',lbl:'Configurazione'},
   ];
   const curNav=NAV_ITEMS.find(n=>n.id===ST.tab)||NAV_ITEMS[0];
@@ -3606,8 +3777,9 @@ window.render = function() {
   else if(ST.tab==='body') H+=renderBody(cW,mac,theme,pWeek,sx);
   else if(ST.tab==='measures') H+=renderMeasures(cW,mac,theme,pWeek,sx);
   else if(ST.tab==='coach') H+=renderCoach();
+  else if(ST.tab==='share') H+=renderShare();
   else if(ST.tab==='set') H+=renderSettings(mac);
-  H+=`</div></div>`;root.innerHTML=H+sheetH+moreSheetH+shortPickH;
+  H+=`</div></div>`;root.innerHTML=H+sheetH+moreSheetH+shortPickH+renderTour();
   if(ST.tab==='coach') setTimeout(()=>{const c=el('chatArea');if(c)c.scrollTop=c.scrollHeight;},50);
   // PUNTO 11: inizializza visibilità campi in Configurazione
   if(ST.tab==='set') setTimeout(()=>{if(window.toggleSessVisibilitySettings) toggleSessVisibilitySettings();},0);
