@@ -2276,8 +2276,74 @@ window.skipTour=function(){
   }
 };
 // Render dell'overlay tour (chiamato dopo il render principale)
+// PUNTO 24: disclaimer medico + informativa privacy
+// Popup obbligatorio alla prima registrazione, accettazione salvata in ST.p.disclaimerAccepted
+window.acceptDisclaimer=function(){
+  if(!ST.p) return;
+  ST.p.disclaimerAccepted=true;
+  ST.p.disclaimerAcceptedAt=new Date().toISOString();
+  save();
+};
+
+// Apre il disclaimer in modalità "rivedi" (sempre consultabile da Config)
+window.openDisclaimerView=function(){
+  window.disclaimerViewMode=true;
+  render();
+};
+window.closeDisclaimerView=function(){
+  window.disclaimerViewMode=false;
+  render();
+};
+
+window.renderDisclaimer=function(){
+  if(!ST.p) return '';
+  // Mostra se non accettato (popup obbligatorio) OPPURE se aperto da Config (modalità rivedi)
+  const isReview=!!window.disclaimerViewMode;
+  if(ST.p.disclaimerAccepted && !isReview) return '';
+  const acceptedDate=ST.p.disclaimerAcceptedAt?new Date(ST.p.disclaimerAcceptedAt).toLocaleDateString('it-IT'):null;
+  return `<div style="position:fixed;inset:0;background:rgba(0,0,0,.92);backdrop-filter:blur(8px);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto;">
+    <div style="background:var(--bg);border:2px solid var(--ora);border-radius:20px;max-width:480px;width:100%;padding:22px;box-shadow:0 0 40px rgba(255,104,53,.3);max-height:92vh;overflow-y:auto;">
+
+      <!-- Header -->
+      <div style="text-align:center;margin-bottom:18px;">
+        <div style="font-size:48px;margin-bottom:6px;line-height:1;">📋</div>
+        <div class="bebas" style="font-size:24px;color:var(--ora);line-height:1.1;">${isReview?'TERMINI E PRIVACY':'PRIMA DI INIZIARE'}</div>
+        <div style="font-size:12px;color:var(--mut);margin-top:4px;">${isReview && acceptedDate?`Accettato il ${acceptedDate}`:'Leggi e accetta per usare l\'app'}</div>
+      </div>
+
+      <!-- Disclaimer medico -->
+      <div style="background:rgba(255,104,53,.06);border:1.5px solid var(--ora);border-radius:14px;padding:14px;margin-bottom:14px;">
+        <div class="bebas" style="font-size:17px;color:var(--ora);margin-bottom:8px;">⚠️ DISCLAIMER MEDICO</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.6;">
+          FitTracker PRO è uno strumento di supporto al fitness e all'alimentazione, <strong>non un servizio sanitario</strong>. I consigli su allenamento, calorie e macronutrienti sono generati con regole standard e <strong>non sostituiscono il parere di un medico, dietista o personal trainer qualificato</strong>.<br><br>
+          Se hai patologie (cardiache, metaboliche, alimentari), assumi farmaci, sei in gravidanza/allattamento o hai dubbi, <strong>consulta sempre un professionista</strong> prima di seguire i consigli dell'app. Usi l'app sotto la tua responsabilità.
+        </div>
+      </div>
+
+      <!-- Privacy -->
+      <div style="background:rgba(96,165,250,.06);border:1.5px solid var(--blu);border-radius:14px;padding:14px;margin-bottom:14px;">
+        <div class="bebas" style="font-size:17px;color:var(--blu);margin-bottom:8px;">🔒 INFORMATIVA PRIVACY</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.6;">
+          I tuoi dati (peso, misure, allenamenti, pasti) sono salvati nel tuo <strong>account privato sul Cloud</strong> (Firebase Auth + Firestore di Google). Nessuno tranne te può leggerli, neanche gli sviluppatori dell'app.<br><br>
+          <strong>Non condividiamo dati con terzi e non mostriamo pubblicità</strong>. Puoi cancellare il tuo account in qualsiasi momento dalla Configurazione (sezione "Zona pericolosa") — l'eliminazione è immediata e irreversibile.
+        </div>
+      </div>
+
+      <!-- Bottoni -->
+      ${isReview?`
+        <button class="btn" style="width:100%;padding:14px;font-family:'Bebas Neue';font-size:16px;background:var(--blu);color:#fff;" onclick="closeDisclaimerView()">CHIUDI</button>
+      `:`
+        <div style="background:var(--surf);border:1px solid var(--bord);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:var(--mut);line-height:1.5;text-align:center;">Per usare l'app devi accettare il disclaimer e l'informativa privacy. Cliccando "Accetto" confermi di aver letto e compreso entrambi.</div>
+        <button class="btn" style="width:100%;padding:14px;font-family:'Bebas Neue';font-size:18px;background:var(--ora);color:#fff;" onclick="acceptDisclaimer()">✓ HO LETTO E ACCETTO</button>
+      `}
+    </div>
+  </div>`;
+};
+
 window.renderTour=function(){
   if(!ST.p) return '';
+  // PUNTO 24: il tour parte solo dopo che il disclaimer è stato accettato
+  if(!ST.p.disclaimerAccepted) return '';
   if(ST.p.tourCompleted) return '';
   const s=TOUR_STEPS[window.tourStep||0];
   if(!s) return '';
@@ -2468,6 +2534,7 @@ window.renderSetup = function(){
   <textarea id="iFavPra" maxlength="200" rows="2" placeholder="Es. pasta al pomodoro, insalata di pollo, bresaola" style="margin-bottom:10px;font-size:13px;"></textarea>
   <span class="lbl" style="margin-bottom:4px;">🌙 CENA</span>
   <textarea id="iFavCen" maxlength="200" rows="2" placeholder="Es. pesce alla griglia, uova, verdure di stagione" style="margin-bottom:14px;font-size:13px;"></textarea>
+  <div style="background:rgba(255,104,53,.05);border-left:3px solid var(--ora);border-radius:0 10px 10px 0;padding:10px 12px;margin-bottom:10px;font-size:11px;color:var(--mut);line-height:1.5;">📋 Cliccando "Attiva il sistema" ti verrà chiesto di accettare il disclaimer medico e l'informativa privacy. L'app non sostituisce il parere di un medico o nutrizionista qualificato.</div>
   <button class="btn" onclick="initProgram()">ATTIVA IL SISTEMA ▸</button>
   </div></div>`;
 }
@@ -3479,6 +3546,12 @@ window.renderSettings = function(mac){
     <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:10px;">Rivedi il tour guidato di benvenuto in 5 passi.</div>
     <button class="btn-s btn-action" style="width:100%;padding:11px;font-size:13px;" onclick="startTour();render();">▶ RIVEDI TOUR</button>
   </div>
+  <!-- PUNTO 24: rivedi disclaimer + privacy -->
+  <div class="card" style="border-color:var(--ora);">
+    <div class="bebas" style="font-size:18px;color:var(--ora);margin-bottom:6px;">📋 DISCLAIMER & PRIVACY</div>
+    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:10px;">Rileggi il disclaimer medico e l'informativa privacy che hai accettato alla registrazione.</div>
+    <button class="btn-s btn-action" style="width:100%;padding:11px;font-size:13px;" onclick="openDisclaimerView()">📖 LEGGI</button>
+  </div>
   <div class="card">
     <button class="btn btn-action" style="padding:14px;width:100%;font-family:'Bebas Neue';font-size:18px;" onclick="doLogout()">🚪 LOGOUT</button>
   </div>
@@ -3779,7 +3852,7 @@ window.render = function() {
   else if(ST.tab==='coach') H+=renderCoach();
   else if(ST.tab==='share') H+=renderShare();
   else if(ST.tab==='set') H+=renderSettings(mac);
-  H+=`</div></div>`;root.innerHTML=H+sheetH+moreSheetH+shortPickH+renderTour();
+  H+=`</div></div>`;root.innerHTML=H+sheetH+moreSheetH+shortPickH+renderTour()+renderDisclaimer();
   if(ST.tab==='coach') setTimeout(()=>{const c=el('chatArea');if(c)c.scrollTop=c.scrollHeight;},50);
   // PUNTO 11: inizializza visibilità campi in Configurazione
   if(ST.tab==='set') setTimeout(()=>{if(window.toggleSessVisibilitySettings) toggleSessVisibilitySettings();},0);
