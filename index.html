@@ -2478,7 +2478,15 @@ window.openCustomMealEditor=function(mealId,targetKcal){
   if(!ST.p.customMeals) ST.p.customMeals={};
   // Se non c'è ancora un custom, iniziamo con array vuoto (edit from scratch)
   ST.sheet='customMeal';
-  ST.sheetData={mealId,targetKcal,draft:[...(ST.p.customMeals[mealId]||[])]};
+  ST.sheetData={
+    mealId,targetKcal,
+    draft:[...(ST.p.customMeals[mealId]||[])],
+    addMode:'db',         // PUNTO 26: modalità default = ricerca DB
+    foodQuery:'',
+    foodCat:null,
+    selectedFood:null,
+    selectedGrams:100
+  };
   render();
 };
 
@@ -2498,6 +2506,74 @@ window.addCustomMealItem=function(){
   document.getElementById('cmName').value='';
   document.getElementById('cmGrams').value='';
   document.getElementById('cmKcal').value='';
+  render();
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// PUNTO 26 (UI) — Integrazione DB cibi nell'editor pasti
+// ═══════════════════════════════════════════════════════════════════
+
+// Cambia modalità tra ricerca DB e inserimento manuale
+window.switchAddMode=function(mode){
+  if(!ST.sheetData) return;
+  ST.sheetData.addMode=mode; // 'db' oppure 'manual'
+  // Reset stato selezione quando cambio modalità
+  ST.sheetData.selectedFood=null;
+  ST.sheetData.foodQuery='';
+  ST.sheetData.foodCat=null;
+  render();
+};
+
+// Aggiorna query di ricerca (chiamato live mentre digito)
+window.updateFoodQuery=function(val){
+  if(!ST.sheetData) return;
+  ST.sheetData.foodQuery=(val||'').slice(0,50);
+  // Se sto digitando, deseleziono il cibo precedente
+  if(ST.sheetData.selectedFood && val!==ST.sheetData.selectedFood.name){
+    ST.sheetData.selectedFood=null;
+  }
+  render();
+};
+
+// Filtro per categoria
+window.setFoodCat=function(cat){
+  if(!ST.sheetData) return;
+  ST.sheetData.foodCat = (ST.sheetData.foodCat===cat) ? null : cat;
+  ST.sheetData.foodQuery=''; // reset query
+  ST.sheetData.selectedFood=null;
+  render();
+};
+
+// Seleziona un cibo dal dropdown
+window.selectFood=function(foodId){
+  if(!ST.sheetData) return;
+  const f = window.foodById(foodId);
+  if(!f) return;
+  ST.sheetData.selectedFood=f;
+  ST.sheetData.selectedGrams=ST.sheetData.selectedGrams||100;
+  ST.sheetData.foodQuery=f.name; // mostra il nome nel campo
+  render();
+  // Focus al campo grammi
+  setTimeout(()=>{const g=document.getElementById('dbGrams');if(g){g.focus();g.select();}},50);
+};
+
+// Aggiunge il cibo selezionato dal DB al draft del pasto
+window.addDbFoodToDraft=function(){
+  if(!ST.sheetData||!ST.sheetData.selectedFood) return;
+  const grams=parseInt(document.getElementById('dbGrams')?.value||0);
+  if(!grams||grams<1||grams>2000) return alert('Grammi: deve essere tra 1 e 2000.');
+  const f=ST.sheetData.selectedFood;
+  const portion=window.foodPortion(f, grams);
+  ST.sheetData.draft.push({
+    name: f.name,
+    grams: grams,
+    kcal: portion.kcal,
+    fromDb: true,    // flag per distinguere
+    foodId: f.id     // per future statistiche
+  });
+  // Reset selezione per inserire un altro cibo
+  ST.sheetData.selectedFood=null;
+  ST.sheetData.foodQuery='';
   render();
 };
 
@@ -4207,22 +4283,89 @@ window.render = function() {
       ${draft.length>0?`<div style="margin-bottom:14px;">
         ${draft.map((it,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surf);border:1px solid var(--bord);border-radius:10px;margin-bottom:6px;">
           <div style="flex:1;min-width:0;">
-            <div style="font-size:13px;font-weight:600;color:var(--text);">${escapeHtml(it.name)}</div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);">${it.fromDb?'<span title="Dal database" style="font-size:10px;color:var(--purp);margin-right:4px;">📚</span>':''}${escapeHtml(it.name)}</div>
             <div style="font-size:11px;color:var(--mut);">${it.grams}g · ${it.kcal} kcal</div>
           </div>
           <button class="btn-s" style="background:var(--red);color:#fff;padding:6px 10px;font-size:11px;" onclick="removeCustomMealItem(${i})">✕</button>
         </div>`).join('')}
-      </div>`:`<div style="text-align:center;padding:16px;font-size:12px;color:var(--mut);">Nessun cibo aggiunto. Inserisci almeno 1 cibo sotto.</div>`}
+      </div>`:`<div style="text-align:center;padding:16px;font-size:12px;color:var(--mut);">Nessun cibo aggiunto. Aggiungine almeno 1 dal database o inseriscilo manualmente.</div>`}
 
-      <!-- Form nuovo cibo -->
+      <!-- PUNTO 26: Form aggiungi cibo con 2 modalità (DB / Manuale) -->
       <div style="background:rgba(167,139,250,.06);border:1.5px solid var(--purp);border-radius:12px;padding:12px;margin-bottom:14px;">
-        <div style="font-size:11px;font-weight:700;color:var(--purp);letter-spacing:1px;margin-bottom:8px;">+ AGGIUNGI CIBO</div>
-        <input id="cmName" type="text" maxlength="80" placeholder="Nome cibo (es. Pasta al sugo)" style="margin-bottom:8px;font-size:14px;padding:10px;">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-          <input id="cmGrams" type="number" min="1" max="2000" placeholder="Grammi" style="margin:0;font-size:14px;padding:10px;text-align:center;">
-          <input id="cmKcal" type="number" min="1" max="3000" placeholder="Kcal tot" style="margin:0;font-size:14px;padding:10px;text-align:center;">
+
+        <!-- Tab switcher -->
+        <div style="display:flex;gap:6px;margin-bottom:12px;">
+          <button class="btn-s" style="flex:1;padding:8px;font-size:11px;font-weight:700;background:${(d.addMode||'db')==='db'?'var(--purp)':'var(--surf)'};color:${(d.addMode||'db')==='db'?'#fff':'var(--mut)'};border:1.5px solid ${(d.addMode||'db')==='db'?'var(--purp)':'var(--bord)'};letter-spacing:1px;" onclick="switchAddMode('db')">🔍 DAL DATABASE</button>
+          <button class="btn-s" style="flex:1;padding:8px;font-size:11px;font-weight:700;background:${d.addMode==='manual'?'var(--blu)':'var(--surf)'};color:${d.addMode==='manual'?'#fff':'var(--mut)'};border:1.5px solid ${d.addMode==='manual'?'var(--blu)':'var(--bord)'};letter-spacing:1px;" onclick="switchAddMode('manual')">✏️ MANUALE</button>
         </div>
-        <button class="btn-s" style="background:var(--purp);color:#fff;width:100%;padding:10px;font-size:13px;" onclick="addCustomMealItem()">+ Aggiungi al pasto</button>
+
+        ${(d.addMode||'db')==='db' ? (() => {
+          // ─── MODALITÀ RICERCA DATABASE ───
+          const query = d.foodQuery || '';
+          const cat = d.foodCat;
+          const sel = d.selectedFood;
+          // Lista risultati: se c'è categoria attiva, mostra cibi della categoria filtrati per query;
+          // se c'è solo query, fa ricerca testuale su tutto il DB; se nessuno dei due, lista vuota
+          let results = [];
+          if(query.length>=2 && !sel){
+            results = window.foodSearch(query, 25);
+            if(cat) results = results.filter(f=>f.cat===cat);
+          } else if(cat && !sel){
+            results = window.foodsByCat(cat).slice(0, 25);
+          }
+          const grams = d.selectedGrams || 100;
+          const portion = sel ? window.foodPortion(sel, grams) : null;
+          return `
+            <!-- Campo ricerca -->
+            <input id="dbSearch" type="text" maxlength="50" value="${escapeHtml(query)}" placeholder="🔍 Cerca cibo (es. pasta, pollo, mela...)" oninput="updateFoodQuery(this.value)" style="margin-bottom:8px;font-size:14px;padding:10px;">
+
+            <!-- Chip categorie -->
+            <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">
+              ${window.FOOD_CATS.map(c => `<button class="btn-s" style="font-size:10px;padding:4px 8px;background:${cat===c.id?'var(--purp)':'var(--surf)'};color:${cat===c.id?'#fff':'var(--mut)'};border:1px solid ${cat===c.id?'var(--purp)':'var(--bord)'};" onclick="setFoodCat('${c.id}')">${c.emo} ${c.lbl.split(' ')[0]}</button>`).join('')}
+            </div>
+
+            ${sel ? `
+              <!-- Cibo selezionato + input grammi -->
+              <div style="background:rgba(197,241,53,.08);border:1.5px solid var(--acc);border-radius:10px;padding:12px;margin-bottom:8px;">
+                <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;">${escapeHtml(sel.name)}</div>
+                <div style="font-size:10px;color:var(--mut);margin-bottom:10px;">${sel.kcal} kcal/100g · P:${sel.p}g · C:${sel.c}g · F:${sel.f}g</div>
+                <div style="display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center;margin-bottom:10px;">
+                  <span style="font-size:12px;color:var(--mut);">Grammi:</span>
+                  <input id="dbGrams" type="number" min="1" max="2000" value="${grams}" oninput="ST.sheetData.selectedGrams=parseInt(this.value)||100;document.getElementById('dbPortionInfo').innerHTML=window.foodPortion(ST.sheetData.selectedFood,ST.sheetData.selectedGrams).kcal+' kcal'" style="margin:0;font-size:14px;padding:8px;text-align:center;font-weight:700;">
+                </div>
+                <div style="background:var(--bg);border-radius:8px;padding:8px 10px;font-size:13px;text-align:center;color:var(--acc);font-weight:700;"><span id="dbPortionInfo">${portion.kcal} kcal</span> · ${portion.p}g prot · ${portion.c}g carbo · ${portion.f}g grassi</div>
+              </div>
+              <button class="btn-s" style="background:var(--purp);color:#fff;width:100%;padding:10px;font-size:13px;" onclick="addDbFoodToDraft()">+ AGGIUNGI AL PASTO</button>
+            ` : `
+              <!-- Lista risultati -->
+              ${results.length>0 ? `
+                <div style="max-height:240px;overflow-y:auto;background:var(--bg);border-radius:8px;border:1px solid var(--bord);">
+                  ${results.map(f => {
+                    const c = window.FOOD_CATS.find(x=>x.id===f.cat);
+                    return `<div onclick="selectFood('${f.id}')" style="padding:8px 10px;border-bottom:1px solid var(--bord);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                      <div style="flex:1;min-width:0;">
+                        <div style="font-size:12px;font-weight:600;color:var(--text);line-height:1.3;">${escapeHtml(f.name)}</div>
+                        <div style="font-size:10px;color:var(--mut);">${c?c.emo:''} ${c?c.lbl:f.cat}</div>
+                      </div>
+                      <div style="font-size:11px;color:var(--acc);font-weight:700;flex-shrink:0;">${f.kcal} kcal</div>
+                    </div>`;
+                  }).join('')}
+                </div>
+              ` : query.length>=2 ? `<div style="text-align:center;padding:14px;font-size:12px;color:var(--mut);">Nessun cibo trovato per "${escapeHtml(query)}". Prova la modalità "Manuale" per aggiungerlo a mano.</div>`
+                : cat ? `<div style="text-align:center;padding:10px;font-size:12px;color:var(--mut);">Nessun cibo nella categoria selezionata.</div>`
+                : `<div style="text-align:center;padding:10px;font-size:11px;color:var(--mut);line-height:1.5;">💡 Digita almeno 2 lettere o seleziona una categoria per cercare tra ${window.FOOD_DB.length} cibi italiani.</div>`}
+            `}
+          `;
+        })() : `
+          <!-- ─── MODALITÀ INSERIMENTO MANUALE ─── -->
+          <div style="font-size:11px;color:var(--mut);margin-bottom:10px;line-height:1.5;">Per cibi non presenti nel database. Inserisci tu nome, grammi e kcal totali (li trovi sull'etichetta).</div>
+          <input id="cmName" type="text" maxlength="80" placeholder="Nome cibo (es. Pasta al sugo)" style="margin-bottom:8px;font-size:14px;padding:10px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+            <input id="cmGrams" type="number" min="1" max="2000" placeholder="Grammi" style="margin:0;font-size:14px;padding:10px;text-align:center;">
+            <input id="cmKcal" type="number" min="1" max="3000" placeholder="Kcal tot" style="margin:0;font-size:14px;padding:10px;text-align:center;">
+          </div>
+          <button class="btn-s" style="background:var(--blu);color:#fff;width:100%;padding:10px;font-size:13px;" onclick="addCustomMealItem()">+ AGGIUNGI AL PASTO</button>
+        `}
       </div>
 
       <!-- Azioni -->
