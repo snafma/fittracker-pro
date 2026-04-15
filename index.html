@@ -892,8 +892,171 @@ window.getMotivationalMsg=function(an,ST,cW,mac,pWeek){
   ];
   return {emoji:'💡',color:'var(--mut)',title:'RIMANI COSTANTE',msg:__seedRandom(seed,opts)};
 };
+// PUNTO 18: gestione schede personalizzate
+window.openCustomWorkoutEditor=function(workoutId){
+  if(!ST.p.customWorkouts) ST.p.customWorkouts=[];
+  let cw;
+  if(workoutId){
+    cw=ST.p.customWorkouts.find(w=>w.id===workoutId);
+    if(!cw) return;
+    cw=JSON.parse(JSON.stringify(cw)); // deep clone per draft
+  } else {
+    cw={id:'cw_'+Date.now(),name:'',emoji:'🛠️',color:'#a78bfa',exercises:[]};
+  }
+  ST.sheet='customWorkout';
+  ST.sheetData={draft:cw,isNew:!workoutId};
+  render();
+};
+
+window.saveCustomWorkout=function(){
+  if(!ST.sheetData) return;
+  const draft=ST.sheetData.draft;
+  const name=(document.getElementById('cwName')?.value||'').trim().slice(0,60).replace(/[<>]/g,'');
+  if(!name) return alert('Inserisci un nome per la scheda.');
+  if(!draft.exercises||draft.exercises.length===0) return alert('Aggiungi almeno 1 esercizio alla scheda.');
+  draft.name=name;
+  if(!ST.p.customWorkouts) ST.p.customWorkouts=[];
+  const existingIdx=ST.p.customWorkouts.findIndex(w=>w.id===draft.id);
+  // Validazione volume
+  const vol=estimateWorkoutVolume(draft);
+  const minVolByFocus={total:8,upper:6,lower:6,glutes:5,hyp:10,strength:5};
+  const minVol=minVolByFocus[ST.p.focus]||6;
+  if(vol.totalSets<minVol){
+    if(!confirm(`⚠️ La tua scheda ha ${vol.totalSets} serie totali, sotto il minimo consigliato per il focus "${ST.p.focus||'total'}" (${minVol} serie).\n\nUna scheda così leggera potrebbe non essere sufficiente per il tuo obiettivo. Vuoi salvare comunque?`)){
+      return;
+    }
+  }
+  if(existingIdx>=0){
+    ST.p.customWorkouts[existingIdx]=draft;
+  } else {
+    ST.p.customWorkouts.push(draft);
+  }
+  closeSheet();
+  save();
+};
+
+window.deleteCustomWorkout=function(id){
+  if(!confirm('Eliminare questa scheda personalizzata?')) return;
+  ST.p.customWorkouts=(ST.p.customWorkouts||[]).filter(w=>w.id!==id);
+  save();
+};
+
+window.estimateWorkoutVolume=function(cw){
+  let totalSets=0,totalReps=0;
+  (cw.exercises||[]).forEach(e=>{
+    totalSets+=parseInt(e.sets)||0;
+    const reps=parseMeanReps(e.reps);
+    totalReps+=reps*(parseInt(e.sets)||0);
+  });
+  return{totalSets,totalReps};
+};
+
+// Aggiunge esercizio al draft (dalla libreria EX)
+window.addLibraryExerciseToDraft=function(){
+  if(!ST.sheetData) return;
+  const exId=document.getElementById('cwExSelect')?.value;
+  if(!exId||!EX[exId]) return alert('Seleziona un esercizio dalla lista.');
+  const ex=EX[exId];
+  // Default reps/recupero in base al focus
+  const sr=getSetsReps(ex.t,ST.p.t||'cut',pwk(ST.programStart),ST.p.focus||'total');
+  ST.sheetData.draft.exercises.push({exId,sets:sr.sets,reps:sr.reps,rest:sr.rest});
+  render();
+};
+
+// Apre form per esercizio totalmente custom
+window.openExerciseCreator=function(){
+  if(!ST.sheetData) return;
+  ST.sheetData.subSheet='customEx';
+  render();
+};
+
+// Salva esercizio custom dentro draft
+window.saveCustomExerciseToDraft=function(){
+  if(!ST.sheetData) return;
+  const name=(document.getElementById('cwExName')?.value||'').trim().slice(0,60).replace(/[<>]/g,'');
+  const mus=(document.getElementById('cwExMus')?.value||'').trim().slice(0,40).replace(/[<>]/g,'');
+  const sets=parseInt(document.getElementById('cwExSets')?.value||3);
+  const reps=(document.getElementById('cwExReps')?.value||'8-12').toString().slice(0,15).replace(/[<>]/g,'');
+  const rest=parseInt(document.getElementById('cwExRest')?.value||90);
+  if(!name) return alert('Inserisci il nome dell\'esercizio.');
+  if(sets<1||sets>10) return alert('Serie: tra 1 e 10.');
+  if(rest<0||rest>600) return alert('Recupero: tra 0 e 600 secondi.');
+  ST.sheetData.draft.exercises.push({
+    customName:name,customMus:mus||'Personalizzato',customType:'compound',
+    sets,reps,rest,tempId:Date.now().toString(36),isCustom:true
+  });
+  ST.sheetData.subSheet=null;
+  render();
+};
+
+// Modifica reps/recupero/sets di un esercizio già nella scheda
+window.updateExerciseInDraft=function(idx,field,value){
+  if(!ST.sheetData) return;
+  if(!ST.sheetData.draft.exercises[idx]) return;
+  const v=field==='reps'?(value||'').toString().slice(0,15).replace(/[<>]/g,''):parseInt(value)||0;
+  ST.sheetData.draft.exercises[idx][field]=v;
+};
+
+// Rimuove esercizio dal draft
+window.removeExerciseFromDraft=function(idx){
+  if(!ST.sheetData) return;
+  ST.sheetData.draft.exercises.splice(idx,1);
+  render();
+};
+
+// Cambia emoji scheda
+window.setCustomWorkoutEmoji=function(emoji){
+  if(!ST.sheetData) return;
+  ST.sheetData.draft.emoji=emoji;
+  render();
+};
+
+window.openCustomWorkoutEditor=window.openCustomWorkoutEditor; // alias riassicurato
+
 window.buildWorkout=function(woId,goal,pw2,exPrefs,sex,analysis){
+  // PUNTO 18: se woId è una scheda custom (cw_*), uso quella
+  if(woId && woId.startsWith('cw_')){
+    const cw=(ST.p.customWorkouts||[]).find(w=>w.id===woId);
+    if(cw){
+      const exercises=cw.exercises.map(ce=>{
+        // Esercizio dalla libreria EX
+        if(ce.exId && EX[ce.exId]){
+          const ex=EX[ce.exId];
+          return {
+            ...ex,
+            id:ce.exId,
+            slot:'cw_'+ce.exId,
+            cat:ex.cat,
+            sets:ce.sets||3,
+            reps:ce.reps||'8-12',
+            rest:ce.rest||90,
+          };
+        }
+        // Esercizio totalmente custom (definito dall'utente)
+        return {
+          name:ce.customName||'Esercizio custom',
+          mus:ce.customMus||'—',
+          steps:ce.customSteps||['Esegui secondo le tue indicazioni.'],
+          cues:ce.customCues||[],
+          t:ce.customType||'compound',
+          id:'cwex_'+(ce.tempId||Math.random().toString(36).slice(2,8)),
+          slot:'cw_custom',
+          cat:'custom',
+          sets:ce.sets||3,
+          reps:ce.reps||'8-12',
+          rest:ce.rest||90,
+          isUserCustom:true,
+        };
+      });
+      // Riscaldamento + stretching anche per le custom
+      const warmupKey=goal.t==='cut'?'wu_cut':goal.t==='bulk'?'wu_bulk':'wu_general';
+      exercises.unshift({...EX[warmupKey],id:warmupKey,slot:'warmup',cat:'warmup'});
+      exercises.push({...EX['cd_stretch'],id:'cd_stretch',slot:'cooldown',cat:'cooldown'});
+      return {name:cw.name,emoji:cw.emoji||'🛠️',col:cw.color||'#a78bfa',slots:cw.exercises.map((_,i)=>({k:'cw_'+i,cat:'custom'})),exercises,isCustom:true};
+    }
+  }
   const sch=WO_SCH[woId];
+  if(!sch) return null;
   const defs=getDefs(sex,goal.loc);
   const exercises=sch.slots.map(sl=>{
     const exId=(exPrefs&&exPrefs[sl.k])||defs[sl.k];
@@ -2573,6 +2736,24 @@ window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,to
       </div>
     </div>`;
   }).join('')}
+  <!-- PUNTO 18: schede personalizzate dell'utente -->
+  ${(ST.p.customWorkouts||[]).map(cw=>{
+    const isToday=cw.id===todayWoId;
+    return `<div class="card" style="border-left:5px solid ${cw.color||'var(--purp)'};padding:16px;${isToday?'box-shadow:0 0 15px '+(cw.color||'var(--purp)')+'30;':''}">
+      <div class="r" style="margin-bottom:10px;">
+        <div>
+          <div style="font-size:9px;font-weight:700;color:var(--purp);letter-spacing:1.5px;margin-bottom:2px;">🛠️ TUA SCHEDA PERSONALIZZATA</div>
+          ${isToday?`<div style="font-size:10px;font-weight:700;color:${cw.color||'var(--purp)'};letter-spacing:1px;margin-bottom:4px;">▶ TOCCA A TE OGGI</div>`:''}
+          <div class="bebas" style="font-size:22px;color:${cw.color||'var(--purp)'};">${cw.emoji||'🛠️'} ${escapeHtml(cw.name)}</div>
+          <div style="font-size:12px;color:var(--mut);margin-top:3px;">${cw.exercises.length} esercizi</div>
+        </div>
+        <button class="btn-s" style="background:${cw.color||'var(--purp)'};color:#fff;font-size:20px;padding:13px 19px;" onclick="startWo('${cw.id}')">▶</button>
+      </div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;">
+        ${cw.exercises.map(e=>{const name=e.isCustom?e.customName:(EX[e.exId]?.name||'?');return `<div style="padding:4px 8px;background:var(--surf);border:1px solid var(--bord);border-radius:7px;font-size:10px;color:var(--mut);">${escapeHtml((name||'').split('—')[0].trim().split(' ').slice(0,2).join(' '))}</div>`;}).join('')}
+      </div>
+    </div>`;
+  }).join('')}
   <div class="card" style="padding:16px;">
     <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1.5px;margin-bottom:8px;">PIANO SETTIMANA CORRENTE — SITUAZIONE REALE</div>
     <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">${legendGrid}</div>
@@ -3059,6 +3240,28 @@ window.renderSettings = function(mac){
     <div style="font-size:11px;color:var(--mut);margin-top:10px;line-height:1.4;">💡 Quando attivo, partirà un beep e dopo 0.8 sec inizia la serie. Premi "ESCI" per interrompere in qualsiasi momento.</div>
   </div>
 
+  <!-- PUNTO 18: LE MIE SCHEDE PERSONALIZZATE -->
+  <div class="card" style="border-color:var(--purp);">
+    <div class="bebas" style="font-size:20px;color:var(--purp);margin-bottom:6px;">🛠️ LE MIE SCHEDE</div>
+    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:14px;">Crea schede di allenamento personalizzate. Possono affiancare le schede automatiche A/B/C nella tua rotazione settimanale.</div>
+    ${(ST.p.customWorkouts||[]).length===0?`<div style="text-align:center;padding:14px;font-size:12px;color:var(--mut);background:var(--surf);border-radius:10px;margin-bottom:12px;">Nessuna scheda personalizzata.</div>`:
+      (ST.p.customWorkouts||[]).map(cw=>{
+        const vol=estimateWorkoutVolume(cw);
+        return `<div style="background:var(--surf);border:1px solid var(--bord);border-left:4px solid ${cw.color||'var(--purp)'};border-radius:10px;padding:12px;margin-bottom:8px;">
+        <div class="r" style="margin-bottom:6px;">
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--text);">${cw.emoji||'🛠️'} ${escapeHtml(cw.name)}</div>
+            <div style="font-size:11px;color:var(--mut);margin-top:2px;">${cw.exercises.length} esercizi · ${vol.totalSets} serie totali</div>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn-s btn-action" style="font-size:11px;padding:6px 10px;" onclick="openCustomWorkoutEditor('${cw.id}')">✏️</button>
+            <button class="btn-s" style="background:var(--red);color:#fff;font-size:11px;padding:6px 10px;" onclick="deleteCustomWorkout('${cw.id}')">🗑️</button>
+          </div>
+        </div>
+      </div>`;}).join('')}
+    <button class="btn" style="background:var(--purp);color:#fff;padding:12px;" onclick="openCustomWorkoutEditor()">+ CREA NUOVA SCHEDA</button>
+  </div>
+
   <!-- ORARI PERSONALIZZATI -->
   <div class="card" style="border-color:var(--ora);">
     <div class="bebas" style="font-size:20px;color:var(--ora);margin-bottom:6px;">🕐 ORARI PERSONALIZZATI</div>
@@ -3253,6 +3456,103 @@ window.render = function() {
         <button class="btn" style="flex:1;padding:12px;" onclick="saveCustomMeal()">SALVA</button>
       </div>
       <div style="font-size:10px;color:var(--mut);text-align:center;margin-top:10px;line-height:1.4;">💡 Se lasci vuoto il pasto e salvi, torni ai consigli automatici.</div>
+    </div></div>`;
+  })():
+  // PUNTO 18: editor scheda personalizzata
+  ST.sheet==='customWorkout'&&ST.sheetData?(()=>{
+    const d=ST.sheetData;
+    const draft=d.draft;
+    const vol=estimateWorkoutVolume(draft);
+    const minVolByFocus={total:8,upper:6,lower:6,glutes:5,hyp:10,strength:5};
+    const minVol=minVolByFocus[ST.p.focus]||6;
+    const volCol=vol.totalSets>=minVol?'var(--acc)':'var(--yel)';
+    const emojis=['🛠️','💪','🏋️','🦵','🤸','⚡','🔱','🔥','🍑','🦾','💥'];
+    // Sub-sheet: creazione esercizio custom
+    if(d.subSheet==='customEx'){
+      const sr=getSetsReps('compound',ST.p.t||'cut',pwk(ST.programStart),ST.p.focus||'total');
+      return`<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div>
+        <div class="bebas" style="font-size:22px;margin-bottom:14px;">+ NUOVO ESERCIZIO PERSONALIZZATO</div>
+        <span class="lbl">NOME ESERCIZIO</span>
+        <input id="cwExName" type="text" maxlength="60" placeholder="Es. Alzate cinesi" style="margin-bottom:10px;">
+        <span class="lbl">GRUPPO MUSCOLARE</span>
+        <input id="cwExMus" type="text" maxlength="40" placeholder="Es. Spalle" style="margin-bottom:10px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">
+          <div><span class="lbl" style="font-size:10px;">SERIE</span><input id="cwExSets" type="number" min="1" max="10" value="${sr.sets}" style="margin:0;text-align:center;"></div>
+          <div><span class="lbl" style="font-size:10px;">REPS</span><input id="cwExReps" type="text" maxlength="15" value="${sr.reps}" style="margin:0;text-align:center;"></div>
+          <div><span class="lbl" style="font-size:10px;">RECUPERO (S)</span><input id="cwExRest" type="number" min="0" max="600" value="${sr.rest}" style="margin:0;text-align:center;"></div>
+        </div>
+        <div style="font-size:11px;color:var(--mut);margin-bottom:14px;line-height:1.5;">💡 Suggeriti per il tuo focus: ${sr.note||sr.sets+'×'+sr.reps+', recupero '+sr.rest+'s'}.</div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-action" style="flex:1;padding:12px;" onclick="ST.sheetData.subSheet=null;render();">ANNULLA</button>
+          <button class="btn" style="flex:1;padding:12px;background:var(--purp);color:#fff;" onclick="saveCustomExerciseToDraft()">AGGIUNGI</button>
+        </div>
+      </div></div>`;
+    }
+    // Sheet principale: editor scheda
+    return`<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div>
+      <div class="bebas" style="font-size:22px;margin-bottom:14px;">${d.isNew?'+ NUOVA SCHEDA':'✏️ MODIFICA SCHEDA'}</div>
+
+      <!-- Nome scheda -->
+      <span class="lbl">NOME SCHEDA</span>
+      <input id="cwName" type="text" maxlength="60" value="${escapeHtml(draft.name||'')}" placeholder="Es. La mia scheda spalle" style="margin-bottom:10px;">
+
+      <!-- Emoji -->
+      <span class="lbl" style="margin-bottom:6px;">EMOJI</span>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;">
+        ${emojis.map(e=>`<button class="btn-s" style="font-size:18px;padding:8px 12px;background:${draft.emoji===e?'rgba(167,139,250,.2)':'var(--surf)'};border:1.5px solid ${draft.emoji===e?'var(--purp)':'var(--bord)'};color:var(--text);" onclick="setCustomWorkoutEmoji('${e}')">${e}</button>`).join('')}
+      </div>
+
+      <!-- Lista esercizi attuali -->
+      <span class="lbl" style="margin-bottom:6px;">ESERCIZI (${draft.exercises.length})</span>
+      ${draft.exercises.length===0?`<div style="text-align:center;padding:14px;font-size:12px;color:var(--mut);background:var(--surf);border-radius:10px;margin-bottom:10px;">Nessun esercizio. Aggiungine almeno 1.</div>`:
+      `<div style="margin-bottom:10px;">
+        ${draft.exercises.map((e,i)=>{
+          const exData=e.exId?EX[e.exId]:null;
+          const name=e.isCustom?e.customName:(exData?.name||'?');
+          const mus=e.isCustom?e.customMus:(exData?.mus||'');
+          return `<div style="background:var(--surf);border:1px solid var(--bord);border-radius:10px;padding:10px 12px;margin-bottom:6px;">
+            <div class="r" style="margin-bottom:8px;">
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:13px;font-weight:600;color:var(--text);">${escapeHtml(name)}${e.isCustom?' <span style=\"font-size:9px;color:var(--purp);background:rgba(167,139,250,.15);padding:1px 6px;border-radius:4px;font-weight:700;\">CUSTOM</span>':''}</div>
+                <div style="font-size:10px;color:var(--mut);">${escapeHtml(mus)}</div>
+              </div>
+              <button class="btn-s" style="background:var(--red);color:#fff;font-size:11px;padding:4px 8px;" onclick="removeExerciseFromDraft(${i})">✕</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+              <div><div style="font-size:9px;color:var(--mut);letter-spacing:1px;">SERIE</div><input type="number" min="1" max="10" value="${e.sets||3}" oninput="updateExerciseInDraft(${i},'sets',this.value)" style="margin:0;padding:6px;text-align:center;font-size:13px;font-weight:700;"></div>
+              <div><div style="font-size:9px;color:var(--mut);letter-spacing:1px;">REPS</div><input type="text" maxlength="15" value="${escapeHtml(e.reps||'8-12')}" oninput="updateExerciseInDraft(${i},'reps',this.value)" style="margin:0;padding:6px;text-align:center;font-size:13px;font-weight:700;"></div>
+              <div><div style="font-size:9px;color:var(--mut);letter-spacing:1px;">RECUP. (S)</div><input type="number" min="0" max="600" value="${e.rest||90}" oninput="updateExerciseInDraft(${i},'rest',this.value)" style="margin:0;padding:6px;text-align:center;font-size:13px;font-weight:700;"></div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`}
+
+      <!-- Volume info -->
+      <div style="background:rgba(167,139,250,.06);border:1.5px solid ${volCol};border-radius:10px;padding:10px 12px;margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-size:11px;color:var(--mut);">Volume totale: <strong style="color:${volCol};">${vol.totalSets} serie</strong></div>
+          <div style="font-size:11px;color:var(--mut);">Min consigliato: ${minVol}</div>
+        </div>
+      </div>
+
+      <!-- Aggiungi esercizio: 2 bottoni -->
+      <div style="background:rgba(167,139,250,.06);border:1.5px solid var(--purp);border-radius:12px;padding:12px;margin-bottom:14px;">
+        <div style="font-size:11px;font-weight:700;color:var(--purp);letter-spacing:1px;margin-bottom:8px;">+ AGGIUNGI ESERCIZIO</div>
+        <select id="cwExSelect" style="margin-bottom:8px;font-size:13px;padding:10px;">
+          <option value="">— Scegli dalla libreria —</option>
+          ${Object.keys(EX).filter(k=>!EX[k].isWarmup&&!EX[k].isCooldown&&EX[k].cat&&!['warmup','cooldown','cardio'].includes(EX[k].cat)).sort((a,b)=>EX[a].cat.localeCompare(EX[b].cat)).map(k=>`<option value="${k}">${EX[k].cat?.toUpperCase()} · ${EX[k].name}</option>`).join('')}
+        </select>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-s btn-action" style="flex:1;padding:10px;font-size:12px;" onclick="addLibraryExerciseToDraft()">+ DA LIBRERIA</button>
+          <button class="btn-s" style="flex:1;background:var(--purp);color:#fff;padding:10px;font-size:12px;" onclick="openExerciseCreator()">+ CREA TUO</button>
+        </div>
+      </div>
+
+      <!-- Azioni -->
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-action" style="flex:1;padding:12px;" onclick="closeSheet()">ANNULLA</button>
+        <button class="btn" style="flex:1;padding:12px;background:var(--purp);color:#fff;" onclick="saveCustomWorkout()">SALVA</button>
+      </div>
     </div></div>`;
   })():'';
   // Sheets extra (legacy rimossi: ora c'è il drawer laterale)
