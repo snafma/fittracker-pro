@@ -262,9 +262,35 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
 </div>
 <script>
 'use strict';
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// FITTRACKER PRO — INDEX.HTML (~4500 righe, file singolo)
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+// INDICE DELLE SEZIONI (cerca il token "§ N." per saltare):
+//   § 1.  Utility globali + escapeHtml + togglePw
+//   § 2.  Inizializzazione Firebase (Auth + Firestore)
+//   § 3.  Database Layer (DB.g / DB.s / DB.d)
+//   § 4.  Wake Lock (schermo acceso durante workout)
+//   § 5.  Audio (beep fine pausa)
+//   § 6.  Costanti: FOCUS_LIST, EX (esercizi), WO_SCH (schede A/B/C/D/E)
+//   § 7.  FOOD_DB (462 cibi italiani) + ricerca/lookup/porzioni
+//   § 8.  Logica programma: calcBMR, calcMacros, analyze, buildMeals, buildWorkout, getRotation
+//   § 9.  Stato applicazione (ST, AU) + load/save Firebase
+//   § 10. Auth: doLogin, doRegister, forgotPassword, auto-migrazione legacy
+//   § 11. initProgram / updateProgram + flussi setup
+//   § 12. Editor pasti custom (customMeals) + FOOD_DB UI
+//   § 13. Editor schede custom (customWorkouts)
+//   § 14. Tour guidato (TOUR_STEPS) + Disclaimer legale
+//   § 15. Render views: renderAuth, renderHome, renderWork, renderDiet, renderBody,
+//         renderMeasures, renderCoach, renderShare, renderSettings, renderSetup
+//   § 16. Runtime workout: startWo, runWo, logSeries, advanceExercise, closeWo
+//   § 17. Render principale + drawer + topbar
+//   § 18. Boot: listener Firebase Auth
+// ═══════════════════════════════════════════════════════════════════════════════════════════
+
+// ─── § 1. UTILITY GLOBALI ──────────────────────────────────────────────────
 function hp(s) { let h=0; for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;} return 'h'+Math.abs(h).toString(36)+s.length; }
 function getToday() { return new Date().toISOString().split('T')[0]; }
-// PUNTO 16+22: escape HTML per prevenire XSS quando si reinietta input utente in innerHTML
+// escapeHtml: prevenzione XSS quando si reinietta input utente in innerHTML
 function escapeHtml(s){ return (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
 window.escapeHtml=escapeHtml;
 function togglePw(el) {
@@ -378,6 +404,7 @@ const INTOL_LIST=[
   {id:'fish',label:'Pesce/Crostacei',icon:'🐟'},{id:'soy',label:'Soia',icon:'🫘'}
 ];
 // ── Focus di allenamento ──
+// ─── § 6. COSTANTI: FOCUS_LIST, EX, WO_SCH ──────────────────────────────────
 const FOCUS_LIST=[
   {id:'total',   label:'Total Body',      icon:'⚡', col:'#c5f135', desc:'Piano bilanciato — tutti i gruppi muscolari coperti ogni settimana'},
   {id:'upper',   label:'Upper Body',      icon:'💪', col:'#60a5fa', desc:'Focus su petto, schiena, spalle e braccia. Gambe mantenute'},
@@ -572,6 +599,7 @@ window.buildWeeklyPlanWithCardio=function(sessions,cardioLevel,analysis){
 // PUNTO 26 — FOOD DATABASE (462 cibi italiani)
 // Inserito al turno 9 — vedi /db/food_db_combined.js per fonte
 // ═══════════════════════════════════════════════════════════════════
+// ─── § 7. FOOD_DB (462 cibi italiani) ──────────────────────────────────────
 window.FOOD_DB=[
   {id:'pasta_secca',name:'Pasta di semola (peso crudo)',cat:'cereali',kcal:360,p:12,c:73,f:1.5},
   {id:'pasta_integrale',name:'Pasta integrale (peso crudo)',cat:'cereali',kcal:340,p:13,c:67,f:2.5},
@@ -1188,6 +1216,7 @@ window.getMissedWorkouts=function(wLog,sessions,programStart){
 }
 window.calcBMR=function(w,h,age,sex){return sex==='m'?Math.round(10*w+6.25*h-5*age+5):Math.round(10*w+6.25*h-5*age-161);}
 window.actMultiplier=function(s){if(s===0) return 1.2;if(s<=2) return 1.375;if(s<=4) return 1.55;return 1.725;}
+// ─── § 8. LOGICA PROGRAMMA: calcMacros, buildMeals, buildWorkout ──────────
 window.calcMacros=function(w,h,age,sex,goal,sessions,analysis){
   const bmr=calcBMR(w,h||170,age||25,sex||'m');
   const tdee=Math.round(bmr*actMultiplier(sessions));
@@ -1424,6 +1453,7 @@ window.getMotivationalMsg=function(an,ST,cW,mac,pWeek){
   ];
   return {emoji:'💡',color:'var(--mut)',title:'RIMANI COSTANTE',msg:__seedRandom(seed,opts)};
 };
+// ─── § 13. EDITOR SCHEDE CUSTOM ────────────────────────────────────────────
 // PUNTO 18: gestione schede personalizzate
 window.openCustomWorkoutEditor=function(workoutId){
   if(!ST.p.customWorkouts) ST.p.customWorkouts=[];
@@ -1542,8 +1572,6 @@ window.setCustomWorkoutEmoji=function(emoji){
   ST.sheetData.draft.emoji=emoji;
   render();
 };
-
-window.openCustomWorkoutEditor=window.openCustomWorkoutEditor; // alias riassicurato
 
 window.buildWorkout=function(woId,goal,pw2,exPrefs,sex,analysis){
   // PUNTO 18: se woId è una scheda custom (cw_*), uso quella
@@ -2080,6 +2108,7 @@ window.doReg=async function(){
   }catch(e){setMsg(__fbErr(e));}
 };
 
+// ─── § 10. AUTH: login, register, forgot password, auto-migrazione ─────────
 window.doLogin=async function(){
   try{
     if(!window.FBAuth) return setMsg('Attendi database...');
@@ -2235,6 +2264,7 @@ window.getStepsGoal=function(p){
   return 8000;
 };
 
+// ─── § 11. initProgram / updateProgram ─────────────────────────────────────
 window.initProgram=function(){
   const w=parseFloat(vv('iW')),g=parseFloat(vv('gW')),t=vv('iT'),dur=parseInt(vv('iDur')),tRaw=vv('iDate'),loc=vv('iLoc');
   const sess=parseInt(vv('iSess'))||3,cl=parseInt(vv('iCardio'))||1;
@@ -2474,6 +2504,7 @@ window.pickMealOpt=function(mealId,optIdx){if(!ST.mealOpts)ST.mealOpts={};ST.mea
 // ═════════════════════════════════════════════════════════════
 
 // Apre l'editor del pasto custom (bottom sheet)
+// ─── § 12. EDITOR PASTI CUSTOM + FOOD_DB UI ────────────────────────────────
 window.openCustomMealEditor=function(mealId,targetKcal){
   if(!ST.p.customMeals) ST.p.customMeals={};
   // Se non c'è ancora un custom, iniziamo con array vuoto (edit from scratch)
@@ -2711,6 +2742,7 @@ window.getWo=function(){
   return buildWorkout(ST.aWo,ST.p,p,ST.exPrefs,sx,an);
 }
 window.getEx=function(){return getWo().exercises[ST.step];}
+// ─── § 16. RUNTIME WORKOUT: startWo, runWo, logSeries ──────────────────────
 window.startWo=function(id){
   clearInterval(ST.tmrId);clearInterval(ST.setTmrId);
   ST.aWo=id;ST.step=0;ST.currVol=0;ST.woPhase='ready';ST.currentSet=0;ST.setElapsed=0;ST.tmr=0;
@@ -2903,6 +2935,7 @@ window.closeDisclaimerView=function(){
   render();
 };
 
+// ─── § 14. TOUR GUIDATO + DISCLAIMER LEGALE ────────────────────────────────
 window.renderDisclaimer=function(){
   if(!ST.p) return '';
   // Mostra se non accettato (popup obbligatorio) OPPURE se aperto da Config (modalità rivedi)
@@ -3113,6 +3146,7 @@ window.renderAuth = function(root){
   <div style="text-align:center;margin-top:12px;font-size:11px;color:var(--mut);">🔒 Database sicuro in Cloud · Ogni account è privato</div>
   </div></div>`;
 }
+// ─── § 15. RENDER VIEWS: renderSetup, renderHome, renderWork, ecc. ─────────
 window.renderSetup = function(){
   const defDate=new Date(new Date().getTime()+12*7*864e5).toISOString().split('T')[0];
   const cW=ST.h.length?ST.h[ST.h.length-1].w:70;
@@ -3651,9 +3685,7 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
     </div>`;
   }).join('')}`;
 }
-window.getMeasureArr=function(field){
-  return Object.keys(ST.measures).sort().filter(d=>ST.measures[d]&&ST.measures[d][field]>0).map(d=>({d:d,v:ST.measures[d][field]})).slice(-(ST.chartFilter||30));
-}
+// PUNTO 21: getMeasureArr era dichiarato due volte (duplicato rimosso, la versione canonica è sopra a renderBody)
 window.renderMeasures = function(cW,mac,theme,pWeek,sx){
   if(!ST.chartFilter) ST.chartFilter=30;
   const sortedDates=Object.keys(ST.measures).sort();
@@ -4170,6 +4202,7 @@ window.renderSettings = function(mac){
   </div>`;
 }
 // ── RENDER PRINCIPALE ─────────────────────────────────────────
+// ─── § 17. RENDER PRINCIPALE + DRAWER NAV ──────────────────────────────────
 window.render = function() {
   const root=document.getElementById('app');
   if(!AU.user){renderAuth(root);return;}
@@ -4196,10 +4229,10 @@ window.render = function() {
     const exUnit = getExerciseUnit(ex);  // PUNTO 7: kg/sec/reps
     const sug=getSuggest(ex.id,ST.wHistory||{},exUnit);
     if(ST.woPhase==='rest'){
-      root.innerHTML=`<div class="wo"><div class="wo-head"><div><div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;text-transform:uppercase;">${wo.name} · Es. ${ST.step+1}/${wo.exercises.length}</div><div class="bebas" style="font-size:18px;color:var(--blu);">⏸ RECUPERO — SERIE ${ST.currentSet}/${totalSets}</div></div><button class="btn-s btn-action" onclick="skipRest()">SALTA ▸</button></div>
+      root.innerHTML=`<div class="wo"><div class="wo-head"><div><div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;text-transform:uppercase;">${escapeHtml(wo.name)} · Es. ${ST.step+1}/${wo.exercises.length}</div><div class="bebas" style="font-size:18px;color:var(--blu);">⏸ RECUPERO — SERIE ${ST.currentSet}/${totalSets}</div></div><button class="btn-s btn-action" onclick="skipRest()">SALTA ▸</button></div>
       <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;">
         <div class="tmr-ring tmr-ring-rest"><div id="tmrUI" style="font-size:78px;font-family:monospace;font-weight:700;color:var(--blu);">${ST.tmr}</div><div style="font-size:12px;color:var(--mut);">secondi</div></div>
-        <div style="margin-top:24px;text-align:center;"><div style="font-size:13px;color:var(--mut);margin-bottom:6px;">PROSSIMA SERIE:</div><div class="bebas" style="font-size:28px;color:var(--text);">SERIE ${ST.currentSet+1} DI ${totalSets}</div><div style="font-size:14px;color:${wo.col||'var(--acc)'};margin-top:4px;font-weight:700;">${ex.name}</div></div>
+        <div style="margin-top:24px;text-align:center;"><div style="font-size:13px;color:var(--mut);margin-bottom:6px;">PROSSIMA SERIE:</div><div class="bebas" style="font-size:28px;color:var(--text);">SERIE ${ST.currentSet+1} DI ${totalSets}</div><div style="font-size:14px;color:${wo.col||'var(--acc)'};margin-top:4px;font-weight:700;">${escapeHtml(ex.name)}</div></div>
         <div style="display:flex;gap:10px;margin-top:20px;">${Array(totalSets).fill(0).map((_,i)=>`<div class="set-dot ${i<ST.currentSet?'done':i===ST.currentSet?'current':''}"></div>`).join('')}</div>
       </div>
       <div style="padding:14px;border-top:1px solid var(--bord);"><button class="btn btn-action" style="width:100%;height:60px;font-size:18px;" onclick="skipRest()">⏭ SALTA RECUPERO</button></div></div>`;return;
@@ -4207,16 +4240,16 @@ window.render = function() {
     if(ST.woPhase==='exercise_done'){
       const isLastEx=ST.step>=wo.exercises.length-1;
       const nextEx=!isLastEx?wo.exercises[ST.step+1]:null;
-      root.innerHTML=`<div class="wo"><div class="wo-head"><div><div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;text-transform:uppercase;">${wo.name} · Es. ${ST.step+1}/${wo.exercises.length}</div><div class="bebas" style="font-size:18px;color:var(--acc);">✅ COMPLETATO!</div></div><button class="btn-s btn-action" onclick="closeWo()">✕ ESCI</button></div>
+      root.innerHTML=`<div class="wo"><div class="wo-head"><div><div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;text-transform:uppercase;">${escapeHtml(wo.name)} · Es. ${ST.step+1}/${wo.exercises.length}</div><div class="bebas" style="font-size:18px;color:var(--acc);">✅ COMPLETATO!</div></div><button class="btn-s btn-action" onclick="closeWo()">✕ ESCI</button></div>
       <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;">
-        <div style="font-size:48px;margin-bottom:12px;">💪</div><div class="bebas" style="font-size:32px;color:var(--acc);line-height:1;margin-bottom:6px;">${ex.name.split('—')[0].trim()}</div><div style="font-size:14px;color:var(--mut);margin-bottom:20px;">${totalSets} serie completate</div>
+        <div style="font-size:48px;margin-bottom:12px;">💪</div><div class="bebas" style="font-size:32px;color:var(--acc);line-height:1;margin-bottom:6px;">${escapeHtml(ex.name.split('—')[0].trim())}</div><div style="font-size:14px;color:var(--mut);margin-bottom:20px;">${totalSets} serie completate</div>
         <div style="display:flex;gap:10px;margin-bottom:28px;">${Array(totalSets).fill(0).map(()=>'<div class="set-dot done"></div>').join('')}</div>
-        ${isLastEx?`<div class="card" style="width:100%;padding:20px;text-align:center;"><div class="bebas" style="font-size:28px;color:var(--acc);margin-bottom:4px;">🏆 ALLENAMENTO FINITO!</div></div>`:`<div class="card" style="width:100%;padding:16px;"><div style="font-size:11px;color:var(--mut);margin-bottom:8px;font-weight:700;letter-spacing:1px;">PROSSIMO ESERCIZIO</div><div class="bebas" style="font-size:22px;color:var(--text);">${nextEx?.name||''}</div></div>`}
+        ${isLastEx?`<div class="card" style="width:100%;padding:20px;text-align:center;"><div class="bebas" style="font-size:28px;color:var(--acc);margin-bottom:4px;">🏆 ALLENAMENTO FINITO!</div></div>`:`<div class="card" style="width:100%;padding:16px;"><div style="font-size:11px;color:var(--mut);margin-bottom:8px;font-weight:700;letter-spacing:1px;">PROSSIMO ESERCIZIO</div><div class="bebas" style="font-size:22px;color:var(--text);">${escapeHtml(nextEx?.name||'')}</div></div>`}
       </div>
       <div style="padding:14px;border-top:1px solid var(--bord);"><button class="btn" style="height:68px;font-size:22px;background:${isLastEx?'var(--gre)':wo.col||'var(--acc)'};" onclick="advanceExercise()">${isLastEx?'🏁 SALVA E TERMINA':'➡️ PROSSIMO'}</button></div></div>`;return;
     }
     const isActive=ST.woPhase==='active';
-    root.innerHTML=`<div class="wo"><div class="wo-head"><div><div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;text-transform:uppercase;">${wo.name} · Es. ${ST.step+1}/${wo.exercises.length}</div><div class="bebas" style="font-size:20px;color:${wo.col||theme};">${ex.name}</div></div><button class="btn-s btn-action" onclick="closeWo()">✕ ESCI</button></div>
+    root.innerHTML=`<div class="wo"><div class="wo-head"><div><div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;text-transform:uppercase;">${escapeHtml(wo.name)} · Es. ${ST.step+1}/${wo.exercises.length}</div><div class="bebas" style="font-size:20px;color:${wo.col||theme};">${escapeHtml(ex.name)}</div></div><button class="btn-s btn-action" onclick="closeWo()">✕ ESCI</button></div>
     <div class="bw" style="height:4px;border-radius:0;"><div class="bf" style="width:${((ST.step)/(wo.exercises.length)*100).toFixed(0)}%;height:4px;background:${wo.col||theme};border-radius:0;"></div></div>
     <div style="padding:16px;flex:1;overflow-y:auto;padding-bottom:100px;">
       <div style="background:${isActive?'rgba(74,222,128,.07)':'rgba(197,241,53,.05)'};border:1.5px solid ${isActive?'var(--gre)':wo.col||'var(--acc)'};border-radius:14px;padding:18px;margin-bottom:14px;text-align:center;box-shadow:${isActive?'0 0 20px rgba(74,222,128,0.2)':'none'};transition:0.3s;">
