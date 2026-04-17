@@ -406,12 +406,12 @@ const INTOL_LIST=[
 // ── Focus di allenamento ──
 // ─── § 6. COSTANTI: FOCUS_LIST, EX, WO_SCH ──────────────────────────────────
 const FOCUS_LIST=[
-  {id:'total',   label:'Total Body',      icon:'⚡', col:'#c5f135', desc:'Piano bilanciato — tutti i gruppi muscolari coperti ogni settimana'},
-  {id:'upper',   label:'Upper Body',      icon:'💪', col:'#60a5fa', desc:'Focus su petto, schiena, spalle e braccia. Gambe mantenute'},
-  {id:'lower',   label:'Lower Body',      icon:'🦵', col:'#ff6835', desc:'Focus su gambe, femorali, glutei. Upper body mantenuto'},
-  {id:'glutes',  label:'Glutei & Core',   icon:'🍑', col:'#f472b6', desc:'Focus massimo su glutei, femorali, addome e stabilità'},
-  {id:'hyp',     label:'Ipertrofia Max',  icon:'🏋️', col:'#a78bfa', desc:'Volume elevato per massimizzare la crescita muscolare'},
-  {id:'strength',label:'Forza Pura',      icon:'🔱', col:'#fbbf24', desc:'Carichi pesanti, meno reps, più recupero. Guadagni di forza'},
+  {id:'total',   label:'Total Body',      icon:'⚡', col:'#c5f135', desc:'Piano bilanciato per tutti i gruppi muscolari. 3-4 serie × 8-12 reps, recupero 90s. Ideale per chi inizia o vuole fitness generale.'},
+  {id:'upper',   label:'Upper Body',      icon:'💪', col:'#60a5fa', desc:'Priorità a petto, schiena, spalle, braccia. Più esercizi per la parte alta. Gambe mantenute (1 esercizio/sess). Reps 8-12, recupero 90s.'},
+  {id:'lower',   label:'Lower Body',      icon:'🦵', col:'#ff6835', desc:'Priorità a gambe, femorali, glutei. Più esercizi per la parte bassa. Upper mantenuto (1 esercizio/sess). Reps 8-12, recupero 90-120s.'},
+  {id:'glutes',  label:'Glutei & Core',   icon:'🍑', col:'#f472b6', desc:'Focus massimo su glutei, femorali, addominali. Esercizi mirati (hip thrust, ponte glutei, affondi laterali). 3-4 serie × 10-15 reps, recupero 60-75s.'},
+  {id:'hyp',     label:'Ipertrofia Max',  icon:'🏋️', col:'#a78bfa', desc:'Massima crescita muscolare. Volume alto: 4-5 serie × 8-12 reps, recupero breve 60-90s. Intensità moderata, molti movimenti.'},
+  {id:'strength',label:'Forza Pura',      icon:'🔱', col:'#fbbf24', desc:'Guadagni di forza (non massa). Carichi pesanti: 5 serie × 3-5 reps, recupero lungo 180s. Meno esercizi ma più intensità.'},
 ];
 const EX={
   ch_man:{cat:'chest',t:'compound',name:'Panca Piana — Manubri',mus:'Petto Medio',steps:['Sdraiati sulla panca, manubrio per mano all\'altezza delle orecchie','Gomiti a 75° dal corpo, non perpendicolari alla schiena','Abbassa lentamente in 2-3 secondi sfiorando il petto','Spingi esplosivamente verso l\'alto'],cues:['Scapole retratte e abbassate per tutta la serie','Piedi piatti e fermi a terra','Non bloccare completamente i gomiti in cima']},
@@ -460,6 +460,86 @@ const EX={
   cd_liss:{cat:'cardio',t:'cardio',name:'Cardio LISS (Bici/Camminata)',mus:'Cardio',steps:['Mantieni il 60-65% della FC max','Devi poter tenere una conversazione','Ritmo costante per tutta la durata','Durata: 25-40 minuti'],cues:['Brucia principalmente grassi a questa intensità','FC target: 110-130 bpm']},
   cd_hiit:{cat:'cardio',t:'cardio',name:'HIIT — Scatti',mus:'Cardio Metabolico',steps:['Riscaldamento 5 minuti','30 secondi al massimo sforzo (80-90% FC max)','30 secondi di recupero attivo','Ripeti il ciclo 10-15 volte'],cues:['Molto più efficiente del LISS per il metabolismo','Max 3 volte a settimana']},
   cd_burp:{cat:'cardio',t:'cardio',name:'Circuito HIIT a Corpo Libero',mus:'Corpo Completo',steps:['30s Burpees → 30s Riposo','30s Mountain Climbers → 30s Riposo','30s Jumping Jacks → 30s Riposo','Ripeti 5-8 volte'],cues:['Ottimo per bruciare calorie in poco tempo']},
+  // ═══════════════════════════════════════════════════════════
+  // FIX 6 — ESERCIZI AGGIUNTIVI (+60): bodyweight, kettlebell, elastici, varianti
+  // ═══════════════════════════════════════════════════════════
+
+  // CHEST — varianti aggiuntive (+4)
+  ch_dip_bench:{cat:'chest',t:'compound',name:'Dip alle Parallele (petto)',mus:'Petto Inferiore',steps:['Sospeso alle parallele con braccia dritte','Inclina il busto in avanti di ~30° (coinvolge petto)','Scendi controllato fino a 90° al gomito','Risali esplosivo spingendo col petto'],cues:['Inclinazione busto = più petto, verticale = più tricipiti','Non scendere oltre 90° se spalle rigide']},
+  ch_floor_press:{cat:'chest',t:'compound',name:'Floor Press (manubri a terra)',mus:'Petto Medio',steps:['Sdraiato a terra con manubri all\'altezza del petto','Gomiti si fermano quando toccano il pavimento','Spingi verso l\'alto come panca piana','Controllato in discesa'],cues:['Ottimo per chi ha problemi alle spalle (range ridotto)','Lavora di più sui tricipiti della panca classica']},
+  ch_cable_cross:{cat:'chest',t:'isolation',name:'Cable Crossover',mus:'Petto Interno',steps:['Cavi in alto, busto leggermente inclinato in avanti','Braccia aperte, gomiti leggermente piegati','Porta le mani davanti al corpo incrociandole','Stringi il petto nella contrazione'],cues:['Stringi al massimo in posizione finale 1-2 secondi','Non usare peso eccessivo, senti la contrazione']},
+  ch_svend:{cat:'chest',t:'isolation',name:'Svend Press (petto interno)',mus:'Petto Interno',steps:['In piedi o seduto, tieni un disco tra i palmi davanti al petto','Spingi le mani l\'una contro l\'altra con forza','Estendi le braccia in avanti mantenendo la pressione','Ritorna lento al petto'],cues:['Serve ipertensione costante tra i palmi','Ottimo per attivazione petto interno, peso 5-10kg']},
+
+  // BACK — varianti aggiuntive (+5)
+  bk_face_pull:{cat:'back',t:'isolation',name:'Face Pull (corda/elastico)',mus:'Deltoidi Posteriori/Trapezio',steps:['Corda o elastico all\'altezza del viso','Tira la corda verso il viso con gomiti alti','Separa le due estremità a fine movimento','Stringi le scapole e i posteriori'],cues:['Essenziale per salute della spalla','3-4 serie × 15-20 reps con peso leggero']},
+  bk_tbar:{cat:'back',t:'compound',name:'T-Bar Row',mus:'Gran Dorsale/Romboidi',steps:['Cavalca il bilancere con presa stretta','Busto inclinato ~45°','Tira il peso verso l\'ombelico','Stringi le scapole in alto'],cues:['Gran base per spessore della schiena','Usa presa neutra (palmi verso il basso)']},
+  bk_shrug_db:{cat:'back',t:'isolation',name:'Shrug con Manubri (trapezio)',mus:'Trapezio Superiore',steps:['In piedi con un manubrio per mano lungo i fianchi','Alza le spalle verso le orecchie','Contrai il trapezio in alto 1 secondo','Abbassa controllato'],cues:['Niente rotazioni delle spalle','Trapezio è un muscolo piccolo: peso moderato, alte reps']},
+  bk_pullover:{cat:'back',t:'isolation',name:'Pullover con Manubrio',mus:'Gran Dorsale/Serrato',steps:['Sdraiato di traverso su panca, solo spalle appoggiate','Tieni un manubrio con due mani sopra il petto','Abbassa dietro la testa in arco controllato','Risali attivando il dorsale'],cues:['Ottimo per allungare il dorsale','Gomiti leggermente piegati per tutta l\'escursione']},
+  bk_superman:{cat:'back',t:'isolation',name:'Good Morning (peso corporeo)',mus:'Lombari/Femorali',steps:['In piedi gambe larghezza spalle, mani dietro la testa','Incurva leggermente la schiena bassa','Inclinati in avanti dalle anche (non dalla schiena)','Risali contraendo i glutei'],cues:['Mantieni la schiena neutra, non tonda','Movimento solo dalle anche']},
+
+  // SHOULDERS — aggiuntivi (+5)
+  sh_arnold:{cat:'shoulders',t:'compound',name:'Arnold Press',mus:'Deltoidi (tutti i fasci)',steps:['Manubri all\'altezza del petto, palmi verso di te','Ruota i palmi in fuori mentre spingi verso l\'alto','Blocca in alto con palmi avanti','Inverti il movimento in discesa'],cues:['Lavora tutti e 3 i fasci del deltoide','Peso moderato, movimento controllato']},
+  sh_upright:{cat:'shoulders',t:'compound',name:'Tirate al Mento',mus:'Deltoide Laterale/Trapezio',steps:['Bilancere o manubri davanti alle cosce, presa stretta','Tira verso l\'alto fino all\'altezza del mento','Gomiti sempre più alti dei polsi','Discesa controllata'],cues:['Attenzione: movimento con rischio impingement','Se senti fastidio, ferma il movimento al livello del petto']},
+  sh_rear_db:{cat:'shoulders',t:'isolation',name:'Alzate Posteriori (panca inclinata)',mus:'Deltoide Posteriore',steps:['Petto appoggiato a panca inclinata 30-45°','Braccia pendenti con manubri','Alza manubri lateralmente con gomiti leggermente piegati','Stringi le scapole in alto'],cues:['Peso leggero, senti il posteriore','Evita swing con schiena']},
+  sh_shrug_band:{cat:'shoulders',t:'isolation',name:'Elevazione Scapolare con Elastico',mus:'Trapezio Inferiore',steps:['Elastico ancorato sopra la testa','Impugna con braccia estese in alto','Tira le scapole verso il basso senza piegare i gomiti','Mantieni 2 sec, poi rilascia'],cues:['Movimento isolato e piccolo','Ottimo per postura e salute spalla']},
+  sh_ytw:{cat:'shoulders',t:'isolation',name:'Y-T-W raise (corpo libero)',mus:'Deltoidi/Trapezio Medio',steps:['Sdraiato a pancia in giù su panca inclinata bassa','Forma Y con braccia estese sopra la testa, alza','Forma T con braccia laterali, alza','Forma W con braccia piegate a 90°, alza'],cues:['10 reps per ciascuna forma','Postura e mobilità spalla, nessun peso o leggero']},
+
+  // BICEPS — aggiuntivi (+4)
+  bi_hammer:{cat:'biceps',t:'isolation',name:'Curl a Martello',mus:'Bicipite Brachiale/Brachioradiale',steps:['In piedi con manubri ai fianchi, palmi verso l\'interno','Curl mantenendo palmi affiancati (non ruotare)','Alza fino all\'altezza delle spalle','Discesa controllata'],cues:['Ottimo per spessore del braccio (brachiale)','Non dondolare il busto']},
+  bi_prea:{cat:'biceps',t:'isolation',name:'Curl alla Panca Scott',mus:'Bicipite (picco)',steps:['Braccia appoggiate sulla panca Scott, ascelle al bordo','Manubrio o bilancere EZ','Curl completo senza staccare i gomiti','Non estendere completamente in basso (tensione continua)'],cues:['Movimento isolato, elimina lo swing','Peso moderato, forma pulita']},
+  bi_cable:{cat:'biceps',t:'isolation',name:'Curl ai Cavi',mus:'Bicipite',steps:['Cavo basso, impugnatura EZ o corda','In piedi, gomiti fissi ai fianchi','Curl fino alla contrazione massima','Discesa lenta in 3 secondi'],cues:['Tensione continua, mai scarico','Stringi in cima 1 secondo']},
+  bi_zottman:{cat:'biceps',t:'isolation',name:'Zottman Curl',mus:'Bicipite/Avambraccio',steps:['Manubri ai fianchi, palmi avanti','Curl classico in alto','In cima ruota i palmi verso il basso','Abbassa lentamente con palmi in giù'],cues:['Combina curl e reverse curl','Lavora anche avambraccio e brachioradiale']},
+
+  // TRICEPS — aggiuntivi (+4)
+  tri_rope:{cat:'triceps',t:'isolation',name:'Pushdown ai Cavi (corda)',mus:'Tricipite',steps:['Cavo alto con corda, gomiti ai fianchi','Spingi verso il basso fino all\'estensione completa','Separa le estremità della corda in fondo','Ritorno controllato'],cues:['Gomiti fissi, non muovere le spalle','Stringi in basso 1 secondo']},
+  tri_skull:{cat:'triceps',t:'isolation',name:'French Press (skull crusher)',mus:'Tricipite Lungo',steps:['Sdraiato su panca, bilancere EZ sopra il petto','Piega solo i gomiti, abbassa verso la fronte','Estendi le braccia verso l\'alto','Gomiti rimangono fermi'],cues:['Chiamato skull crusher perché se molli va sulla fronte — attenzione','Peso moderato, forma impeccabile']},
+  tri_kickback:{cat:'triceps',t:'isolation',name:'Kickback con Manubrio',mus:'Tricipite',steps:['Busto inclinato 45°, manubrio per mano','Gomito piegato a 90°, braccio parallelo al busto','Estendi indietro il braccio','Stringi il tricipite in cima'],cues:['Gomito fisso all\'altezza del tronco','Movimento solo dall\'avambraccio']},
+  tri_closebench:{cat:'triceps',t:'compound',name:'Panca Piana — Presa Stretta',mus:'Tricipite/Petto',steps:['Panca piana con presa larghezza spalle','Gomiti vicino ai fianchi durante la discesa','Tocca leggermente il petto','Spingi esplosivo verso l\'alto'],cues:['Ottimo per forza dei tricipiti','Presa non troppo stretta (no polsi)']},
+
+  // QUADS — aggiuntivi (+5)
+  lg_leg_press:{cat:'quads',t:'compound',name:'Leg Press',mus:'Quadricipiti/Glutei',steps:['Seduto alla macchina, piedi larghezza spalle su pedana','Piega ginocchia fino a 90°','Spingi con i talloni per estendere','Non bloccare ginocchia in cima'],cues:['Piedi più alti = più glutei, più bassi = più quad','Mantieni la schiena attaccata allo schienale']},
+  lg_front_squat:{cat:'quads',t:'compound',name:'Front Squat',mus:'Quadricipiti',steps:['Bilancere in presa incrociata davanti alle spalle','Gomiti alti, petto in fuori','Scendi in squat profondo','Risali mantenendo busto eretto'],cues:['Enfatizza quadricipite, meno schiena della back squat','Mobilità polsi e spalle necessaria']},
+  lg_hack_squat:{cat:'quads',t:'compound',name:'Hack Squat',mus:'Quadricipiti',steps:['Alla macchina hack squat, schiena appoggiata','Piedi larghezza spalle','Scendi a 90° o più','Spingi per risalire'],cues:['Posizione fissa, isola bene i quadricipiti','Piedi più avanti = più quadricipiti, più indietro = più glutei']},
+  lg_step_up:{cat:'quads',t:'compound',name:'Step-Up su Panca',mus:'Quadricipiti/Glutei',steps:['Piede destro su panca alta circa 40cm','Spingi col tallone destro per salire','Porta ginocchio sinistro verso il petto in cima','Scendi controllato'],cues:['Usa manubri per aumentare il carico','Non spingere con la gamba a terra, usa solo quella sopra']},
+  lg_lunge_walk:{cat:'quads',t:'compound',name:'Affondi in Camminata',mus:'Quadricipiti/Glutei',steps:['In piedi con manubri ai fianchi','Fai un passo avanti lungo, piega entrambe le ginocchia','Spingi dal tallone avanti per portarti a quello opposto','Continua alternando gambe'],cues:['Ginocchio anteriore non supera la punta del piede','Busto sempre eretto']},
+
+  // GLUTES — aggiuntivi (+4)
+  lg_hip_thrust:{cat:'glutes',t:'compound',name:'Hip Thrust (con bilancere)',mus:'Glutei',steps:['Spalle appoggiate a panca, bilancere sui fianchi','Piedi larghezza spalle, ginocchia piegate','Spingi i fianchi verso l\'alto fino all\'allineamento','Stringi i glutei 2 secondi in cima'],cues:['Esercizio RE per costruire glutei','Imbottisci il bilancere con asciugamano per evitare dolore']},
+  lg_rdl_db:{cat:'glutes',t:'compound',name:'Stacco Rumeno — Manubri',mus:'Femorali/Glutei',steps:['Manubri davanti alle cosce, gambe leggermente piegate','Inclinati in avanti dalle anche (non schiena)','Scendi fino a sentire allungamento femorali','Risali contraendo i glutei'],cues:['Schiena sempre dritta, non incurvata','Peso sui talloni']},
+  lg_bulgarian:{cat:'glutes',t:'compound',name:'Bulgarian Split Squat',mus:'Glutei/Quadricipiti',steps:['Piede posteriore appoggiato a panca dietro','Piede anteriore in posizione da affondo lungo','Scendi piegando il ginocchio anteriore','Risali spingendo col tallone anteriore'],cues:['Un peso per volta, una gamba per volta','Ottimo per correggere asimmetrie']},
+  lg_glute_kick:{cat:'glutes',t:'isolation',name:'Kickback Glutei (quadrupedia)',mus:'Grande Gluteo',steps:['A quattro zampe, ginocchia sotto i fianchi','Estendi una gamba indietro e in alto','Stringi il gluteo in cima','Ritorno controllato senza toccare terra'],cues:['Non inarcare la schiena','Puoi aggiungere cavigliera o elastico per carico']},
+
+  // CALVES — aggiuntivi (+3, erano solo 1!)
+  lg_calf_standing:{cat:'calves',t:'isolation',name:'Calf Raise in Piedi',mus:'Polpacci (gemello)',steps:['In piedi su bordo gradino, talloni sospesi','Manubri ai fianchi per carico','Alzati sulle punte al massimo','Scendi fino al massimo stretch'],cues:['Range completo: giù fino in fondo, su fino in punta','Polpacci amano alte reps: 15-20']},
+  lg_calf_seated:{cat:'calves',t:'isolation',name:'Calf Raise Seduto',mus:'Polpacci (soleo)',steps:['Seduto con peso sulle ginocchia','Piedi sull\'estremità di un rialzo','Alza i talloni al massimo','Discesa controllata'],cues:['Posizione seduta isola il soleo','Contrai in alto 1 sec prima di scendere']},
+  lg_calf_donkey:{cat:'calves',t:'isolation',name:'Donkey Calf Raise',mus:'Polpacci',steps:['In piedi piegato in avanti a 90° con mani appoggiate','Peso sulla schiena/fianchi o compagno seduto','Alzati sulle punte','Scendi al massimo stretch'],cues:['Allungamento completo = massima crescita','Serie lunghe da 20-25 reps']},
+
+  // CORE — aggiuntivi (+4)
+  co_hang_leg:{cat:'core',t:'isolation',name:'Hanging Leg Raise',mus:'Addominali Inferiori',steps:['Sospeso alla sbarra, braccia dritte','Alza le gambe tese fino a 90° col busto','Controlla la discesa senza oscillare','Tieni 1 sec in alto'],cues:['Avanzato, richiede forza addominale','Se troppo difficile, piega le ginocchia']},
+  co_deadbug:{cat:'core',t:'isolation',name:'Dead Bug',mus:'Core (stabilità)',steps:['Sdraiato sulla schiena, braccia in alto, ginocchia piegate a 90°','Estendi braccio destro e gamba sinistra contemporaneamente','Torna al centro','Alterna lato'],cues:['Schiena sempre attaccata al pavimento','Movimento lento e controllato']},
+  co_bird_dog:{cat:'core',t:'isolation',name:'Bird Dog',mus:'Core/Lombari',steps:['A quattro zampe, schiena neutra','Estendi braccio destro e gamba sinistra contemporaneamente','Tieni 2 sec in posizione','Torna e cambia lato'],cues:['Non ruotare i fianchi','Perfetto per stabilità e mal di schiena']},
+  co_sidebridge:{cat:'core',t:'isolation',name:'Side Plank',mus:'Obliqui',steps:['Sdraiato sul fianco, appoggio su avambraccio','Alza i fianchi allineando corpo','Mantieni la posizione','Esegui stesso tempo per lato'],cues:['Corpo perfettamente allineato','Non far cadere i fianchi']},
+
+  // CARDIO/CONDITIONING — aggiuntivi (+3)
+  cd_mount:{cat:'cardio',t:'cardio',name:'Mountain Climbers',mus:'Full Body/Cardio',steps:['Posizione di plank alta','Porta alternatamente le ginocchia al petto a ritmo rapido','Mantieni il plank senza far oscillare i fianchi','30-60 secondi continuo'],cues:['Alta frequenza cardiaca in poco tempo','Core contratto tutto il tempo']},
+  cd_jumprope:{cat:'cardio',t:'cardio',name:'Jump Rope (corda)',mus:'Polpacci/Cardio',steps:['Corda a lunghezza giusta (manici ~ascelle)','Salti piccoli sui polpacci','Mantieni ritmo costante','30 sec-3 min in base al livello'],cues:['Brucia 10-15 kcal/minuto','Ottimo warm-up ma anche HIIT']},
+  cd_battle:{cat:'cardio',t:'cardio',name:'Battle Ropes',mus:'Full Body/Cardio',steps:['Corde pesanti ancorate, una per mano','Onde alternate o simultanee','Squat leggero per stabilità','20-40 sec di scarica intensa'],cues:['Coinvolge spalle, core, gambe','Ottimo finisher fine allenamento']},
+
+  // FOREARMS — nuova categoria (+3)
+  fa_wrist_curl:{cat:'forearms',t:'isolation',name:'Wrist Curl',mus:'Flessori Avambraccio',steps:['Seduto con avambracci appoggiati sulle cosce','Manubri con palmi verso l\'alto','Piega i polsi facendo scendere i manubri','Arrotola in su contraendo'],cues:['Solo movimento dei polsi','Alte reps 15-20']},
+  fa_rev_curl:{cat:'forearms',t:'isolation',name:'Reverse Curl',mus:'Estensori Avambraccio/Brachioradiale',steps:['In piedi, bilancere con presa prona (palmi giù)','Curl mantenendo i polsi fermi','Alza fino all\'altezza delle spalle','Discesa lenta'],cues:['Peso inferiore al curl normale','Ottimo per forza presa']},
+  fa_farmer:{cat:'forearms',t:'compound',name:'Farmer Walk',mus:'Avambracci/Trapezio/Core',steps:['Manubri pesanti ai fianchi','Cammina con postura eretta 20-40 metri','Passi piccoli, movimento controllato','Non appoggiare i pesi a metà'],cues:['Ottimo per forza di presa e stabilizzatori','Peso: 50-75% del tuo peso corporeo']},
+
+  // EXPLOSIVE / PLYOMETRIC — nuovi (+4)
+  ex_box_jump:{cat:'quads',t:'compound',name:'Box Jump',mus:'Quadricipiti/Esplosiva',steps:['Davanti a un rialzo alto 40-60cm','Carica flettendo ginocchia','Salta esplosivo atterrando dolcemente sul box','Risali eretto e scendi camminando'],cues:['Mai scendere saltando (rischio ginocchia)','Altezza scegliila con cautela']},
+  ex_kb_swing:{cat:'glutes',t:'compound',name:'Kettlebell Swing',mus:'Glutei/Femorali/Core',steps:['Kettlebell davanti a te, gambe leggermente piegate','Inclinati dalle anche, porta kb tra le gambe','Spingi forte coi fianchi portando kb all\'altezza spalle','Controlla il ritorno tra le gambe'],cues:['Potenza dalle anche, non dalle spalle','Braccia sono solo pendoli']},
+  ex_push_exp:{cat:'chest',t:'compound',name:'Plyometric Push-Up',mus:'Petto/Esplosiva',steps:['Posizione di flessione','Scendi controllato','Spingi esplosivo staccando le mani dal pavimento','Atterra morbido e incatena'],cues:['Esercizio avanzato','Se troppo, resta su push-up normali']},
+  ex_burpee:{cat:'cardio',t:'compound',name:'Burpee',mus:'Full Body/Cardio',steps:['In piedi, piegati e appoggia le mani a terra','Salta indietro in posizione di plank','Flessione facoltativa','Salta avanti e in alto con braccia sopra'],cues:['Esercizio completissimo ma stancante','Ritmo regolare più importante della velocità']},
+
+  // STRETCHING ATTIVO (+2)
+  st_hip_flex:{cat:'mobility',t:'isometric',name:'Stretch Flessori Anca',mus:'Flessori Anca',steps:['In affondo alto, ginocchio posteriore a terra','Spingi i fianchi in avanti','Mantieni 30-45 secondi','Alterna gamba'],cues:['Importante per chi sta seduto molte ore','Senti stretch, non dolore']},
+  st_thoracic:{cat:'mobility',t:'isometric',name:'Mobility Toracica',mus:'Toracica/Schiena Alta',steps:['A quattro zampe','Mano dietro la testa','Ruota gomito verso soffitto, guarda in alto','Poi giù verso il braccio opposto, 10 reps'],cues:['Ottimo pre-allenamento spalle/panca','Migliora postura']},
+
   // RISCALDAMENTO
   wu_general:{cat:'warmup',t:'warmup',name:'🔥 RISCALDAMENTO (5 min)',mus:'Tutto il corpo',isWarmup:true,sets:1,reps:'5 minuti',rest:0,steps:['1 min — Jumping Jacks (saltelli con braccia e gambe allargate)','1 min — Arm Circles (rotazioni delle braccia avanti e indietro)','1 min — Leg Swings (oscillazioni delle gambe avanti/indietro e laterali)','1 min — Hip Circles (rotazioni delle anche in cerchio)','1 min — Torso Rotations (rotazioni del busto con mani alle spalle)'],cues:['Il riscaldamento riduce le lesioni del 50% — non saltarlo mai','Aumenta gradualmente l\'intensità nei primi 5 minuti','Il corpo deve essere sudato leggermente prima di iniziare a caricare']},
   wu_cut:{cat:'warmup',t:'warmup',name:'🔥 RISCALDAMENTO + CARDIO (8 min)',mus:'Tutto il corpo + Cardio',isWarmup:true,sets:1,reps:'8 minuti',rest:0,steps:['3 min — Camminata veloce o bici leggera (50-55% FC max)','1 min — Jumping Jacks','1 min — Arm Circles','1 min — Leg Swings','1 min — Hip Circles','1 min — Jump Rope o Marcia sul posto veloce'],cues:['Per la definizione: 3 minuti di cardio leggero prima dei pesi accelera il metabolismo fin dall\'inizio','Non esaurirti — il cardio di riscaldamento è leggero, non intenso']},
@@ -468,14 +548,16 @@ const EX={
   cd_stretch:{cat:'cooldown',t:'cooldown',name:'🧘 DEFATICAMENTO & STRETCHING (5 min)',mus:'Tutto il corpo',isCooldown:true,sets:1,reps:'5 minuti',rest:0,steps:['45 sec — Child\'s Pose: inginocchiati, porta le braccia in avanti e la testa a terra','45 sec — Quad Stretch: in piedi, porta il piede verso il gluteo tenendo la caviglia','45 sec — Chest Opener: mani intrecciate dietro la schiena, apri il petto verso l\'alto','45 sec — Hamstring Stretch: seduto, gambe dritte, raggiungi le punte dei piedi','45 sec — Pigeon Pose (o Figura 4): allungamento intenso dei flessori dell\'anca','45 sec — Spinal Twist: seduto, ruota il busto con un ginocchio piegato al petto'],cues:['Lo stretching post-workout migliora il recupero del 30%','Ogni posizione si mantiene 30-45 secondi — senti lo stretch, mai dolore','Respira profondamente durante ogni posizione: l\'espirazione aiuta il rilassamento muscolare','Non rimandare: lo stretching va fatto caldo, subito dopo l\'allenamento']},
 };
 const EX_G={
-  chest:['ch_man','ch_bil','ch_incl','ch_croci','ch_pieg','ch_pieg_inc','ch_pieg_dec'],
-  triceps:['tri_fr','tri_push','tri_dips','tri_oh','tri_dips_chair'],
-  shoulders:['sh_mil','sh_lat','sh_frt','sh_fp','sh_pike','sh_lat_home'],
-  back:['bk_rb','bk_rm','bk_traz','bk_lat','bk_st','bk_super','bk_door'],
-  biceps:['bi_cb','bi_cm','bi_mar','bi_con','bi_towel'],
-  glutes:['lg_hip','lg_rum','lg_lc','lg_bridge'],
-  quads:['lg_squat','lg_af','lg_sq_jump'],
-  core:['co_plk','co_cr','co_rus','co_lr','co_plkl'],
+  chest:['ch_man','ch_bil','ch_incl','ch_croci','ch_pieg','ch_pieg_inc','ch_pieg_dec','ch_dip_bench','ch_floor_press','ch_cable_cross','ch_svend','ex_push_exp'],
+  triceps:['tri_fr','tri_push','tri_dips','tri_oh','tri_dips_chair','tri_rope','tri_skull','tri_kickback','tri_closebench'],
+  shoulders:['sh_mil','sh_lat','sh_frt','sh_fp','sh_pike','sh_lat_home','sh_arnold','sh_upright','sh_rear_db','sh_shrug_band','sh_ytw'],
+  back:['bk_rb','bk_rm','bk_traz','bk_lat','bk_st','bk_super','bk_door','bk_face_pull','bk_tbar','bk_shrug_db','bk_pullover','bk_superman'],
+  biceps:['bi_cb','bi_cm','bi_mar','bi_con','bi_towel','bi_hammer','bi_prea','bi_cable','bi_zottman'],
+  glutes:['lg_hip','lg_rum','lg_lc','lg_bridge','lg_hip_thrust','lg_rdl_db','lg_bulgarian','lg_glute_kick','ex_kb_swing'],
+  quads:['lg_squat','lg_af','lg_sq_jump','lg_leg_press','lg_front_squat','lg_hack_squat','lg_step_up','lg_lunge_walk','ex_box_jump'],
+  calves:['lg_calf','lg_calf_standing','lg_calf_seated','lg_calf_donkey'],
+  core:['co_plk','co_cr','co_rus','co_lr','co_plkl','co_hang_leg','co_deadbug','co_bird_dog','co_sidebridge'],
+  forearms:['fa_wrist_curl','fa_rev_curl','fa_farmer'],
 };
 const WO_SCH={
   A:{name:'PETTO & TRICIPITI',emoji:'🏋️',col:'#c5f135',slots:[{cat:'chest',k:'A1'},{cat:'chest',k:'A2'},{cat:'chest',k:'A3'},{cat:'triceps',k:'A4'},{cat:'triceps',k:'A5'},{cat:'core',k:'A6'}]},
@@ -601,27 +683,27 @@ window.buildWeeklyPlanWithCardio=function(sessions,cardioLevel,analysis){
 // ═══════════════════════════════════════════════════════════════════
 // ─── § 7. FOOD_DB (462 cibi italiani) ──────────────────────────────────────
 window.FOOD_DB=[
-  {id:'pasta_secca',name:'Pasta di semola (peso crudo)',cat:'cereali',kcal:360,p:12,c:73,f:1.5},
-  {id:'pasta_integrale',name:'Pasta integrale (peso crudo)',cat:'cereali',kcal:340,p:13,c:67,f:2.5},
-  {id:'pasta_riso',name:'Pasta di riso (peso crudo)',cat:'cereali',kcal:355,p:7,c:80,f:1},
-  {id:'pasta_legumi',name:'Pasta di legumi (peso crudo)',cat:'cereali',kcal:340,p:24,c:55,f:3},
-  {id:'pasta_cotta',name:'Pasta cotta (peso cotto)',cat:'cereali',kcal:130,p:5,c:25,f:0.5},
+  {id:'pasta_secca',name:'Pasta di semola (crudo)',cat:'cereali',kcal:360,p:12,c:73,f:1.5},
+  {id:'pasta_integrale',name:'Pasta integrale (crudo)',cat:'cereali',kcal:340,p:13,c:67,f:2.5},
+  {id:'pasta_riso',name:'Pasta di riso (crudo)',cat:'cereali',kcal:355,p:7,c:80,f:1},
+  {id:'pasta_legumi',name:'Pasta di legumi (crudo)',cat:'cereali',kcal:340,p:24,c:55,f:3},
+  {id:'pasta_cotta',name:'Pasta cotta (cotto)',cat:'cereali',kcal:130,p:5,c:25,f:0.5},
   {id:'gnocchi',name:'Gnocchi di patate',cat:'cereali',kcal:160,p:3,c:33,f:1},
   {id:'tortellini',name:'Tortellini (con ripieno)',cat:'cereali',kcal:290,p:13,c:42,f:8},
   {id:'lasagne_sfoglia',name:'Sfoglia per lasagne',cat:'cereali',kcal:355,p:12,c:72,f:1.5},
-  {id:'cous_cous',name:'Couscous (peso crudo)',cat:'cereali',kcal:370,p:13,c:74,f:1},
+  {id:'cous_cous',name:'Couscous (crudo)',cat:'cereali',kcal:370,p:13,c:74,f:1},
   {id:'cous_cous_cotto',name:'Couscous cotto',cat:'cereali',kcal:115,p:4,c:23,f:0.2},
-  {id:'riso_bianco',name:'Riso bianco (peso crudo)',cat:'cereali',kcal:355,p:7,c:80,f:0.5},
-  {id:'riso_integrale',name:'Riso integrale (peso crudo)',cat:'cereali',kcal:340,p:7.5,c:72,f:2.5},
-  {id:'riso_basmati',name:'Riso basmati (peso crudo)',cat:'cereali',kcal:350,p:8,c:78,f:1},
-  {id:'riso_venere',name:'Riso venere (peso crudo)',cat:'cereali',kcal:355,p:7,c:75,f:2.5},
+  {id:'riso_bianco',name:'Riso bianco (crudo)',cat:'cereali',kcal:355,p:7,c:80,f:0.5},
+  {id:'riso_integrale',name:'Riso integrale (crudo)',cat:'cereali',kcal:340,p:7.5,c:72,f:2.5},
+  {id:'riso_basmati',name:'Riso basmati (crudo)',cat:'cereali',kcal:350,p:8,c:78,f:1},
+  {id:'riso_venere',name:'Riso venere (crudo)',cat:'cereali',kcal:355,p:7,c:75,f:2.5},
   {id:'riso_rosso',name:'Riso rosso integrale (crudo)',cat:'cereali',kcal:350,p:8,c:74,f:2.5},
   {id:'riso_cotto',name:'Riso cotto',cat:'cereali',kcal:130,p:2.5,c:28,f:0.3},
   {id:'risotto_zafferano',name:'Risotto allo zafferano (cotto)',cat:'cereali',kcal:160,p:4,c:25,f:5},
   {id:'farro_perlato',name:'Farro perlato (crudo)',cat:'cereali',kcal:340,p:15,c:67,f:2.5},
   {id:'farro_cotto',name:'Farro cotto',cat:'cereali',kcal:120,p:5,c:23,f:1},
   {id:'orzo_perlato',name:'Orzo perlato (crudo)',cat:'cereali',kcal:320,p:10,c:71,f:1.5},
-  {id:'quinoa',name:'Quinoa (peso crudo)',cat:'cereali',kcal:370,p:14,c:64,f:6},
+  {id:'quinoa',name:'Quinoa (crudo)',cat:'cereali',kcal:370,p:14,c:64,f:6},
   {id:'quinoa_cotta',name:'Quinoa cotta',cat:'cereali',kcal:120,p:4.5,c:21,f:2},
   {id:'avena_fiocchi',name:'Avena - Fiocchi (crudi)',cat:'cereali',kcal:380,p:13,c:67,f:7},
   {id:'avena_porridge',name:'Porridge avena cotto (con acqua)',cat:'cereali',kcal:75,p:2.5,c:13,f:1.5},
@@ -922,7 +1004,7 @@ window.FOOD_DB=[
   {id:'verdure_grigliate',name:'Verdure grigliate (zucchine, melanzane, peperoni)',cat:'verdure',kcal:35,p:1.5,c:5,f:1},
   {id:'minestrone',name:'Minestrone (verdure miste cotte)',cat:'verdure',kcal:35,p:1.5,c:6,f:0.5},
   {id:'crauti',name:'Crauti',cat:'verdure',kcal:20,p:1,c:3.5,f:0.2},
-  {id:'curgette',name:'Zucchine (peso cotto)',cat:'verdure',kcal:18,p:1.5,c:3,f:0.3},
+  {id:'curgette',name:'Zucchine (cotto)',cat:'verdure',kcal:18,p:1.5,c:3,f:0.3},
   {id:'kale',name:'Cavolo riccio (kale)',cat:'verdure',kcal:35,p:3,c:4.5,f:0.5},
   {id:'invidia_riccia',name:'Indivia riccia',cat:'verdure',kcal:17,p:1.3,c:3,f:0.2},
   {id:'borlotti_freschi',name:'Borlotti freschi (sgranati)',cat:'verdure',kcal:130,p:9,c:23,f:0.5},
@@ -1503,6 +1585,14 @@ window.deleteCustomWorkout=function(id){
   save();
 };
 
+// FIX 7: setWorkoutMode - toggle 3 stati per cosa mostrare in Allenamento
+window.setWorkoutMode=function(mode){
+  if(!ST.p) return;
+  if(!['auto','mine','both'].includes(mode)) return;
+  ST.p.workoutMode=mode;
+  save();
+};
+
 window.estimateWorkoutVolume=function(cw){
   let totalSets=0,totalReps=0;
   (cw.exercises||[]).forEach(e=>{
@@ -1514,8 +1604,17 @@ window.estimateWorkoutVolume=function(cw){
 };
 
 // Aggiunge esercizio al draft (dalla libreria EX)
+// FIX: helper per conservare il nome scheda digitato prima di un render
+// (evita che il campo cwName perda il valore quando render() ricrea il DOM)
+window.saveDraftNameBeforeRender=function(){
+  if(!ST.sheetData||!ST.sheetData.draft) return;
+  const n=document.getElementById('cwName')?.value;
+  if(n!=null) ST.sheetData.draft.name=n.slice(0,60).replace(/[<>]/g,'');
+};
+
 window.addLibraryExerciseToDraft=function(){
   if(!ST.sheetData) return;
+  saveDraftNameBeforeRender(); // FIX: conserva nome scheda prima del render
   const exId=document.getElementById('cwExSelect')?.value;
   if(!exId||!EX[exId]) return alert('Seleziona un esercizio dalla lista.');
   const ex=EX[exId];
@@ -1528,12 +1627,14 @@ window.addLibraryExerciseToDraft=function(){
 // Apre form per esercizio totalmente custom
 window.openExerciseCreator=function(){
   if(!ST.sheetData) return;
+  saveDraftNameBeforeRender(); // FIX
   ST.sheetData.subSheet='customEx';
   render();
 };
 
 // Salva esercizio custom dentro draft
 window.saveCustomExerciseToDraft=function(){
+  saveDraftNameBeforeRender(); // FIX: conserva nome scheda anche dopo creazione esercizio custom
   if(!ST.sheetData) return;
   const name=(document.getElementById('cwExName')?.value||'').trim().slice(0,60).replace(/[<>]/g,'');
   const mus=(document.getElementById('cwExMus')?.value||'').trim().slice(0,40).replace(/[<>]/g,'');
@@ -1562,6 +1663,7 @@ window.updateExerciseInDraft=function(idx,field,value){
 // Rimuove esercizio dal draft
 window.removeExerciseFromDraft=function(idx){
   if(!ST.sheetData) return;
+  saveDraftNameBeforeRender(); // FIX
   ST.sheetData.draft.exercises.splice(idx,1);
   render();
 };
@@ -1569,6 +1671,10 @@ window.removeExerciseFromDraft=function(idx){
 // Cambia emoji scheda
 window.setCustomWorkoutEmoji=function(emoji){
   if(!ST.sheetData) return;
+  // FIX: salvo il nome attualmente digitato prima di fare render()
+  // (altrimenti il campo input viene ricreato e il testo è perso)
+  const currentName=document.getElementById('cwName')?.value;
+  if(currentName!=null) ST.sheetData.draft.name=currentName.slice(0,60).replace(/[<>]/g,'');
   ST.sheetData.draft.emoji=emoji;
   render();
 };
@@ -1890,7 +1996,7 @@ window.buildMeals=function(macros,intol=[],sex='m',isRestDay=false,diet='omnivor
   const gP_pra=gramProt(kPra),gC_pra=gramPasta(kPra),gR_pra=gramRice(kPra);
   let praOpts=[];
   if(!isVeg){
-    praOpts.push({lbl:'🍗 Pollo + Riso',items:[`${gP_pra}g Petto di pollo`,`${gR_pra}g Riso integrale (peso crudo)`,olio,'Verdure a piacere']});
+    praOpts.push({lbl:'🍗 Pollo + Riso',items:[`${gP_pra}g Petto di pollo`,`${gR_pra}g Riso integrale (crudo)`,olio,'Verdure a piacere']});
     if(!haF) praOpts.push({lbl:'🐟 Tonno + Riso',items:[`${round10(gP_pra*0.8)}g Tonno al naturale`,`${gR_pra}g Riso (crudo)`,olio,'Pomodori e insalata']});
     praOpts.push({lbl:'🥩 Manzo magro + Patate',items:[`${gP_pra}g Tagliata di manzo magro`,`${round10(gR_pra*2.5)}g Patate lesse`,olio,'Verdure grigliate']});
   }
@@ -2267,16 +2373,29 @@ window.getStepsGoal=function(p){
 // ─── § 11. initProgram / updateProgram ─────────────────────────────────────
 window.initProgram=function(){
   const w=parseFloat(vv('iW')),g=parseFloat(vv('gW')),t=vv('iT'),dur=parseInt(vv('iDur')),tRaw=vv('iDate'),loc=vv('iLoc');
-  const sess=parseInt(vv('iSess'))||3,cl=parseInt(vv('iCardio'))||1;
+  // FIX: parseInt('0') || 3 darebbe 3 perché 0 è falsy. Uso controllo esplicito.
+  const sessRaw=parseInt(vv('iSess'));
+  const sess=Number.isNaN(sessRaw)?3:sessRaw;
+  const clRaw=parseInt(vv('iCardio'));
+  const cl=Number.isNaN(clRaw)?1:clRaw;
   const intol=[...document.querySelectorAll('.intol-chip.on')].map(c=>c.dataset.id);
   const focus=document.querySelector('.focus-chip.on')?.dataset?.focus||'total';
   const diet=document.querySelector('.diet-chip.on')?.dataset?.diet||'omnivore';
   if(!w||!g||!tRaw) return alert('Compila tutto!');
-  if(sess===0&&t==='bulk') return alert('⚠️ Con 0 sessioni non fai massa.');
-  if(sess===1&&t==='bulk') return alert('⚠️ Per massa servono almeno 2 sessioni.');
+  // FIX: warning non bloccanti — l'utente decide, noi adattiamo il piano
+  if(sess===0&&t==='bulk'){
+    if(!confirm('⚠️ Aumentare massa muscolare richiede allenamento con resistenze. Senza palestra, l\'aumento di peso sarà principalmente grasso. Vuoi procedere comunque?')) return;
+  }
+  if(sess===1&&t==='bulk'){
+    if(!confirm('⚠️ Per la massa muscolare sono consigliate almeno 2-3 sessioni/settimana. Con 1 sola la progressione sarà lenta. Vuoi procedere comunque?')) return;
+  }
   let tDate=new Date(tRaw);
-  const minWk=t==='cut'?Math.abs(w-g)/0.8:Math.abs(w-g)/0.3;
-  if((tDate-new Date())/(7*864e5)<minWk){tDate=new Date(new Date().getTime()+minWk*7*864e5);alert('Data corretta dall\'AI.');}
+  // FIX: rate settimanale realistico in base a sessioni (più sessioni = più velocità possibile)
+  // Cut: 0 sess=0.4kg/sett, 1-2 sess=0.6, 3+ sess=0.8
+  // Bulk: 0 sess=0.15kg/sett, 1-2 sess=0.2, 3+ sess=0.3
+  const maxRate = t==='cut' ? (sess===0?0.4:sess<3?0.6:0.8) : (sess===0?0.15:sess<3?0.2:0.3);
+  const minWk=Math.abs(w-g)/maxRate;
+  if((tDate-new Date())/(7*864e5)<minWk){tDate=new Date(new Date().getTime()+minWk*7*864e5);alert('⚠️ Data obiettivo corretta automaticamente.\n\nCon '+sess+' sessioni/settimana, il rate massimo realistico è '+maxRate+' kg/settimana. Nuova data: '+tDate.toLocaleDateString('it-IT'));}
   // PUNTO 12: integratori proteici (chip, default NO)
   const usesSupplements=document.querySelector('.supp-chip.on')?.dataset?.supp==='yes';
   // PUNTO 16: cibi preferiti (sanitizzati, max 200 char)
@@ -2312,6 +2431,11 @@ window.pickFocusChip=function(el){
   const col=el.dataset.col||'var(--acc)';
   el.style.borderColor=col;
   el.style.background=col+'12';
+  // FIX 5: aggiorna descrizione dinamica
+  const fId=el.dataset.focus;
+  const f=FOCUS_LIST.find(x=>x.id===fId);
+  const descEl=document.getElementById('focusDesc2');
+  if(descEl && f) descEl.textContent=f.desc;
 };
 window.pickDietChip=function(el){
   document.querySelectorAll('#dietChips .diet-chip2').forEach(x=>{
@@ -2336,7 +2460,12 @@ window.pickSuppChip=function(el){
 };
 
 window.updateProgram=function(){
-  const g=parseFloat(vv('eG')),t=vv('eT'),dur=parseInt(vv('eDur')),tRaw=vv('eDate'),sess=parseInt(vv('eSess'))||3,cl=parseInt(vv('eCardio'))||1,loc=vv('eLoc');
+  const g=parseFloat(vv('eG')),t=vv('eT'),dur=parseInt(vv('eDur')),tRaw=vv('eDate'),loc=vv('eLoc');
+  // FIX: stesso problema con parseInt || fallback (0 è falsy)
+  const sessRaw2=parseInt(vv('eSess'));
+  const sess=Number.isNaN(sessRaw2)?3:sessRaw2;
+  const clRaw2=parseInt(vv('eCardio'));
+  const cl=Number.isNaN(clRaw2)?1:clRaw2;
   // PUNTO 13: leggo i valori e fallback solido a quelli salvati se non leggibili dal DOM
   const intolEls=document.querySelectorAll('.intol-chip2.on');
   const intol=intolEls.length>0?[...intolEls].map(c=>c.dataset.id):(ST.p.intol||[]);
@@ -2357,12 +2486,19 @@ window.updateProgram=function(){
   };
   const workoutTime=vv('tWo')||ST.p.workoutTime||'18:00';
   if(!g||!tRaw) return alert('Compila campi!');
-  if(sess===0&&t==='bulk') return alert('⚠️ Con 0 sessioni niente massa.');
-  if(sess===1&&t==='bulk') return alert('⚠️ Almeno 2 sessioni per massa.');
+  // FIX: warning non bloccanti anche in update
+  if(sess===0&&t==='bulk'){
+    if(!confirm('⚠️ Aumentare massa muscolare richiede allenamento. Senza palestra l\'aumento sarà prevalentemente grasso. Procedo?')) return;
+  }
+  if(sess===1&&t==='bulk'){
+    if(!confirm('⚠️ Per massa sono consigliate almeno 2-3 sessioni/settimana. Procedo?')) return;
+  }
   let tDate=new Date(tRaw);
   const currW=ST.h[ST.h.length-1]?.w||70;
-  const minWk=t==='cut'?Math.abs(currW-g)/0.8:Math.abs(currW-g)/0.3;
-  if((tDate-new Date())/(7*864e5)<minWk){tDate=new Date(new Date().getTime()+minWk*7*864e5);alert('Data corretta dall\'AI.');}
+  // FIX: stesso rate realistico basato su sessioni
+  const maxRate2 = t==='cut' ? (sess===0?0.4:sess<3?0.6:0.8) : (sess===0?0.15:sess<3?0.2:0.3);
+  const minWk=Math.abs(currW-g)/maxRate2;
+  if((tDate-new Date())/(7*864e5)<minWk){tDate=new Date(new Date().getTime()+minWk*7*864e5);alert('⚠️ Data obiettivo corretta.\n\nCon '+sess+' sessioni/settimana il rate massimo realistico è '+maxRate2+' kg/settimana. Nuova data: '+tDate.toLocaleDateString('it-IT'));}
   // PUNTO 16: salva cibi preferiti (sanitizzati)
   const sanitizeFav=v=>(v||'').toString().slice(0,200).replace(/[<>]/g,'').trim();
   const newFavs={
@@ -2563,7 +2699,19 @@ window.updateFoodQuery=function(val){
   if(ST.sheetData.selectedFood && val!==ST.sheetData.selectedFood.name){
     ST.sheetData.selectedFood=null;
   }
+  // FIX: salvo la posizione del cursore prima del re-render
+  const activeEl=document.activeElement;
+  const cursorPos=activeEl?.selectionStart;
   render();
+  // Dopo il render, ripristino il focus sul campo ricerca per non perdere la tastiera mobile
+  requestAnimationFrame(()=>{
+    const input=document.getElementById('dbSearch');
+    if(input){
+      input.focus();
+      // Metto il cursore dove era prima (alla fine di default)
+      if(cursorPos!=null) try { input.setSelectionRange(cursorPos,cursorPos); } catch(e) {}
+    }
+  });
 };
 
 // Filtro per categoria
@@ -3155,7 +3303,7 @@ window.renderSetup = function(){
   <div id="wrapFocus">
   <span class="lbl" style="margin-bottom:8px;">FOCUS DI ALLENAMENTO — cosa vuoi sviluppare?</span>
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:14px;">
-    ${FOCUS_LIST.map((f,i)=>`<div class="focus-chip ${i===0?'on':''}" data-focus="${f.id}" style="border-color:${i===0?f.col:'var(--bord)'};background:${i===0?f.col+'12':'var(--surf)'};" onclick="document.querySelectorAll('.focus-chip').forEach(x=>{x.classList.remove('on');x.style.borderColor='var(--bord)';x.style.background='var(--surf)';});this.classList.add('on');this.style.borderColor=FOCUS_LIST.find(x=>x.id===this.dataset.focus).col;this.style.background=FOCUS_LIST.find(x=>x.id===this.dataset.focus).col+'12';"><div style="font-size:18px;margin-bottom:2px;">${f.icon}</div><div style="font-size:10px;font-weight:700;line-height:1.2;">${f.label}</div></div>`).join('')}
+    ${FOCUS_LIST.map((f,i)=>`<div class="focus-chip ${i===0?'on':''}" data-focus="${f.id}" style="border-color:${i===0?f.col:'var(--bord)'};background:${i===0?f.col+'12':'var(--surf)'};" onclick="document.querySelectorAll('.focus-chip').forEach(x=>{x.classList.remove('on');x.style.borderColor='var(--bord)';x.style.background='var(--surf)';});this.classList.add('on');const _f=FOCUS_LIST.find(x=>x.id===this.dataset.focus);this.style.borderColor=_f.col;this.style.background=_f.col+'12';document.getElementById('focusDesc').textContent=_f.desc;"><div style="font-size:18px;margin-bottom:2px;">${f.icon}</div><div style="font-size:10px;font-weight:700;line-height:1.2;">${f.label}</div></div>`).join('')}
   </div>
   <div id="focusDesc" style="font-size:12px;color:var(--mut);margin-bottom:14px;padding:8px 12px;background:var(--bg);border-radius:8px;">${FOCUS_LIST[0].desc}</div>
   </div>
@@ -3543,7 +3691,8 @@ window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,to
     ${todayLog&&!todayLog.isRest?`<div style="font-size:12px;color:var(--acc);margin-top:8px;">✅ Completato! Volume: ${todayLog.vol}kg</div>`:''}
   </div>
   ${cardioCard}
-  ${uniqueWoKeys.map(k=>{
+  ${/* FIX 7: filtro in base a ST.p.workoutMode (auto/mine/both, default 'both') */ ''}
+  ${((ST.p.workoutMode||'both')!=='mine') ? uniqueWoKeys.map(k=>{
     const w=WO_SCH[k];const defs=getDefs(sx,ST.p.loc);const isToday=k===todayWoId;
     return`<div class="card" style="border-left:5px solid ${w.col};padding:16px;${isToday?'box-shadow:0 0 15px '+w.col+'30;':''}">
       <div class="r" style="margin-bottom:10px;">
@@ -3558,9 +3707,9 @@ window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,to
         ${w.slots.map(sl=>{const exId=(ST.exPrefs&&ST.exPrefs[sl.k])||defs[sl.k];const ex=EX[exId];return`<div onclick="openSwap('${sl.k}')" style="cursor:pointer;padding:4px 8px;background:var(--surf);border:1px solid var(--bord);border-radius:7px;font-size:10px;color:var(--mut);">${ex?.name?.split('—')[0]?.trim()?.split(' ').slice(0,2).join(' ')||exId} 🔄</div>`;}).join('')}
       </div>
     </div>`;
-  }).join('')}
-  <!-- PUNTO 18: schede personalizzate dell'utente -->
-  ${(ST.p.customWorkouts||[]).map(cw=>{
+  }).join('') : ''}
+  <!-- PUNTO 18 + FIX 7: schede personalizzate dell'utente (mostrate se mode=mine o both) -->
+  ${((ST.p.workoutMode||'both')!=='auto') ? (ST.p.customWorkouts||[]).map(cw=>{
     const isToday=cw.id===todayWoId;
     return `<div class="card" style="border-left:5px solid ${cw.color||'var(--purp)'};padding:16px;${isToday?'box-shadow:0 0 15px '+(cw.color||'var(--purp)')+'30;':''}">
       <div class="r" style="margin-bottom:10px;">
@@ -3576,7 +3725,13 @@ window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,to
         ${cw.exercises.map(e=>{const name=e.isCustom?e.customName:(EX[e.exId]?.name||'?');return `<div style="padding:4px 8px;background:var(--surf);border:1px solid var(--bord);border-radius:7px;font-size:10px;color:var(--mut);">${escapeHtml((name||'').split('—')[0].trim().split(' ').slice(0,2).join(' '))}</div>`;}).join('')}
       </div>
     </div>`;
-  }).join('')}
+  }).join('') : ''}
+  ${/* Messaggio se mode=mine ma nessuna scheda custom */ ''}
+  ${(ST.p.workoutMode==='mine' && (!ST.p.customWorkouts || ST.p.customWorkouts.length===0)) ? `<div class="card" style="padding:16px;text-align:center;color:var(--mut);">
+    <div style="font-size:40px;margin-bottom:8px;">🛠️</div>
+    <div style="font-size:13px;line-height:1.5;margin-bottom:10px;">Hai impostato <strong>Solo le mie schede</strong>, ma non hai ancora creato nessuna scheda personalizzata.</div>
+    <button class="btn-s btn-action" style="padding:10px 16px;font-size:13px;" onclick="ST.tab='set';render();">VAI IN CONFIGURAZIONE</button>
+  </div>` : ''}
   <div class="card" style="padding:16px;">
     <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1.5px;margin-bottom:8px;">PIANO SETTIMANA CORRENTE — SITUAZIONE REALE</div>
     <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">${legendGrid}</div>
@@ -4079,9 +4234,10 @@ window.renderSettings = function(mac){
     <span class="lbl" style="margin-bottom:8px;">INTOLLERANZE (aggiorna)</span>
     <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;">${INTOL_LIST.map(i=>`<span class="intol-chip2 ${(ST.p.intol||[]).includes(i.id)?'on':''}" data-id="${i.id}" onclick="toggleIntolChip(this)">${i.icon} ${i.label}</span>`).join('')}</div>
     <div id="wrapEFocus"><span class="lbl" style="margin-bottom:8px;">FOCUS DI ALLENAMENTO</span>
-    <div id="focusChips" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:14px;">
+    <div id="focusChips" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:10px;">
       ${FOCUS_LIST.map(f=>{const isOn=(ST.p.focus||'total')===f.id;return`<div class="focus-chip2 ${isOn?'on':''}" data-focus="${f.id}" data-col="${f.col}" style="border-color:${isOn?f.col:'var(--bord)'};background:${isOn?f.col+'12':'var(--surf)'};padding:10px 6px;border:2px solid var(--bord);border-radius:12px;cursor:pointer;text-align:center;transition:.2s;" onclick="pickFocusChip(this)"><div style="font-size:16px;margin-bottom:2px;">${f.icon}</div><div style="font-size:10px;font-weight:700;line-height:1.2;">${f.label}</div></div>`;}).join('')}
-    </div></div>
+    </div>
+    <div id="focusDesc2" style="font-size:12px;color:var(--mut);margin-bottom:14px;padding:8px 12px;background:var(--bg);border-radius:8px;line-height:1.5;">${(FOCUS_LIST.find(f=>f.id===(ST.p.focus||'total'))||FOCUS_LIST[0]).desc}</div></div>
     <span class="lbl" style="margin-bottom:8px;">ALIMENTAZIONE</span>
     <div id="dietChips" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:14px;">
       ${[{id:'omnivore',icon:'🥩',lbl:'Onnivoro'},{id:'vegetarian',icon:'🥦',lbl:'Vegetariano'},{id:'vegan',icon:'🌱',lbl:'Vegano'}].map(d=>{const isOn=(ST.p.diet||'omnivore')===d.id;return`<div class="diet-chip2 ${isOn?'on':''}" data-diet="${d.id}" style="padding:12px 6px;border-radius:12px;border:2px solid ${isOn?'var(--acc)':'var(--bord)'};background:${isOn?'rgba(197,241,53,.08)':'var(--surf)'};cursor:pointer;text-align:center;transition:.2s;" onclick="pickDietChip(this)"><div style="font-size:20px;margin-bottom:3px;">${d.icon}</div><div style="font-size:10px;font-weight:700;">${d.lbl}</div></div>`;}).join('')}
@@ -4123,6 +4279,25 @@ window.renderSettings = function(mac){
   <div class="card" style="border-color:var(--purp);">
     <div class="bebas" style="font-size:20px;color:var(--purp);margin-bottom:6px;">🛠️ LE MIE SCHEDE</div>
     <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:14px;">Crea schede di allenamento personalizzate. Possono affiancare le schede automatiche A/B/C nella tua rotazione settimanale.</div>
+
+    <!-- FIX 7: toggle 3 stati per scegliere cosa mostrare in Allenamento -->
+    ${(ST.p.customWorkouts||[]).length>0 ? (() => {
+      const mode=ST.p.workoutMode||'both';
+      const opts=[
+        {id:'auto', lbl:'Solo AI', desc:'Mostra solo le schede automatiche A/B/C'},
+        {id:'mine', lbl:'Solo mie', desc:'Mostra solo le tue schede personalizzate'},
+        {id:'both', lbl:'Entrambe', desc:'Mostra sia AI che tue schede'},
+      ];
+      const curDesc=(opts.find(o=>o.id===mode)||opts[2]).desc;
+      return `<div style="background:rgba(167,139,250,.06);border:1.5px solid var(--purp);border-radius:12px;padding:12px;margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:700;color:var(--purp);letter-spacing:1px;margin-bottom:8px;">COSA MOSTRARE IN ALLENAMENTO</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;">
+          ${opts.map(o => `<button class="btn-s" style="padding:8px 4px;font-size:11px;font-weight:700;background:${mode===o.id?'var(--purp)':'var(--surf)'};color:${mode===o.id?'#fff':'var(--mut)'};border:1.5px solid ${mode===o.id?'var(--purp)':'var(--bord)'};" onclick="setWorkoutMode('${o.id}')">${o.lbl}</button>`).join('')}
+        </div>
+        <div style="font-size:11px;color:var(--mut);line-height:1.4;">${curDesc}</div>
+      </div>`;
+    })() : ''}
+
     ${(ST.p.customWorkouts||[]).length===0?`<div style="text-align:center;padding:14px;font-size:12px;color:var(--mut);background:var(--surf);border-radius:10px;margin-bottom:12px;">Nessuna scheda personalizzata.</div>`:
       (ST.p.customWorkouts||[]).map(cw=>{
         const vol=estimateWorkoutVolume(cw);
