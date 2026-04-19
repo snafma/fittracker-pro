@@ -1145,20 +1145,268 @@ window.FOOD_DB=[
   {id:'latte_avena',name:'Bevanda di avena',cat:'bevande',kcal:50,p:1,c:7,f:1.5},
   {id:'latte_riso',name:'Bevanda di riso',cat:'bevande',kcal:50,p:0.3,c:10,f:1},
   {id:'latte_cocco',name:'Bevanda di cocco (light)',cat:'bevande',kcal:25,p:0.2,c:3,f:1.2}
+  ,
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // FIX G — ESPANSIONE DB +200 CIBI (piatti regionali, pizze, dolci, gelati, fast food)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ─── PIATTI ITALIANI TRADIZIONALI (primi cucinati) ───
+  {id:'pasta_carbonara',name:'Pasta alla carbonara (porzione)',cat:'piatti_pronti',kcal:175,p:8,c:18,f:8},
+  {id:'pasta_amatriciana',name:'Pasta all\'amatriciana',cat:'piatti_pronti',kcal:160,p:6,c:20,f:6},
+  {id:'pasta_cacio_pepe',name:'Pasta cacio e pepe',cat:'piatti_pronti',kcal:200,p:8,c:22,f:9},
+  {id:'pasta_pesto',name:'Pasta al pesto',cat:'piatti_pronti',kcal:180,p:6,c:22,f:8},
+  {id:'pasta_pomodoro',name:'Pasta al pomodoro (semplice)',cat:'piatti_pronti',kcal:130,p:4,c:25,f:2},
+  {id:'pasta_ragu',name:'Pasta al ragù (alla bolognese)',cat:'piatti_pronti',kcal:170,p:7,c:20,f:6},
+  {id:'pasta_arrabbiata',name:'Pasta all\'arrabbiata',cat:'piatti_pronti',kcal:140,p:5,c:24,f:3},
+  {id:'pasta_vongole',name:'Spaghetti alle vongole',cat:'piatti_pronti',kcal:155,p:8,c:22,f:4},
+  {id:'lasagne_forno',name:'Lasagne al forno (porzione)',cat:'piatti_pronti',kcal:180,p:9,c:15,f:9},
+  {id:'cannelloni',name:'Cannelloni al forno',cat:'piatti_pronti',kcal:170,p:8,c:16,f:8},
+  {id:'gnocchi_sugo',name:'Gnocchi al pomodoro',cat:'piatti_pronti',kcal:150,p:4,c:27,f:3},
+  {id:'gnocchi_gorgo',name:'Gnocchi al gorgonzola',cat:'piatti_pronti',kcal:210,p:7,c:22,f:11},
+  {id:'tortellini_brodo',name:'Tortellini in brodo',cat:'piatti_pronti',kcal:120,p:6,c:16,f:3},
+  {id:'tortellini_panna',name:'Tortellini panna e prosciutto',cat:'piatti_pronti',kcal:220,p:9,c:20,f:12},
+  {id:'ravioli_burro',name:'Ravioli burro e salvia',cat:'piatti_pronti',kcal:200,p:7,c:22,f:10},
+  {id:'risotto_milanese',name:'Risotto alla milanese',cat:'piatti_pronti',kcal:160,p:4,c:22,f:6},
+  {id:'risotto_funghi',name:'Risotto ai funghi porcini',cat:'piatti_pronti',kcal:155,p:4,c:23,f:5},
+  {id:'risotto_pesce',name:'Risotto ai frutti di mare',cat:'piatti_pronti',kcal:145,p:7,c:22,f:3},
+  {id:'orzotto',name:'Orzotto alle verdure',cat:'piatti_pronti',kcal:125,p:4,c:22,f:2},
+  {id:'minestrone',name:'Minestrone di verdure',cat:'piatti_pronti',kcal:60,p:3,c:10,f:1.5},
+  {id:'pasta_fagioli',name:'Pasta e fagioli',cat:'piatti_pronti',kcal:110,p:5,c:18,f:2},
+  {id:'pasta_ceci',name:'Pasta e ceci',cat:'piatti_pronti',kcal:115,p:5,c:19,f:2},
+  {id:'zuppa_lenticchie',name:'Zuppa di lenticchie',cat:'piatti_pronti',kcal:90,p:6,c:14,f:1},
+  {id:'minestra_riso',name:'Minestra di riso e patate',cat:'piatti_pronti',kcal:85,p:2,c:17,f:0.5},
+
+  // ─── SECONDI CUCINATI ───
+  {id:'cotoletta_milanese',name:'Cotoletta alla milanese (porzione)',cat:'piatti_pronti',kcal:290,p:22,c:12,f:17},
+  {id:'saltimbocca',name:'Saltimbocca alla romana',cat:'piatti_pronti',kcal:210,p:24,c:2,f:12},
+  {id:'scaloppine',name:'Scaloppine al limone',cat:'piatti_pronti',kcal:180,p:22,c:5,f:8},
+  {id:'ossobuco',name:'Ossobuco con gremolata',cat:'piatti_pronti',kcal:220,p:20,c:3,f:14},
+  {id:'pollo_arrosto',name:'Pollo arrosto (con pelle)',cat:'piatti_pronti',kcal:215,p:27,c:0,f:12},
+  {id:'pollo_parmigiana',name:'Pollo alla parmigiana',cat:'piatti_pronti',kcal:240,p:24,c:8,f:13},
+  {id:'polpette_sugo',name:'Polpette al sugo',cat:'piatti_pronti',kcal:200,p:15,c:8,f:12},
+  {id:'polpettone',name:'Polpettone al forno',cat:'piatti_pronti',kcal:230,p:18,c:10,f:13},
+  {id:'arrosto_vitello',name:'Arrosto di vitello',cat:'piatti_pronti',kcal:190,p:28,c:0,f:9},
+  {id:'brasato',name:'Brasato al vino',cat:'piatti_pronti',kcal:240,p:26,c:4,f:13},
+  {id:'parmigiana_melanzane',name:'Parmigiana di melanzane',cat:'piatti_pronti',kcal:180,p:8,c:10,f:13},
+  {id:'melanzane_forno',name:'Melanzane al funghetto',cat:'piatti_pronti',kcal:95,p:2,c:8,f:6},
+  {id:'caponata',name:'Caponata siciliana',cat:'piatti_pronti',kcal:130,p:2,c:12,f:8},
+  {id:'peperonata',name:'Peperonata',cat:'piatti_pronti',kcal:75,p:2,c:9,f:4},
+  {id:'frittata_patate',name:'Frittata di patate',cat:'piatti_pronti',kcal:180,p:9,c:12,f:11},
+  {id:'frittata_zucchine',name:'Frittata di zucchine',cat:'piatti_pronti',kcal:140,p:10,c:5,f:9},
+  {id:'baccala',name:'Baccalà alla vicentina',cat:'piatti_pronti',kcal:170,p:18,c:6,f:8},
+  {id:'fritto_misto',name:'Fritto misto di pesce',cat:'piatti_pronti',kcal:260,p:18,c:10,f:17},
+  {id:'insalata_mare',name:'Insalata di mare',cat:'piatti_pronti',kcal:120,p:15,c:5,f:4},
+  {id:'orata_forno',name:'Orata al forno con patate',cat:'piatti_pronti',kcal:145,p:18,c:10,f:4},
+
+  // ─── PIZZE (per porzione intera ~300g) ───
+  {id:'pizza_margherita',name:'Pizza margherita (intera)',cat:'pizze',kcal:270,p:10,c:34,f:10},
+  {id:'pizza_marinara',name:'Pizza marinara (intera)',cat:'pizze',kcal:220,p:7,c:38,f:5},
+  {id:'pizza_napoli',name:'Pizza napoli (acciughe, capperi)',cat:'pizze',kcal:255,p:11,c:33,f:9},
+  {id:'pizza_diavola',name:'Pizza diavola (salame piccante)',cat:'pizze',kcal:295,p:13,c:33,f:13},
+  {id:'pizza_quattro_stagioni',name:'Pizza quattro stagioni',cat:'pizze',kcal:275,p:12,c:32,f:11},
+  {id:'pizza_quattro_formaggi',name:'Pizza quattro formaggi',cat:'pizze',kcal:320,p:14,c:30,f:16},
+  {id:'pizza_capricciosa',name:'Pizza capricciosa',cat:'pizze',kcal:285,p:13,c:31,f:12},
+  {id:'pizza_prosciutto',name:'Pizza prosciutto cotto',cat:'pizze',kcal:260,p:12,c:32,f:10},
+  {id:'pizza_prosciutto_funghi',name:'Pizza prosciutto e funghi',cat:'pizze',kcal:270,p:13,c:31,f:11},
+  {id:'pizza_bufalina',name:'Pizza bufalina (bufala DOP)',cat:'pizze',kcal:290,p:13,c:30,f:13},
+  {id:'pizza_tonno_cipolla',name:'Pizza tonno e cipolla',cat:'pizze',kcal:260,p:14,c:32,f:9},
+  {id:'pizza_vegetariana',name:'Pizza vegetariana',cat:'pizze',kcal:245,p:9,c:33,f:9},
+  {id:'pizza_bianca',name:'Pizza bianca (focaccia)',cat:'pizze',kcal:265,p:7,c:42,f:8},
+  {id:'pizza_wurstel_patate',name:'Pizza wurstel e patatine',cat:'pizze',kcal:310,p:12,c:32,f:16},
+  {id:'pizza_trancio',name:'Trancio di pizza al taglio (100g)',cat:'pizze',kcal:250,p:9,c:32,f:10},
+  {id:'focaccia_genovese',name:'Focaccia genovese',cat:'pizze',kcal:295,p:7,c:40,f:12},
+  {id:'focaccia_ligure',name:'Focaccia con cipolle',cat:'pizze',kcal:275,p:7,c:40,f:10},
+  {id:'calzone',name:'Calzone (ripieno)',cat:'pizze',kcal:285,p:13,c:32,f:12},
+
+  // ─── DOLCI TRADIZIONALI ITALIANI ───
+  {id:'tiramisu_porzione',name:'Tiramisù (porzione)',cat:'dolci',kcal:290,p:6,c:30,f:16},
+  {id:'cannolo_siciliano',name:'Cannolo siciliano (1 pz)',cat:'dolci',kcal:210,p:4,c:22,f:12},
+  {id:'cassata',name:'Cassata siciliana (fetta)',cat:'dolci',kcal:310,p:6,c:45,f:12},
+  {id:'baba_rum',name:'Babà al rum (1 pz)',cat:'dolci',kcal:250,p:5,c:38,f:9},
+  {id:'sfogliatella',name:'Sfogliatella (1 pz)',cat:'dolci',kcal:280,p:5,c:35,f:13},
+  {id:'pastiera',name:'Pastiera napoletana (fetta)',cat:'dolci',kcal:310,p:7,c:38,f:14},
+  {id:'panettone',name:'Panettone (fetta 80g)',cat:'dolci',kcal:335,p:6,c:50,f:12},
+  {id:'pandoro',name:'Pandoro (fetta 80g)',cat:'dolci',kcal:370,p:6,c:45,f:18},
+  {id:'colomba',name:'Colomba pasquale (fetta)',cat:'dolci',kcal:340,p:6,c:50,f:13},
+  {id:'torta_nonna',name:'Torta della nonna (fetta)',cat:'dolci',kcal:300,p:6,c:35,f:15},
+  {id:'crostata_marmellata',name:'Crostata alla marmellata',cat:'dolci',kcal:340,p:5,c:50,f:13},
+  {id:'crostata_frutta',name:'Crostata di frutta',cat:'dolci',kcal:260,p:4,c:38,f:11},
+  {id:'torta_mele',name:'Torta di mele (fetta)',cat:'dolci',kcal:240,p:4,c:35,f:9},
+  {id:'torta_cioccolato',name:'Torta al cioccolato (fetta)',cat:'dolci',kcal:370,p:5,c:40,f:22},
+  {id:'millefoglie',name:'Millefoglie (1 pz)',cat:'dolci',kcal:380,p:5,c:38,f:24},
+  {id:'profiterole',name:'Profiteroles (porzione)',cat:'dolci',kcal:350,p:7,c:32,f:21},
+  {id:'zuppa_inglese',name:'Zuppa inglese (porzione)',cat:'dolci',kcal:270,p:7,c:35,f:10},
+  {id:'panna_cotta',name:'Panna cotta (porzione)',cat:'dolci',kcal:220,p:4,c:20,f:14},
+  {id:'creme_caramel',name:'Crème caramel (1 pz)',cat:'dolci',kcal:150,p:5,c:22,f:4},
+  {id:'mousse_cioccolato',name:'Mousse al cioccolato',cat:'dolci',kcal:280,p:5,c:25,f:18},
+  {id:'bignè',name:'Bignè con crema (1 pz)',cat:'dolci',kcal:110,p:2,c:10,f:7},
+  {id:'pasticcino',name:'Pasticcino mignon (1 pz)',cat:'dolci',kcal:90,p:1.5,c:10,f:5},
+  {id:'budino_cioccolato',name:'Budino al cioccolato (vasetto)',cat:'dolci',kcal:180,p:4,c:25,f:7},
+
+  // ─── GELATI ───
+  {id:'gelato_cono_1',name:'Cono gelato 1 gusto (piccolo)',cat:'gelati',kcal:130,p:3,c:18,f:5},
+  {id:'gelato_cono_2',name:'Cono gelato 2 gusti (medio)',cat:'gelati',kcal:260,p:5,c:36,f:10},
+  {id:'gelato_cono_3',name:'Cono gelato 3 gusti (grande)',cat:'gelati',kcal:390,p:7,c:54,f:15},
+  {id:'gelato_coppetta_piccola',name:'Coppetta gelato piccola (100g)',cat:'gelati',kcal:230,p:4,c:32,f:9},
+  {id:'gelato_coppetta_media',name:'Coppetta gelato media (200g)',cat:'gelati',kcal:460,p:8,c:64,f:18},
+  {id:'gelato_fior_latte',name:'Gelato fior di latte (100g)',cat:'gelati',kcal:220,p:4,c:25,f:11},
+  {id:'gelato_cioccolato',name:'Gelato al cioccolato (100g)',cat:'gelati',kcal:240,p:4,c:30,f:12},
+  {id:'gelato_pistacchio',name:'Gelato al pistacchio (100g)',cat:'gelati',kcal:250,p:5,c:25,f:14},
+  {id:'gelato_nocciola',name:'Gelato alla nocciola (100g)',cat:'gelati',kcal:245,p:5,c:25,f:14},
+  {id:'sorbetto_limone',name:'Sorbetto al limone (100g)',cat:'gelati',kcal:130,p:0.5,c:32,f:0},
+  {id:'ghiacciolo',name:'Ghiacciolo (1 stecco)',cat:'gelati',kcal:70,p:0,c:17,f:0},
+  {id:'cornetto_algida',name:'Cornetto Algida Classico (1 pz)',cat:'gelati',kcal:270,p:3,c:32,f:14},
+  {id:'magnum',name:'Magnum Classic (1 pz)',cat:'gelati',kcal:270,p:3,c:25,f:18},
+  {id:'magnum_mandorla',name:'Magnum alla mandorla (1 pz)',cat:'gelati',kcal:290,p:4,c:26,f:19},
+  {id:'calippo',name:'Calippo (1 stecco)',cat:'gelati',kcal:95,p:0,c:22,f:0},
+  {id:'cucciolone',name:'Cucciolone Algida (1 pz)',cat:'gelati',kcal:190,p:3,c:26,f:8},
+  {id:'mega_algida',name:'Mega Algida (1 pz)',cat:'gelati',kcal:175,p:2.5,c:20,f:9},
+  {id:'affogato',name:'Affogato al caffè',cat:'gelati',kcal:260,p:4,c:30,f:13},
+
+  // ─── FAST FOOD ───
+  {id:'big_mac',name:'Big Mac (McDonald\'s, 1 pz)',cat:'fast_food',kcal:510,p:25,c:45,f:26},
+  {id:'mcchicken',name:'McChicken (McDonald\'s, 1 pz)',cat:'fast_food',kcal:400,p:15,c:41,f:19},
+  {id:'mcrib',name:'McRib (McDonald\'s, 1 pz)',cat:'fast_food',kcal:480,p:22,c:44,f:24},
+  {id:'cheeseburger',name:'Cheeseburger semplice (1 pz)',cat:'fast_food',kcal:300,p:15,c:32,f:13},
+  {id:'hamburger_medio',name:'Hamburger medio con contorno',cat:'fast_food',kcal:540,p:28,c:45,f:28},
+  {id:'whopper',name:'Whopper (Burger King, 1 pz)',cat:'fast_food',kcal:660,p:28,c:49,f:40},
+  {id:'patatine_piccole',name:'Patatine fritte piccole (porzione)',cat:'fast_food',kcal:230,p:3,c:30,f:11},
+  {id:'patatine_medie',name:'Patatine fritte medie',cat:'fast_food',kcal:340,p:4,c:43,f:16},
+  {id:'patatine_grandi',name:'Patatine fritte grandi',cat:'fast_food',kcal:490,p:6,c:63,f:23},
+  {id:'chicken_nuggets_6',name:'Chicken nuggets 6 pezzi',cat:'fast_food',kcal:270,p:13,c:16,f:17},
+  {id:'chicken_nuggets_9',name:'Chicken nuggets 9 pezzi',cat:'fast_food',kcal:400,p:20,c:24,f:25},
+  {id:'mcmenu_medio',name:'McMenu medio (panino+patatine+bibita)',cat:'fast_food',kcal:1050,p:30,c:120,f:47},
+  {id:'kebab_panino',name:'Kebab in panino',cat:'fast_food',kcal:620,p:35,c:60,f:28},
+  {id:'kebab_piadina',name:'Kebab in piadina',cat:'fast_food',kcal:680,p:32,c:70,f:30},
+  {id:'piadina_prosciutto',name:'Piadina prosciutto e formaggio',cat:'fast_food',kcal:490,p:20,c:50,f:23},
+  {id:'piadina_nutella',name:'Piadina con Nutella',cat:'fast_food',kcal:540,p:9,c:75,f:22},
+  {id:'panino_salame',name:'Panino con salame',cat:'fast_food',kcal:430,p:18,c:40,f:22},
+  {id:'panino_prosciutto',name:'Panino prosciutto crudo e mozzarella',cat:'fast_food',kcal:430,p:22,c:40,f:20},
+  {id:'panino_porchetta',name:'Panino con porchetta',cat:'fast_food',kcal:520,p:22,c:42,f:27},
+  {id:'hotdog',name:'Hot dog',cat:'fast_food',kcal:290,p:10,c:24,f:18},
+  {id:'fishburger',name:'Fish burger',cat:'fast_food',kcal:370,p:15,c:38,f:17},
+
+  // ─── SNACK E JUNK FOOD ───
+  {id:'patatine_chips_bag',name:'Patatine chips busta piccola (25g)',cat:'snack',kcal:135,p:1.5,c:13,f:8},
+  {id:'patatine_chips_100',name:'Patatine chips (100g)',cat:'snack',kcal:540,p:6,c:50,f:34},
+  {id:'nachos',name:'Nachos con formaggio',cat:'snack',kcal:290,p:6,c:30,f:16},
+  {id:'popcorn_dolci',name:'Popcorn dolci (100g)',cat:'snack',kcal:480,p:8,c:70,f:19},
+  {id:'popcorn_salati',name:'Popcorn salati (100g)',cat:'snack',kcal:440,p:11,c:55,f:21},
+  {id:'kinder_bueno',name:'Kinder Bueno (1 barretta)',cat:'snack',kcal:110,p:2,c:10,f:7},
+  {id:'snickers',name:'Snickers (1 pz 50g)',cat:'snack',kcal:250,p:4,c:30,f:13},
+  {id:'mars',name:'Mars (1 pz 50g)',cat:'snack',kcal:230,p:2,c:32,f:9},
+  {id:'twix',name:'Twix (1 pz 50g)',cat:'snack',kcal:250,p:2,c:33,f:12},
+  {id:'kitkat',name:'KitKat (1 barretta 4 dita)',cat:'snack',kcal:210,p:3,c:26,f:11},
+  {id:'bounty',name:'Bounty (1 barretta)',cat:'snack',kcal:270,p:2,c:30,f:15},
+  {id:'ferrero_rocher',name:'Ferrero Rocher (1 pz)',cat:'snack',kcal:75,p:1,c:6,f:5},
+  {id:'m_and_m',name:'M&M\'s cioccolato (1 bustina 45g)',cat:'snack',kcal:220,p:2,c:30,f:10},
+  {id:'nutella_100g',name:'Nutella (100g)',cat:'snack',kcal:540,p:6,c:58,f:31},
+  {id:'cioccolato_latte_25g',name:'Cioccolato al latte (25g, 1 fila)',cat:'snack',kcal:140,p:2,c:14,f:8},
+  {id:'cioccolato_fond_25g',name:'Cioccolato fondente 70% (25g)',cat:'snack',kcal:145,p:2,c:10,f:10},
+  {id:'pringles_piccole',name:'Pringles busta piccola (40g)',cat:'snack',kcal:210,p:2,c:22,f:13},
+
+  // ─── COLAZIONE BAR / CAFFETTERIA ───
+  {id:'cappuccino',name:'Cappuccino (tazza)',cat:'bar',kcal:80,p:4,c:8,f:4},
+  {id:'caffe_latte',name:'Caffè latte (tazza)',cat:'bar',kcal:110,p:6,c:10,f:5},
+  {id:'latte_macchiato',name:'Latte macchiato',cat:'bar',kcal:100,p:5,c:9,f:5},
+  {id:'marocchino',name:'Marocchino',cat:'bar',kcal:90,p:2,c:10,f:5},
+  {id:'cornetto_vuoto',name:'Cornetto vuoto (1 pz)',cat:'bar',kcal:290,p:6,c:34,f:15},
+  {id:'cornetto_marmellata',name:'Cornetto alla marmellata',cat:'bar',kcal:330,p:6,c:42,f:14},
+  {id:'cornetto_crema',name:'Cornetto alla crema',cat:'bar',kcal:350,p:7,c:40,f:17},
+  {id:'cornetto_cioccolato',name:'Cornetto al cioccolato',cat:'bar',kcal:360,p:7,c:42,f:17},
+  {id:'cornetto_nutella',name:'Cornetto alla Nutella',cat:'bar',kcal:380,p:7,c:44,f:19},
+  {id:'brioche_crema',name:'Brioche con crema',cat:'bar',kcal:320,p:6,c:40,f:14},
+  {id:'veneziana',name:'Veneziana con glassa',cat:'bar',kcal:390,p:7,c:52,f:16},
+  {id:'ciambella_bar',name:'Ciambella al bar',cat:'bar',kcal:310,p:5,c:42,f:13},
+  {id:'pain_au_chocolat',name:'Pain au chocolat (1 pz)',cat:'bar',kcal:340,p:6,c:38,f:18},
+  {id:'trancio_torta_mele',name:'Trancio torta di mele bar',cat:'bar',kcal:280,p:4,c:38,f:12},
+  {id:'bomba_crema',name:'Bomba fritta alla crema',cat:'bar',kcal:370,p:6,c:45,f:18},
+  {id:'toast_prosciutto_form',name:'Toast prosciutto e formaggio',cat:'bar',kcal:360,p:18,c:32,f:17},
+  {id:'tramezzino_tonno',name:'Tramezzino tonno (1 pz)',cat:'bar',kcal:180,p:8,c:18,f:8},
+  {id:'tramezzino_prosciutto',name:'Tramezzino prosciutto (1 pz)',cat:'bar',kcal:170,p:8,c:18,f:7},
+  {id:'spremuta_arancia',name:'Spremuta d\'arancia bar',cat:'bar',kcal:80,p:1.5,c:18,f:0},
+  {id:'centrifuga_frutta',name:'Centrifuga frutta al bar',cat:'bar',kcal:120,p:1.5,c:28,f:0.3},
+
+  // ─── BIRRE E ALCOLICI (oltre quelli base) ───
+  {id:'birra_piccola',name:'Birra piccola (0.2L)',cat:'bevande',kcal:85,p:1,c:7,f:0},
+  {id:'birra_media',name:'Birra media (0.4L)',cat:'bevande',kcal:170,p:2,c:14,f:0},
+  {id:'birra_grande',name:'Birra grande (0.66L)',cat:'bevande',kcal:280,p:3,c:23,f:0},
+  {id:'birra_doppio_malto',name:'Birra doppio malto media (0.4L)',cat:'bevande',kcal:220,p:2,c:16,f:0},
+  {id:'vino_calice',name:'Vino (calice 150ml)',cat:'bevande',kcal:125,p:0,c:4,f:0},
+  {id:'vino_bicchiere',name:'Vino (bicchiere piccolo 100ml)',cat:'bevande',kcal:85,p:0,c:2.5,f:0},
+  {id:'spritz',name:'Spritz Aperol (aperitivo)',cat:'bevande',kcal:190,p:0,c:18,f:0},
+  {id:'negroni',name:'Negroni (cocktail)',cat:'bevande',kcal:220,p:0,c:14,f:0},
+  {id:'mojito',name:'Mojito',cat:'bevande',kcal:170,p:0,c:20,f:0},
+  {id:'amaro',name:'Amaro digestivo (40ml)',cat:'bevande',kcal:95,p:0,c:10,f:0},
+  {id:'grappa',name:'Grappa (30ml)',cat:'bevande',kcal:70,p:0,c:0,f:0},
+  {id:'prosecco_flute',name:'Prosecco flute (100ml)',cat:'bevande',kcal:80,p:0,c:3,f:0},
+
+  // ─── BIBITE E SUCCHI AGGIUNTIVI ───
+  {id:'cocacola_lattina',name:'Coca-Cola lattina (330ml)',cat:'bevande',kcal:140,p:0,c:35,f:0},
+  {id:'fanta_lattina',name:'Fanta lattina (330ml)',cat:'bevande',kcal:145,p:0,c:35,f:0},
+  {id:'sprite_lattina',name:'Sprite lattina (330ml)',cat:'bevande',kcal:130,p:0,c:34,f:0},
+  {id:'redbull',name:'Red Bull (250ml)',cat:'bevande',kcal:115,p:0,c:28,f:0},
+  {id:'the_freddo',name:'Tè freddo pesca (bottiglia 500ml)',cat:'bevande',kcal:120,p:0,c:30,f:0},
+  {id:'gatorade',name:'Gatorade (500ml)',cat:'bevande',kcal:125,p:0,c:30,f:0},
+  {id:'succo_pesca',name:'Succo di pesca (bottiglia 200ml)',cat:'bevande',kcal:110,p:0,c:27,f:0},
+
+  // ─── FRUTTA PIATTI PRONTI ───
+  {id:'macedonia',name:'Macedonia di frutta (porzione)',cat:'frutta',kcal:65,p:1,c:16,f:0.3},
+  {id:'frutta_sciroppo',name:'Frutta sciroppata (porzione)',cat:'frutta',kcal:95,p:0.4,c:23,f:0.1},
+  {id:'smoothie_frutta',name:'Smoothie frutta (300ml)',cat:'bevande',kcal:160,p:2,c:35,f:1},
+
+  // ─── PESCE / SUSHI ───
+  {id:'sushi_maki_8',name:'Sushi maki 8 pezzi',cat:'piatti_pronti',kcal:320,p:10,c:55,f:6},
+  {id:'sushi_nigiri_1',name:'Nigiri (1 pz)',cat:'piatti_pronti',kcal:45,p:3,c:7,f:0.5},
+  {id:'sashimi_salmone',name:'Sashimi di salmone (porzione)',cat:'pesce',kcal:165,p:22,c:0,f:8},
+  {id:'poke_bowl',name:'Poke bowl medio',cat:'piatti_pronti',kcal:580,p:28,c:70,f:18},
+  {id:'ramen',name:'Ramen (ciotola)',cat:'piatti_pronti',kcal:490,p:22,c:65,f:14},
+
+  // ─── ETNICO / INTERNAZIONALE ───
+  {id:'couscous_piatto',name:'Cous cous con verdure e carne',cat:'piatti_pronti',kcal:160,p:9,c:22,f:4},
+  {id:'paella',name:'Paella valenciana (porzione)',cat:'piatti_pronti',kcal:180,p:10,c:25,f:5},
+  {id:'tacos',name:'Tacos (1 pz)',cat:'piatti_pronti',kcal:170,p:8,c:15,f:8},
+  {id:'burrito',name:'Burrito (1 pz)',cat:'piatti_pronti',kcal:430,p:18,c:55,f:15},
+  {id:'hummus',name:'Hummus (100g)',cat:'piatti_pronti',kcal:165,p:8,c:14,f:10},
+  {id:'falafel',name:'Falafel (100g, 4-5 polpette)',cat:'piatti_pronti',kcal:330,p:13,c:32,f:18},
+
+  // ─── BISCOTTI SPECIFICI MARCHE ───
+  {id:'mulino_bianco_pangocciolini',name:'Pan di stelle (3 biscotti)',cat:'dolci',kcal:130,p:2,c:18,f:5},
+  {id:'oro_saiwa',name:'Oro Saiwa (4 biscotti)',cat:'dolci',kcal:130,p:3,c:22,f:3},
+  {id:'galbusera_buondi',name:'Buondì Motta (1 pz)',cat:'dolci',kcal:155,p:2,c:22,f:6},
+  {id:'kinder_delice',name:'Kinder Delice (1 pz)',cat:'dolci',kcal:165,p:3,c:17,f:9},
+  {id:'kinder_brioss',name:'Kinder Brioss (1 pz)',cat:'dolci',kcal:125,p:3,c:16,f:5},
+  {id:'fiesta_ferrero',name:'Fiesta Ferrero (1 pz)',cat:'dolci',kcal:130,p:1,c:15,f:7},
+
+  // ─── PIATTI VEGETARIANI/VEGANI ALTERNATIVI ───
+  {id:'burger_vegetale',name:'Burger vegetale (1 pz)',cat:'piatti_pronti',kcal:230,p:20,c:10,f:13},
+  {id:'seitan_cucinato',name:'Seitan alla piastra (100g)',cat:'piatti_pronti',kcal:130,p:24,c:5,f:2},
+  {id:'tempeh_cucinato',name:'Tempeh marinato (100g)',cat:'piatti_pronti',kcal:195,p:20,c:9,f:11},
+  {id:'bowl_quinoa',name:'Bowl di quinoa con verdure',cat:'piatti_pronti',kcal:130,p:6,c:22,f:3}
+
 ];
 
 // Categorie con etichette user-friendly italiane + emoji
 window.FOOD_CATS=[
-  {id:'cereali',  lbl:'Cereali e Pane', emo:'🌾'},
-  {id:'carne',    lbl:'Carne e Salumi', emo:'🥩'},
-  {id:'pesce',    lbl:'Pesce',          emo:'🐟'},
-  {id:'latticini',lbl:'Latticini',      emo:'🧀'},
-  {id:'uova',     lbl:'Uova',           emo:'🥚'},
-  {id:'legumi',   lbl:'Legumi',         emo:'🫘'},
-  {id:'verdure',  lbl:'Verdure',        emo:'🥦'},
-  {id:'frutta',   lbl:'Frutta e Frutta secca', emo:'🍎'},
-  {id:'condimenti',lbl:'Condimenti e Salse', emo:'🫒'},
-  {id:'bevande',  lbl:'Bevande e Integratori', emo:'☕'},
+  {id:'cereali',  lbl:'Cereali e Pane', short:'Cereali', emo:'🌾'},
+  {id:'carne',    lbl:'Carne e Salumi', short:'Carne',   emo:'🥩'},
+  {id:'pesce',    lbl:'Pesce',          short:'Pesce',   emo:'🐟'},
+  {id:'latticini',lbl:'Latticini',      short:'Latt.',   emo:'🧀'},
+  {id:'uova',     lbl:'Uova',           short:'Uova',    emo:'🥚'},
+  {id:'legumi',   lbl:'Legumi',         short:'Legumi',  emo:'🫘'},
+  {id:'verdure',  lbl:'Verdure',        short:'Verdure', emo:'🥦'},
+  {id:'frutta',   lbl:'Frutta e Frutta secca', short:'Frutta', emo:'🍎'},
+  {id:'condimenti',lbl:'Condimenti e Salse', short:'Condim.', emo:'🫒'},
+  {id:'bevande',  lbl:'Bevande e Integratori', short:'Bevande', emo:'☕'},
+  // FIX G: nuove categorie per espansione DB (+204 cibi)
+  {id:'piatti_pronti',lbl:'Piatti Pronti', short:'Piatti', emo:'🍝'},
+  {id:'pizze',    lbl:'Pizze e Focacce', short:'Pizze',  emo:'🍕'},
+  {id:'dolci',    lbl:'Dolci',           short:'Dolci',  emo:'🍰'},
+  {id:'gelati',   lbl:'Gelati',          short:'Gelati', emo:'🍦'},
+  {id:'fast_food',lbl:'Fast Food',       short:'Fast',   emo:'🍔'},
+  {id:'snack',    lbl:'Snack',           short:'Snack',  emo:'🍿'},
+  {id:'bar',      lbl:'Bar e Colazione', short:'Bar',    emo:'🥐'},
 ];
 
 // ─────────────────────────────────────────────────────────────────
@@ -2459,6 +2707,49 @@ window.pickSuppChip=function(el){
   el.style.background='rgba(197,241,53,.08)';
 };
 
+// FIX: aggiornamento dati profilo personali (sesso, altezza, età, peso iniziale)
+window.updateProfile=function(){
+  const sx=document.querySelector('.profile-sx-chip.on')?.dataset?.sx||AU.profile?.sx||'m';
+  const htRaw=parseFloat(vv('pfHt'));
+  const agRaw=parseInt(vv('pfAg'));
+  const wStartRaw=parseFloat(vv('pfWStart'));
+
+  if(isNaN(htRaw)||htRaw<100||htRaw>250) return alert('Altezza non valida (deve essere tra 100 e 250 cm)');
+  if(isNaN(agRaw)||agRaw<10||agRaw>100) return alert('Età non valida (deve essere tra 10 e 100 anni)');
+  if(isNaN(wStartRaw)||wStartRaw<20||wStartRaw>300) return alert('Peso non valido (deve essere tra 20 e 300 kg)');
+
+  // Aggiorno AU.profile
+  if(!AU.profile) AU.profile={};
+  AU.profile.sx=sx;
+  AU.profile.ht=htRaw;
+  AU.profile.ag=agRaw;
+
+  // Peso iniziale: è ST.h[0].w (prima pesata). Lo aggiorno o lo creo.
+  if(!ST.h || ST.h.length===0){
+    ST.h=[{d:ST.programStart||getToday(),w:wStartRaw}];
+  } else {
+    ST.h[0].w=wStartRaw;
+    // Se la data del primo è dopo programStart, la correggo
+    if(ST.programStart && ST.h[0].d>ST.programStart){
+      ST.h[0].d=ST.programStart;
+    }
+  }
+
+  save();
+  alert('✅ Profilo aggiornato');
+};
+
+window.pickProfileSxChip=function(el){
+  document.querySelectorAll('.profile-sx-chip').forEach(x=>{
+    x.classList.remove('on');
+    x.style.borderColor='var(--bord)';
+    x.style.background='var(--surf)';
+  });
+  el.classList.add('on');
+  el.style.borderColor='var(--acc)';
+  el.style.background='rgba(197,241,53,.08)';
+};
+
 window.updateProgram=function(){
   const g=parseFloat(vv('eG')),t=vv('eT'),dur=parseInt(vv('eDur')),tRaw=vv('eDate'),loc=vv('eLoc');
   // FIX: stesso problema con parseInt || fallback (0 è falsy)
@@ -2550,7 +2841,47 @@ window.logCheat=async function(){
   if(!txt||txt.length<2) return alert('Descrivi cosa hai mangiato!');
   if(window.cheatLoading) return;
   window.cheatLoading=true;render();
-  const result=await aiEstimateFood(txt);
+
+  // FIX: splitting su virgole/congiunzioni per gestire multi-cibo
+  // Es. "pizza, birra, gelato" → 3 chiamate separate
+  // Evito di splittare se la AI funziona (che già lo fa), ma se va in fallback locale
+  // il local parser potrebbe non gestire bene termini mischiati
+  const parts=txt.split(/\s*(?:,|;|\be\b|\+)\s*/i).filter(p=>p.length>=2);
+  let result;
+
+  if(parts.length>1){
+    // Multi-cibo: chiamo AI per ogni parte e aggrego
+    const allItems=[];
+    let anyUnknown=false;
+    let anySimilar=[];
+    for(const part of parts){
+      const r=await aiEstimateFood(part);
+      if(r.skipped||r.total===0) continue; // ignora eventuali parti "saltato"
+      if(r.unknown && r.similar?.length){
+        // Almeno una parte non è chiara → chiediamo aiuto
+        anyUnknown=true;
+        anySimilar.push({part,similar:r.similar});
+        continue;
+      }
+      (r.items||[]).forEach(it=>allItems.push(it));
+    }
+    if(anyUnknown && anySimilar.length){
+      // Mostra UI per la prima parte non chiara
+      window.cheatSimilarPick={
+        text: anySimilar[0].part,
+        similar: anySimilar[0].similar,
+        fallbackItems: allItems, // i riconosciuti li teniamo
+        multipart: true, // flag per indicare contesto multi
+      };
+      window.cheatLoading=false;
+      render();return;
+    }
+    const total=allItems.reduce((s,it)=>s+(Number(it.kcal)||0)*(Number(it.qty)||1),0);
+    result={items:allItems,total:Math.round(total)};
+  } else {
+    result=await aiEstimateFood(txt);
+  }
+
   window.cheatLoading=false;
   // Caso: pasto saltato
   if(result.skipped||result.total===0){
@@ -2586,6 +2917,20 @@ window.pickSimilarFood=function(idx){
   if(!sim) return;
   applyCheatToLog(window.cheatSimilarPick.text,[{label:sim.label,kcal:sim.kcal,qty:1}],sim.kcal);
 }
+// FIX F: inserimento manuale kcal quando nessun simile è corretto
+window.applyManualCheatKcal=function(){
+  if(!window.cheatSimilarPick) return;
+  const kcalRaw=parseInt(document.getElementById('manualCheatKcal')?.value);
+  if(isNaN(kcalRaw)||kcalRaw<1||kcalRaw>5000) return alert('Inserisci un valore valido tra 1 e 5000 kcal.');
+  // Aggrego con gli items già riconosciuti (se multipart)
+  const priorItems=window.cheatSimilarPick.fallbackItems||[];
+  const priorTotal=priorItems.reduce((s,it)=>s+(Number(it.kcal)||0)*(Number(it.qty)||1),0);
+  const newItem={label:window.cheatSimilarPick.text+' (stima manuale)',kcal:kcalRaw,qty:1};
+  const allItems=[...priorItems, newItem];
+  const total=Math.round(priorTotal+kcalRaw);
+  applyCheatToLog(window.cheatSimilarPick.text,allItems,total);
+};
+
 window.useFallbackFood=function(){
   if(!window.cheatSimilarPick) return;
   const items=window.cheatSimilarPick.fallbackItems.length?window.cheatSimilarPick.fallbackItems:[{label:'Stima media',kcal:500,qty:1}];
@@ -2698,19 +3043,71 @@ window.updateFoodQuery=function(val){
   // Se sto digitando, deseleziono il cibo precedente
   if(ST.sheetData.selectedFood && val!==ST.sheetData.selectedFood.name){
     ST.sheetData.selectedFood=null;
+    // In questo caso serve il render completo perché cambia la struttura della UI
+    _updateFoodQueryFullRender();
+    return;
   }
-  // FIX: salvo la posizione del cursore prima del re-render
+  // FIX: aggiorno SOLO la lista dropdown via DOM (no render() completo)
+  // Questo evita che la tastiera mobile si chiuda e lo scroll della sheet si azzeri.
+  _renderDropdownOnly();
+};
+// Helper: renderizza solo il div dropdown risultati
+window._renderDropdownOnly=function(){
+  if(!ST.sheetData) return;
+  const container=document.getElementById('foodDropdownContainer');
+  if(!container){
+    // Se il container non c'è ancora, fallback a render completo
+    _updateFoodQueryFullRender();
+    return;
+  }
+  const query=ST.sheetData.foodQuery||'';
+  const cat=ST.sheetData.foodCat;
+  let results=[];
+  if(query.length>=2){
+    results=window.foodSearch(query, 25);
+    if(cat) results=results.filter(f=>f.cat===cat);
+  } else if(cat){
+    results=window.foodsByCat(cat).slice(0, 25);
+  }
+  container.innerHTML=_buildDropdownHtml(results, query, cat);
+};
+// Helper: costruisce l'HTML del dropdown (riutilizzato sia da render completo sia da parziale)
+window._buildDropdownHtml=function(results, query, cat){
+  if(results.length>0){
+    return `<div style="max-height:240px;overflow-y:auto;background:var(--bg);border-radius:8px;border:1px solid var(--bord);">
+      ${results.map(f => {
+        const c = window.FOOD_CATS.find(x=>x.id===f.cat);
+        return `<div onclick="selectFood('${f.id}')" style="padding:8px 10px;border-bottom:1px solid var(--bord);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:12px;font-weight:600;color:var(--text);line-height:1.3;">${escapeHtml(f.name)}</div>
+            <div style="font-size:10px;color:var(--mut);">${c?c.emo:''} ${c?c.lbl:f.cat}</div>
+          </div>
+          <div style="font-size:11px;color:var(--acc);font-weight:700;flex-shrink:0;">${f.kcal} kcal</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+  if(query.length>=2) return `<div style="text-align:center;padding:14px;font-size:12px;color:var(--mut);">Nessun cibo trovato per "${escapeHtml(query)}". Prova la modalità "Manuale" per aggiungerlo a mano.</div>`;
+  if(cat) return `<div style="text-align:center;padding:10px;font-size:12px;color:var(--mut);">Nessun cibo nella categoria selezionata.</div>`;
+  return `<div style="text-align:center;padding:10px;font-size:11px;color:var(--mut);line-height:1.5;">💡 Digita almeno 2 lettere o seleziona una categoria per cercare tra ${window.FOOD_DB.length} cibi italiani.</div>`;
+};
+// Helper: render completo (fallback quando cambia la struttura della UI)
+window._updateFoodQueryFullRender=function(){
+  // Salvo scroll del container sheet per ripristinarlo dopo render
+  const sh=document.querySelector('.sh');
+  const scrollTop=sh?.scrollTop||0;
   const activeEl=document.activeElement;
   const cursorPos=activeEl?.selectionStart;
   render();
-  // Dopo il render, ripristino il focus sul campo ricerca per non perdere la tastiera mobile
   requestAnimationFrame(()=>{
     const input=document.getElementById('dbSearch');
     if(input){
       input.focus();
-      // Metto il cursore dove era prima (alla fine di default)
       if(cursorPos!=null) try { input.setSelectionRange(cursorPos,cursorPos); } catch(e) {}
     }
+    // Ripristino scroll sheet
+    const sh2=document.querySelector('.sh');
+    if(sh2) sh2.scrollTop=scrollTop;
   });
 };
 
@@ -2809,7 +3206,7 @@ window.computeCustomProjection=function(){
   const cW=ST.h.length?ST.h[ST.h.length-1].w:70;
   const sx=AU.profile?.sx||'m';
   const an=analyze(ST.h,ST.p);
-  const mac=calcMacros(cW,AU.profile?.ht||170,AU.profile?.ag||30,sx,ST.p,ST.p.sessions||3,an);
+  const mac=calcMacros(cW,AU.profile?.ht||170,AU.profile?.ag||30,sx,ST.p,(ST.p.sessions!=null?ST.p.sessions:3),an);
   // Stima kcal di ogni pasto non customizzato (da PCT buildMeals)
   const PCT={col:.22,sp1:.08,pra:.30,sp2:.10,cen:.30};
   let totalKcal=0;
@@ -3167,7 +3564,7 @@ window.sendMsg=async function(){
   const inp=el('aiIn');const msg=inp?.value?.trim();if(!msg||ST.chatLoading) return;
   ST.chatHistory.push({role:'user',content:msg});inp.value='';ST.chatLoading=true;render();
   const cW=ST.h.length?ST.h[ST.h.length-1].w:0;const sx=AU.profile?.sx||'m';const p2=pwk(ST.programStart);
-  const an=analyze(ST.h,ST.p);const mac=calcMacros(cW,AU.profile?.ht,AU.profile?.ag,sx,ST.p,ST.p.sessions||3,an);
+  const an=analyze(ST.h,ST.p);const mac=calcMacros(cW,AU.profile?.ht,AU.profile?.ag,sx,ST.p,(ST.p.sessions!=null?ST.p.sessions:3),an);
   const sys=`Sei Marcello, coach fitness e nutrizionista che segue ${AU.user} (${sx==='f'?'donna':'uomo'}). DATI: Peso ${cW}kg → obj ${ST.p.g}kg | Sett. ${p2} | Target ${mac.kcal}kcal. Sii diretto e pratico.`;
   try{
     const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:900,system:sys,messages:ST.chatHistory.slice(-10)})});
@@ -3197,7 +3594,7 @@ window.aiRecalculatePlan=async function(){
   // Prepara contesto compatto
   const sx=AU.profile?.sx||'m';
   const an=analyze(ST.h,{...ST.p,programStart:ST.programStart},ST.wLog);
-  const mac=calcMacros(cW,AU.profile?.ht||170,AU.profile?.ag||30,sx,ST.p,ST.p.sessions||3,an);
+  const mac=calcMacros(cW,AU.profile?.ht||170,AU.profile?.ag||30,sx,ST.p,(ST.p.sessions!=null?ST.p.sessions:3),an);
   const wLogF=ST.wLog.filter(w=>!w.isRest);
   const last14=ST.h.slice(-14);
   const cheats14=Object.entries(ST.nutri).filter(([d])=>d>=last14[0]?.d).map(([d,n])=>({d,k:n.k,cheat:n.cheatLog?.length||0})).slice(-14);
@@ -3210,7 +3607,7 @@ window.aiRecalculatePlan=async function(){
     targetKcal:mac.kcal,targetProt:mac.prot,
     weightHistory:last14,
     workoutsCompleted14d:wLogF.filter(w=>w.d>=last14[0]?.d).length,
-    workoutsTarget14d:(ST.p.sessions||3)*2,
+    workoutsTarget14d:(ST.p.sessions!=null?ST.p.sessions:3)*2,
     nutritionLog:cheats14,
     aiAnalysisStatus:an.status,
     aiAnalysisMsg:an.msg,
@@ -3613,9 +4010,9 @@ window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,to
   // ── FIX 1: Se oggi è riposo → mostra solo il messaggio, niente schede ──
   if(todayLog?.isRest){
     // Calcola il prossimo workout in sequenza
-    const nextWo=getNextWorkoutForDay(ST.wLog,ST.p.sessions||3,ST.programStart,currentDateStr,ST.p.focus||'total');
+    const nextWo=getNextWorkoutForDay(ST.wLog,(ST.p.sessions!=null?ST.p.sessions:3),ST.programStart,currentDateStr,ST.p.focus||'total');
     const nextWoName=nextWo&&WO_SCH[nextWo]?`${WO_SCH[nextWo].emoji} ${WO_SCH[nextWo].name}`:'—';
-    const weekStatus2=getWeekStatus(currentDateStr,ST.wLog,ST.p.sessions||3,ST.programStart,ST.p.cardioLevel||1,an,ST.p.focus||'total');
+    const weekStatus2=getWeekStatus(currentDateStr,ST.wLog,(ST.p.sessions!=null?ST.p.sessions:3),ST.programStart,ST.p.cardioLevel||1,an,ST.p.focus||'total');
     const legendGrid2=buildLegendGrid(weekStatus2,DAY_NAMES,dOfW);
     return`
     <div class="r" style="margin-bottom:14px;"><div class="bebas" style="font-size:26px;">ALLENAMENTO</div><div style="font-size:11px;color:var(--mut);">Sett.${pWeek}${isD?' · DELOAD':''}</div></div>
@@ -3655,13 +4052,13 @@ window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,to
     <div style="margin-top:10px;font-size:12px;color:var(--mut);padding:8px;background:var(--bg);border-radius:8px;">💡 ${an.alert==='stalled'?'STALLO: fai HIIT oggi — obbligatorio per sbloccare il metabolismo.':ST.p.t==='cut'?'Per la definizione preferisci LISS al mattino o HIIT se sei in forma.':'Cardio di mantenimento — LISS leggero per non influire sul recupero.'}</div>
   </div>`:'' ;
   // ── FIX 3: Calendario con stato REALE della settimana ──
-  const weekStatus=getWeekStatus(currentDateStr,ST.wLog,ST.p.sessions||3,ST.programStart,ST.p.cardioLevel||1,an,ST.p.focus||'total');
+  const weekStatus=getWeekStatus(currentDateStr,ST.wLog,(ST.p.sessions!=null?ST.p.sessions:3),ST.programStart,ST.p.cardioLevel||1,an,ST.p.focus||'total');
   const legendGrid=buildLegendGrid(weekStatus,DAY_NAMES,dOfW);
   // Mostra allenamento di oggi + workout disponibili (FIX 2: in sequenza)
-  const rotation=getRotation(ST.p.sessions||3,ST.p.focus||'total');
+  const rotation=getRotation((ST.p.sessions!=null?ST.p.sessions:3),ST.p.focus||'total');
   const uniqueWoKeys=rotation.filter((v,i,a)=>a.indexOf(v)===i).filter(k=>WO_SCH[k]);
   // Allenamenti mancati
-  const {missed,adherencePct}=getMissedWorkouts(ST.wLog,ST.p.sessions||3,ST.programStart);
+  const {missed,adherencePct}=getMissedWorkouts(ST.wLog,(ST.p.sessions!=null?ST.p.sessions:3),ST.programStart);
   const missedBanner=missed>=2?`<div class="card" style="border-color:var(--ora);background:rgba(255,104,53,.04);padding:14px;">
     <div style="font-size:13px;color:var(--ora);font-weight:600;">⚠️ Settimana scorsa: ${ST.p.sessions-missed}/${ST.p.sessions} allenamenti completati (${adherencePct}%)</div>
     <div style="font-size:12px;color:var(--mut);margin-top:4px;line-height:1.5;">L'AI ha adattato calorie e cardio tenendo conto degli allenamenti saltati. Cerca di rispettare il piano questa settimana.</div>
@@ -3772,9 +4169,20 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
     ${window.cheatSimilarPick?`
       <div style="background:rgba(96,165,250,.08);border:1.5px solid var(--blu);border-radius:12px;padding:14px;margin-bottom:10px;">
         <div style="font-size:12px;color:var(--blu);font-weight:700;margin-bottom:6px;">🤔 Non sono sicuro al 100%</div>
-        <div style="font-size:13px;color:var(--text);margin-bottom:10px;">Hai scritto: <em>"${window.cheatSimilarPick.text}"</em>. Scegli il cibo più simile a ciò che hai mangiato:</div>
-        ${window.cheatSimilarPick.similar.map((s,i)=>`<button onclick="pickSimilarFood(${i})" style="display:block;width:100%;text-align:left;background:var(--surf);border:1.5px solid var(--bord);border-radius:10px;padding:11px 14px;margin-bottom:6px;cursor:pointer;color:var(--text);font-family:'DM Sans',sans-serif;"><div style="font-weight:700;font-size:13px;">${s.label}</div><div style="font-size:11px;color:var(--mut);margin-top:2px;">~${s.kcal} kcal</div></button>`).join('')}
-        <div style="display:flex;gap:6px;margin-top:8px;">
+        <div style="font-size:13px;color:var(--text);margin-bottom:10px;">Hai scritto: <em>"${escapeHtml(window.cheatSimilarPick.text)}"</em>. ${window.cheatSimilarPick.multipart?'Questa parte non è chiara. ':''}Scegli il cibo più simile, oppure inserisci tu le kcal:</div>
+        ${window.cheatSimilarPick.similar.map((s,i)=>`<button onclick="pickSimilarFood(${i})" style="display:block;width:100%;text-align:left;background:var(--surf);border:1.5px solid var(--bord);border-radius:10px;padding:11px 14px;margin-bottom:6px;cursor:pointer;color:var(--text);font-family:'DM Sans',sans-serif;"><div style="font-weight:700;font-size:13px;">${escapeHtml(s.label)}</div><div style="font-size:11px;color:var(--mut);margin-top:2px;">~${s.kcal} kcal</div></button>`).join('')}
+
+        <!-- FIX F: input kcal manuali quando non si vuole nessuna opzione -->
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--bord);">
+          <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:8px;">✏️ NESSUNA DI QUESTE? INSERISCI KCAL A MANO</div>
+          <div style="display:grid;grid-template-columns:1fr 100px;gap:6px;margin-bottom:8px;">
+            <input id="manualCheatKcal" type="number" min="1" max="5000" placeholder="Kcal totali (es. 450)" style="margin:0;font-size:14px;padding:10px;">
+            <button class="btn-s" style="background:var(--blu);color:#fff;padding:10px;font-size:12px;font-weight:700;" onclick="applyManualCheatKcal()">✓ USA</button>
+          </div>
+          <div style="font-size:10px;color:var(--mut);line-height:1.3;">Guarda l'etichetta del prodotto o stima: snack piccolo ~200kcal, dolce ~400kcal, pasto completo ~700kcal.</div>
+        </div>
+
+        <div style="display:flex;gap:6px;margin-top:10px;">
           <button class="btn-s btn-action" style="flex:1;font-size:11px;padding:8px;" onclick="useFallbackFood()">📊 Usa stima media</button>
           <button class="btn-s btn-red" style="flex:1;font-size:11px;padding:8px;" onclick="cancelCheatPick()">✕ Annulla</button>
         </div>
@@ -4217,18 +4625,43 @@ window.renderCoach = function(){
 }
 window.renderSettings = function(mac){
   const sx=AU.profile?.sx||'m';
+  const wStart=ST.h && ST.h.length>0 ? ST.h[0].w : 70;
   return`
   <div class="card" style="background:linear-gradient(135deg,#0c1a00,#0a1000);border-color:#1e2d00;padding:18px;margin-bottom:14px;">
     <div class="rc"><div style="width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--acc),#7ab300);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:28px;color:#000;">${AU.user.charAt(0).toUpperCase()}</div>
     <div><div class="bebas" style="font-size:22px;">${AU.user}</div><div style="font-size:11px;color:var(--mut);">${sx==='f'?'👩 Donna':'👨 Uomo'} · ${AU.profile?.ag||'?'} anni · ${AU.profile?.ht||'?'}cm</div><div style="font-size:11px;color:var(--mut);margin-top:2px;">${ST.wLog.filter(w=>!w.isRest).length} allenamenti · ${streak(ST.wLog)} streak 🔥</div></div></div>
   </div>
+
+  <!-- NUOVO: IL MIO PROFILO — modifica sesso, altezza, età, peso iniziale -->
+  <div class="card" style="border-color:var(--blu);">
+    <div class="bebas" style="font-size:20px;color:var(--blu);margin-bottom:6px;">👤 IL MIO PROFILO</div>
+    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:14px;">Dati personali usati per calcolare BMR, TDEE e macro. Modifica solo se devi correggere un valore sbagliato o se è passato del tempo (es. compleanno).</div>
+
+    <span class="lbl" style="margin-bottom:8px;">SESSO</span>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px;">
+      ${[{id:'m',icon:'👨',lbl:'Uomo'},{id:'f',icon:'👩',lbl:'Donna'}].map(s=>{const isOn=sx===s.id;return`<div class="profile-sx-chip ${isOn?'on':''}" data-sx="${s.id}" style="padding:12px 6px;border-radius:12px;border:2px solid ${isOn?'var(--acc)':'var(--bord)'};background:${isOn?'rgba(197,241,53,.08)':'var(--surf)'};cursor:pointer;text-align:center;transition:.2s;" onclick="pickProfileSxChip(this)"><div style="font-size:20px;margin-bottom:3px;">${s.icon}</div><div style="font-size:11px;font-weight:700;">${s.lbl}</div></div>`;}).join('')}
+    </div>
+
+    <span class="lbl">ALTEZZA (CM)</span>
+    <input type="number" id="pfHt" value="${AU.profile?.ht||170}" step="1" min="100" max="250" style="margin-bottom:10px;">
+
+    <span class="lbl">ETÀ (ANNI)</span>
+    <input type="number" id="pfAg" value="${AU.profile?.ag||30}" step="1" min="10" max="100" style="margin-bottom:10px;">
+
+    <span class="lbl">PESO DI PARTENZA (KG)</span>
+    <input type="number" id="pfWStart" value="${wStart}" step=".1" min="20" max="300" style="margin-bottom:4px;">
+    <div style="font-size:11px;color:var(--mut);margin-bottom:14px;line-height:1.4;">È il peso all'inizio del programma (usato per calcolare i progressi). Non modifica il tuo peso attuale.</div>
+
+    <button class="btn" style="width:100%;padding:12px;background:var(--blu);color:#fff;" onclick="updateProfile()">SALVA DATI PROFILO</button>
+  </div>
+
   <div class="card">
     <div class="bebas" style="font-size:20px;margin-bottom:14px;">⚙️ MODIFICA PROGRAMMA</div>
     <span class="lbl">PESO OBIETTIVO (KG)</span><input type="number" id="eG" value="${ST.p.g}" step=".1">
     <span class="lbl">DATA OBIETTIVO</span><input type="date" id="eDate" value="${ST.p.targetD}">
     <span class="lbl">STRATEGIA</span><select id="eT"><option value="cut" ${ST.p.t==='cut'?'selected':''}>Definizione (Perdita Grasso)</option><option value="bulk" ${ST.p.t==='bulk'?'selected':''}>Massa (Aumento Muscolo)</option></select>
     <div id="wrapELoc"><span class="lbl">DOVE TI ALLENI?</span><select id="eLoc"><option value="gym" ${ST.p.loc==='gym'?'selected':''}>🏋️ In Palestra</option><option value="home" ${ST.p.loc==='home'?'selected':''}>🏠 A Casa</option></select></div>
-    <span class="lbl">SESSIONI / SETTIMANA</span><select id="eSess" onchange="toggleSessVisibilitySettings()">${[0,1,2,3,4,5,6].map(n=>`<option value="${n}" ${(ST.p.sessions||3)===n?'selected':''}>${n===0?'0 — Solo Nutrizione & Passi':n+' sessioni'}</option>`).join('')}</select>
+    <span class="lbl">SESSIONI / SETTIMANA</span><select id="eSess" onchange="toggleSessVisibilitySettings()">${[0,1,2,3,4,5,6].map(n=>`<option value="${n}" ${(ST.p.sessions!=null?ST.p.sessions:3)===n?'selected':''}>${n===0?'0 — Solo Nutrizione & Passi':n+' sessioni'}</option>`).join('')}</select>
     <div id="wrapEDur"><span class="lbl">DURATA SESSIONE</span><select id="eDur"><option value="45" ${ST.p.dur===45?'selected':''}>45 minuti</option><option value="60" ${ST.p.dur===60?'selected':''}>60 minuti</option><option value="90" ${ST.p.dur===90?'selected':''}>90 minuti</option></select></div>
     <div id="wrapECardio"><span class="lbl">CARDIO BASE / SETTIMANA (l'AI ricalcola)</span><select id="eCardio"><option value="0" ${ST.p.cardioLevel===0?'selected':''}>0 — Solo pesi</option><option value="1" ${ST.p.cardioLevel===1?'selected':''}>1 — Leggero</option><option value="2" ${ST.p.cardioLevel===2?'selected':''}>2 — Moderato</option><option value="3" ${ST.p.cardioLevel===3?'selected':''}>3 — Intenso</option></select></div>
     <span class="lbl" style="margin-bottom:8px;">INTOLLERANZE (aggiorna)</span>
@@ -4387,15 +4820,15 @@ window.render = function() {
   let cW=ST.h.length?ST.h[ST.h.length-1].w:0;
   const wEntry=ST.h.find(x=>x.d===currentDateStr);if(wEntry) cW=wEntry.w;
   const an=ST.p?analyze(ST.h,{...ST.p,programStart:ST.programStart},ST.wLog):{status:'new',msg:'',col:'var(--mut)',calAdj:0,cardioAdj:0,alert:null,missed:0};
-  const mac=ST.p?calcMacros(cW,ht,ag,sx,ST.p,ST.p.sessions||3,an):{kcal:1700,prot:120,carb:150,fat:50,bmr:0,tdee:0,cardioLevel:1};
+  const mac=ST.p?calcMacros(cW,ht,ag,sx,ST.p,(ST.p.sessions!=null?ST.p.sessions:3),an):{kcal:1700,prot:120,carb:150,fat:50,bmr:0,tdee:0,cardioLevel:1};
   const theme=ST.p?.t==='cut'?'var(--acc)':'var(--blu)';
   const dOfW=(new Date(currentDateStr).getDay()+6)%7;
   // Stato reale della settimana + sequenza workout basata sulla storia
-  const weekStatus=ST.p?getWeekStatus(currentDateStr,ST.wLog,ST.p.sessions||3,ST.programStart,ST.p.cardioLevel||1,an,ST.p.focus||'total'):Array(7).fill({planned:'rest',actual:null,isToday:false});
+  const weekStatus=ST.p?getWeekStatus(currentDateStr,ST.wLog,(ST.p.sessions!=null?ST.p.sessions:3),ST.programStart,ST.p.cardioLevel||1,an,ST.p.focus||'total'):Array(7).fill({planned:'rest',actual:null,isToday:false});
   const weekPlan=weekStatus.map(d=>d.planned||'rest'); // backward compat
   const todayLog=ST.wLog.find(w=>w.d===currentDateStr);
   // FIX 2: todayWoId dalla sequenza storica, non dal giorno della settimana
-  const nextSeqWo=ST.p&&!todayLog?.isRest?getNextWorkoutForDay(ST.wLog,ST.p.sessions||3,ST.programStart,currentDateStr,ST.p.focus||'total'):null;
+  const nextSeqWo=ST.p&&!todayLog?.isRest?getNextWorkoutForDay(ST.wLog,(ST.p.sessions!=null?ST.p.sessions:3),ST.programStart,currentDateStr,ST.p.focus||'total'):null;
   const todayWoId=todayLog?.isRest?'rest':(todayLog?.woId||(nextSeqWo)||(weekStatus[dOfW]?.planned)||'rest');
   if(ST.aWo&&ST.p){
     const wo=getWo(),ex=getEx();
@@ -4529,7 +4962,7 @@ window.render = function() {
 
             <!-- Chip categorie -->
             <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">
-              ${window.FOOD_CATS.map(c => `<button class="btn-s" style="font-size:10px;padding:4px 8px;background:${cat===c.id?'var(--purp)':'var(--surf)'};color:${cat===c.id?'#fff':'var(--mut)'};border:1px solid ${cat===c.id?'var(--purp)':'var(--bord)'};" onclick="setFoodCat('${c.id}')">${c.emo} ${c.lbl.split(' ')[0]}</button>`).join('')}
+              ${window.FOOD_CATS.map(c => `<button class="btn-s" style="font-size:10px;padding:4px 8px;background:${cat===c.id?'var(--purp)':'var(--surf)'};color:${cat===c.id?'#fff':'var(--mut)'};border:1px solid ${cat===c.id?'var(--purp)':'var(--bord)'};" onclick="setFoodCat('${c.id}')">${c.emo} ${c.short||c.lbl}</button>`).join('')}
             </div>
 
             ${sel ? `
@@ -4545,7 +4978,8 @@ window.render = function() {
               </div>
               <button class="btn-s" style="background:var(--purp);color:#fff;width:100%;padding:10px;font-size:13px;" onclick="addDbFoodToDraft()">+ AGGIUNGI AL PASTO</button>
             ` : `
-              <!-- Lista risultati -->
+              <!-- Lista risultati (wrappato in container per render parziale, fix tastiera) -->
+              <div id="foodDropdownContainer">
               ${results.length>0 ? `
                 <div style="max-height:240px;overflow-y:auto;background:var(--bg);border-radius:8px;border:1px solid var(--bord);">
                   ${results.map(f => {
@@ -4562,6 +4996,7 @@ window.render = function() {
               ` : query.length>=2 ? `<div style="text-align:center;padding:14px;font-size:12px;color:var(--mut);">Nessun cibo trovato per "${escapeHtml(query)}". Prova la modalità "Manuale" per aggiungerlo a mano.</div>`
                 : cat ? `<div style="text-align:center;padding:10px;font-size:12px;color:var(--mut);">Nessun cibo nella categoria selezionata.</div>`
                 : `<div style="text-align:center;padding:10px;font-size:11px;color:var(--mut);line-height:1.5;">💡 Digita almeno 2 lettere o seleziona una categoria per cercare tra ${window.FOOD_DB.length} cibi italiani.</div>`}
+              </div>
             `}
           `;
         })() : `
@@ -4717,7 +5152,8 @@ window.render = function() {
   let H=drawerH+`<div class="topbar">
     <button class="hamb" onclick="toggleDrawer()" aria-label="Menu"><span class="hamb-bars"><span></span><span></span><span></span></span></button>
     <div class="tb-title"><span class="acc">${curNav.ic}</span> ${curNav.lbl.toUpperCase()}</div>
-    <div style="display:flex;align-items:center;">
+    <div style="display:flex;align-items:center;gap:6px;">
+      ${currentDateStr!==getToday()?`<button class="btn-s" style="padding:6px 10px;font-size:11px;font-weight:700;background:var(--ora);color:#fff;border:none;letter-spacing:1px;" onclick="changeCurrentDate(getToday())">OGGI</button>`:''}
       <input type="date" value="${currentDateStr}" max="${getToday()}" onchange="changeCurrentDate(this.value)" style="width:auto;margin:0;padding:6px 8px;font-size:12px;border:1.5px solid ${currentDateStr!==getToday()?'var(--ora)':'var(--bord)'};border-radius:8px;color:${currentDateStr!==getToday()?'var(--ora)':'var(--text)'};background:var(--surf);font-weight:700;outline:none;cursor:pointer;">
     </div>
   </div>
