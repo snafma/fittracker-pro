@@ -559,6 +559,281 @@ const EX_G={
   core:['co_plk','co_cr','co_rus','co_lr','co_plkl','co_hang_leg','co_deadbug','co_bird_dog','co_sidebridge'],
   forearms:['fa_wrist_curl','fa_rev_curl','fa_farmer'],
 };
+
+// ═══════════════════════════════════════════════════════════════════
+// FIX 2: DB SPORT OUTDOOR — 30 sport con MET per calcolo kcal
+// Formula standard: kcal/min = MET × peso_kg × 0.0175
+// MET fonte: Compendium of Physical Activities (Ainsworth et al.)
+// Dove ha senso, ogni sport ha 2 intensità (normale / intenso)
+// ═══════════════════════════════════════════════════════════════════
+const SPORT_DB=[
+  // Camminata / passeggiate
+  {id:'walk_slow',  name:'Camminata lenta',         emo:'🚶', cat:'camminata', met:3.0},
+  {id:'walk_fast',  name:'Camminata veloce',        emo:'🚶‍♂️', cat:'camminata', met:4.5},
+  {id:'walk_hills', name:'Camminata in salita / collina', emo:'⛰️', cat:'camminata', met:6.0},
+  // Corsa
+  {id:'run_slow',   name:'Corsa lenta (jogging)',   emo:'🏃', cat:'corsa',     met:7.0},
+  {id:'run_med',    name:'Corsa media (~10 km/h)',  emo:'🏃‍♂️', cat:'corsa',    met:10.0},
+  {id:'run_fast',   name:'Corsa veloce (~13 km/h)', emo:'💨', cat:'corsa',     met:13.0},
+  // Ciclismo
+  {id:'bike_slow',  name:'Bici leggera (< 16 km/h)', emo:'🚲', cat:'bici',     met:4.0},
+  {id:'bike_med',   name:'Bici media (16-20 km/h)',  emo:'🚴', cat:'bici',     met:6.8},
+  {id:'bike_fast',  name:'Bici veloce (> 20 km/h)',  emo:'🚴‍♂️', cat:'bici',    met:10.0},
+  {id:'mtb',        name:'Mountain bike',            emo:'🚵', cat:'bici',     met:8.5},
+  // Nuoto
+  {id:'swim_slow',  name:'Nuoto leggero',            emo:'🏊', cat:'nuoto',    met:6.0},
+  {id:'swim_hard',  name:'Nuoto intenso',            emo:'🏊‍♂️', cat:'nuoto',   met:9.8},
+  // Sport di squadra
+  {id:'football',   name:'Calcio',                   emo:'⚽', cat:'squadra',   met:8.0},
+  {id:'football5',  name:'Calcio a 5 / calcetto',    emo:'🥅', cat:'squadra',   met:7.0},
+  {id:'basket',     name:'Basket',                   emo:'🏀', cat:'squadra',   met:7.5},
+  {id:'volley',     name:'Pallavolo',                emo:'🏐', cat:'squadra',   met:4.0},
+  {id:'rugby',      name:'Rugby',                    emo:'🏉', cat:'squadra',   met:8.3},
+  // Racchetta
+  {id:'tennis',     name:'Tennis',                   emo:'🎾', cat:'racchetta', met:7.3},
+  {id:'padel',      name:'Padel',                    emo:'🎾', cat:'racchetta', met:7.0},
+  {id:'pingpong',   name:'Ping pong',                emo:'🏓', cat:'racchetta', met:4.0},
+  // Arti marziali
+  {id:'boxing',     name:'Boxe / pugilato',          emo:'🥊', cat:'martiali',  met:9.0},
+  {id:'mma',        name:'MMA / arti marziali miste', emo:'🥋', cat:'martiali', met:10.3},
+  {id:'karate',     name:'Karate / judo',            emo:'🥋', cat:'martiali',  met:10.3},
+  // Fitness alternativo
+  {id:'yoga',       name:'Yoga',                     emo:'🧘', cat:'fitness',   met:2.5},
+  {id:'pilates',    name:'Pilates',                  emo:'🤸', cat:'fitness',   met:3.5},
+  {id:'crossfit',   name:'CrossFit / allenamento funzionale', emo:'💪', cat:'fitness', met:8.0},
+  {id:'dance',      name:'Danza / zumba',            emo:'💃', cat:'fitness',   met:6.8},
+  // Outdoor
+  {id:'ski',        name:'Sci / snowboard',          emo:'🎿', cat:'outdoor',   met:7.0},
+  {id:'climbing',   name:'Arrampicata',              emo:'🧗', cat:'outdoor',   met:8.0},
+  {id:'hiking',     name:'Escursionismo / trekking', emo:'🥾', cat:'outdoor',   met:6.0},
+  // Altri
+  {id:'golf',       name:'Golf (a piedi)',           emo:'⛳', cat:'altri',     met:4.8},
+  {id:'rowing',     name:'Canottaggio / vogatore',   emo:'🚣', cat:'altri',     met:7.0},
+  {id:'skating',    name:'Pattinaggio / skateboard', emo:'⛸️', cat:'altri',     met:7.0},
+];
+
+// Calcolo kcal per un'attività data: MET × peso × minuti × 0.0175
+window.calcSportKcal=function(sportId, minutes, weightKg){
+  const s=SPORT_DB.find(x=>x.id===sportId);
+  if(!s || !minutes || !weightKg) return 0;
+  return Math.round(s.met * weightKg * minutes * 0.0175);
+};
+// Lookup rapido
+window.sportById=function(id){return SPORT_DB.find(s=>s.id===id);};
+window.SPORT_DB=SPORT_DB;
+
+// ═══════════════════════════════════════════════════════════════════
+// FIX 2: FUNZIONI CRUD ATTIVITÀ SPORT + CRONOMETRO
+// Struttura: ST.activities[date] = [{id, sportId, minutes, kcal, ts, name, emo}]
+// ═══════════════════════════════════════════════════════════════════
+window.currentWeightKg=function(){
+  if(!ST||!ST.h||ST.h.length===0) return 70;
+  return ST.h[ST.h.length-1].w || 70;
+};
+
+// Aggiunge un'attività al giorno corrente
+window.addActivity=function(sportId, minutes){
+  const sport=sportById(sportId);
+  if(!sport) return alert('Sport non trovato');
+  const mins=parseInt(minutes);
+  if(isNaN(mins)||mins<1||mins>600) return alert('Minuti non validi (1-600)');
+  const kcal=calcSportKcal(sportId, mins, currentWeightKg());
+  if(!ST.activities) ST.activities={};
+  if(!ST.activities[currentDateStr]) ST.activities[currentDateStr]=[];
+  const id='act_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+  ST.activities[currentDateStr].push({
+    id, sportId, minutes:mins, kcal, ts:Date.now(),
+    name:sport.name, emo:sport.emo
+  });
+  // Chiudi eventuale sheet e ricarica
+  ST.sheet=null; ST.sheetData=null;
+  save();
+};
+
+// Rimuove un'attività
+window.deleteActivity=function(activityId){
+  if(!confirm('Eliminare questa attività?')) return;
+  if(!ST.activities||!ST.activities[currentDateStr]) return;
+  ST.activities[currentDateStr]=ST.activities[currentDateStr].filter(a=>a.id!==activityId);
+  if(ST.activities[currentDateStr].length===0) delete ST.activities[currentDateStr];
+  save();
+};
+
+// Totale kcal attività sport in un giorno
+window.getActivitiesKcal=function(dateStr){
+  if(!ST.activities||!ST.activities[dateStr]) return 0;
+  return ST.activities[dateStr].reduce((sum,a)=>sum+(a.kcal||0),0);
+};
+
+// ─── CRONOMETRO ───
+// ST.stopwatch = {sportId, startTs, elapsed, running}
+window.startStopwatch=function(sportId){
+  const sport=sportById(sportId);
+  if(!sport) return;
+  ST.stopwatch={sportId, startTs:Date.now(), elapsed:0, running:true};
+  // Mantengo il timer attivo aggiornando ogni secondo
+  if(window._stopwatchTimer) clearInterval(window._stopwatchTimer);
+  window._stopwatchTimer=setInterval(()=>{
+    const el=document.getElementById('stopwatchDisplay');
+    if(!el||!ST.stopwatch||!ST.stopwatch.running) return;
+    const now=Date.now();
+    const totalMs=ST.stopwatch.elapsed+(now-ST.stopwatch.startTs);
+    const mins=Math.floor(totalMs/60000);
+    const secs=Math.floor((totalMs%60000)/1000);
+    el.textContent=String(mins).padStart(2,'0')+':'+String(secs).padStart(2,'0');
+    // Aggiorna anche kcal stimate live
+    const kcalEl=document.getElementById('stopwatchKcal');
+    if(kcalEl){
+      const kcal=calcSportKcal(ST.stopwatch.sportId, totalMs/60000, currentWeightKg());
+      kcalEl.textContent='~'+kcal+' kcal';
+    }
+  },1000);
+  save();
+};
+
+window.pauseStopwatch=function(){
+  if(!ST.stopwatch||!ST.stopwatch.running) return;
+  ST.stopwatch.elapsed+=(Date.now()-ST.stopwatch.startTs);
+  ST.stopwatch.running=false;
+  if(window._stopwatchTimer) clearInterval(window._stopwatchTimer);
+  save();
+};
+
+window.resumeStopwatch=function(){
+  if(!ST.stopwatch||ST.stopwatch.running) return;
+  ST.stopwatch.startTs=Date.now();
+  ST.stopwatch.running=true;
+  if(window._stopwatchTimer) clearInterval(window._stopwatchTimer);
+  window._stopwatchTimer=setInterval(()=>{
+    const el=document.getElementById('stopwatchDisplay');
+    if(!el||!ST.stopwatch||!ST.stopwatch.running) return;
+    const now=Date.now();
+    const totalMs=ST.stopwatch.elapsed+(now-ST.stopwatch.startTs);
+    const mins=Math.floor(totalMs/60000);
+    const secs=Math.floor((totalMs%60000)/1000);
+    el.textContent=String(mins).padStart(2,'0')+':'+String(secs).padStart(2,'0');
+    const kcalEl=document.getElementById('stopwatchKcal');
+    if(kcalEl){
+      const kcal=calcSportKcal(ST.stopwatch.sportId, totalMs/60000, currentWeightKg());
+      kcalEl.textContent='~'+kcal+' kcal';
+    }
+  },1000);
+  save();
+};
+
+// Ferma + salva come attività
+window.stopAndSaveStopwatch=function(){
+  if(!ST.stopwatch) return;
+  if(ST.stopwatch.running){
+    ST.stopwatch.elapsed+=(Date.now()-ST.stopwatch.startTs);
+    ST.stopwatch.running=false;
+  }
+  if(window._stopwatchTimer) clearInterval(window._stopwatchTimer);
+  const totalMs=ST.stopwatch.elapsed;
+  const totalMin=Math.round(totalMs/60000);
+  if(totalMin<1){
+    if(!confirm('Attività molto breve (meno di 1 minuto). Salvare comunque?')) return;
+  }
+  const sportId=ST.stopwatch.sportId;
+  ST.stopwatch=null;
+  addActivity(sportId, Math.max(1,totalMin));
+};
+
+window.cancelStopwatch=function(){
+  if(!confirm('Annullare il cronometro? Il tempo registrato andrà perso.')) return;
+  if(window._stopwatchTimer) clearInterval(window._stopwatchTimer);
+  ST.stopwatch=null;
+  save();
+};
+
+// Formatta display cronometro (legge elapsed cumulativo)
+window.formatStopwatch=function(sw){
+  if(!sw) return '00:00';
+  let total=sw.elapsed||0;
+  if(sw.running && sw.startTs) total+=Date.now()-sw.startTs;
+  const mins=Math.floor(total/60000);
+  const secs=Math.floor((total%60000)/1000);
+  return String(mins).padStart(2,'0')+':'+String(secs).padStart(2,'0');
+};
+
+// ─── UI: apertura sheet "Nuova attività" ───
+window.openActivitySheet=function(){
+  ST.sheet='activity';
+  ST.sheetData={mode:'select', sportId:null, minutes:30, q:''};
+  render();
+};
+
+window.selectActivitySport=function(sportId){
+  if(!ST.sheetData) return;
+  ST.sheetData.sportId=sportId;
+  ST.sheetData.mode='config'; // passa a schermo minuti/cronometro
+  render();
+};
+
+window.setActivityMode=function(mode){
+  if(!ST.sheetData) return;
+  ST.sheetData.mode=mode;
+  render();
+};
+
+window.confirmManualActivity=function(){
+  if(!ST.sheetData||!ST.sheetData.sportId) return;
+  const mins=parseInt(document.getElementById('actMins')?.value);
+  addActivity(ST.sheetData.sportId, mins);
+};
+
+window.startStopwatchFromSheet=function(){
+  if(!ST.sheetData||!ST.sheetData.sportId) return;
+  startStopwatch(ST.sheetData.sportId);
+  ST.sheet=null; ST.sheetData=null;
+  render();
+};
+
+window.updateActivityQuery=function(val){
+  if(!ST.sheetData) return;
+  ST.sheetData.q=(val||'').slice(0,50).toLowerCase();
+  // Render parziale per non chiudere tastiera
+  const container=document.getElementById('sportListContainer');
+  if(!container){ render(); return; }
+  container.innerHTML=_buildSportListHtml();
+  requestAnimationFrame(()=>{
+    const input=document.getElementById('sportSearch');
+    if(input) input.focus();
+  });
+};
+
+window._buildSportListHtml=function(){
+  if(!ST.sheetData) return '';
+  const q=ST.sheetData.q||'';
+  const filtered=SPORT_DB.filter(s=>{
+    if(!q) return true;
+    return s.name.toLowerCase().includes(q) || s.cat.includes(q);
+  });
+  if(filtered.length===0){
+    return `<div style="text-align:center;padding:20px;color:var(--mut);font-size:12px;">Nessuno sport trovato per "${escapeHtml(q)}".</div>`;
+  }
+  // Raggruppo per categoria
+  const cats={camminata:'🚶 Camminata',corsa:'🏃 Corsa',bici:'🚴 Ciclismo',nuoto:'🏊 Nuoto',squadra:'⚽ Squadra',racchetta:'🎾 Racchetta',martiali:'🥊 Arti marziali',fitness:'💪 Fitness',outdoor:'⛰️ Outdoor',altri:'🏆 Altri'};
+  let html='';
+  const w=currentWeightKg();
+  Object.keys(cats).forEach(c=>{
+    const items=filtered.filter(s=>s.cat===c);
+    if(items.length===0) return;
+    html+=`<div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;margin:10px 0 4px;">${cats[c]}</div>`;
+    items.forEach(s=>{
+      const kcalPerMin=Math.round(s.met*w*0.0175*10)/10;
+      html+=`<div onclick="selectActivitySport('${s.id}')" style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--surf);border:1px solid var(--bord);border-radius:10px;margin-bottom:4px;cursor:pointer;">
+        <div style="display:flex;gap:10px;align-items:center;">
+          <div style="font-size:22px;">${s.emo}</div>
+          <div style="font-size:13px;font-weight:600;">${escapeHtml(s.name)}</div>
+        </div>
+        <div style="font-size:11px;color:var(--acc);font-weight:700;">${kcalPerMin} kcal/min</div>
+      </div>`;
+    });
+  });
+  return html;
+};
+
 const WO_SCH={
   A:{name:'PETTO & TRICIPITI',emoji:'🏋️',col:'#c5f135',slots:[{cat:'chest',k:'A1'},{cat:'chest',k:'A2'},{cat:'chest',k:'A3'},{cat:'triceps',k:'A4'},{cat:'triceps',k:'A5'},{cat:'core',k:'A6'}]},
   B:{name:'GAMBE & SPALLE',emoji:'🦵',col:'#ff6835',slots:[{cat:'quads',k:'B1'},{cat:'glutes',k:'B2'},{cat:'quads',k:'B3'},{cat:'shoulders',k:'B4'},{cat:'shoulders',k:'B5'},{cat:'core',k:'B6'}]},
@@ -1547,9 +1822,11 @@ window.getMissedWorkouts=function(wLog,sessions,programStart){
 window.calcBMR=function(w,h,age,sex){return sex==='m'?Math.round(10*w+6.25*h-5*age+5):Math.round(10*w+6.25*h-5*age-161);}
 window.actMultiplier=function(s){if(s===0) return 1.2;if(s<=2) return 1.375;if(s<=4) return 1.55;return 1.725;}
 // ─── § 8. LOGICA PROGRAMMA: calcMacros, buildMeals, buildWorkout ──────────
-window.calcMacros=function(w,h,age,sex,goal,sessions,analysis){
+window.calcMacros=function(w,h,age,sex,goal,sessions,analysis,extraKcal){
   const bmr=calcBMR(w,h||170,age||25,sex||'m');
-  const tdee=Math.round(bmr*actMultiplier(sessions));
+  const tdeeBase=Math.round(bmr*actMultiplier(sessions));
+  // FIX 2: sommo kcal da attività outdoor se presenti (somma al TDEE → deficit/surplus si preserva)
+  const tdee=tdeeBase+Math.round(extraKcal||0);
   let kcal=goal.t==='cut'?(tdee-500):(tdee+300);
   kcal+=analysis?.calAdj||0;
   if(goal.t==='cut'&&kcal<w*22) kcal=w*22;
@@ -1562,7 +1839,7 @@ window.calcMacros=function(w,h,age,sex,goal,sessions,analysis){
   const fat=Math.round(w*(sex==='f'?1.0:0.8));
   const carb=Math.max(50,Math.round((kcal-(prot*4)-(fat*9))/4));
   const effCardio=Math.max(0,Math.min(5,(goal.cardioLevel||1)+(analysis?.cardioAdj||0)));
-  return{kcal,prot,fat,carb,bmr,tdee,cardioLevel:effCardio};
+  return{kcal,prot,fat,carb,bmr,tdee,tdeeBase,extraKcal:Math.round(extraKcal||0),cardioLevel:effCardio};
 }
 window.analyze=function(history,goal,wLog){
   if(!history||history.length<4) return{status:'new',msg:'Inserisci almeno 4 pesate per l\'AI.',col:'var(--mut)',calAdj:0,cardioAdj:0,alert:null,missed:0};
@@ -2283,16 +2560,22 @@ window.buildMeals=function(macros,intol=[],sex='m',isRestDay=false,diet='omnivor
     if(cm && cm.length>0){
       const items=cm.map(it=>`${it.grams}g ${escapeHtml(it.name)} (${it.kcal} kcal)`);
       const totalK=cm.reduce((s,i)=>s+(i.kcal||0),0);
-      return [{lbl:`✏️ Personalizzato (~${totalK} kcal)`,items,isCustom:true}];
+      return [{lbl:`✏️ Personalizzato (~${totalK} kcal)`,items,isCustom:true,actualKcal:totalK}];
     }
     return origOpts;
   };
+  // FIX 1: helper per ottenere kcal effettive di un pasto (somma cibi custom oppure target AI)
+  const getActualKcal=(id,fallbackKcal)=>{
+    const cm=customMeals[id];
+    if(cm && cm.length>0) return cm.reduce((s,i)=>s+(i.kcal||0),0);
+    return fallbackKcal;
+  };
   return[
-    {id:'col',pct:PCT.col,n:`🌅 COLAZIONE  ${T.col}`,kcal:kCol,opts:mkOpts('col',colOpts),fav:favs?.col||'',isCustom:!!customMeals.col?.length},
-    {id:'sp1',pct:PCT.sp1,n:`🍎 SPUNTINO  ${T.sp1}`,kcal:kSp1,opts:mkOpts('sp1',sp1Opts),isCustom:!!customMeals.sp1?.length},
-    {id:'pra',pct:PCT.pra,n:`🍽️ PRANZO  ${T.pra}`,kcal:kPra,opts:mkOpts('pra',praOpts),fav:favs?.pra||'',isCustom:!!customMeals.pra?.length},
-    {...sp2,opts:mkOpts('sp2',sp2.opts),isCustom:!!customMeals.sp2?.length},
-    {id:'cen',pct:PCT.cen,n:`🌙 CENA  ${T.cen}`,kcal:kCen,opts:mkOpts('cen',cenOpts),fav:favs?.cen||'',isCustom:!!customMeals.cen?.length},
+    {id:'col',pct:PCT.col,n:`🌅 COLAZIONE  ${T.col}`,kcal:kCol,actualKcal:getActualKcal('col',kCol),opts:mkOpts('col',colOpts),fav:favs?.col||'',isCustom:!!customMeals.col?.length},
+    {id:'sp1',pct:PCT.sp1,n:`🍎 SPUNTINO  ${T.sp1}`,kcal:kSp1,actualKcal:getActualKcal('sp1',kSp1),opts:mkOpts('sp1',sp1Opts),isCustom:!!customMeals.sp1?.length},
+    {id:'pra',pct:PCT.pra,n:`🍽️ PRANZO  ${T.pra}`,kcal:kPra,actualKcal:getActualKcal('pra',kPra),opts:mkOpts('pra',praOpts),fav:favs?.pra||'',isCustom:!!customMeals.pra?.length},
+    {...sp2,actualKcal:getActualKcal('sp2',sp2.kcal),opts:mkOpts('sp2',sp2.opts),isCustom:!!customMeals.sp2?.length},
+    {id:'cen',pct:PCT.cen,n:`🌙 CENA  ${T.cen}`,kcal:kCen,actualKcal:getActualKcal('cen',kCen),opts:mkOpts('cen',cenOpts),fav:favs?.cen||'',isCustom:!!customMeals.cen?.length},
   ];
 }
 // STATE
@@ -2304,7 +2587,7 @@ window.closeDrawer=function(){window.drawerOpen=false;render();}
 window.gotoTab=function(t){ST.tab=t;window.drawerOpen=false;render();}
 window.defST=function(){
   return{
-    p:null,h:[],wLog:[],nutri:{},water:{},life:{},cheatDebt:0,measures:{},notes:[],suppLog:{},
+    p:null,h:[],wLog:[],nutri:{},water:{},life:{},cheatDebt:0,measures:{},notes:[],suppLog:{},activities:{},
     chatHistory:[],exPrefs:{},wHistory:{},programStart:null,mealOpts:{},shortcuts:['work','diet'],
     aiPlan:null,
     tab:'home',sheet:null,sheetData:null,chartFilter:30,
@@ -2405,7 +2688,7 @@ window.__tryLegacyMigration = async function(ident, pw){
 
     // 4. Costruisci il nuovo documento includendo il profilo
     const newData = oldData ? {...oldData} : {
-      p:null,h:[],wLog:[],nutri:{},water:{},life:{},cheatDebt:0,measures:{},
+      p:null,h:[],wLog:[],nutri:{},water:{},life:{},cheatDebt:0,measures:{},activities:{},
       notes:[],suppLog:{},chatHistory:[],exPrefs:{},wHistory:{},
       programStart:null,mealOpts:{}
     };
@@ -2452,7 +2735,7 @@ window.doReg=async function(){
     try{ await window.FBAuth.sendVerify(cred.user); }catch(_){}
     const today=getToday();
     const initialData={
-      p:null,h:[{d:today,w:wt}],wLog:[],nutri:{},water:{},life:{},
+      p:null,h:[{d:today,w:wt}],wLog:[],nutri:{},water:{},life:{},activities:{},
       cheatDebt:0,measures:{},notes:[],suppLog:{},chatHistory:[],
       exPrefs:{},wHistory:{},programStart:today,mealOpts:{},
       profile:{un,email,ht,ag,sx,created:today}
@@ -2572,6 +2855,26 @@ window.__initAuthListener=function(){
         Object.assign(ST,{...defST(),...data});
         if(!ST.chartFilter) ST.chartFilter=30;
         AU.profile=data.profile||null;
+        // FIX 2: se c'era un cronometro running, riavvio il ticker (ma non avanzo elapsed mentre era offline)
+        if(ST.stopwatch && ST.stopwatch.running){
+          // L'elapsed è già stato aggiornato al momento del pause implicito di logout; riavvio da ora
+          ST.stopwatch.startTs=Date.now();
+          if(window._stopwatchTimer) clearInterval(window._stopwatchTimer);
+          window._stopwatchTimer=setInterval(()=>{
+            const el=document.getElementById('stopwatchDisplay');
+            if(!el||!ST.stopwatch||!ST.stopwatch.running) return;
+            const now=Date.now();
+            const totalMs=ST.stopwatch.elapsed+(now-ST.stopwatch.startTs);
+            const mins=Math.floor(totalMs/60000);
+            const secs=Math.floor((totalMs%60000)/1000);
+            el.textContent=String(mins).padStart(2,'0')+':'+String(secs).padStart(2,'0');
+            const kcalEl=document.getElementById('stopwatchKcal');
+            if(kcalEl){
+              const kcal=calcSportKcal(ST.stopwatch.sportId, totalMs/60000, currentWeightKg());
+              kcalEl.textContent='~'+kcal+' kcal';
+            }
+          },1000);
+        }
       }
       AU.msg='';
     }else{
@@ -2950,11 +3253,20 @@ window.removeCheatEntry=function(idx){
   if(!day.cheatLog.length) ST.cheatDebt=0;
   save();
 }
-window.logMeal=function(id,pct,k,p,c,f){
+// FIX 1: logMeal accetta actualKcal (ultimo param) per pasti custom
+// Se presente, usa il valore effettivo invece di k*pct (target %)
+window.logMeal=function(id,pct,k,p,c,f,actualKcal){
   if(!ST.nutri[currentDateStr]) ST.nutri[currentDateStr]={k:0,p:0,c:0,f:0,logged:[],skipped:[],cheatTxt:''};
   if(ST.nutri[currentDateStr].logged.includes(id)||ST.nutri[currentDateStr].skipped?.includes(id)) return;
-  ST.nutri[currentDateStr].k+=Math.round(k*pct);ST.nutri[currentDateStr].p+=Math.round(p*pct);
-  ST.nutri[currentDateStr].c+=Math.round(c*pct);ST.nutri[currentDateStr].f+=Math.round(f*pct);
+  // Se custom: usa actualKcal reale (calcoli macro proporzionalmente)
+  const useActual=(actualKcal!=null&&actualKcal>0);
+  const kcalAdd=useActual?actualKcal:Math.round(k*pct);
+  // Se custom, proporziona i macro rispetto al target previsto per quel pasto (k*pct)
+  const ratio=useActual?(actualKcal/(k*pct)):1;
+  ST.nutri[currentDateStr].k+=kcalAdd;
+  ST.nutri[currentDateStr].p+=Math.round(p*pct*ratio);
+  ST.nutri[currentDateStr].c+=Math.round(c*pct*ratio);
+  ST.nutri[currentDateStr].f+=Math.round(f*pct*ratio);
   ST.nutri[currentDateStr].logged.push(id);save();
 }
 window.skipMeal=function(id){
@@ -2964,11 +3276,17 @@ window.skipMeal=function(id){
     ST.nutri[currentDateStr].skipped.push(id);save();
   }
 }
-window.uncheckMeal=function(id,pct,k,p,c,f){
+window.uncheckMeal=function(id,pct,k,p,c,f,actualKcal){
   if(!ST.nutri[currentDateStr]) return;
   if(ST.nutri[currentDateStr].logged.includes(id)){
-    ST.nutri[currentDateStr].k-=Math.round(k*pct);ST.nutri[currentDateStr].p-=Math.round(p*pct);
-    ST.nutri[currentDateStr].c-=Math.round(c*pct);ST.nutri[currentDateStr].f-=Math.round(f*pct);
+    // Stesso calcolo speculare a logMeal
+    const useActual=(actualKcal!=null&&actualKcal>0);
+    const kcalSub=useActual?actualKcal:Math.round(k*pct);
+    const ratio=useActual?(actualKcal/(k*pct)):1;
+    ST.nutri[currentDateStr].k-=kcalSub;
+    ST.nutri[currentDateStr].p-=Math.round(p*pct*ratio);
+    ST.nutri[currentDateStr].c-=Math.round(c*pct*ratio);
+    ST.nutri[currentDateStr].f-=Math.round(f*pct*ratio);
     ST.nutri[currentDateStr].logged=ST.nutri[currentDateStr].logged.filter(m=>m!==id);
   }else if(ST.nutri[currentDateStr].skipped?.includes(id)){
     ST.nutri[currentDateStr].skipped=ST.nutri[currentDateStr].skipped.filter(m=>m!==id);
@@ -3206,7 +3524,7 @@ window.computeCustomProjection=function(){
   const cW=ST.h.length?ST.h[ST.h.length-1].w:70;
   const sx=AU.profile?.sx||'m';
   const an=analyze(ST.h,ST.p);
-  const mac=calcMacros(cW,AU.profile?.ht||170,AU.profile?.ag||30,sx,ST.p,(ST.p.sessions!=null?ST.p.sessions:3),an);
+  const mac=calcMacros(cW,AU.profile?.ht||170,AU.profile?.ag||30,sx,ST.p,(ST.p.sessions!=null?ST.p.sessions:3),an,getActivitiesKcal(currentDateStr));
   // Stima kcal di ogni pasto non customizzato (da PCT buildMeals)
   const PCT={col:.22,sp1:.08,pra:.30,sp2:.10,cen:.30};
   let totalKcal=0;
@@ -3564,7 +3882,7 @@ window.sendMsg=async function(){
   const inp=el('aiIn');const msg=inp?.value?.trim();if(!msg||ST.chatLoading) return;
   ST.chatHistory.push({role:'user',content:msg});inp.value='';ST.chatLoading=true;render();
   const cW=ST.h.length?ST.h[ST.h.length-1].w:0;const sx=AU.profile?.sx||'m';const p2=pwk(ST.programStart);
-  const an=analyze(ST.h,ST.p);const mac=calcMacros(cW,AU.profile?.ht,AU.profile?.ag,sx,ST.p,(ST.p.sessions!=null?ST.p.sessions:3),an);
+  const an=analyze(ST.h,ST.p);const mac=calcMacros(cW,AU.profile?.ht,AU.profile?.ag,sx,ST.p,(ST.p.sessions!=null?ST.p.sessions:3),an,getActivitiesKcal(currentDateStr));
   const sys=`Sei Marcello, coach fitness e nutrizionista che segue ${AU.user} (${sx==='f'?'donna':'uomo'}). DATI: Peso ${cW}kg → obj ${ST.p.g}kg | Sett. ${p2} | Target ${mac.kcal}kcal. Sii diretto e pratico.`;
   try{
     const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:900,system:sys,messages:ST.chatHistory.slice(-10)})});
@@ -3594,7 +3912,7 @@ window.aiRecalculatePlan=async function(){
   // Prepara contesto compatto
   const sx=AU.profile?.sx||'m';
   const an=analyze(ST.h,{...ST.p,programStart:ST.programStart},ST.wLog);
-  const mac=calcMacros(cW,AU.profile?.ht||170,AU.profile?.ag||30,sx,ST.p,(ST.p.sessions!=null?ST.p.sessions:3),an);
+  const mac=calcMacros(cW,AU.profile?.ht||170,AU.profile?.ag||30,sx,ST.p,(ST.p.sessions!=null?ST.p.sessions:3),an,getActivitiesKcal(currentDateStr));
   const wLogF=ST.wLog.filter(w=>!w.isRest);
   const last14=ST.h.slice(-14);
   const cheats14=Object.entries(ST.nutri).filter(([d])=>d>=last14[0]?.d).map(([d,n])=>({d,k:n.k,cheat:n.cheatLog?.length||0})).slice(-14);
@@ -3807,7 +4125,7 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
   <div style="background:var(--card);border:1px solid var(--bord);border-radius:18px;padding:16px;margin-bottom:14px;">
     <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
       <span style="font-size:11px;font-weight:700;color:var(--mut);letter-spacing:1px;text-transform:uppercase;">Calorie oggi</span>
-      <span style="font-size:11px;color:var(--mut);">target ${mac.kcal} kcal</span>
+      <span style="font-size:11px;color:var(--mut);">target ${mac.kcal} kcal${mac.extraKcal>0?` <span style="color:var(--blu);font-weight:700;">(+${mac.extraKcal} sport)</span>`:''}</span>
     </div>
     <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
       <div><div style="font-family:'Bebas Neue';font-size:32px;line-height:1;color:${(dLog.k||0)>mac.kcal?'var(--red)':'var(--text)'};">${dLog.k||0}</div><div style="font-size:10px;color:var(--mut);">consumate</div></div>
@@ -3878,6 +4196,26 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
       <div style="width:${Math.min(100,(todayWater/waterGoal)*100)}%;height:8px;background:var(--blu);border-radius:99px;transition:width .3s;"></div>
     </div>
   </div>
+
+  <!-- FIX 2: CARD RAPIDA ATTIVITÀ OUTDOOR -->
+  ${(() => {
+    const dayActs=(ST.activities&&ST.activities[currentDateStr])||[];
+    const totalK=dayActs.reduce((s,a)=>s+(a.kcal||0),0);
+    const totalMin=dayActs.reduce((s,a)=>s+(a.minutes||0),0);
+    return `<div style="background:var(--card);border:1px solid ${dayActs.length>0?'var(--blu)':'var(--bord)'};border-radius:18px;padding:18px;margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${dayActs.length>0?'12':'0'}px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="font-size:24px;">🏃</div>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);">ATTIVITÀ OUTDOOR</div>
+            <div style="font-size:11px;color:var(--mut);">${dayActs.length>0?`${dayActs.length} ${dayActs.length===1?'attività':'attività'} · ${totalMin} min · ${totalK} kcal`:'Sport, camminata, corsa, padel...'}</div>
+          </div>
+        </div>
+        <button onclick="openActivitySheet()" style="background:var(--blu);color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;">+ AGGIUNGI</button>
+      </div>
+      ${dayActs.length>0 ? `<div style="display:flex;gap:6px;flex-wrap:wrap;">${dayActs.slice(0,4).map(a=>`<div style="background:var(--surf);border:1px solid var(--bord);border-radius:8px;padding:6px 10px;font-size:11px;color:var(--text);display:flex;gap:5px;align-items:center;"><span>${a.emo||'🏃'}</span><span>${a.minutes}min</span><span style="color:var(--acc);font-weight:700;">${a.kcal}kc</span></div>`).join('')}${dayActs.length>4?`<div style="font-size:11px;color:var(--mut);align-self:center;">+${dayActs.length-4}</div>`:''}</div>` : ''}
+    </div>` ;
+  })()}
 
   <!-- SONNO (compatto) -->
   <div style="background:var(--card);border:1px solid var(--bord);border-radius:18px;padding:14px 18px;margin-bottom:12px;">
@@ -4129,6 +4467,38 @@ window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,to
     <div style="font-size:13px;line-height:1.5;margin-bottom:10px;">Hai impostato <strong>Solo le mie schede</strong>, ma non hai ancora creato nessuna scheda personalizzata.</div>
     <button class="btn-s btn-action" style="padding:10px 16px;font-size:13px;" onclick="ST.tab='set';render();">VAI IN CONFIGURAZIONE</button>
   </div>` : ''}
+
+  <!-- FIX 2: Attività outdoor (sport, camminata, corsa, ecc.) -->
+  ${(() => {
+    const dayActs=(ST.activities&&ST.activities[currentDateStr])||[];
+    const totalK=dayActs.reduce((s,a)=>s+(a.kcal||0),0);
+    const totalMin=dayActs.reduce((s,a)=>s+(a.minutes||0),0);
+    return `<div class="card" style="border-left:5px solid var(--blu);padding:16px;margin-bottom:14px;">
+      <div class="r" style="margin-bottom:10px;">
+        <div>
+          <div class="bebas" style="font-size:20px;color:var(--blu);">🏃 ATTIVITÀ OUTDOOR</div>
+          <div style="font-size:11px;color:var(--mut);margin-top:2px;">Sport, camminate, corsa — tutto conta sul bilancio calorico</div>
+        </div>
+        <button class="btn-s" style="background:var(--blu);color:#fff;padding:8px 12px;font-size:12px;font-weight:700;" onclick="openActivitySheet()">+ AGGIUNGI</button>
+      </div>
+      ${dayActs.length>0 ? `
+        <div style="background:var(--surf);border-radius:8px;padding:10px;margin-bottom:10px;display:flex;justify-content:space-around;gap:8px;">
+          <div style="text-align:center;"><div class="bebas" style="font-size:22px;color:var(--blu);line-height:1;">${totalMin}</div><div style="font-size:10px;color:var(--mut);margin-top:2px;">MINUTI</div></div>
+          <div style="text-align:center;"><div class="bebas" style="font-size:22px;color:var(--acc);line-height:1;">${totalK}</div><div style="font-size:10px;color:var(--mut);margin-top:2px;">KCAL BRUCIATE</div></div>
+          <div style="text-align:center;"><div class="bebas" style="font-size:22px;color:var(--text);line-height:1;">${dayActs.length}</div><div style="font-size:10px;color:var(--mut);margin-top:2px;">ATTIVITÀ</div></div>
+        </div>
+        ${dayActs.map(a=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;margin-bottom:4px;">
+          <div style="font-size:20px;">${a.emo||'🏃'}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:600;">${escapeHtml(a.name||'Attività')}</div>
+            <div style="font-size:11px;color:var(--mut);">${a.minutes} min · <span style="color:var(--acc);font-weight:700;">${a.kcal} kcal</span></div>
+          </div>
+          <button class="btn-s" style="background:var(--red);color:#fff;padding:4px 8px;font-size:10px;" onclick="deleteActivity('${a.id}')">✕</button>
+        </div>`).join('')}
+      ` : `<div style="text-align:center;padding:16px 8px;font-size:12px;color:var(--mut);line-height:1.5;">Nessuna attività registrata oggi.<br>Tocca <strong style="color:var(--blu);">+ AGGIUNGI</strong> per inserire camminata, corsa o sport.</div>`}
+    </div>`;
+  })()}
+
   <div class="card" style="padding:16px;">
     <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1.5px;margin-bottom:8px;">PIANO SETTIMANA CORRENTE — SITUAZIONE REALE</div>
     <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">${legendGrid}</div>
@@ -4224,12 +4594,12 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
     const selIdx=ST.mealOpts?.[m.id]||0,opt=m.opts[selIdx]||m.opts[0];
     return`<div class="card" style="opacity:${isL||isS?.55:1};">
       <div class="r" style="margin-bottom:10px;">
-        <div><div style="font-size:15px;font-weight:700;">${m.n}</div><div style="font-size:11px;color:var(--mut);">~${m.kcal} kcal${m.isRestSnack?' · Giorno riposo':''}</div></div>
-        ${isL?`<div class="rc"><span style="color:var(--acc);font-size:12px;font-weight:700;">✅ FATTO</span><button class="btn-s btn-action" style="padding:4px 8px;font-size:10px;margin-left:6px;" onclick="uncheckMeal('${m.id}',${m.pct},${mac.kcal},${mac.prot},${mac.carb},${mac.fat})">annulla</button></div>`:
+        <div><div style="font-size:15px;font-weight:700;">${m.n}</div><div style="font-size:11px;color:var(--mut);">${m.isCustom?`<span style="color:var(--purp);font-weight:700;">${m.actualKcal} kcal</span> · personalizzato <span style="color:var(--mut);">(target ~${m.kcal})</span>`:`~${m.kcal} kcal`}${m.isRestSnack?' · Giorno riposo':''}</div></div>
+        ${isL?`<div class="rc"><span style="color:var(--acc);font-size:12px;font-weight:700;">✅ FATTO</span><button class="btn-s btn-action" style="padding:4px 8px;font-size:10px;margin-left:6px;" onclick="uncheckMeal('${m.id}',${m.pct},${mac.kcal},${mac.prot},${mac.carb},${mac.fat},${m.isCustom?m.actualKcal:'null'})">annulla</button></div>`:
          isS?`<div class="rc"><span style="color:var(--red);font-size:12px;font-weight:700;">❌ SALTATO</span><button class="btn-s btn-action" style="padding:4px 8px;font-size:10px;margin-left:6px;" onclick="uncheckMeal('${m.id}')">annulla</button></div>`:
         `<div style="display:flex;gap:5px;">
           <button class="btn-s btn-action" style="font-size:12px;padding:6px 10px;" onclick="skipMeal('${m.id}')">⏭️ Salto</button>
-          <button class="btn-s" style="background:var(--surf);color:var(--acc);border:1px solid var(--acc);font-family:'Bebas Neue';font-size:13px;" onclick="logMeal('${m.id}',${m.pct},${mac.kcal},${mac.prot},${mac.carb},${mac.fat})">FATTO ✓</button>
+          <button class="btn-s" style="background:var(--surf);color:var(--acc);border:1px solid var(--acc);font-family:'Bebas Neue';font-size:13px;" onclick="logMeal('${m.id}',${m.pct},${mac.kcal},${mac.prot},${mac.carb},${mac.fat},${m.isCustom?m.actualKcal:'null'})">FATTO ✓</button>
         </div>`}
       </div>
       ${m.fav?`<div style="background:rgba(255,104,53,.08);border-left:3px solid var(--ora);border-radius:0 10px 10px 0;padding:10px 12px;margin-bottom:10px;">
@@ -4476,12 +4846,15 @@ window.renderBody = function(cW,mac,theme,pWeek,sx){
 
   <!-- PUNTO 6: ANALISI GRANULARE PER ESERCIZIO -->
   ${(() => {
-    const exStats = buildExerciseStats(ST.wHistory || {});
+    const allStats = buildExerciseStats(ST.wHistory || {});
+    // FIX 3: mostra solo esercizi con almeno un valore numerico registrato
+    // (kg, sec, o reps > 0). Escludo quelli "fatti" ma senza dati reali.
+    const exStats = allStats.filter(s => s.maxKg > 0 || s.maxSec > 0 || s.maxReps > 0);
     if (exStats.length === 0) return '';
-    const top = exStats.slice(0, 8); // top 8 esercizi più frequenti
+    const top = exStats.slice(0, 8); // top 8 esercizi più frequenti con dati
     return `<div class="bebas" style="font-size:18px;color:var(--mut);margin:16px 0 10px;letter-spacing:1px;">📊 PROGRESSI PER ESERCIZIO</div>
     <div class="card" style="padding:14px;">
-      <div style="font-size:11px;color:var(--mut);line-height:1.5;margin-bottom:12px;">Top ${top.length} esercizi più eseguiti. Il <strong style="color:var(--acc);">1RM stimato</strong> è il peso massimo teorico per una singola ripetizione (formula Epley).</div>
+      <div style="font-size:11px;color:var(--mut);line-height:1.5;margin-bottom:12px;">Top ${top.length} esercizi con dati registrati. Il <strong style="color:var(--acc);">1RM stimato</strong> è il peso massimo teorico per una singola ripetizione (formula Epley).</div>
       ${top.map(s => {
         const unit = s.unit || 'kg';
         const isKg = unit === 'kg' && s.maxKg > 0;
@@ -4820,7 +5193,7 @@ window.render = function() {
   let cW=ST.h.length?ST.h[ST.h.length-1].w:0;
   const wEntry=ST.h.find(x=>x.d===currentDateStr);if(wEntry) cW=wEntry.w;
   const an=ST.p?analyze(ST.h,{...ST.p,programStart:ST.programStart},ST.wLog):{status:'new',msg:'',col:'var(--mut)',calAdj:0,cardioAdj:0,alert:null,missed:0};
-  const mac=ST.p?calcMacros(cW,ht,ag,sx,ST.p,(ST.p.sessions!=null?ST.p.sessions:3),an):{kcal:1700,prot:120,carb:150,fat:50,bmr:0,tdee:0,cardioLevel:1};
+  const mac=ST.p?calcMacros(cW,ht,ag,sx,ST.p,(ST.p.sessions!=null?ST.p.sessions:3),an,getActivitiesKcal(currentDateStr)):{kcal:1700,prot:120,carb:150,fat:50,bmr:0,tdee:0,cardioLevel:1};
   const theme=ST.p?.t==='cut'?'var(--acc)':'var(--blu)';
   const dOfW=(new Date(currentDateStr).getDay()+6)%7;
   // Stato reale della settimana + sequenza workout basata sulla storia
@@ -5019,6 +5392,55 @@ window.render = function() {
       <div style="font-size:10px;color:var(--mut);text-align:center;margin-top:10px;line-height:1.4;">💡 Se lasci vuoto il pasto e salvi, torni ai consigli automatici.</div>
     </div></div>`;
   })():
+  // FIX 2: sheet nuova attività sport
+  ST.sheet==='activity'&&ST.sheetData?(()=>{
+    const d=ST.sheetData;
+    if(d.mode==='select'){
+      // Schermata selezione sport
+      return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div>
+        <div class="bebas" style="font-size:22px;margin-bottom:4px;">🏃 NUOVA ATTIVITÀ</div>
+        <div style="font-size:12px;color:var(--mut);margin-bottom:14px;">Scegli lo sport o l'attività che hai fatto (o stai per fare). Le kcal sono calcolate dal tuo peso.</div>
+        <input id="sportSearch" type="text" maxlength="50" placeholder="🔍 Cerca (es. corsa, padel, yoga...)" oninput="updateActivityQuery(this.value)" style="margin-bottom:10px;font-size:14px;padding:10px;" value="${escapeHtml(d.q||'')}">
+        <div id="sportListContainer" style="max-height:50vh;overflow-y:auto;">${_buildSportListHtml()}</div>
+        <button class="btn btn-action" style="margin-top:12px;width:100%;padding:12px;" onclick="closeSheet()">ANNULLA</button>
+      </div></div>`;
+    }
+    // Schermata config (minuti manuali o cronometro)
+    const sport=sportById(d.sportId);
+    if(!sport){ return `<div class="sh-ov" onclick="closeSheet()"><div class="sh"><div style="padding:20px;">Sport non valido</div></div></div>`; }
+    const w=currentWeightKg();
+    const mins=d.minutes||30;
+    const estKcal=calcSportKcal(d.sportId, mins, w);
+    return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <div style="font-size:36px;">${sport.emo}</div>
+        <div>
+          <div class="bebas" style="font-size:22px;">${escapeHtml(sport.name)}</div>
+          <div style="font-size:11px;color:var(--mut);">${Math.round(sport.met*w*0.0175*10)/10} kcal/min al tuo peso · MET ${sport.met}</div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--mut);margin-bottom:14px;">Come vuoi registrare questa attività?</div>
+
+      <!-- Opzione 1: Inserisci minuti -->
+      <div style="background:rgba(96,165,250,.06);border:1.5px solid var(--blu);border-radius:12px;padding:14px;margin-bottom:10px;">
+        <div style="font-size:11px;font-weight:700;color:var(--blu);letter-spacing:1px;margin-bottom:10px;">⏱️ INSERISCI MINUTI A MANO</div>
+        <div style="display:grid;grid-template-columns:1fr 100px;gap:8px;margin-bottom:10px;">
+          <input id="actMins" type="number" min="1" max="600" value="${mins}" style="margin:0;font-size:14px;padding:10px;text-align:center;" oninput="document.getElementById('actKcalPreview').textContent='~'+calcSportKcal('${d.sportId}',parseInt(this.value)||0,${w})+' kcal'">
+          <div style="display:flex;align-items:center;justify-content:center;background:var(--bg);border-radius:8px;padding:8px;font-size:13px;color:var(--acc);font-weight:700;"><span id="actKcalPreview">~${estKcal} kcal</span></div>
+        </div>
+        <button class="btn" style="width:100%;padding:10px;background:var(--blu);color:#fff;" onclick="confirmManualActivity()">✓ REGISTRA ATTIVITÀ</button>
+      </div>
+
+      <!-- Opzione 2: Cronometro -->
+      <div style="background:rgba(197,241,53,.06);border:1.5px solid var(--acc);border-radius:12px;padding:14px;margin-bottom:14px;">
+        <div style="font-size:11px;font-weight:700;color:var(--acc);letter-spacing:1px;margin-bottom:10px;">⏱️ CRONOMETRO LIVE</div>
+        <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:10px;">Inizia ora e ferma quando hai finito. Le kcal vengono calcolate in automatico.</div>
+        <button class="btn" style="width:100%;padding:12px;background:var(--acc);color:#000;font-weight:700;" onclick="startStopwatchFromSheet()">▶️ AVVIA CRONOMETRO</button>
+      </div>
+
+      <button class="btn btn-action" style="width:100%;padding:12px;" onclick="setActivityMode('select')">← Indietro allo sport</button>
+    </div></div>`;
+  })():
   // PUNTO 18: editor scheda personalizzata
   ST.sheet==='customWorkout'&&ST.sheetData?(()=>{
     const d=ST.sheetData;
@@ -5157,6 +5579,29 @@ window.render = function() {
       <input type="date" value="${currentDateStr}" max="${getToday()}" onchange="changeCurrentDate(this.value)" style="width:auto;margin:0;padding:6px 8px;font-size:12px;border:1.5px solid ${currentDateStr!==getToday()?'var(--ora)':'var(--bord)'};border-radius:8px;color:${currentDateStr!==getToday()?'var(--ora)':'var(--text)'};background:var(--surf);font-weight:700;outline:none;cursor:pointer;">
     </div>
   </div>
+  ${ST.stopwatch && sportById(ST.stopwatch.sportId) ? (() => {
+    // FIX 2: overlay cronometro attivo (visibile in tutte le tab)
+    const sp=sportById(ST.stopwatch.sportId);
+    const running=ST.stopwatch.running;
+    const totalMs=(ST.stopwatch.elapsed||0)+(running&&ST.stopwatch.startTs?(Date.now()-ST.stopwatch.startTs):0);
+    const mins=Math.floor(totalMs/60000);
+    const secs=Math.floor((totalMs%60000)/1000);
+    const display=String(mins).padStart(2,'0')+':'+String(secs).padStart(2,'0');
+    const kcal=calcSportKcal(ST.stopwatch.sportId, totalMs/60000, currentWeightKg());
+    return `<div style="position:fixed;top:52px;left:50%;transform:translateX(-50%);z-index:90;background:linear-gradient(135deg,#0c1a00,#0a1000);border:2px solid var(--acc);border-radius:14px;padding:10px 16px;box-shadow:0 4px 20px rgba(0,0,0,.6);display:flex;gap:12px;align-items:center;min-width:280px;max-width:calc(100% - 24px);">
+      <div style="font-size:22px;">${sp.emo}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;">${escapeHtml(sp.name).toUpperCase()}${running?' · LIVE':' · PAUSA'}</div>
+        <div style="display:flex;gap:10px;align-items:baseline;">
+          <div id="stopwatchDisplay" style="font-family:monospace;font-size:22px;font-weight:700;color:${running?'var(--acc)':'var(--ora)'};line-height:1;">${display}</div>
+          <div id="stopwatchKcal" style="font-size:12px;color:var(--acc);font-weight:700;">~${kcal} kcal</div>
+        </div>
+      </div>
+      ${running ? `<button onclick="pauseStopwatch();render();" style="background:var(--ora);color:#fff;border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;">⏸</button>` : `<button onclick="resumeStopwatch();render();" style="background:var(--gre);color:#000;border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;">▶</button>`}
+      <button onclick="stopAndSaveStopwatch()" style="background:var(--blu);color:#fff;border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;">⏹ FINE</button>
+      <button onclick="cancelStopwatch();render();" style="background:transparent;border:1px solid var(--red);color:var(--red);border-radius:8px;padding:6px 8px;font-size:10px;cursor:pointer;">✕</button>
+    </div>` ;
+  })() : ''}
   <div class="content"><div class="wrap">`;
   if(!ST.p){H+=renderSetup();H+=`</div></div>`;root.innerHTML=H+sheetH;
     // PUNTO 11: inizializza visibilità campi form registrazione
