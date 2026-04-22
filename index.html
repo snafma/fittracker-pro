@@ -300,34 +300,96 @@ function togglePw(el) {
 }
 const pwRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*.,\-_?]).{8,}$/;
 // ═════════════════════════════════════════════════════════════
-// PUNTO 2 — Wake Lock: tiene lo schermo acceso durante l'allenamento
+// PUNTO 2 — Wake Lock robusto: tiene lo schermo acceso durante l'allenamento
+// Gestisce sospensione Android, iOS < 16.4 (fallback NoSleep-style), re-acquire al foreground
 // ═════════════════════════════════════════════════════════════
 window.WakeLockMgr = {
   _lock: null,
   _enabled: false,
-  async enable() {
-    if (this._enabled) return;
-    this._enabled = true;
-    if ('wakeLock' in navigator) {
-      try {
+  _onVis: null,
+  _video: null,  // fallback iOS: video silenzioso in loop per prevenire sleep
+  _retryTimer: null,
+  supported(){ return 'wakeLock' in navigator; },
+  async _acquire(){
+    if(!this._enabled) return;
+    if(this._lock) return; // già attivo
+    if('wakeLock' in navigator){
+      try{
         this._lock = await navigator.wakeLock.request('screen');
         console.log('🔆 Wake Lock attivo');
-        this._lock.addEventListener('release', () => { this._lock = null; });
-        // Re-acquire al ritorno in foreground (Android sospende il lock in background)
-        document.addEventListener('visibilitychange', this._onVis = async () => {
-          if (this._enabled && document.visibilityState === 'visible' && !this._lock) {
-            try { this._lock = await navigator.wakeLock.request('screen'); } catch(_){}
+        // Se il browser rilascia (es. batteria bassa, policy), riacquisisci quando torno visibile
+        this._lock.addEventListener('release', ()=>{
+          console.log('Wake Lock rilasciato dal sistema');
+          this._lock = null;
+          // Retry dopo 2s se siamo ancora visibili e abilitati
+          if(this._enabled && document.visibilityState==='visible'){
+            if(this._retryTimer) clearTimeout(this._retryTimer);
+            this._retryTimer = setTimeout(()=>this._acquire(), 2000);
           }
         });
-      } catch(e) { console.warn('Wake Lock fallito:', e?.message); }
+      } catch(e) {
+        console.warn('Wake Lock fallito:', e?.message);
+        // Retry automatico dopo 3s se transient failure
+        if(this._enabled){
+          if(this._retryTimer) clearTimeout(this._retryTimer);
+          this._retryTimer = setTimeout(()=>this._acquire(), 3000);
+        }
+      }
     } else {
-      console.log('Wake Lock API non supportata (probabilmente iOS Safari < 16.4)');
+      // Fallback iOS < 16.4: video silenzioso in loop (tecnica NoSleep.js)
+      this._startVideoFallback();
     }
   },
-  async disable() {
+  _startVideoFallback(){
+    if(this._video) return;
+    try{
+      // Video di 1 frame, 1 px, base64. Blob loop per prevenire sleep.
+      const v = document.createElement('video');
+      v.setAttribute('playsinline','');
+      v.setAttribute('muted','');
+      v.muted = true;
+      v.loop = true;
+      v.style.cssText = 'position:fixed;top:-1px;left:-1px;width:1px;height:1px;opacity:0;pointer-events:none;';
+      // Video "quasi vuoto" base64 MP4 di 1 frame ripetuto
+      v.src = 'data:video/mp4;base64,AAAAHGZ0eXBpc29tAAACAGlzb21pc28ybXA0MQAACAFtb292AAAAbG12aGQAAAAA1lmv5dZZr+UAAAPoAAAAAwABAAABAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAdGdHJhawAAAFx0a2hkAAAAAdZZr+XWWa/lAAAAAQAAAAAAAAPoAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAEAAAABAAAAAAAkbWRpYQAAACBtZGhkAAAAANZZr+XWWa/lAAAAGAAAAAFVxAAAAAAALWhkbHIAAAAAAAAAAHZpZGUAAAAAAAAAAAAAAABWaWRlb0hhbmRsZXIAAAACWG1pbmYAAAAUdm1oZAAAAAEAAAAAAAAAAAAAACRkaW5mAAAAHGRyZWYAAAAAAAAAAQAAAAx1cmwgAAAAAQAAAhhzdGJsAAAAuHN0c2QAAAAAAAAAAQAAAKhhdmMxAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAEAAQABIAAAASAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAY//8AAAA2YXZjQwFkAAz/4QAaZ2QADKzZQUBBaEAAAAMAQAAACgPFi2WAAQAGaOvjyyLAAAAAEHBhc3AAAAABAAAAAQAAABhzdHRzAAAAAAAAAAEAAAABAAAIAAAAABxzdHNjAAAAAAAAAAEAAAABAAAAAQAAAAEAAAAUc3RzegAAAAAAAAAZAAAAAQAAABRzdGNvAAAAAAAAAAEAAAAsAAAAYXVkdGEAAABZbWV0YQAAAAAAAAAhaGRscgAAAAAAAAAAbWRpcmFwcGwAAAAAAAAAAAAAAAAsaWxzdAAAACSpdG9vAAAAHGRhdGEAAAABAAAAAExhdmY1Ni40MC4xMDE=';
+      document.body.appendChild(v);
+      v.play().catch(()=>{});
+      this._video = v;
+      console.log('🔆 Wake Lock fallback video attivo (iOS)');
+    } catch(e){ console.warn('Wake Lock video fallback fallito:', e?.message); }
+  },
+  _stopVideoFallback(){
+    if(this._video){
+      try{ this._video.pause(); this._video.remove(); } catch(_){}
+      this._video = null;
+    }
+  },
+  async enable(){
+    if(this._enabled) return;
+    this._enabled = true;
+    // Listener per ri-acquisire al ritorno in foreground
+    this._onVis = async ()=>{
+      if(this._enabled && document.visibilityState==='visible'){
+        // Pulizia eventuale retry pendente
+        if(this._retryTimer){ clearTimeout(this._retryTimer); this._retryTimer = null; }
+        await this._acquire();
+      }
+    };
+    document.addEventListener('visibilitychange', this._onVis);
+    // Al focus finestra, ri-prova comunque (Safari mobile a volte non trigga visibilitychange)
+    window.addEventListener('focus', this._onVis);
+    await this._acquire();
+  },
+  async disable(){
     this._enabled = false;
-    if (this._lock) { try { await this._lock.release(); } catch(_){} this._lock = null; }
-    if (this._onVis) { document.removeEventListener('visibilitychange', this._onVis); this._onVis = null; }
+    if(this._retryTimer){ clearTimeout(this._retryTimer); this._retryTimer = null; }
+    if(this._lock){ try{ await this._lock.release(); } catch(_){} this._lock = null; }
+    if(this._onVis){
+      document.removeEventListener('visibilitychange', this._onVis);
+      window.removeEventListener('focus', this._onVis);
+      this._onVis = null;
+    }
+    this._stopVideoFallback();
     console.log('🔅 Wake Lock disattivato');
   }
 };
@@ -3106,7 +3168,8 @@ window.updateProgram=function(){
 }
 window.changeCurrentDate=function(dStr){currentDateStr=dStr;render();}
 window.logWeight=function(){
-  const w=parseFloat(vv('nw'));
+  // FIX: l'input in Home ha id="nW" (maiuscolo), era vv('nw') che non trovava nulla
+  const w=parseFloat(vv('nW')||vv('nw'));
   if(w>30&&w<300){
     const idx=ST.h.findIndex(x=>x.d===currentDateStr);
     if(idx>=0) ST.h[idx].w=w; else ST.h.push({d:currentDateStr,w:w});
@@ -4053,183 +4116,262 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
   const waterGoal=sx==='f'?10:12;
   const dLog=ST.nutri[t2]||{k:0};
   const remK=Math.max(0,mac.kcal-(dLog.k||0));
-  const excessK=Math.max(0,(dLog.k||0)-mac.kcal); // PUNTO 19: kcal in eccesso
+  const excessK=Math.max(0,(dLog.k||0)-mac.kcal);
   const calPct=Math.min(100,((dLog.k||0)/mac.kcal)*100);
-  const motiv=(typeof getMotivationalMsg==='function')?getMotivationalMsg(an,ST,cW,mac,pWeek):null;
-  // Stato salvato dei dati di oggi
+
+  // Stato oggi
   const wEntry=ST.h.find(x=>x.d===t2);
   const weightSaved=!!wEntry;
   const stepsSaved=ST.life[t2]&&ST.life[t2].steps>0;
   const stepsValue=ST.life[t2]?.steps||0;
+  const noTraining=(ST.p.sessions||0)===0;
+  const isRestDay=todayWoId==='REST';
+  const todayActs=(ST.activities&&ST.activities[t2])||[];
+  const actsKcal=todayActs.reduce((s,a)=>s+(a.kcal||0),0);
+  const actsMin=todayActs.reduce((s,a)=>s+(a.minutes||0),0);
+
+  // ─── CALCOLO PASTO CORRENTE (per l'ora attuale) ──────────────
+  const now=new Date();
+  const curHM=now.getHours()*60+now.getMinutes();
+  const T=Object.assign({col:'07:00',sp1:'10:30',pra:'13:00',sp2:'16:00',cen:'19:30'},ST.p.times||{});
+  const toMin=s=>{const [h,m]=s.split(':').map(Number);return h*60+m;};
+  // Finestra pasto: ±90 min dall'orario; pranzo/cena ±120 min
+  const mealWindows=[
+    {id:'col',t:T.col,win:90,icon:'🌅',name:'COLAZIONE',pct:'col'},
+    {id:'sp1',t:T.sp1,win:60,icon:'🍎',name:'SPUNTINO',pct:'sp1'},
+    {id:'pra',t:T.pra,win:120,icon:'🍽️',name:'PRANZO',pct:'pra'},
+    {id:'sp2',t:T.sp2,win:60,icon:'🍎',name:'SPUNTINO',pct:'sp2'},
+    {id:'cen',t:T.cen,win:120,icon:'🌙',name:'CENA',pct:'cen'},
+  ];
+  let currentMeal=null, nextMeal=null;
+  for(const m of mealWindows){
+    const mm=toMin(m.t);
+    const diff=Math.abs(curHM-mm);
+    if(diff<=m.win && !currentMeal) currentMeal=m;
+    if(mm>curHM && !nextMeal) nextMeal=m;
+  }
+  // Fallback: se prima di colazione, "next" è colazione
+  if(!nextMeal && !currentMeal) nextMeal=mealWindows[0];
+
+  const activeMealId=currentMeal?.id;
+  const mealAlreadyLogged=activeMealId && ST.nutri[t2]?.logged?.includes(activeMealId);
+  const mealAlreadySkipped=activeMealId && ST.nutri[t2]?.skipped?.includes(activeMealId);
+  // Calcolo kcal del pasto corrente (custom o da PCT)
+  const PCT_LOC={col:0.22,sp1:0.10,pra:0.32,sp2:0.08,cen:0.28};
+  let currentMealKcal=0, currentMealIsCustom=false;
+  if(currentMeal){
+    const cm=ST.p?.customMeals?.[activeMealId];
+    if(cm && cm.length>0){
+      currentMealKcal=cm.reduce((s,i)=>s+(i.kcal||0),0);
+      currentMealIsCustom=true;
+    } else {
+      currentMealKcal=Math.round(mac.kcal*PCT_LOC[activeMealId]);
+    }
+  }
+
+  // ─── INFO SCHEDA ALLENAMENTO OGGI ──────────────────────────
+  let todayWorkoutInfo=null;
+  if(todayWoId && todayWoId!=='REST' && !noTraining){
+    // Scheda custom?
+    const cw=(ST.p.customWorkouts||[]).find(w=>w.id===todayWoId);
+    if(cw){
+      todayWorkoutInfo={name:cw.name,emoji:cw.emoji||'🛠️',col:cw.color||'var(--purp)',exCount:cw.exercises.length,isCustom:true,id:cw.id};
+    } else if(WO_SCH[todayWoId]){
+      const wo=WO_SCH[todayWoId];
+      todayWorkoutInfo={name:wo.name,emoji:wo.emoji,col:wo.col,exCount:wo.slots.length,isCustom:false,id:todayWoId};
+    }
+  }
+  const workoutAlreadyDone=todayLog && todayLog.completed;
+
+  // ═══════════════════════════════════════════════════════════
+  // HERO DINAMICO: mostra l'azione più rilevante del momento
+  // ═══════════════════════════════════════════════════════════
+  // Priorità: pasto attivo > allenamento (se oggi) > giorno riposo > attività generica
+  let heroHtml='';
+  const greeting=(()=>{
+    const h=now.getHours();
+    if(h<6) return 'Notte';
+    if(h<12) return 'Buongiorno';
+    if(h<18) return 'Buon pomeriggio';
+    return 'Buonasera';
+  })();
+
+  if(currentMeal && !mealAlreadyLogged && !mealAlreadySkipped){
+    // HERO PASTO — è l'ora di un pasto non ancora registrato
+    heroHtml=`<div class="home-hero" style="background:linear-gradient(145deg,rgba(197,241,53,.08),rgba(197,241,53,.02));border:2px solid var(--acc);border-radius:22px;padding:22px 20px;margin-bottom:14px;">
+      <div style="font-size:10px;font-weight:700;color:var(--acc);letter-spacing:2px;margin-bottom:8px;">⏰ È L'ORA DI</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+        <div style="font-size:44px;line-height:1;">${currentMeal.icon}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="bebas" style="font-size:30px;line-height:1;">${currentMeal.name}</div>
+          <div style="font-size:12px;color:var(--mut);margin-top:3px;">${currentMeal.t} · ${currentMealKcal} kcal${currentMealIsCustom?' · personalizzato':''}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        <button class="btn" style="padding:16px 10px;background:var(--acc);color:#000;font-family:'Bebas Neue';font-size:20px;letter-spacing:1px;border:none;border-radius:14px;" onclick="logMeal('${currentMeal.id}',${PCT_LOC[currentMeal.id]},${mac.kcal},${mac.prot},${mac.carb},${mac.fat},${currentMealIsCustom?currentMealKcal:'null'})">✓ FATTO</button>
+        <button class="btn" style="padding:16px 10px;background:var(--surf);color:var(--red);border:1.5px solid var(--red);font-family:'Bebas Neue';font-size:20px;letter-spacing:1px;border-radius:14px;" onclick="skipMeal('${currentMeal.id}')">✕ SALTO</button>
+      </div>
+      <button onclick="ST.tab='diet';render()" style="width:100%;background:transparent;border:none;color:var(--mut);font-size:12px;padding:6px;text-decoration:underline;cursor:pointer;">vedi dettaglio cibi →</button>
+    </div>`;
+  } else if(todayWorkoutInfo && !workoutAlreadyDone){
+    // HERO ALLENAMENTO — oggi hai allenamento non completato
+    heroHtml=`<div class="home-hero" style="background:linear-gradient(145deg,${todayWorkoutInfo.col}15,${todayWorkoutInfo.col}05);border:2px solid ${todayWorkoutInfo.col};border-radius:22px;padding:22px 20px;margin-bottom:14px;">
+      <div style="font-size:10px;font-weight:700;color:${todayWorkoutInfo.col};letter-spacing:2px;margin-bottom:8px;">💪 ALLENAMENTO DI OGGI</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+        <div style="font-size:44px;line-height:1;">${todayWorkoutInfo.emoji}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="bebas" style="font-size:26px;line-height:1.05;color:${todayWorkoutInfo.col};">${escapeHtml(todayWorkoutInfo.name)}</div>
+          <div style="font-size:12px;color:var(--mut);margin-top:4px;">${todayWorkoutInfo.exCount} esercizi · ~${ST.p.dur||60} min${todayWorkoutInfo.isCustom?' · tua scheda':''}</div>
+        </div>
+      </div>
+      <button class="btn" style="width:100%;padding:18px;background:${todayWorkoutInfo.col};color:#000;font-family:'Bebas Neue';font-size:22px;letter-spacing:2px;border:none;border-radius:14px;" onclick="startWo('${todayWorkoutInfo.id}')">▶ INIZIA ALLENAMENTO</button>
+    </div>`;
+  } else if(isRestDay || noTraining){
+    // HERO RIPOSO — giorno di riposo
+    heroHtml=`<div class="home-hero" style="background:linear-gradient(145deg,rgba(96,165,250,.08),rgba(96,165,250,.02));border:2px solid var(--blu);border-radius:22px;padding:22px 20px;margin-bottom:14px;">
+      <div style="font-size:10px;font-weight:700;color:var(--blu);letter-spacing:2px;margin-bottom:8px;">💤 ${noTraining?'OGGI TOCCA AI PASSI':'GIORNO DI RIPOSO'}</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+        <div style="font-size:44px;line-height:1;">${noTraining?'🚶':'😌'}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="bebas" style="font-size:24px;line-height:1.05;color:var(--blu);">${noTraining?'CAMMINATA + ALIMENTAZIONE':'RECUPERO ATTIVO'}</div>
+          <div style="font-size:12px;color:var(--mut);margin-top:4px;line-height:1.4;">${noTraining?`Obiettivo: ${sx==='f'?'10.000':'12.000'} passi oggi`:'Stretching, camminata leggera, 7-8h di sonno. Domani si riparte.'}</div>
+        </div>
+      </div>
+      <button class="btn" style="width:100%;padding:16px;background:var(--blu);color:#fff;font-family:'Bebas Neue';font-size:20px;letter-spacing:1px;border:none;border-radius:14px;" onclick="openActivitySheet()">+ TRACCIA ATTIVITÀ</button>
+    </div>`;
+  } else if(nextMeal){
+    // HERO PROSSIMO PASTO — momento tra i pasti
+    heroHtml=`<div class="home-hero" style="background:linear-gradient(145deg,rgba(167,139,250,.06),rgba(167,139,250,.02));border:1.5px solid var(--purp);border-radius:22px;padding:20px;margin-bottom:14px;">
+      <div style="font-size:10px;font-weight:700;color:var(--purp);letter-spacing:2px;margin-bottom:8px;">⏱️ PROSSIMA AZIONE</div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="font-size:36px;">${nextMeal.icon}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="bebas" style="font-size:22px;line-height:1;">${nextMeal.name} alle ${nextMeal.t}</div>
+          <div style="font-size:12px;color:var(--mut);margin-top:3px;">${greeting} ${AU.user.split(' ')[0]}! Al tuo prossimo pasto mancano poche ore.</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
   return`
-  <!-- HEADER PROGRESSO -->
-  <div style="background:linear-gradient(145deg,#0a1200,#0c1600);border:1px solid var(--bord);border-radius:22px;padding:20px;margin-bottom:14px;position:relative;overflow:hidden;">
-    <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:${theme};opacity:.04;pointer-events:none;"></div>
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
-      <div>
-        <div style="font-size:11px;font-weight:700;color:${theme};letter-spacing:2px;text-transform:uppercase;margin-bottom:2px;">${ST.p.t==='cut'?'DEFINIZIONE':'MASSA'} &middot; SETT.${pWeek}${isD?' &middot; DELOAD':''}</div>
-        <div style="display:flex;align-items:baseline;gap:6px;">
-          <span style="font-family:'Bebas Neue';font-size:60px;line-height:1;">${cW}</span>
-          <span style="font-size:16px;color:var(--mut);font-weight:600;">kg</span>
-        </div>
-        <div style="font-size:13px;color:var(--mut);margin-top:2px;">obiettivo <strong style="color:var(--text);">${ST.p.g}kg</strong> &middot; mancano <strong style="color:${theme};">${kgLeft}kg</strong></div>
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
-        <div onclick="ST.tab='set';render()" style="width:42px;height:42px;border-radius:50%;background:${theme}20;border:2px solid ${theme}40;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:20px;color:${theme};cursor:pointer;">${AU.user.charAt(0).toUpperCase()}</div>
-        ${stk>=2?`<div style="background:rgba(255,104,53,.15);color:var(--ora);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">🔥 ${stk}gg</div>`:''}
+  <!-- HEADER PROGRESSO COMPATTO -->
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;padding:0 4px;">
+    <div onclick="ST.tab='set';render()" style="width:46px;height:46px;border-radius:50%;background:${theme}25;border:2px solid ${theme}60;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:20px;color:${theme};cursor:pointer;flex-shrink:0;">${AU.user.charAt(0).toUpperCase()}</div>
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:10px;font-weight:700;color:${theme};letter-spacing:1.5px;">${ST.p.t==='cut'?'DEFINIZIONE':'MASSA'} · SETT.${pWeek}${isD?' · DELOAD':''}</div>
+      <div style="display:flex;align-items:baseline;gap:6px;">
+        <span class="bebas" style="font-size:28px;line-height:1;">${cW}<span style="font-size:14px;color:var(--mut);">kg</span></span>
+        <span style="font-size:12px;color:var(--mut);">→ ${ST.p.g}kg · <strong style="color:${theme};">${kgLeft}kg rimasti</strong></span>
       </div>
     </div>
-    <div style="background:rgba(255,255,255,.06);border-radius:99px;height:8px;overflow:hidden;margin-bottom:6px;">
-      <div style="width:${progress.toFixed(0)}%;height:8px;background:${theme};border-radius:99px;"></div>
+    ${stk>=2?`<div style="background:rgba(255,104,53,.15);color:var(--ora);padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap;">🔥 ${stk}gg</div>`:''}
+  </div>
+  <div style="background:var(--surf);border-radius:99px;height:5px;overflow:hidden;margin:0 4px 18px;">
+    <div style="width:${progress.toFixed(0)}%;height:5px;background:${theme};"></div>
+  </div>
+
+  <!-- HERO DINAMICO -->
+  ${heroHtml}
+
+  <!-- CARD CALORIE OGGI (grande, compatta) -->
+  <div style="background:var(--card);border:1px solid ${calPct>=100?'var(--red)':calPct>=75?'var(--acc)':'var(--bord)'};border-radius:18px;padding:16px 18px;margin-bottom:10px;" onclick="ST.tab='diet';render()" role="button">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+      <span style="font-size:11px;font-weight:700;color:var(--mut);letter-spacing:1.5px;">🔥 CALORIE OGGI</span>
+      <span style="font-size:11px;color:var(--mut);">target ${mac.kcal}${mac.extraKcal>0?` <span style="color:var(--blu);">(+${mac.extraKcal} sport)</span>`:''}</span>
     </div>
-    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--mut);">
-      <span>${ST.p.s}kg</span>
-      <span style="color:${theme};font-weight:700;">${Math.round(progress)}%</span>
-      <span>${ST.p.g}kg</span>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+      <div><div class="bebas" style="font-size:38px;line-height:1;color:${excessK>0?'var(--red)':'var(--text)'};">${dLog.k||0}</div><div style="font-size:10px;color:var(--mut);margin-top:2px;">consumate</div></div>
+      <div style="text-align:right;"><div class="bebas" style="font-size:38px;line-height:1;color:${remK>0?'var(--acc)':'var(--red)'};">${excessK>0?'+'+excessK:remK}</div><div style="font-size:10px;color:var(--mut);margin-top:2px;">${excessK>0?'ECCESSO':'RIMASTE'}</div></div>
+    </div>
+    <div style="background:var(--bg);border-radius:99px;height:8px;overflow:hidden;">
+      <div style="width:${calPct}%;height:8px;background:${excessK>0?'var(--red)':'var(--acc)'};border-radius:99px;transition:width .3s;"></div>
     </div>
   </div>
 
-  <!-- PUNTO 19: ALERT KCAL IN ECCESSO -->
-  ${excessK>0?`<div style="background:linear-gradient(145deg,rgba(255,71,87,.10),rgba(255,71,87,.04));border:1.5px solid var(--red);border-radius:16px;padding:14px 16px;margin-bottom:14px;">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
-      <div style="font-size:30px;flex-shrink:0;line-height:1;">⚠️</div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:11px;font-weight:700;color:var(--red);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">CALORIE SUPERATE</div>
-        <div style="font-size:13px;color:var(--text);line-height:1.5;">Hai consumato <strong style="color:var(--red);">+${Math.round(excessK)} kcal</strong> oltre il target di oggi.</div>
+  <!-- QUICK ACTIONS GRID 2x2: passi, acqua, peso, attività -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+
+    <!-- PASSI -->
+    <div style="background:var(--card);border:1px solid ${stepsSaved?'var(--gre)':'var(--bord)'};border-radius:16px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <div style="font-size:22px;">🚶</div>
+        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;">PASSI OGGI</div>
+      </div>
+      <div class="bebas" style="font-size:28px;line-height:1;color:${stepsSaved?'var(--gre)':'var(--text)'};margin-bottom:8px;">${stepsValue.toLocaleString('it-IT')}</div>
+      <div style="display:flex;gap:5px;">
+        <input type="number" id="nStep" value="${stepsValue}" placeholder="0" style="margin:0;font-size:13px;padding:7px;text-align:center;flex:1;">
+        <button onclick="logSteps()" style="background:${stepsSaved?'var(--blu)':'var(--gre)'};color:#000;border:none;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;">${stepsSaved?'OK':'+'}</button>
       </div>
     </div>
-    <div style="background:rgba(0,0,0,.25);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--mut);line-height:1.5;">
-      📊 Oggi: <strong style="color:var(--text);">${Math.round(dLog.k||0)}</strong> / ${Math.round(mac.kcal)} kcal target<br>
-      🎯 Per il resto della giornata: <strong style="color:var(--ora);">target raggiunto</strong>, ferma qui i pasti se possibile.<br>
-      💡 ${excessK<200?'Eccesso piccolo, recupera con +15 min di camminata oggi.':excessK<500?`Recupera con +30 min cardio oggi o riduci di ~${Math.round(excessK/3)} kcal/giorno per i prossimi 3 giorni.`:`Eccesso importante. Riduci di ~${Math.round(excessK/4)} kcal/giorno per i prossimi 4 giorni e aggiungi 30 min cardio domani.`}
-    </div>
-  </div>`:''}
 
-  <!-- MESSAGGIO MOTIVAZIONALE ADATTIVO -->
-  ${motiv?`<div style="background:var(--card);border-left:4px solid ${motiv.color};border-radius:0 16px 16px 0;padding:16px 18px;margin-bottom:14px;display:flex;gap:14px;align-items:flex-start;">
-    <div style="font-size:30px;flex-shrink:0;line-height:1;">${motiv.emoji}</div>
-    <div style="flex:1;min-width:0;"><div style="font-size:11px;font-weight:700;color:${motiv.color};letter-spacing:1px;margin-bottom:4px;text-transform:uppercase;">${motiv.title.replace(/\$\{pWeek\}/g,pWeek)}</div>
-    <div style="font-size:13px;color:var(--text);line-height:1.55;">${motiv.msg.replace(/\$\{pWeek\}/g,pWeek)}</div></div>
-  </div>`:''}
+    <!-- ACQUA -->
+    <div style="background:var(--card);border:1px solid ${todayWater>0?'var(--blu)':'var(--bord)'};border-radius:16px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <div style="font-size:22px;">💧</div>
+        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;">ACQUA</div>
+      </div>
+      <div class="bebas" style="font-size:28px;line-height:1;color:var(--blu);margin-bottom:8px;">${todayWater}<span style="font-size:12px;color:var(--mut);">/${waterGoal}</span></div>
+      <div style="display:flex;gap:5px;">
+        <button onclick="logWater(-1)" style="flex:1;background:var(--surf);border:1px solid var(--bord);color:var(--mut);border-radius:8px;padding:7px;font-size:16px;font-weight:700;cursor:pointer;">−</button>
+        <button onclick="logWater(1)" style="flex:1;background:rgba(96,165,250,.15);border:1px solid var(--blu);color:var(--blu);border-radius:8px;padding:7px;font-size:16px;font-weight:700;cursor:pointer;">+</button>
+      </div>
+    </div>
 
-  ${an.status!=='new'?`<div style="background:var(--card);border:1px solid ${an.col};border-radius:18px;padding:14px;margin-bottom:14px;">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
-      <span style="font-size:11px;font-weight:700;color:${an.col};letter-spacing:1px;text-transform:uppercase;">AI ENGINE</span>
-      ${an.proj?`<span style="font-size:10px;color:var(--mut);">${an.proj.toLocaleDateString('it-IT')}</span>`:''}
+    <!-- PESO -->
+    <div style="background:var(--card);border:1px solid ${weightSaved?'var(--gre)':'var(--bord)'};border-radius:16px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <div style="font-size:22px;">⚖️</div>
+        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;">PESO OGGI</div>
+      </div>
+      <div class="bebas" style="font-size:28px;line-height:1;color:${weightSaved?'var(--gre)':'var(--text)'};margin-bottom:8px;">${wEntry?wEntry.w:cW}<span style="font-size:12px;color:var(--mut);">kg</span></div>
+      <div style="display:flex;gap:5px;">
+        <input type="number" id="nW" value="${wEntry?wEntry.w:''}" placeholder="${cW}" step=".1" style="margin:0;font-size:13px;padding:7px;text-align:center;flex:1;">
+        <button onclick="logWeight()" style="background:${weightSaved?'var(--blu)':'var(--gre)'};color:#000;border:none;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;">${weightSaved?'OK':'+'}</button>
+      </div>
     </div>
-    <div style="font-size:13px;line-height:1.5;color:var(--text);">${an.msg}</div>
-    ${an.proj?`<div style="font-size:11px;color:var(--mut);margin-top:8px;padding-top:8px;border-top:1px solid var(--bord);">Obiettivo tra <strong style="color:var(--text);">${an.wkNeed} settimane</strong></div>`:''}
-  </div>`:''}
 
-  <!-- CALORIE OGGI (compatto) -->
-  <div style="background:var(--card);border:1px solid var(--bord);border-radius:18px;padding:16px;margin-bottom:14px;">
-    <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-      <span style="font-size:11px;font-weight:700;color:var(--mut);letter-spacing:1px;text-transform:uppercase;">Calorie oggi</span>
-      <span style="font-size:11px;color:var(--mut);">target ${mac.kcal} kcal${mac.extraKcal>0?` <span style="color:var(--blu);font-weight:700;">(+${mac.extraKcal} sport)</span>`:''}</span>
+    <!-- ATTIVITÀ OUTDOOR -->
+    <div style="background:var(--card);border:1px solid ${todayActs.length>0?'var(--blu)':'var(--bord)'};border-radius:16px;padding:14px;cursor:pointer;" onclick="openActivitySheet()">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <div style="font-size:22px;">🏃</div>
+        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;">SPORT OGGI</div>
+      </div>
+      ${todayActs.length>0 ? `
+        <div class="bebas" style="font-size:28px;line-height:1;color:var(--blu);margin-bottom:4px;">${actsKcal}<span style="font-size:12px;color:var(--mut);">kcal</span></div>
+        <div style="font-size:11px;color:var(--mut);">${todayActs.length} ${todayActs.length===1?'attività':'attività'} · ${actsMin} min</div>
+      ` : `
+        <div class="bebas" style="font-size:18px;line-height:1;color:var(--mut);margin-bottom:4px;">NIENTE</div>
+        <div style="font-size:11px;color:var(--blu);font-weight:700;">+ Tocca per tracciare</div>
+      `}
     </div>
-    <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-      <div><div style="font-family:'Bebas Neue';font-size:32px;line-height:1;color:${(dLog.k||0)>mac.kcal?'var(--red)':'var(--text)'};">${dLog.k||0}</div><div style="font-size:10px;color:var(--mut);">consumate</div></div>
-      <div style="text-align:right;"><div style="font-family:'Bebas Neue';font-size:32px;line-height:1;color:${remK>0?'var(--acc)':'var(--red)'};">${remK}</div><div style="font-size:10px;color:var(--mut);">rimaste</div></div>
-    </div>
-    <div style="background:var(--bg);border-radius:99px;height:10px;overflow:hidden;">
-      <div style="width:${calPct}%;height:10px;background:${(dLog.k||0)>mac.kcal?'var(--red)':'var(--acc)'};border-radius:99px;"></div>
-    </div>
+
   </div>
 
-  <!-- INSERIMENTO PESO -->
-  <div style="background:var(--card);border:1px solid ${weightSaved?'var(--gre)':'var(--bord)'};border-radius:18px;padding:18px;margin-bottom:12px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div style="font-size:24px;">⚖️</div>
-        <div>
-          <div style="font-size:13px;font-weight:700;color:var(--text);">PESO DI OGGI</div>
-          <div style="font-size:11px;color:var(--mut);">${weightSaved?`✅ Salvato: <strong style="color:var(--gre)">${wEntry.w} kg</strong>`:'Mattina a stomaco vuoto'}</div>
-        </div>
+  <!-- SONNO (compatto, fondo) -->
+  <div style="background:var(--card);border:1px solid var(--bord);border-radius:16px;padding:12px 16px;margin-bottom:14px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:18px;">😴</span>
+        <span style="font-size:11px;font-weight:700;color:var(--mut);letter-spacing:1px;">SONNO</span>
       </div>
-      ${weightSaved?`<button onclick="deleteWeight()" style="background:transparent;border:1px solid var(--red);color:var(--red);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;">🗑 ELIMINA</button>`:''}
+      <div class="bebas" style="font-size:22px;color:var(--purp);" id="slpD">${ST.life[t2]?.sleep||7.5}<span style="font-size:11px;color:var(--mut);">h</span></div>
     </div>
-    <div style="display:flex;gap:10px;align-items:center;">
-      <input type="number" id="nw" value="${cW}" step=".1" style="margin:0;font-size:24px;font-weight:700;text-align:center;flex:1;padding:14px;">
-      <button onclick="logWeight()" style="background:${weightSaved?'var(--blu)':theme};color:#000;border:none;border-radius:12px;padding:14px 20px;font-family:'Bebas Neue';font-size:18px;cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent;">${weightSaved?'MODIFICA':'SALVA KG'}</button>
-    </div>
+    <input type="range" min="4" max="12" step=".5" value="${ST.life[t2]?.sleep||7.5}" oninput="document.getElementById('slpD').innerHTML=this.value+'<span style=\\'font-size:11px;color:var(--mut)\\'>h</span>'" onchange="logSleep(this.value)" style="width:100%;margin:0;padding:0;">
   </div>
 
-  <!-- INSERIMENTO PASSI -->
-  <div style="background:var(--card);border:1px solid ${stepsSaved?'var(--gre)':'var(--bord)'};border-radius:18px;padding:18px;margin-bottom:12px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div style="font-size:24px;">🚶</div>
-        <div>
-          <div style="font-size:13px;font-weight:700;color:var(--text);">PASSI DI OGGI</div>
-          <div style="font-size:11px;color:var(--mut);">${stepsSaved?`✅ Salvati: <strong style="color:var(--gre)">${stepsValue.toLocaleString('it-IT')}</strong>`:'Obiettivo: 8.000–10.000'}</div>
-        </div>
-      </div>
-      ${stepsSaved?`<button onclick="deleteSteps()" style="background:transparent;border:1px solid var(--red);color:var(--red);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;">🗑 ELIMINA</button>`:''}
-    </div>
-    <div style="display:flex;gap:10px;align-items:center;">
-      <input type="number" id="nStep" value="${stepsValue}" placeholder="Es. 8500" style="margin:0;font-size:24px;font-weight:700;text-align:center;flex:1;padding:14px;">
-      <button onclick="logSteps()" style="background:${stepsSaved?'var(--blu)':'var(--gre)'};color:#000;border:none;border-radius:12px;padding:14px 20px;font-family:'Bebas Neue';font-size:18px;cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent;">${stepsSaved?'MODIFICA':'SALVA'}</button>
-    </div>
-  </div>
-
-  <!-- INSERIMENTO ACQUA -->
-  <div style="background:var(--card);border:1px solid ${todayWater>0?'var(--blu)':'var(--bord)'};border-radius:18px;padding:18px;margin-bottom:12px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div style="font-size:24px;">💧</div>
-        <div>
-          <div style="font-size:13px;font-weight:700;color:var(--text);">ACQUA DI OGGI</div>
-          <div style="font-size:11px;color:var(--mut);">Obiettivo: ${waterGoal} bicchieri (~${(waterGoal*0.25).toFixed(1)} L)</div>
-        </div>
-      </div>
-      ${todayWater>0?`<button onclick="resetWater()" style="background:transparent;border:1px solid var(--red);color:var(--red);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;">🗑 AZZERA</button>`:''}
-    </div>
-    <div style="display:flex;align-items:center;gap:14px;">
-      <button onclick="logWater(-1)" style="background:var(--surf);border:1.5px solid var(--bord);color:var(--mut);border-radius:14px;width:56px;height:56px;font-size:28px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;">−</button>
-      <div style="flex:1;text-align:center;">
-        <div style="font-family:'Bebas Neue';font-size:48px;line-height:1;color:var(--blu);">${todayWater}<span style="font-size:18px;color:var(--mut);">/${waterGoal}</span></div>
-        <div style="font-size:10px;color:var(--mut);margin-top:4px;letter-spacing:1px;">BICCHIERI</div>
-      </div>
-      <button onclick="logWater(1)" style="background:rgba(96,165,250,.15);border:1.5px solid var(--blu);color:var(--blu);border-radius:14px;width:56px;height:56px;font-size:28px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;">+</button>
-    </div>
-    <div style="background:var(--bg);border-radius:99px;height:8px;overflow:hidden;margin-top:14px;">
-      <div style="width:${Math.min(100,(todayWater/waterGoal)*100)}%;height:8px;background:var(--blu);border-radius:99px;transition:width .3s;"></div>
-    </div>
-  </div>
-
-  <!-- FIX 2: CARD RAPIDA ATTIVITÀ OUTDOOR -->
-  ${(() => {
-    const dayActs=(ST.activities&&ST.activities[currentDateStr])||[];
-    const totalK=dayActs.reduce((s,a)=>s+(a.kcal||0),0);
-    const totalMin=dayActs.reduce((s,a)=>s+(a.minutes||0),0);
-    return `<div style="background:var(--card);border:1px solid ${dayActs.length>0?'var(--blu)':'var(--bord)'};border-radius:18px;padding:18px;margin-bottom:12px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${dayActs.length>0?'12':'0'}px;">
-        <div style="display:flex;align-items:center;gap:10px;">
-          <div style="font-size:24px;">🏃</div>
-          <div>
-            <div style="font-size:13px;font-weight:700;color:var(--text);">ATTIVITÀ OUTDOOR</div>
-            <div style="font-size:11px;color:var(--mut);">${dayActs.length>0?`${dayActs.length} ${dayActs.length===1?'attività':'attività'} · ${totalMin} min · ${totalK} kcal`:'Sport, camminata, corsa, padel...'}</div>
-          </div>
-        </div>
-        <button onclick="openActivitySheet()" style="background:var(--blu);color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;">+ AGGIUNGI</button>
-      </div>
-      ${dayActs.length>0 ? `<div style="display:flex;gap:6px;flex-wrap:wrap;">${dayActs.slice(0,4).map(a=>`<div style="background:var(--surf);border:1px solid var(--bord);border-radius:8px;padding:6px 10px;font-size:11px;color:var(--text);display:flex;gap:5px;align-items:center;"><span>${a.emo||'🏃'}</span><span>${a.minutes}min</span><span style="color:var(--acc);font-weight:700;">${a.kcal}kc</span></div>`).join('')}${dayActs.length>4?`<div style="font-size:11px;color:var(--mut);align-self:center;">+${dayActs.length-4}</div>`:''}</div>` : ''}
-    </div>` ;
-  })()}
-
-  <!-- SONNO (compatto) -->
-  <div style="background:var(--card);border:1px solid var(--bord);border-radius:18px;padding:14px 18px;margin-bottom:12px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div style="font-size:20px;">😴</div>
-        <div style="font-size:13px;font-weight:700;color:var(--text);">SONNO</div>
-      </div>
-      <div style="font-family:'Bebas Neue';font-size:24px;color:var(--purp);" id="slpD">${ST.life[t2]?.sleep||7.5}<span style="font-size:12px;color:var(--mut);">h</span></div>
-    </div>
-    <input type="range" min="4" max="12" step=".5" value="${ST.life[t2]?.sleep||7.5}" oninput="document.getElementById('slpD').innerHTML=this.value+'<span style=\\'font-size:12px;color:var(--mut)\\'>h</span>'" onchange="logSleep(this.value)" style="width:100%;margin:0;padding:0;">
-  </div>
+  ${motivMessageHome(an,ST,cW,mac,pWeek)}
   `;
 }
+
+// Wrapper messaggio motivazionale (compatto in fondo Home)
+window.motivMessageHome=function(an,st,cW,mac,pWeek){
+  const motiv=(typeof getMotivationalMsg==='function')?getMotivationalMsg(an,st,cW,mac,pWeek):null;
+  if(!motiv||!motiv.msg) return '';
+  return `<div style="background:linear-gradient(135deg,rgba(197,241,53,.04),rgba(197,241,53,.01));border:1px dashed var(--bord);border-radius:14px;padding:14px 16px;margin-bottom:10px;">
+    <div style="font-size:10px;font-weight:700;color:var(--acc);letter-spacing:1px;margin-bottom:4px;">💭 IL TUO COACH</div>
+    <div style="font-size:13px;line-height:1.5;color:var(--text);">${escapeHtml(motiv.msg)}</div>
+  </div>`;
+};
 // ── renderWork: FIX 1 (riposo=niente schede), FIX 2 (sequenza A→B→C), FIX 3 (calendario reale) ──
 window.buildLegendGrid=function(weekStatus,DAY_NAMES,dOfW){
   return weekStatus.map(function(ws,i){
