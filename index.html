@@ -672,6 +672,66 @@ const SPORT_DB=[
   {id:'golf',       name:'Golf (a piedi)',           emo:'⛳', cat:'altri',     met:4.8},
   {id:'rowing',     name:'Canottaggio / vogatore',   emo:'🚣', cat:'altri',     met:7.0},
   {id:'skating',    name:'Pattinaggio / skateboard', emo:'⛸️', cat:'altri',     met:7.0},
+
+  // ═══════════════════════════════════════════════════════════
+  // ESPANSIONE: +30 sport (bici varianti, fitness, arti marziali, danza)
+  // ═══════════════════════════════════════════════════════════
+
+  // Ciclismo (varianti specifiche, era area carente)
+  {id:'spinning',     name:'Spinning / cyclette indoor',  emo:'🚴', cat:'bici',     met:8.5},
+  {id:'bike_gravel',  name:'Bici gravel / strade bianche', emo:'🚲', cat:'bici',    met:8.0},
+  {id:'bike_road',    name:'Ciclismo su strada (corsa)',  emo:'🚴‍♂️', cat:'bici',    met:9.5},
+  {id:'bike_downhill',name:'Bici downhill / enduro',      emo:'🚵', cat:'bici',     met:7.5},
+  {id:'ebike',        name:'E-bike (pedalata assistita)', emo:'🚲', cat:'bici',     met:5.0},
+  {id:'bike_indoor',  name:'Cyclette / spinning casalingo',emo:'🚴', cat:'bici',    met:6.5},
+  {id:'bike_kid',     name:'Bici con bambini (lenta)',    emo:'🚴', cat:'bici',     met:3.5},
+
+  // Corsa (varianti)
+  {id:'run_trail',    name:'Trail running (sentiero)',    emo:'🏃', cat:'corsa',    met:11.0},
+  {id:'run_interval', name:'Corsa a intervalli (HIIT)',   emo:'💨', cat:'corsa',    met:12.5},
+
+  // Camminata
+  {id:'walk_dog',     name:'Camminata con cane',          emo:'🐕', cat:'camminata',met:3.5},
+  {id:'walk_nordic',  name:'Nordic walking (con bastoni)',emo:'🚶', cat:'camminata',met:5.5},
+
+  // Nuoto (varianti)
+  {id:'aqua_gym',     name:'Acquagym / aquafitness',      emo:'🏊', cat:'nuoto',    met:5.5},
+  {id:'water_polo',   name:'Pallanuoto',                  emo:'🤽', cat:'nuoto',    met:10.0},
+
+  // Sport di squadra (extra)
+  {id:'baseball',     name:'Baseball / softball',         emo:'⚾', cat:'squadra',  met:5.0},
+  {id:'handball',     name:'Pallamano',                   emo:'🤾', cat:'squadra',  met:8.0},
+  {id:'frisbee',      name:'Ultimate frisbee',            emo:'🥏', cat:'squadra',  met:8.0},
+
+  // Racchetta (extra)
+  {id:'badminton',    name:'Badminton',                   emo:'🏸', cat:'racchetta',met:5.5},
+  {id:'squash',       name:'Squash',                      emo:'🎾', cat:'racchetta',met:12.0},
+
+  // Arti marziali (varianti specifiche)
+  {id:'jiujitsu',     name:'Brazilian Jiu-Jitsu (BJJ)',   emo:'🥋', cat:'martiali', met:10.0},
+  {id:'muay_thai',    name:'Muay Thai / kickboxing',      emo:'🥊', cat:'martiali', met:10.5},
+  {id:'taekwondo',    name:'Taekwondo',                   emo:'🥋', cat:'martiali', met:10.0},
+  {id:'capoeira',     name:'Capoeira',                    emo:'🤸', cat:'martiali', met:9.5},
+
+  // Fitness (varianti danza/aerobica/yoga)
+  {id:'zumba',        name:'Zumba / aerobica latina',     emo:'💃', cat:'fitness',  met:7.5},
+  {id:'spin_class',   name:'Lezione di spin in palestra', emo:'🚴', cat:'fitness',  met:8.5},
+  {id:'hiit',         name:'HIIT (allenamento intenso)',  emo:'💪', cat:'fitness',  met:9.0},
+  {id:'tabata',       name:'Tabata',                      emo:'⏱️', cat:'fitness',  met:10.0},
+  {id:'yoga_power',   name:'Power yoga / vinyasa',        emo:'🧘', cat:'fitness',  met:5.0},
+  {id:'pump',         name:'Body pump / lezione pesi',    emo:'💪', cat:'fitness',  met:7.5},
+  {id:'aerial',       name:'Pole dance / aerial silk',    emo:'🤸', cat:'fitness',  met:6.5},
+
+  // Outdoor (extra)
+  {id:'hiking_steep', name:'Trekking ripido (>10% pendenza)', emo:'⛰️', cat:'outdoor', met:8.0},
+  {id:'kayak',        name:'Kayak / canoa',               emo:'🛶', cat:'outdoor',  met:5.0},
+  {id:'snowshoe',     name:'Ciaspole / racchette neve',   emo:'❄️', cat:'outdoor',  met:7.0},
+  {id:'horse',        name:'Equitazione (trotto)',        emo:'🐴', cat:'outdoor',  met:5.5},
+  {id:'surf',         name:'Surf / windsurf',             emo:'🏄', cat:'outdoor',  met:6.0},
+
+  // Altri (utili)
+  {id:'rowing_real',  name:'Canottaggio in acqua',        emo:'🚣', cat:'altri',    met:7.5},
+  {id:'roller',       name:'Pattini in linea',            emo:'⛸️', cat:'altri',    met:7.5},
 ];
 
 // Calcolo kcal per un'attività data: MET × peso × minuti × 0.0175
@@ -2457,25 +2517,55 @@ window.estimateCalories=function(text){
 
   // 2. Per ogni parte, estraggo: quantità grammi/ml, numero porzioni, e cerco match nel FOOD_DB
   const FOOD_DB = window.FOOD_DB || [];
+
+  // Normalizzazione: rimuove accenti + porta a singolare per matching robusto
+  // (es. "spaghetti" → "spaghett", "fettine" → "fettin", "pomodori" → "pomodor")
+  const normWord = (w) => {
+    let n = w.toLowerCase()
+      .replace(/[àáâ]/g,'a').replace(/[éèê]/g,'e').replace(/[íì]/g,'i').replace(/[óòô]/g,'o').replace(/[úù]/g,'u')
+      .replace(/ç/g,'c');
+    // Stemming italiano semplice: rimuovi suffissi finali plurali/diminutivi più comuni
+    // "spaghetti"→"spaghett", "spaghetto"→"spaghett", "spaghetti"→"spaghett" (così matchano tra loro)
+    // "fettine"→"fettin", "fetta"→"fett", "fette"→"fett"
+    // Strategia: se finisce in vocale comune (a/e/i/o), rimuovo l'ultima lettera
+    if(n.length >= 4 && /[aeio]$/.test(n)) n = n.slice(0,-1);
+    return n;
+  };
+
+  // Normalizza intera stringa: parole separate, ognuna stemmata
+  const normStr = (s) => (s||'').split(/[\s()/,\-]+/).filter(w=>w.length>=2).map(normWord).join(' ');
+
   // Funzione di match: trova il miglior cibo nel DB per una stringa
   const matchFood = (str) => {
-    const s = str.toLowerCase().replace(/[àáâ]/g,'a').replace(/[éèê]/g,'e').replace(/[íì]/g,'i').replace(/[óòô]/g,'o').replace(/[úù]/g,'u');
+    const sNorm = normStr(str);
+    const sRaw = (str||'').toLowerCase();
     let best = null, bestScore = 0;
+
     for(const f of FOOD_DB){
-      const fname = f.name.toLowerCase().replace(/[àáâ]/g,'a').replace(/[éèê]/g,'e').replace(/[íì]/g,'i').replace(/[óòô]/g,'o').replace(/[úù]/g,'u');
-      // Score: quante parole significative del nome del cibo sono nella stringa utente
-      const fwords = fname.split(/[\s()/,]+/).filter(w=>w.length>=3);
+      const fNorm = normStr(f.name);
+      const fname = f.name.toLowerCase().split('(')[0].trim();
+
+      // Score 1: quante parole stemmate del nome del cibo sono presenti nella stringa stemmata
+      const fwords = fNorm.split(/\s+/).filter(w=>w.length>=3);
       let matched = 0, totalWords = fwords.length;
-      for(const w of fwords){ if(s.includes(w)) matched++; }
-      // Bonus: se la stringa CONTIENE il nome esatto del cibo
-      if(s.includes(fname.split('(')[0].trim())) matched += 3;
+      for(const w of fwords){
+        if(sNorm.includes(w)) matched++;
+      }
+
+      // Score 2: bonus se contiene esattamente la prima parte del nome (senza parentesi)
+      // Es. "ho mangiato pasta integrale" trova "Pasta integrale (peso crudo)"
+      if(sNorm.includes(normStr(fname))) matched += 3;
+
+      // Score 3: bonus se la prima parola del cibo è presente (parola "padrona": pasta, pollo, ecc.)
+      if(fwords[0] && sNorm.includes(fwords[0])) matched += 1;
+
       // Score normalizzato
-      const score = totalWords>0 ? matched / Math.max(1,totalWords) : 0;
-      if(score > bestScore && matched>=1){
+      const score = totalWords > 0 ? matched / Math.max(1, totalWords) : 0;
+      if(score > bestScore && matched >= 1){
         bestScore = score; best = f;
       }
     }
-    return bestScore >= 0.4 ? best : null;
+    return bestScore >= 0.35 ? best : null;
   };
 
   // Mappa quantità testuale → numero
@@ -3612,6 +3702,13 @@ window.cancelCheatPick=function(){window.cheatSimilarPick=null;render();}
 // FIX SGARRI: inserimento DB preciso (alternativa al testo libero)
 // Apre uno sheet che riusa l'UI di ricerca cibo dei pasti custom
 // ═══════════════════════════════════════════════════════════════
+// Banner guida tab Alimentazione: dismiss permanente
+window.hideDietGuide=function(){
+  if(!ST.p) return;
+  ST.p.dietGuideHidden=true;
+  save();
+};
+
 window.openCheatDbPicker=function(){
   ST.sheet='cheatDb';
   ST.sheetData={mode:'select',selectedFood:null,foodQuery:'',foodCat:null,grams:100};
@@ -4181,7 +4278,7 @@ window.TOUR_STEPS=[
   },
   {
     icon:'🥗',
-    title:'Tab "Consigli Nutrizionali"',
+    title:'Tab "Alimentazione"',
     body:'Il tuo piano alimentare giornaliero con kcal e macro target. Per ogni pasto vedi diverse opzioni — scegli quella che preferisci. Puoi personalizzare ogni pasto cliccando "✏️ Personalizza" se vuoi inserire i tuoi cibi.',
     color:'var(--ora)'
   },
@@ -4485,7 +4582,7 @@ window.renderSetup = function(){
   </div>
   <!-- PUNTO 16: cibi preferiti (opzionali) -->
   <span class="lbl" style="margin-bottom:8px;">🍽️ I TUOI PIATTI / CIBI PREFERITI (opzionale)</span>
-  <div style="font-size:11px;color:var(--mut);line-height:1.5;margin-bottom:10px;">Scrivi 2-3 piatti o cibi che ami davvero per ciascun pasto. Cercheremo di includerli nei consigli nutrizionali, mantenendo comunque il target calorico per il tuo obiettivo. Esempi: "pasta al pomodoro, bresaola, yogurt greco". Max 200 caratteri ciascuno.</div>
+  <div style="font-size:11px;color:var(--mut);line-height:1.5;margin-bottom:10px;">Scrivi 2-3 piatti o cibi che ami davvero per ciascun pasto. Cercheremo di includerli nel tuo menù, mantenendo comunque il target calorico per il tuo obiettivo. Esempi: "pasta al pomodoro, bresaola, yogurt greco". Max 200 caratteri ciascuno.</div>
   <span class="lbl" style="margin-bottom:4px;">🌅 COLAZIONE</span>
   <textarea id="iFavCol" maxlength="200" rows="2" placeholder="Es. cappuccino, cornetto, fette biscottate con marmellata" style="margin-bottom:10px;font-size:13px;"></textarea>
   <span class="lbl" style="margin-bottom:4px;">🍽️ PRANZO</span>
@@ -4797,65 +4894,89 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
   // ═══════════════════════════════════════════════════════════
   const todayBlock=`<div style="background:var(--card);border:1px solid var(--bord);border-radius:18px;padding:16px;margin-bottom:10px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-      <div style="font-size:11px;font-weight:700;color:var(--mut);letter-spacing:1.5px;">📊 OGGI IN NUMERI</div>
-      <div style="font-size:11px;color:var(--mut);">${now.toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})}</div>
+      <div style="font-size:12px;font-weight:700;color:var(--mut);letter-spacing:1.5px;">📊 OGGI IN NUMERI</div>
+      <div style="font-size:12px;color:var(--mut);">${now.toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})}</div>
     </div>
 
-    <!-- Riga 1: Kcal (stat grande) + Sport (stat grande) -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
-      <div onclick="ST.tab='diet';render()" style="background:var(--surf);border-radius:12px;padding:12px;cursor:pointer;border:1px solid ${excessK>0?'var(--red)':'var(--bord)'};">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;"><span style="font-size:16px;">🔥</span><span style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;">CALORIE</span></div>
-        <div class="bebas" style="font-size:22px;line-height:1;color:${excessK>0?'var(--red)':'var(--text)'};">${dLog.k||0}<span style="font-size:12px;color:var(--mut);">/${mac.kcal}</span></div>
-        <div style="background:var(--bg);border-radius:99px;height:5px;overflow:hidden;margin-top:6px;">
-          <div style="width:${calPct}%;height:5px;background:${excessK>0?'var(--red)':'var(--acc)'};"></div>
-        </div>
-        ${mac.extraKcal>0?`<div style="font-size:10px;color:var(--blu);font-weight:700;margin-top:4px;">+${mac.extraKcal} da sport</div>`:''}
+    <!-- CALORIE — card grande full-width -->
+    <div onclick="ST.tab='diet';render()" style="background:var(--surf);border-radius:14px;padding:16px;cursor:pointer;border:1.5px solid ${excessK>0?'var(--red)':'var(--bord)'};margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:24px;">🔥</span><span style="font-size:13px;color:var(--mut);font-weight:700;letter-spacing:1.5px;">CALORIE OGGI</span></div>
+        <div style="color:var(--mut);font-size:18px;">›</div>
       </div>
-      <div onclick="openActivitySheet()" style="background:var(--surf);border-radius:12px;padding:12px;cursor:pointer;border:1px solid ${todayActs.length>0?'var(--blu)':'var(--bord)'};">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;"><span style="font-size:16px;">🏃</span><span style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;">SPORT</span></div>
-        <div class="bebas" style="font-size:22px;line-height:1;color:${todayActs.length>0?'var(--blu)':'var(--mut)'};">${todayActs.length>0?actsKcal:'—'}${todayActs.length>0?'<span style="font-size:12px;color:var(--mut);">kcal</span>':''}</div>
-        <div style="font-size:11px;color:var(--mut);margin-top:6px;">${todayActs.length>0?`${todayActs.length} ${todayActs.length===1?'attività':'attività'} · ${actsMin} min`:'+ Tocca per tracciare'}</div>
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px;">
+        <div class="bebas" style="font-size:36px;line-height:1;color:${excessK>0?'var(--red)':'var(--text)'};">${dLog.k||0}</div>
+        <div style="font-size:14px;color:var(--mut);">/ ${mac.kcal} kcal</div>
+      </div>
+      <div style="background:var(--bg);border-radius:99px;height:8px;overflow:hidden;">
+        <div style="width:${calPct}%;height:8px;background:${excessK>0?'var(--red)':'var(--acc)'};border-radius:99px;transition:width .3s;"></div>
+      </div>
+      ${mac.extraKcal>0?`<div style="font-size:12px;color:var(--blu);font-weight:700;margin-top:8px;">+${mac.extraKcal} kcal extra da sport oggi</div>`:''}
+    </div>
+
+    <!-- SPORT -->
+    <div onclick="openActivitySheet()" style="background:var(--surf);border-radius:14px;padding:16px;cursor:pointer;border:1.5px solid ${todayActs.length>0?'var(--blu)':'var(--bord)'};margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:24px;">🏃</span><span style="font-size:13px;color:var(--mut);font-weight:700;letter-spacing:1.5px;">SPORT OUTDOOR</span></div>
+        <div style="color:var(--mut);font-size:18px;">›</div>
+      </div>
+      ${todayActs.length>0 ? `
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px;">
+          <div class="bebas" style="font-size:32px;line-height:1;color:var(--blu);">${actsKcal}</div>
+          <div style="font-size:14px;color:var(--mut);">kcal bruciate</div>
+        </div>
+        <div style="font-size:13px;color:var(--mut);">${todayActs.length} ${todayActs.length===1?'attività':'attività'} · ${actsMin} minuti totali</div>
+      ` : `
+        <div class="bebas" style="font-size:24px;line-height:1;color:var(--mut);margin-bottom:6px;">Nessuna attività</div>
+        <div style="font-size:14px;color:var(--blu);font-weight:700;">+ Tocca per tracciare un'attività</div>
+      `}
+    </div>
+
+    <!-- PASSI -->
+    <div style="background:var(--surf);border-radius:14px;padding:16px;border:1.5px solid ${stepsSaved?'var(--gre)':'var(--bord)'};margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:24px;">🚶</span><span style="font-size:13px;color:var(--mut);font-weight:700;letter-spacing:1.5px;">PASSI OGGI</span></div>
+        <div class="bebas" style="font-size:24px;color:${stepsSaved?'var(--gre)':'var(--text)'};">${stepsValue.toLocaleString('it-IT')}<span style="font-size:13px;color:var(--mut);"> / ${stepsGoal.toLocaleString('it-IT')}</span></div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <input type="number" id="nStep" value="${stepsValue||''}" placeholder="Inserisci passi di oggi" style="margin:0;font-size:15px;padding:14px;text-align:center;flex:1;min-height:50px;border-radius:10px;">
+        <button onclick="logSteps()" style="background:${stepsSaved?'var(--blu)':'var(--gre)'};color:#000;border:none;border-radius:10px;padding:14px 22px;font-size:15px;font-weight:700;cursor:pointer;flex-shrink:0;min-height:50px;min-width:64px;">${stepsSaved?'AGG.':'SALVA'}</button>
       </div>
     </div>
 
-    <!-- Riga 2: Passi / Acqua / Peso (3 stat con input inline) -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
-      <!-- Passi -->
-      <div style="background:var(--surf);border-radius:12px;padding:10px;border:1px solid ${stepsSaved?'var(--gre)':'var(--bord)'};">
-        <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px;"><span style="font-size:14px;">🚶</span><span style="font-size:9px;color:var(--mut);font-weight:700;letter-spacing:.5px;">PASSI</span></div>
-        <div class="bebas" style="font-size:16px;line-height:1;color:${stepsSaved?'var(--gre)':'var(--text)'};margin-bottom:6px;">${stepsValue>=1000?(stepsValue/1000).toFixed(1)+'k':stepsValue}</div>
-        <div style="display:flex;gap:3px;">
-          <input type="number" id="nStep" value="${stepsValue||''}" placeholder="0" style="margin:0;font-size:11px;padding:5px 4px;text-align:center;flex:1;min-width:0;">
-          <button onclick="logSteps()" style="background:${stepsSaved?'var(--blu)':'var(--gre)'};color:#000;border:none;border-radius:6px;padding:5px 7px;font-size:10px;font-weight:700;cursor:pointer;flex-shrink:0;">${stepsSaved?'OK':'+'}</button>
-        </div>
+    <!-- ACQUA -->
+    <div style="background:var(--surf);border-radius:14px;padding:16px;border:1.5px solid ${todayWater>0?'var(--blu)':'var(--bord)'};margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:24px;">💧</span><span style="font-size:13px;color:var(--mut);font-weight:700;letter-spacing:1.5px;">ACQUA</span></div>
+        <div class="bebas" style="font-size:24px;color:var(--blu);">${todayWater}<span style="font-size:13px;color:var(--mut);"> / ${waterGoal} bicchieri</span></div>
       </div>
-      <!-- Acqua -->
-      <div style="background:var(--surf);border-radius:12px;padding:10px;border:1px solid ${todayWater>0?'var(--blu)':'var(--bord)'};">
-        <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px;"><span style="font-size:14px;">💧</span><span style="font-size:9px;color:var(--mut);font-weight:700;letter-spacing:.5px;">ACQUA</span></div>
-        <div class="bebas" style="font-size:16px;line-height:1;color:var(--blu);margin-bottom:6px;">${todayWater}<span style="font-size:10px;color:var(--mut);">/${waterGoal}</span></div>
-        <div style="display:flex;gap:3px;">
-          <button onclick="logWater(-1)" style="flex:1;background:var(--bg);border:1px solid var(--bord);color:var(--mut);border-radius:6px;padding:5px;font-size:13px;font-weight:700;cursor:pointer;">−</button>
-          <button onclick="logWater(1)" style="flex:1;background:rgba(96,165,250,.15);border:1px solid var(--blu);color:var(--blu);border-radius:6px;padding:5px;font-size:13px;font-weight:700;cursor:pointer;">+</button>
-        </div>
-      </div>
-      <!-- Peso -->
-      <div style="background:var(--surf);border-radius:12px;padding:10px;border:1px solid ${weightSaved?'var(--gre)':'var(--bord)'};">
-        <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px;"><span style="font-size:14px;">⚖️</span><span style="font-size:9px;color:var(--mut);font-weight:700;letter-spacing:.5px;">PESO</span></div>
-        <div class="bebas" style="font-size:16px;line-height:1;color:${weightSaved?'var(--gre)':'var(--text)'};margin-bottom:6px;">${wEntry?wEntry.w:cW}<span style="font-size:10px;color:var(--mut);">kg</span></div>
-        <div style="display:flex;gap:3px;">
-          <input type="number" id="nW" value="${wEntry?wEntry.w:''}" placeholder="${cW}" step=".1" style="margin:0;font-size:11px;padding:5px 4px;text-align:center;flex:1;min-width:0;">
-          <button onclick="logWeight()" style="background:${weightSaved?'var(--blu)':'var(--gre)'};color:#000;border:none;border-radius:6px;padding:5px 7px;font-size:10px;font-weight:700;cursor:pointer;flex-shrink:0;">${weightSaved?'OK':'+'}</button>
-        </div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="logWater(-1)" style="flex:1;background:var(--bg);border:1.5px solid var(--bord);color:var(--mut);border-radius:10px;padding:14px;font-size:22px;font-weight:700;cursor:pointer;min-height:50px;">−</button>
+        <div style="flex:2;display:flex;align-items:center;justify-content:center;background:var(--bg);border-radius:10px;font-size:13px;color:var(--mut);font-weight:600;">${todayWater>=waterGoal?'🎯 Obiettivo!':todayWater>0?`${waterGoal-todayWater} ancora`:'Tocca + per aggiungere'}</div>
+        <button onclick="logWater(1)" style="flex:1;background:rgba(96,165,250,.2);border:1.5px solid var(--blu);color:var(--blu);border-radius:10px;padding:14px;font-size:22px;font-weight:700;cursor:pointer;min-height:50px;">+</button>
       </div>
     </div>
 
-    <!-- Riga 3: Sonno (slider full width) -->
-    <div style="background:var(--surf);border-radius:12px;padding:10px 12px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <div style="display:flex;align-items:center;gap:6px;"><span style="font-size:14px;">😴</span><span style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;">SONNO</span></div>
-        <div class="bebas" style="font-size:18px;color:var(--purp);" id="slpD">${ST.life[t2]?.sleep||7.5}<span style="font-size:10px;color:var(--mut);">h</span></div>
+    <!-- PESO -->
+    <div style="background:var(--surf);border-radius:14px;padding:16px;border:1.5px solid ${weightSaved?'var(--gre)':'var(--bord)'};margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:24px;">⚖️</span><span style="font-size:13px;color:var(--mut);font-weight:700;letter-spacing:1.5px;">PESO OGGI</span></div>
+        <div class="bebas" style="font-size:24px;color:${weightSaved?'var(--gre)':'var(--text)'};">${wEntry?wEntry.w:cW}<span style="font-size:13px;color:var(--mut);"> kg</span></div>
       </div>
-      <input type="range" min="4" max="12" step=".5" value="${ST.life[t2]?.sleep||7.5}" oninput="document.getElementById('slpD').innerHTML=this.value+'<span style=\'font-size:10px;color:var(--mut)\'>h</span>'" onchange="logSleep(this.value)" style="width:100%;margin:0;padding:0;">
+      <div style="display:flex;gap:8px;">
+        <input type="number" id="nW" value="${wEntry?wEntry.w:''}" placeholder="Es. ${cW}" step=".1" style="margin:0;font-size:15px;padding:14px;text-align:center;flex:1;min-height:50px;border-radius:10px;">
+        <button onclick="logWeight()" style="background:${weightSaved?'var(--blu)':'var(--gre)'};color:#000;border:none;border-radius:10px;padding:14px 22px;font-size:15px;font-weight:700;cursor:pointer;flex-shrink:0;min-height:50px;min-width:64px;">${weightSaved?'AGG.':'SALVA'}</button>
+      </div>
+    </div>
+
+    <!-- SONNO -->
+    <div style="background:var(--surf);border-radius:14px;padding:16px;border:1.5px solid var(--bord);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:24px;">😴</span><span style="font-size:13px;color:var(--mut);font-weight:700;letter-spacing:1.5px;">SONNO</span></div>
+        <div class="bebas" style="font-size:24px;color:var(--purp);" id="slpD">${ST.life[t2]?.sleep||7.5}<span style="font-size:13px;color:var(--mut);">h</span></div>
+      </div>
+      <input type="range" min="4" max="12" step=".5" value="${ST.life[t2]?.sleep||7.5}" oninput="document.getElementById('slpD').innerHTML=this.value+'<span style=\\'font-size:13px;color:var(--mut)\\'>h</span>'" onchange="logSleep(this.value)" style="width:100%;height:32px;margin:0;padding:0;cursor:pointer;">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--mut);margin-top:4px;"><span>4h</span><span>8h ideale</span><span>12h</span></div>
     </div>
   </div>`;
 
@@ -5185,7 +5306,33 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
   if(!dLog.cheatLog) dLog.cheatLog=[];
   const remK=Math.max(0,mac.kcal-dLog.k);
   const calPct=Math.min(100,(dLog.k/mac.kcal)*100);
+
+  // BANNER GUIDA dismissibile (mostrato solo se utente non l'ha chiuso)
+  const showGuide = !ST.p?.dietGuideHidden;
+
   return`
+  ${showGuide?`<div style="background:linear-gradient(135deg,rgba(197,241,53,.08),rgba(167,139,250,.04));border:1.5px solid var(--acc);border-radius:14px;padding:14px 16px;margin-bottom:12px;position:relative;">
+    <button onclick="hideDietGuide()" style="position:absolute;top:8px;right:8px;background:transparent;border:none;color:var(--mut);font-size:18px;cursor:pointer;width:28px;height:28px;line-height:1;border-radius:50%;" title="Non mostrare più">✕</button>
+    <div style="font-size:11px;font-weight:700;color:var(--acc);letter-spacing:1.5px;margin-bottom:10px;padding-right:24px;">📖 COME USARE QUESTO MENÙ</div>
+    <div style="display:grid;grid-template-columns:1fr;gap:8px;">
+      <div style="display:flex;gap:10px;align-items:flex-start;">
+        <div style="width:22px;height:22px;border-radius:50%;background:var(--acc);color:#000;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;">1</div>
+        <div style="font-size:13px;line-height:1.4;color:var(--text);"><strong>Scegli un'opzione</strong> per ogni pasto della giornata (puoi cambiarla con i pulsanti in alto della card)</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:flex-start;">
+        <div style="width:22px;height:22px;border-radius:50%;background:var(--acc);color:#000;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;">2</div>
+        <div style="font-size:13px;line-height:1.4;color:var(--text);"><strong>Mangia</strong> rispettando le grammature indicate (oppure tocca <span style="color:var(--purp);">💡 RICETTA</span> per le istruzioni)</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:flex-start;">
+        <div style="width:22px;height:22px;border-radius:50%;background:var(--acc);color:#000;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;">3</div>
+        <div style="font-size:13px;line-height:1.4;color:var(--text);">Tocca <strong style="color:var(--acc);">✓ FATTO</strong> dopo il pasto. Le calorie si scalano dal tuo bilancio</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:flex-start;">
+        <div style="width:22px;height:22px;border-radius:50%;background:var(--ora);color:#000;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;">+</div>
+        <div style="font-size:13px;line-height:1.4;color:var(--text);">Hai mangiato qualcosa fuori dieta? Usa <strong style="color:var(--ora);">SGARRO</strong> più sotto</div>
+      </div>
+    </div>
+  </div>`:''}
   ${isRestDay?`<div style="background:rgba(167,139,250,.08);border:1px solid var(--purp);border-radius:14px;padding:12px 14px;margin-bottom:12px;font-size:13px;color:var(--purp);font-weight:600;">💤 Giorno di riposo — niente pre-workout. Menù adattato con spuntino pomeridiano.</div>`:''}
   <div class="card card-hi">
     <div class="r" style="margin-bottom:14px;">
@@ -5878,7 +6025,7 @@ window.renderSettings = function(mac){
   <!-- ORARI PERSONALIZZATI -->
   <div class="card" style="border-color:var(--ora);">
     <div class="bebas" style="font-size:20px;color:var(--ora);margin-bottom:6px;">🕐 ORARI PERSONALIZZATI</div>
-    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:14px;">Imposta i TUOI orari di pasti e allenamento. I consigli nutrizionali e il piano si adattano: lo "spuntino delle 16" diventa "pre-workout" automaticamente nelle ore prima del tuo allenamento.</div>
+    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:14px;">Imposta i TUOI orari di pasti e allenamento. Il menù di alimentazione e il piano si adattano: lo "spuntino delle 16" diventa "pre-workout" automaticamente nelle ore prima del tuo allenamento.</div>
     <div class="g2">
       <div><span class="lbl">🌅 COLAZIONE</span><input type="time" id="tCol" value="${ST.p.times?.col||'07:00'}"></div>
       <div><span class="lbl">🍎 SPUNTINO MATTINA</span><input type="time" id="tSp1" value="${ST.p.times?.sp1||'10:30'}"></div>
@@ -6385,7 +6532,7 @@ window.render = function() {
   const NAV_ITEMS=[
     {id:'home',ic:'🏠',lbl:'Home'},
     {id:'work',ic:'🏋️',lbl:'Allenamento'},
-    {id:'diet',ic:'🥗',lbl:'Consigli Nutrizionali'},
+    {id:'diet',ic:'🥗',lbl:'Alimentazione'},
     {id:'body',ic:'📊',lbl:'Analisi & Progressi'},
     {id:'measures',ic:'📐',lbl:'Misure Corporee'},
     {id:'coach',ic:'🤖',lbl:'AI Coach'},
