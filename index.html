@@ -2429,28 +2429,145 @@ window.buildExerciseStats = function(wHistory) {
     .sort((a, b) => b.sessions - a.sessions);
 };
 // ─── FALLBACK LOCALE: usato SOLO se l'AI non risponde ───
+// ═══════════════════════════════════════════════════════════════
+// FIX SGARRI: parser locale potente che usa FOOD_DB (666 cibi)
+// Capisce: grammi ("150g pasta"), quantità ("2 birre"), porzioni
+// Splitta correttamente cibi multipli ("pizza, birra, gelato")
+// ═══════════════════════════════════════════════════════════════
 window.estimateCalories=function(text){
-  const lower=text.toLowerCase();
-  if(lower.match(/\b(niente|nessuno|saltato|non ho mangiato|digiuno|zero|nulla)\b/)){return{kcal:0,items:[{label:'Pasto saltato',kcal:0,qty:1}]};}
-  let multiplier=1;
-  for(const[word,mult] of Object.entries(QUANTITY_MAP)){
-    if(lower.includes(word)){if(mult===0) return{kcal:0,items:[{label:'Nessun cibo',kcal:0,qty:0}]};if(mult>multiplier) multiplier=mult;}
+  const lower=(text||'').toLowerCase().trim();
+  if(!lower) return {kcal:0,items:[]};
+
+  // Caso "saltato/digiuno"
+  if(lower.match(/\b(niente|nessuno|saltato|non ho mangiato|digiuno|nulla)\b/)){
+    return{kcal:0,items:[{label:'Pasto saltato',kcal:0,qty:1}]};
   }
-  const numMatch=lower.match(/\b([2-9]|1[0-9])\s+(pizza|birra|gelato|cornetto|bicchier)/);
-  if(numMatch) multiplier=Math.max(multiplier,parseInt(numMatch[1]));
-  const sorted=[...FOOD_LIST].sort((a,b)=>Math.max(...b.terms.map(t=>t.length))-Math.max(...a.terms.map(t=>t.length)));
-  const results=[];const usedLabels=new Set();
-  for(const food of sorted){
-    for(const term of food.terms){
-      if(lower.includes(term)&&!usedLabels.has(food.label)){results.push({label:food.label,kcal:food.kcal,qty:multiplier});usedLabels.add(food.label);break;}
+
+  // 1. Splitta su separatori naturali (virgole, "e", "+", ";", "con")
+  // Ma attenzione: "carbonara con pancetta" è un piatto unico — quindi NON splitto su "con" se è "X con Y" troppo corto
+  const rawParts = lower.split(/\s*(?:[,;]|\s\+\s|\bcon\b|\bpiu\b|\be\s)\s*/).map(p=>p.trim()).filter(p=>p.length>=2);
+  // Se splitto e una parte è troppo corta (meno di 3 char) probabilmente è un articolo come "un", "una" — riunisco col successivo
+  const parts = [];
+  for(let i=0;i<rawParts.length;i++){
+    const cur = rawParts[i];
+    if(cur.length<3 && i+1<rawParts.length){ parts.push(cur+' '+rawParts[i+1]); i++; }
+    else parts.push(cur);
+  }
+  if(parts.length===0) parts.push(lower);
+
+  // 2. Per ogni parte, estraggo: quantità grammi/ml, numero porzioni, e cerco match nel FOOD_DB
+  const FOOD_DB = window.FOOD_DB || [];
+  // Funzione di match: trova il miglior cibo nel DB per una stringa
+  const matchFood = (str) => {
+    const s = str.toLowerCase().replace(/[àáâ]/g,'a').replace(/[éèê]/g,'e').replace(/[íì]/g,'i').replace(/[óòô]/g,'o').replace(/[úù]/g,'u');
+    let best = null, bestScore = 0;
+    for(const f of FOOD_DB){
+      const fname = f.name.toLowerCase().replace(/[àáâ]/g,'a').replace(/[éèê]/g,'e').replace(/[íì]/g,'i').replace(/[óòô]/g,'o').replace(/[úù]/g,'u');
+      // Score: quante parole significative del nome del cibo sono nella stringa utente
+      const fwords = fname.split(/[\s()/,]+/).filter(w=>w.length>=3);
+      let matched = 0, totalWords = fwords.length;
+      for(const w of fwords){ if(s.includes(w)) matched++; }
+      // Bonus: se la stringa CONTIENE il nome esatto del cibo
+      if(s.includes(fname.split('(')[0].trim())) matched += 3;
+      // Score normalizzato
+      const score = totalWords>0 ? matched / Math.max(1,totalWords) : 0;
+      if(score > bestScore && matched>=1){
+        bestScore = score; best = f;
+      }
+    }
+    return bestScore >= 0.4 ? best : null;
+  };
+
+  // Mappa quantità testuale → numero
+  const QTY_WORDS = {
+    'mezzo':0.5,'mezza':0.5,'mezz':0.5,'metà':0.5,
+    'un':1,'uno':1,'una':1,
+    'due':2,'tre':3,'quattro':4,'cinque':5,'sei':6,'sette':7,'otto':8,'nove':9,'dieci':10,
+    'doppio':2,'doppia':2
+  };
+
+  const items = [];
+  let unknownAny = false;
+
+  for(const p of parts){
+    // 2a. Cerco grammi: "150g pasta", "50 g pollo", "200gr risotto"
+    const gMatch = p.match(/(\d+(?:[.,]\d+)?)\s*(?:g|gr|gram|grammi|kg|chili|chilo)\b/i);
+    let grams = null;
+    if(gMatch){
+      grams = parseFloat(gMatch[1].replace(',','.'));
+      if(p.match(/\b(?:kg|chili|chilo)\b/i)) grams *= 1000;
+    }
+    // 2b. Cerco ml: "300ml latte", "una lattina di"
+    const mlMatch = p.match(/(\d+(?:[.,]\d+)?)\s*(?:ml|millilitri|cl|centilitri|l|litri)\b/i);
+    let ml = null;
+    if(mlMatch){
+      ml = parseFloat(mlMatch[1].replace(',','.'));
+      if(p.match(/\b(?:cl|centilitri)\b/i)) ml *= 10;
+      if(p.match(/\b(?:l|litri)\b/i)) ml *= 1000;
+    }
+    // 2c. Cerco quantità numerica esplicita: "2 pizze", "3 birre"
+    let qty = 1;
+    const numMatch = p.match(/^(\d+)\s+/);
+    if(numMatch) qty = parseInt(numMatch[1]);
+    else {
+      for(const [w,n] of Object.entries(QTY_WORDS)){
+        if(new RegExp('\\b'+w+'\\b','i').test(p)){ qty = Math.max(qty,n); break; }
+      }
+    }
+
+    // 3. Cerco match nel FOOD_DB
+    const food = matchFood(p);
+    if(food){
+      let portionKcal = food.kcal; // kcal per 100g (stato standard nel DB)
+      let label = food.name;
+      // Se ho grammi specifici → calcolo proporzionale (FOOD_DB è in kcal/100g)
+      if(grams && grams > 0){
+        portionKcal = Math.round((food.kcal * grams) / 100);
+        label = `${food.name} (${grams}g)`;
+        items.push({label, kcal:portionKcal, qty:1, foodId:food.id});
+      } else if(ml && ml > 0 && ['bevande','bar'].includes(food.cat)){
+        // Per bevande, ml ≈ g
+        portionKcal = Math.round((food.kcal * ml) / 100);
+        label = `${food.name} (${ml}ml)`;
+        items.push({label, kcal:portionKcal, qty:1, foodId:food.id});
+      } else {
+        // Nessuna grammatura: porzione standard 100g per default,
+        // ma per cibi pronti/pizze/dolci ecc. uso il valore "per porzione" = kcal*1
+        // (ho strutturato i nuovi cibi con kcal "per porzione" implicita: pizza intera, gelato cono ecc.)
+        const isPortionFood = ['pizze','dolci','gelati','fast_food','snack','bar','piatti_pronti'].includes(food.cat);
+        if(isPortionFood){
+          // Il valore in DB è già per porzione standard
+          items.push({label:food.name, kcal:food.kcal, qty});
+        } else {
+          // Default 100g (assunzione standard)
+          items.push({label:food.name+' (~100g)', kcal:food.kcal, qty});
+        }
+      }
+    } else {
+      // Cibo non riconosciuto. Provo con FOOD_LIST legacy come fallback finale
+      const FL = window.FOOD_LIST || [];
+      let legacyMatch = null;
+      for(const f of FL){
+        for(const term of (f.terms||[])){
+          if(p.includes(term)){ legacyMatch = f; break; }
+        }
+        if(legacyMatch) break;
+      }
+      if(legacyMatch){
+        items.push({label:legacyMatch.label, kcal:legacyMatch.kcal, qty});
+      } else {
+        // Ultimo recourse: stima generica basata sul contesto
+        // Se grammi specificati, uso 1.5 kcal/g (densità media cibo cotto)
+        if(grams) items.push({label:`Cibo non riconosciuto (${grams}g, stima)`, kcal:Math.round(grams*1.5), qty:1, unknown:true});
+        else if(ml) items.push({label:`Bevanda non riconosciuta (${ml}ml, stima)`, kcal:Math.round(ml*0.4), qty:1, unknown:true});
+        else { items.push({label:`"${p}" (stima)`, kcal:300, qty, unknown:true}); }
+        unknownAny = true;
+      }
     }
   }
-  if(results.length===0){
-    if(lower.match(/\b(cena|pranzo|colazione|pasto|mangiato)\b/)) return{kcal:Math.round(600*multiplier),items:[{label:'Pasto generico',kcal:600,qty:multiplier}],unknown:true};
-    return{kcal:Math.round(400*multiplier),items:[{label:'Alimento non riconosciuto',kcal:400,qty:multiplier}],unknown:true};
-  }
-  const totalKcal=Math.round(results.reduce((s,r)=>s+r.kcal*r.qty,0));
-  return{kcal:totalKcal,items:results};
+
+  const totalKcal = Math.round(items.reduce((s,r)=>s+(r.kcal||0)*(r.qty||1), 0));
+  return { kcal:totalKcal, items, unknown:unknownAny };
 }
 
 // ─── CACHE GLOBALE AI (cibi / dieta / esercizi) ─────────────
@@ -2485,21 +2602,31 @@ window.aiEstimateFood=async function(text){
   await loadAiCache();
   if(window.AI_CACHE.food[key]) return window.AI_CACHE.food[key];
 
-  // Quick local check per casi banalissimi (saltato/digiuno) — non serve AI
+  // Quick local check per casi banali (saltato/digiuno) — non serve AI
   const lower=text.toLowerCase();
   if(lower.match(/\b(niente|nessuno|saltato|non ho mangiato|digiuno|nulla)\b/)) return{items:[{label:'Pasto saltato',kcal:0,qty:1}],total:0,skipped:true};
 
+  // FIX SGARRI: il parser locale ora è MOLTO potente (usa FOOD_DB di 666 cibi + parsing grammi)
+  // Lo uso come PRIMARIO. Solo se trova "unknown" provo l'AI come miglioramento.
+  const local = estimateCalories(text);
+  // Se il parser locale ha trovato tutto (nessun item unknown) → uso il suo risultato direttamente. Risposta istantanea.
+  if(local.items?.length>0 && !local.unknown){
+    const result = {items: local.items, total: local.kcal};
+    window.AI_CACHE.food[key] = result;
+    saveAiCache();
+    return result;
+  }
+  // Se invece c'è almeno un item unknown, provo l'AI per migliorare
   const sys=`Sei un nutrizionista italiano esperto. L'utente descrive uno o più cibi/sgarri in italiano colloquiale. Estrai OGNI cibo separatamente con la sua quantità reale e calorie REALI da banche dati alimentari italiane (CREA/INRAN, USDA). Considera il modo italiano di mangiare (porzioni reali da ristorante/casa).
 RISPONDI SOLO con JSON valido in questo formato esatto, senza testo extra, senza markdown, senza \`\`\`:
 {"items":[{"label":"Nome cibo (porzione)","kcal":NUMERO,"qty":NUMERO,"unit":"porzione|g|ml|pezzo|bicchiere"}],"similar":[{"label":"Cibo simile 1","kcal":NUMERO},{"label":"Cibo simile 2","kcal":NUMERO},{"label":"Cibo simile 3","kcal":NUMERO}],"unknown":false}
 Regole:
-- "kcal" = calorie PER UNA singola unità (porzione/pezzo). Il totale viene calcolato moltiplicando per qty.
-- Se l'utente specifica grammi (es. "150g pasta") usa unit:"g" e kcal = kcal per quei grammi totali, qty=1.
-- Se l'utente dice "due pizze", crea 1 item con qty:2.
+- "kcal" = calorie TOTALI per quell'item (kcal × qty viene fatto dopo). Se utente dice "150g pasta", calcola kcal di 150g e metti qty:1.
+- Se l'utente dice "due pizze", crea 1 item con qty:2 e kcal di UNA pizza.
 - Se l'utente elenca più cibi diversi (es. "pizza e birra"), crea più items.
-- "similar" SOLO se NON sei sicuro al 100% di cosa l'utente intenda (max 4 alternative plausibili). Altrimenti similar:[].
-- "unknown":true SOLO se davvero non riesci a interpretare. In tal caso popola "similar" con i 3-4 cibi più plausibili.
-- Calorie realistiche: pizza margherita intera ~800kcal, birra media ~200kcal, piatto pasta carbonara ~700kcal, tiramisù porzione ~450kcal, McMenu medio ~1100kcal.
+- "similar" SOLO se NON sei sicuro al 100%. Altrimenti similar:[].
+- "unknown":true SOLO se davvero non riesci a interpretare. In tal caso popola "similar" con 3-4 cibi più plausibili.
+- Calorie realistiche: pizza margherita intera ~800kcal, birra media ~200kcal, piatto pasta carbonara ~700kcal, tiramisù porzione ~450kcal, fritto misto pesce 100g ~250kcal.
 - NIENTE testo fuori dal JSON.`;
 
   try{
@@ -2522,14 +2649,16 @@ Regole:
     if(!parsed.items) parsed.items=[];
     parsed.total=parsed.items.reduce((s,it)=>s+(Number(it.kcal)||0)*(Number(it.qty)||1),0);
     parsed.total=Math.round(parsed.total);
-    // Salva in cache
-    window.AI_CACHE.food[key]=parsed;
-    saveAiCache();
+    // Salva in cache solo se AI è sicura (no unknown)
+    if(!parsed.unknown){
+      window.AI_CACHE.food[key]=parsed;
+      saveAiCache();
+    }
     return parsed;
   }catch(e){
-    // Fallback al dizionario locale
-    const local=estimateCalories(text);
-    return{items:local.items||[],total:local.kcal,unknown:!!local.unknown,fallback:true};
+    // AI non disponibile → uso comunque il risultato locale (anche se unknown)
+    console.warn('AI sgarri non disponibile, uso parser locale:', e?.message);
+    return{items:local.items||[], total:local.kcal, unknown:!!local.unknown, fallback:true};
   }
 }
 // ── CONSIGLI NUTRIZIONALI: percentuali calibrate per somma totale = 100% delle kcal target ──
@@ -3275,8 +3404,40 @@ window.applyCheatToLog=function(txt,items,total){
   ST.cheatDebt=1;
   if(el('cheatInput'))el('cheatInput').value='';
   window.cheatSimilarPick=null;
+  // FIX SGARRI: feedback toast con impatto sul bilancio del giorno
+  showCheatToast(totalK);
   save();
 }
+
+// Toast di feedback dopo aver salvato uno sgarro
+window.showCheatToast=function(addedKcal){
+  // Calcola consumo totale aggiornato
+  const dLog=ST.nutri[currentDateStr]||{k:0};
+  // Per stimare il target serve macros corrente
+  let targetK=2000; // fallback
+  try{
+    if(ST.p && AU.profile){
+      const sx=AU.profile.sx||'m';
+      const cW=ST.h.length?ST.h[ST.h.length-1].w:70;
+      const an=analyze(ST.h,ST.p);
+      const sess=ST.p.sessions!=null?ST.p.sessions:3;
+      const extraK=getActivitiesKcal?(getActivitiesKcal(currentDateStr)):0;
+      const m=calcMacros(cW,AU.profile.ht||170,AU.profile.ag||30,sx,ST.p,sess,an,extraK);
+      targetK=m.kcal;
+    }
+  }catch(e){}
+  const remaining=targetK-dLog.k;
+  // Crea toast temporaneo
+  const existing=document.getElementById('cheatToast');
+  if(existing) existing.remove();
+  const toast=document.createElement('div');
+  toast.id='cheatToast';
+  const isOver=dLog.k>targetK;
+  toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:200;background:'+(isOver?'#ef4444':'#22c55e')+';color:#fff;padding:14px 20px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.4);font-size:13px;font-weight:600;max-width:90vw;text-align:center;line-height:1.5;';
+  toast.innerHTML=`✅ Sgarro registrato: <strong>+${addedKcal} kcal</strong><br><span style="font-size:11px;opacity:.9;">Oggi: ${dLog.k}/${targetK} kcal · ${isOver?'+'+(dLog.k-targetK)+' eccesso':remaining+' rimaste'}</span>`;
+  document.body.appendChild(toast);
+  setTimeout(()=>{toast.style.opacity='0';toast.style.transition='opacity .4s';setTimeout(()=>toast.remove(),400);},3500);
+};
 window.pickSimilarFood=function(idx){
   if(!window.cheatSimilarPick) return;
   const sim=window.cheatSimilarPick.similar[idx];
@@ -3304,6 +3465,93 @@ window.useFallbackFood=function(){
   applyCheatToLog(window.cheatSimilarPick.text,items,total);
 }
 window.cancelCheatPick=function(){window.cheatSimilarPick=null;render();}
+
+// ═══════════════════════════════════════════════════════════════
+// FIX SGARRI: inserimento DB preciso (alternativa al testo libero)
+// Apre uno sheet che riusa l'UI di ricerca cibo dei pasti custom
+// ═══════════════════════════════════════════════════════════════
+window.openCheatDbPicker=function(){
+  ST.sheet='cheatDb';
+  ST.sheetData={mode:'select',selectedFood:null,foodQuery:'',foodCat:null,grams:100};
+  render();
+};
+window.selectCheatFoodFromDb=function(foodId){
+  if(!ST.sheetData) return;
+  const f=window.foodById?(window.foodById(foodId)):window.FOOD_DB?.find(x=>x.id===foodId);
+  if(!f) return;
+  ST.sheetData.selectedFood=f;
+  ST.sheetData.grams=100;
+  // Per cibi "porzione" (pizze, dolci, ecc.) il valore è già per porzione
+  const isPortionFood=['pizze','dolci','gelati','fast_food','snack','bar','piatti_pronti'].includes(f.cat);
+  if(isPortionFood) ST.sheetData.grams=null; // = 1 porzione
+  render();
+  setTimeout(()=>{const g=document.getElementById('cheatGrams');if(g){g.focus();g.select();}},50);
+};
+window.confirmCheatFromDb=function(){
+  if(!ST.sheetData||!ST.sheetData.selectedFood) return;
+  const f=ST.sheetData.selectedFood;
+  const isPortionFood=['pizze','dolci','gelati','fast_food','snack','bar','piatti_pronti'].includes(f.cat);
+  let kcal,label,grams;
+  if(isPortionFood){
+    // 1 porzione = valore DB
+    const qty=parseInt(document.getElementById('cheatQty')?.value||1);
+    if(isNaN(qty)||qty<1||qty>20) return alert('Quantità non valida (1-20)');
+    kcal=Math.round(f.kcal*qty);
+    label=qty>1?`${qty}× ${f.name}`:f.name;
+    grams=null;
+  } else {
+    grams=parseInt(document.getElementById('cheatGrams')?.value||0);
+    if(isNaN(grams)||grams<1||grams>5000) return alert('Grammi non validi (1-5000)');
+    kcal=Math.round((f.kcal*grams)/100);
+    label=`${f.name} (${grams}g)`;
+  }
+  // Aggiungi al log sgarri (riusa applyCheatToLog)
+  applyCheatToLog(label, [{label,kcal,qty:1,foodId:f.id}], kcal);
+  ST.sheet=null;
+  ST.sheetData=null;
+};
+window.updateCheatFoodQuery=function(val){
+  if(!ST.sheetData) return;
+  ST.sheetData.foodQuery=(val||'').slice(0,50);
+  // Render parziale: aggiorno solo il container risultati
+  const c=document.getElementById('cheatDbList');
+  if(!c){render();return;}
+  c.innerHTML=_buildCheatDbListHtml();
+  // Mantieni focus
+  requestAnimationFrame(()=>{const i=document.getElementById('cheatDbSearch');if(i)i.focus();});
+};
+window.setCheatFoodCat=function(cat){
+  if(!ST.sheetData) return;
+  ST.sheetData.foodCat=(ST.sheetData.foodCat===cat)?null:cat;
+  render();
+};
+window._buildCheatDbListHtml=function(){
+  if(!ST.sheetData) return '';
+  const q=(ST.sheetData.foodQuery||'').trim();
+  const cat=ST.sheetData.foodCat;
+  let results=[];
+  if(q.length>=2){
+    results=window.foodSearch(q,30);
+    if(cat) results=results.filter(f=>f.cat===cat);
+  } else if(cat){
+    results=window.foodsByCat(cat).slice(0,30);
+  }
+  if(results.length===0){
+    if(q.length>=2) return `<div style="text-align:center;padding:20px;font-size:12px;color:var(--mut);">Nessun cibo trovato per "${escapeHtml(q)}".<br>Usa il campo "veloce" per testo libero.</div>`;
+    if(cat) return `<div style="text-align:center;padding:14px;font-size:12px;color:var(--mut);">Nessun cibo nella categoria.</div>`;
+    return `<div style="text-align:center;padding:14px;font-size:11px;color:var(--mut);line-height:1.5;">💡 Digita 2+ lettere o scegli una categoria per cercare tra ${(window.FOOD_DB||[]).length} cibi.</div>`;
+  }
+  return results.map(f=>{
+    const c=window.FOOD_CATS?.find(x=>x.id===f.cat);
+    return `<div onclick="selectCheatFoodFromDb('${f.id}')" style="padding:10px 12px;background:var(--surf);border:1px solid var(--bord);border-radius:10px;margin-bottom:5px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:600;color:var(--text);line-height:1.3;">${escapeHtml(f.name)}</div>
+        <div style="font-size:10px;color:var(--mut);">${c?c.emo:''} ${c?c.lbl:f.cat} · ${f.kcal} kcal/100g</div>
+      </div>
+      <div style="color:var(--purp);font-size:18px;flex-shrink:0;">›</div>
+    </div>`;
+  }).join('');
+};
 window.removeCheatEntry=function(idx){
   if(!confirm('Annullare questo sgarro?')) return;
   const day=ST.nutri[currentDateStr];if(!day||!day.cheatLog) return;
@@ -4836,9 +5084,15 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
         </div>
       </div>
     `:`
-      <textarea id="cheatInput" rows="2" placeholder="Es. 'pizza diavola, due birre e tiramisù' oppure 'ho saltato la cena'" ${window.cheatLoading?'disabled':''}></textarea>
-      <button class="btn-s btn-ora" style="width:100%;padding:13px;font-size:17px;${window.cheatLoading?'opacity:.6;pointer-events:none;':''}" onclick="logCheat()">${window.cheatLoading?'🔍 STO CERCANDO IL CIBO...':'🧠 ANALIZZA CON AI'}</button>
-      ${window.cheatLoading?`<div style="text-align:center;font-size:11px;color:var(--mut);margin-top:8px;">L'AI sta consultando le banche dati nutrizionali...</div>`:''}
+      <textarea id="cheatInput" rows="2" placeholder="Es. '50g fritto misto', '2 fette pizza', 'pizza diavola e una birra'" ${window.cheatLoading?'disabled':''}></textarea>
+      <div style="display:flex;gap:6px;margin-top:8px;">
+        <button class="btn-s btn-ora" style="flex:1;padding:12px;font-size:14px;font-weight:700;${window.cheatLoading?'opacity:.6;pointer-events:none;':''}" onclick="logCheat()">${window.cheatLoading?'🔍 ANALIZZO...':'⚡ INSERISCI VELOCE'}</button>
+        <button class="btn-s" style="flex:1;padding:12px;font-size:14px;font-weight:700;background:var(--surf);color:var(--purp);border:1.5px solid var(--purp);" onclick="openCheatDbPicker()">🔍 SCEGLI DA DB</button>
+      </div>
+      <div style="font-size:11px;color:var(--mut);margin-top:8px;line-height:1.5;">
+        <strong>Veloce</strong>: scrivi quello che hai mangiato in italiano (con grammi se sai). <strong>DB</strong>: scegli il cibo esatto e i grammi precisi tra 666 alimenti italiani.
+      </div>
+      ${window.cheatLoading?`<div style="text-align:center;font-size:11px;color:var(--mut);margin-top:8px;">Riconoscimento in corso...</div>`:''}
     `}
     ${dLog.cheatLog.length?`<div style="margin-top:14px;">
       <div style="font-size:11px;color:var(--ora);font-weight:700;letter-spacing:1px;margin-bottom:8px;">📌 SGARRI DI OGGI (${dLog.cheatLog.length})</div>
@@ -5668,6 +5922,63 @@ window.render = function() {
         <button class="btn" style="flex:1;padding:12px;" onclick="saveCustomMeal()">SALVA</button>
       </div>
       <div style="font-size:10px;color:var(--mut);text-align:center;margin-top:10px;line-height:1.4;">💡 Se lasci vuoto il pasto e salvi, torni ai consigli automatici.</div>
+    </div></div>`;
+  })():
+  // FIX SGARRI: sheet inserimento cibo da DB (alternativa al testo libero)
+  ST.sheet==='cheatDb'&&ST.sheetData?(()=>{
+    const d=ST.sheetData;
+    if(!d.selectedFood){
+      // Schermata 1: ricerca cibo
+      return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div>
+        <div class="bebas" style="font-size:22px;margin-bottom:4px;">🔍 SCEGLI DAL DB</div>
+        <div style="font-size:12px;color:var(--mut);margin-bottom:12px;line-height:1.5;">Cerca tra ${(window.FOOD_DB||[]).length} cibi italiani con valori nutrizionali precisi.</div>
+        <input id="cheatDbSearch" type="text" maxlength="50" value="${escapeHtml(d.foodQuery||'')}" placeholder="🔍 Cerca cibo (es. fritto misto, pizza, gelato...)" oninput="updateCheatFoodQuery(this.value)" style="margin-bottom:8px;font-size:14px;padding:10px;">
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;">
+          ${(window.FOOD_CATS||[]).map(c=>`<button class="btn-s" style="font-size:10px;padding:4px 8px;background:${d.foodCat===c.id?'var(--purp)':'var(--surf)'};color:${d.foodCat===c.id?'#fff':'var(--mut)'};border:1px solid ${d.foodCat===c.id?'var(--purp)':'var(--bord)'};" onclick="setCheatFoodCat('${c.id}')">${c.emo} ${c.short||c.lbl}</button>`).join('')}
+        </div>
+        <div id="cheatDbList" style="max-height:50vh;overflow-y:auto;">${_buildCheatDbListHtml()}</div>
+        <button class="btn btn-action" style="margin-top:12px;width:100%;padding:12px;" onclick="closeSheet()">ANNULLA</button>
+      </div></div>`;
+    }
+    // Schermata 2: imposta grammi/quantità
+    const f=d.selectedFood;
+    const isPortionFood=['pizze','dolci','gelati','fast_food','snack','bar','piatti_pronti'].includes(f.cat);
+    const grams=d.grams||100;
+    const previewKcal=isPortionFood?f.kcal:Math.round((f.kcal*grams)/100);
+    return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+        <div style="font-size:36px;">${(window.FOOD_CATS||[]).find(c=>c.id===f.cat)?.emo||'🍴'}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="bebas" style="font-size:20px;line-height:1.1;">${escapeHtml(f.name)}</div>
+          <div style="font-size:11px;color:var(--mut);">${f.kcal} kcal${isPortionFood?' (per porzione standard)':'/100g'} · P:${f.p||0}g · C:${f.c||0}g · F:${f.f||0}g</div>
+        </div>
+      </div>
+      ${isPortionFood ? `
+        <!-- Cibi per porzione: chiedi quante porzioni -->
+        <div style="background:rgba(255,104,53,.06);border:1.5px solid var(--ora);border-radius:12px;padding:14px;margin-bottom:10px;">
+          <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:10px;">QUANTE PORZIONI?</div>
+          <div style="display:grid;grid-template-columns:1fr 100px;gap:8px;margin-bottom:8px;">
+            <input id="cheatQty" type="number" min="1" max="20" value="1" style="margin:0;font-size:14px;padding:10px;text-align:center;" oninput="document.getElementById('cheatPreviewK').textContent=Math.round(${f.kcal}*(parseInt(this.value)||1))+' kcal'">
+            <div style="display:flex;align-items:center;justify-content:center;background:var(--bg);border-radius:8px;padding:8px;font-size:13px;color:var(--ora);font-weight:700;"><span id="cheatPreviewK">${previewKcal} kcal</span></div>
+          </div>
+        </div>
+      ` : `
+        <!-- Cibi a peso: chiedi grammi -->
+        <div style="background:rgba(167,139,250,.06);border:1.5px solid var(--purp);border-radius:12px;padding:14px;margin-bottom:10px;">
+          <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:10px;">GRAMMI MANGIATI</div>
+          <div style="display:grid;grid-template-columns:1fr 100px;gap:8px;margin-bottom:8px;">
+            <input id="cheatGrams" type="number" min="1" max="5000" value="${grams}" style="margin:0;font-size:14px;padding:10px;text-align:center;" oninput="document.getElementById('cheatPreviewK').textContent=Math.round(${f.kcal}*(parseInt(this.value)||0)/100)+' kcal'">
+            <div style="display:flex;align-items:center;justify-content:center;background:var(--bg);border-radius:8px;padding:8px;font-size:13px;color:var(--purp);font-weight:700;"><span id="cheatPreviewK">${previewKcal} kcal</span></div>
+          </div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap;">
+            ${[50,100,150,200,250,300].map(g=>`<button class="btn-s" style="font-size:11px;padding:5px 10px;background:var(--surf);border:1px solid var(--bord);color:var(--text);" onclick="document.getElementById('cheatGrams').value=${g};document.getElementById('cheatPreviewK').textContent=Math.round(${f.kcal}*${g}/100)+' kcal'">${g}g</button>`).join('')}
+          </div>
+        </div>
+      `}
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-action" style="flex:1;padding:12px;" onclick="ST.sheetData.selectedFood=null;render()">← Cambia cibo</button>
+        <button class="btn" style="flex:2;padding:12px;background:var(--ora);color:#fff;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;" onclick="confirmCheatFromDb()">✓ AGGIUNGI</button>
+      </div>
     </div></div>`;
   })():
   // FIX 2: sheet nuova attività sport
