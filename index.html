@@ -2761,14 +2761,156 @@ window.buildMeals=function(macros,intol=[],sex='m',isRestDay=false,diet='omnivor
     if(cm && cm.length>0) return cm.reduce((s,i)=>s+(i.kcal||0),0);
     return fallbackKcal;
   };
+  // TURNO 2: rotazione opzioni in base al giorno per varietà giornaliera
+  // L'utente vede ogni giorno una "prima opzione" diversa, ma può scorrere tutte le altre
+  const dayOfYear = (()=>{const d=new Date();const start=new Date(d.getFullYear(),0,0);return Math.floor((d-start)/86400000);})();
+  const rotate = (arr) => {
+    if(!arr || arr.length<=1) return arr;
+    const k = dayOfYear % arr.length;
+    return [...arr.slice(k), ...arr.slice(0,k)];
+  };
   return[
-    {id:'col',pct:PCT.col,n:`🌅 COLAZIONE  ${T.col}`,kcal:kCol,actualKcal:getActualKcal('col',kCol),opts:mkOpts('col',colOpts),fav:favs?.col||'',isCustom:!!customMeals.col?.length},
-    {id:'sp1',pct:PCT.sp1,n:`🍎 SPUNTINO  ${T.sp1}`,kcal:kSp1,actualKcal:getActualKcal('sp1',kSp1),opts:mkOpts('sp1',sp1Opts),isCustom:!!customMeals.sp1?.length},
-    {id:'pra',pct:PCT.pra,n:`🍽️ PRANZO  ${T.pra}`,kcal:kPra,actualKcal:getActualKcal('pra',kPra),opts:mkOpts('pra',praOpts),fav:favs?.pra||'',isCustom:!!customMeals.pra?.length},
-    {...sp2,actualKcal:getActualKcal('sp2',sp2.kcal),opts:mkOpts('sp2',sp2.opts),isCustom:!!customMeals.sp2?.length},
-    {id:'cen',pct:PCT.cen,n:`🌙 CENA  ${T.cen}`,kcal:kCen,actualKcal:getActualKcal('cen',kCen),opts:mkOpts('cen',cenOpts),fav:favs?.cen||'',isCustom:!!customMeals.cen?.length},
+    {id:'col',pct:PCT.col,n:`🌅 COLAZIONE  ${T.col}`,kcal:kCol,actualKcal:getActualKcal('col',kCol),opts:mkOpts('col',rotate(colOpts)),fav:favs?.col||'',isCustom:!!customMeals.col?.length},
+    {id:'sp1',pct:PCT.sp1,n:`🍎 SPUNTINO  ${T.sp1}`,kcal:kSp1,actualKcal:getActualKcal('sp1',kSp1),opts:mkOpts('sp1',rotate(sp1Opts)),isCustom:!!customMeals.sp1?.length},
+    {id:'pra',pct:PCT.pra,n:`🍽️ PRANZO  ${T.pra}`,kcal:kPra,actualKcal:getActualKcal('pra',kPra),opts:mkOpts('pra',rotate(praOpts)),fav:favs?.pra||'',isCustom:!!customMeals.pra?.length},
+    {...sp2,actualKcal:getActualKcal('sp2',sp2.kcal),opts:mkOpts('sp2',rotate(sp2.opts)),isCustom:!!customMeals.sp2?.length},
+    {id:'cen',pct:PCT.cen,n:`🌙 CENA  ${T.cen}`,kcal:kCen,actualKcal:getActualKcal('cen',kCen),opts:mkOpts('cen',rotate(cenOpts)),fav:favs?.cen||'',isCustom:!!customMeals.cen?.length},
   ];
 }
+// ═══════════════════════════════════════════════════════════════
+// TURNO 3 — DB RICETTE: 30 ricette italiane sane con istruzioni brevi
+// Ogni ricetta ha keywords usate per matching automatico con le opzioni pasto.
+// Quando l'utente tocca 💡 sull'opzione "🍗 Pollo + Riso", trova la ricetta
+// "pollo_riso_padella" o simile.
+// ═══════════════════════════════════════════════════════════════
+window.RECIPE_DB=[
+  // ─── COLAZIONI ───
+  {id:'col_yogurt_avena',k:['yogurt','avena'],t:'🥣 Bowl Yogurt & Avena',time:'5 min',
+    desc:'Colazione veloce ricca di proteine e fibre.',
+    steps:['In una ciotola versa lo yogurt greco 0%','Aggiungi i fiocchi d\'avena, mescolando per ammorbidirli','Spezzetta sopra le mandorle (o aggiungi 1 frutto se intolleranza)','Completa con caffè o tè verde caldo']},
+  {id:'col_proteica_classica',k:['ricotta','fiocchi di latte','proteica'],t:'🧀 Colazione Proteica Classica',time:'4 min',
+    desc:'Ideale per giorni di allenamento, proteine pulite.',
+    steps:['Pesa la ricotta o i fiocchi di latte 0% in una ciotola','Tosta la fetta di pane integrale','Spezzetta il cioccolato fondente 85% sopra ricotta','Servi con caffè amaro per attivare il metabolismo']},
+  {id:'col_uova_toast',k:['uova','toast','strapazzate'],t:'🍳 Uova Strapazzate & Toast',time:'7 min',
+    desc:'Colazione salata ricca di proteine biologiche.',
+    steps:['Sbatti 2 uova in una ciotola con un pizzico di sale','Scalda una padella antiaderente senza grassi (o pochissimo olio)','Versa le uova e mescola continuamente per 2 minuti','Tosta il pane integrale, servi con frutto e caffè']},
+  {id:'col_shaker',k:['shaker','whey','proteica con shaker'],t:'🥛 Colazione con Shaker',time:'2 min',
+    desc:'Massima velocità, ottima per chi va di corsa.',
+    steps:['Riempi lo shaker con 250ml acqua fredda','Aggiungi 30g whey/isolate gusto a scelta','Agita bene per 30 secondi','Tosta il pane integrale, completa con caffè e cioccolato fondente']},
+  {id:'col_vegana',k:['vegana','soia','plant'],t:'🌱 Colazione Plant-Based',time:'5 min',
+    desc:'Vegana ad alto potere saziante.',
+    steps:['Versa lo yogurt di soia in una ciotola','Aggiungi avena (o riso soffiato se senza glutine)','Affetta la banana sopra','Completa con caffè o tè verde']},
+
+  // ─── PRANZI ───
+  {id:'pra_pollo_riso',k:['pollo','riso'],t:'🍗 Pollo + Riso in Padella',time:'25 min',
+    desc:'Il pasto post-allenamento per eccellenza.',
+    steps:['Cuoci il riso in acqua bollente salata (12-13 min)','Taglia il petto di pollo a strisce','Scalda olio EVO in padella, rosola pollo 6-7 min','Sala, pepa, aggiungi un goccio di limone','Servi con verdure crude o cotte a piacere']},
+  {id:'pra_tonno_riso',k:['tonno','riso'],t:'🐟 Bowl di Tonno e Riso',time:'15 min',
+    desc:'Velocissimo, omega-3 e proteine.',
+    steps:['Cuoci il riso al dente (può essere preparato la sera prima)','Sgocciola il tonno al naturale','In una bowl: riso freddo, tonno, pomodorini, insalata','Condisci con olio EVO, sale e basilico fresco']},
+  {id:'pra_manzo_patate',k:['manzo','tagliata','patate'],t:'🥩 Tagliata di Manzo & Patate',time:'30 min',
+    desc:'Domenicale ma pulito, ferro e proteine top.',
+    steps:['Lessa le patate intere con buccia (20 min) poi sbuccia e taglia','Scalda una griglia o padella di ghisa rovente','Cuoci la tagliata 2 min per lato (mantieni rosa al centro)','Lascia riposare 3 min, taglia a fettine, sale grosso','Servi con patate e verdure grigliate, olio EVO a crudo']},
+  {id:'pra_pasta_uova',k:['pasta','uova'],t:'🥚 Pasta con Uova Sode & Insalata',time:'15 min',
+    desc:'Carbonara-style ma sana e veloce.',
+    steps:['Cuoci la pasta integrale al dente','Nel frattempo soda 3 uova in acqua bollente (8 min)','Scola pasta, condisci con olio EVO e parmigiano','Servi con uova affettate sopra e insalata mista']},
+  {id:'pra_legumi_cereali',k:['legumi','lenticchie','ceci','farro'],t:'🫘 Bowl di Legumi & Cereali',time:'20 min',
+    desc:'Vegana, completa, con tutti gli aminoacidi essenziali.',
+    steps:['Cuoci il farro in acqua bollente salata (15 min)','Scalda i legumi cotti in padella con olio e rosmarino','Unisci farro e legumi nella bowl','Aggiungi verdure di stagione, olio EVO e una spruzzata di limone']},
+  {id:'pra_tofu',k:['tofu','tofu grigliato'],t:'🟡 Tofu Grigliato con Riso Basmati',time:'20 min',
+    desc:'Vegana, ricca di proteine vegetali.',
+    steps:['Marina il tofu 10 min con salsa di soia, zenzero, aglio','Cuoci il riso basmati (12 min)','Griglia il tofu in padella rovente 3 min per lato','Servi con verdure miste saltate e riso']},
+
+  // ─── CENE ───
+  {id:'cen_pesce_bianco',k:['pesce bianco','merluzzo','orata','branzino'],t:'🐟 Pesce Bianco al Forno',time:'25 min',
+    desc:'Cena leggera, digeribile, omega-3.',
+    steps:['Preriscalda il forno a 200°C','Disponi il pesce in teglia con carta forno','Condisci con olio EVO, limone, prezzemolo, sale','Inforna 15-18 min (varia se pesce intero o filetto)','Servi con verdure cotte e pane integrale']},
+  {id:'cen_carne_magra',k:['pollo','tacchino','carne magra'],t:'🥩 Carne Magra alla Griglia',time:'20 min',
+    desc:'Versatile e proteica, perfetta per il recupero.',
+    steps:['Scalda la griglia o padella di ghisa rovente','Cuoci la carne 3-4 min per lato (dipende dallo spessore)','Sala SOLO a fine cottura per non disidratare','Servi con verdure grigliate e pane integrale o patate']},
+  {id:'cen_legumi_uova',k:['legumi','uova alla coque','lenticchie'],t:'🫘 Legumi & Uova alla Coque',time:'15 min',
+    desc:'Plant-forward con proteine biologiche.',
+    steps:['Scalda i legumi cotti in padella con olio e aglio','Cuoci 2 uova in acqua bollente per 5 min (coque)','Taglia le verdure a julienne e saltale brevemente','Servi tutto insieme con pane integrale a parte']},
+  {id:'cen_tofu_verdure',k:['tofu','tempeh','wok'],t:'🟡 Wok di Tofu & Verdure',time:'20 min',
+    desc:'Veloce, colorato, vegano completo.',
+    steps:['Taglia tofu a cubetti e saltalo in wok rovente con poco olio','Aggiungi verdure colorate (peperoni, zucchine, broccoli)','Cuoci a fuoco alto 5-6 min mescolando','Insaporisci con salsa di soia, zenzero, semi di sesamo','Servi con pane integrale o patate lesse']},
+  {id:'cen_ricotta_verdure',k:['ricotta','insalata abbondante'],t:'🥛 Insalatona con Ricotta',time:'10 min',
+    desc:'Cena leggera in serate calde.',
+    steps:['Lava e asciuga insalata mista, condiscila','Sbriciola la ricotta sopra l\'insalata','Aggiungi pomodorini, cetrioli, semi di lino','Servi con due fette di pane integrale e olio EVO a crudo']},
+
+  // ─── SPUNTINI ───
+  {id:'sp1_frutta_noci',k:['frutta','noci','mandorle'],t:'🥜 Frutta & Frutta Secca',time:'1 min',
+    desc:'Spuntino completo: zuccheri buoni + grassi sazianti.',
+    steps:['Prendi una mela o pera di stagione','Lava sotto l\'acqua, mangia con la buccia per le fibre','Accompagna con noci o mandorle al naturale (non salate)','Bevi un tè verde caldo per amplificare l\'effetto saziante']},
+  {id:'sp1_yogurt_pomeridiano',k:['yogurt pomeridiano','yogurt'],t:'🥛 Yogurt Pomeridiano',time:'2 min',
+    desc:'Spezzafame proteico tra pranzo e cena.',
+    steps:['Versa lo yogurt greco 0% in una ciotolina','Affetta un kiwi sopra (o altro frutto di stagione)','Aggiungi opzionalmente 5g semi di chia','Mangia lentamente per massimizzare la sazietà']},
+  {id:'sp1_fiocchi',k:['fiocchi di latte'],t:'🥛 Fiocchi di Latte & Frutta',time:'2 min',
+    desc:'Caseina a lento rilascio, ottimo prima del workout pomeridiano.',
+    steps:['Pesa i fiocchi di latte in una ciotola','Affetta il kiwi a fettine','Mescola e gusta a temperatura ambiente']},
+  {id:'sp2_preworkout',k:['pre-workout','pre wo','banana'],t:'⚡ Pre-Workout Carboidrati',time:'2 min',
+    desc:'Energia rapida 30-45 min prima dell\'allenamento.',
+    steps:['Mangia la banana intera (non frullata, le fibre rallentano)','Tosta la fetta di pane integrale','Spalma 1 cucchiaino di miele','Caffè nero opzionale per stimolo neuromuscolare']},
+  {id:'sp2_preworkout_shaker',k:['pre-wo proteico','shaker','whey'],t:'⚡ Pre-WO Proteico (Shaker)',time:'2 min',
+    desc:'Per chi vuole anche un boost proteico immediato.',
+    steps:['Riempi lo shaker con 250ml acqua','Aggiungi 20g whey gusto neutro o cioccolato','Aggiungi 5g avena per carboidrati a rilascio medio','Mangia la banana a parte, poi vai in palestra']},
+  {id:'sp2_preworkout_cibo',k:['pre-wo cibo solido','yogurt'],t:'🍶 Pre-WO Solido',time:'3 min',
+    desc:'Versione "vera colazione" per workout serali.',
+    steps:['Versa yogurt greco 0% in ciotola','Aggiungi 5g avena e 1 cucchiaino miele','Affetta una banana sopra','Mangia 60-90 min prima del workout per massima energia']},
+
+  // ─── EXTRA / VARIETÀ ───
+  {id:'pra_pasta_pomodoro_pollo',k:['pasta','pomodoro','pollo'],t:'🍝 Pasta Pollo & Pomodoro',time:'25 min',
+    desc:'Variazione classica italiana con proteine.',
+    steps:['Cuoci la pasta integrale al dente','Salta il pollo a cubetti in padella con olio EVO','Aggiungi passata di pomodoro e basilico, sobbolli 5 min','Unisci la pasta scolata e mescola','Spolvera parmigiano e servi caldo']},
+  {id:'cen_salmone_verdure',k:['salmone','verdure cotte'],t:'🐟 Salmone in Padella & Verdure',time:'15 min',
+    desc:'Omega-3 al massimo, super sazianti.',
+    steps:['Scalda padella antiaderente a fuoco medio-alto','Cuoci salmone con pelle in basso 4 min','Gira e cuoci altri 2 min, sala a fine cottura','Servi con verdure al vapore e olio EVO a crudo','Spruzza limone fresco prima di mangiare']},
+  {id:'pra_quinoa_bowl',k:['quinoa','bowl'],t:'🥗 Quinoa Bowl Mediterranea',time:'20 min',
+    desc:'Proteine vegetali complete con tutti gli aminoacidi.',
+    steps:['Cuoci la quinoa in acqua salata (15 min)','Scalda i ceci cotti con paprika e cumino','Componi la bowl: quinoa, ceci, pomodorini, feta','Condisci con olio EVO, limone, origano']},
+  {id:'cen_frittata_verdure',k:['frittata','uova','zucchine'],t:'🍳 Frittata di Verdure',time:'20 min',
+    desc:'Cena svuota-frigo, proteica e veloce.',
+    steps:['Salta le verdure tagliate (zucchine, peperoni) in padella','Sbatti 3 uova con sale e parmigiano','Versa sulle verdure, cuoci 5 min a fuoco basso coperto','Gira con un piatto e cuoci altri 3 min','Servi con insalata e pane integrale']},
+  {id:'col_pancakes_proteici',k:['pancakes','proteici','avena'],t:'🥞 Pancakes Proteici',time:'10 min',
+    desc:'Variazione divertente per la colazione del weekend.',
+    steps:['In un frullatore: 1 banana, 2 uova, 30g avena, 15g whey','Frulla fino a ottenere pastella liscia','Cuoci in padella antiaderente piccoli pancakes (1 min per lato)','Servi con yogurt greco e cannella']},
+  {id:'pra_orzotto',k:['orzotto','orzo','funghi'],t:'🍚 Orzotto ai Funghi',time:'30 min',
+    desc:'Alternativa al risotto, più ricco di fibre.',
+    steps:['Sciacqua l\'orzo perlato sotto acqua corrente','Cuoci in brodo vegetale 25-30 min mescolando','Salta funghi separatamente con aglio e prezzemolo','Unisci alla fine, manteca con un filo d\'olio EVO']},
+  {id:'cen_pollo_curry',k:['pollo','curry'],t:'🍛 Pollo al Curry Light',time:'25 min',
+    desc:'Variazione esotica con pochi grassi.',
+    steps:['Taglia il pollo a cubetti, rosola in padella','Aggiungi 200ml latte di cocco light e 1 cucchiaino curry','Sobbolli 10 min finché il pollo è morbido','Servi con riso basmati e foglie di coriandolo fresco']},
+];
+
+// Trova la ricetta migliore per un'opzione pasto data
+window.findRecipeForOpt=function(optLbl, mealId){
+  if(!optLbl) return null;
+  // Normalizzo il label (rimuovo emoji e spazi multipli, lowercase)
+  const norm=(s)=>(s||'').toLowerCase().replace(/[^\w\s]/g,' ').replace(/\s+/g,' ').trim();
+  const target=norm(optLbl);
+  let best=null, bestScore=0;
+  for(const r of RECIPE_DB){
+    let score=0;
+    for(const kw of r.k){
+      if(target.includes(kw.toLowerCase())) score+=kw.length;
+    }
+    // Bonus se l'ID inizia con il prefisso del pasto (col_/pra_/cen_/sp1_/sp2_)
+    const prefix=mealId==='col'?'col_':mealId==='pra'?'pra_':mealId==='cen'?'cen_':mealId==='sp1'?'sp1_':mealId==='sp2'?'sp2_':'';
+    if(prefix && r.id.startsWith(prefix)) score+=2;
+    if(score>bestScore){ bestScore=score; best=r; }
+  }
+  return bestScore>=3 ? best : null;
+};
+
+// Apri sheet ricetta
+window.openRecipeSheet=function(recipeId){
+  const r=RECIPE_DB.find(x=>x.id===recipeId);
+  if(!r) return;
+  ST.sheet='recipe';
+  ST.sheetData={recipe:r};
+  render();
+};
+
 // STATE
 window.AU={user:null,tab:'login',msg:'',fgStep:1,fgUser:'',fgSecOk:false};
 window.currentDateStr=getToday();
@@ -5047,7 +5189,7 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
   ${isRestDay?`<div style="background:rgba(167,139,250,.08);border:1px solid var(--purp);border-radius:14px;padding:12px 14px;margin-bottom:12px;font-size:13px;color:var(--purp);font-weight:600;">💤 Giorno di riposo — niente pre-workout. Menù adattato con spuntino pomeridiano.</div>`:''}
   <div class="card card-hi">
     <div class="r" style="margin-bottom:14px;">
-      <div><div class="bebas" style="font-size:20px;">BILANCIO DEL GIORNO</div><div style="font-size:11px;color:var(--mut);">Target adattato: ${mac.kcal} kcal</div></div>
+      <div><div class="bebas" style="font-size:20px;">BILANCIO DEL GIORNO</div><div style="font-size:11px;color:var(--mut);">Target adattato: ${mac.kcal} kcal <button onclick="window.showCalcDetail=true;render();setTimeout(()=>document.querySelector('[onclick*=showCalcDetail]')?.scrollIntoView({behavior:'smooth',block:'center'}),100)" style="background:transparent;border:1px solid var(--mut);color:var(--mut);width:16px;height:16px;border-radius:50%;font-size:10px;font-weight:700;cursor:pointer;padding:0;line-height:14px;display:inline-flex;align-items:center;justify-content:center;margin-left:4px;vertical-align:middle;" title="Come calcoliamo">?</button></div></div>
       <div style="text-align:right;"><div class="bebas" style="font-size:38px;line-height:1;color:${dLog.k>mac.kcal?'var(--red)':'var(--acc)'};">${remK}</div><div style="font-size:10px;color:var(--mut);">kcal rimaste</div></div>
     </div>
     <div class="bw" style="height:12px;background:var(--surf);border:1px solid var(--bord);margin-bottom:16px;">
@@ -5057,6 +5199,66 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
       ${[['PROT',mac.prot-dLog.p,'var(--acc)','g'],['CARB',mac.carb-dLog.c,'var(--blu)','g'],['GRASSI',mac.fat-dLog.f,'var(--yel)','g']].map(([l,v,c,u])=>`<div style="text-align:center;background:var(--surf);border-radius:9px;padding:10px 4px;"><div class="bebas" style="font-size:20px;color:${c};line-height:1;">${Math.max(0,Math.round(v))}${u}</div><div style="font-size:9px;color:var(--mut);margin-top:2px;">${l} rimasti</div></div>`).join('')}
     </div>
     ${dLog.k>0||dLog.skipped?.length>0?`<div style="text-align:center;"><button class="btn-s btn-out" style="font-size:12px;" onclick="resetMacros()">Azzera log di oggi</button></div>`:''}
+  </div>
+
+  <!-- TURNO 2: Card "Come calcoliamo" (collassabile) -->
+  <div class="card" style="border:1px dashed var(--bord);background:var(--surf);">
+    <button onclick="window.showCalcDetail=!window.showCalcDetail;render()" style="width:100%;display:flex;justify-content:space-between;align-items:center;background:transparent;border:none;cursor:pointer;padding:0;color:var(--text);">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:18px;">🧮</span>
+        <span style="font-size:13px;font-weight:700;">Come calcoliamo i tuoi numeri</span>
+      </div>
+      <span style="font-size:14px;color:var(--mut);">${window.showCalcDetail?'▲':'▼'}</span>
+    </button>
+    ${window.showCalcDetail?`
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--bord);">
+        <div style="font-size:12px;line-height:1.6;color:var(--mut);margin-bottom:14px;">Tutti i numeri sono calcolati con formule scientifiche standard usate da nutrizionisti. Niente magia, solo matematica adattata ai tuoi dati.</div>
+
+        <!-- BMR -->
+        <div style="background:var(--bg);border-radius:10px;padding:11px 13px;margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;">
+            <div style="font-size:11px;font-weight:700;color:var(--mut);letter-spacing:1px;">METABOLISMO BASALE (BMR)</div>
+            <div class="bebas" style="font-size:20px;color:var(--text);">${mac.bmr} kcal</div>
+          </div>
+          <div style="font-size:11px;color:var(--mut);line-height:1.5;">È quanto bruci ogni giorno se stessi a letto. <strong style="color:var(--text);">Formula Mifflin-St Jeor</strong>:<br>${sx==='m'?'10×peso + 6.25×altezza − 5×età + 5':'10×peso + 6.25×altezza − 5×età − 161'}<br><span style="opacity:.8;">= 10×${ST.h.length?ST.h[ST.h.length-1].w:'?'} + 6.25×${AU.profile?.ht||170} − 5×${AU.profile?.ag||30} ${sx==='m'?'+ 5':'− 161'} = ${mac.bmr} kcal</span></div>
+        </div>
+
+        <!-- TDEE -->
+        <div style="background:var(--bg);border-radius:10px;padding:11px 13px;margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;">
+            <div style="font-size:11px;font-weight:700;color:var(--mut);letter-spacing:1px;">DISPENDIO TOTALE (TDEE)</div>
+            <div class="bebas" style="font-size:20px;color:var(--text);">${mac.tdee} kcal</div>
+          </div>
+          <div style="font-size:11px;color:var(--mut);line-height:1.5;">BMR × moltiplicatore attività ${ST.p.sessions===0?'(sedentario 1.20)':ST.p.sessions<=2?'(leggero 1.375)':ST.p.sessions<=4?'(moderato 1.55)':'(intenso 1.725)'} = ${mac.tdeeBase} kcal${mac.extraKcal>0?`<br>+ <strong style="color:var(--blu);">${mac.extraKcal} kcal</strong> da sport outdoor di oggi`:''}<br><span style="opacity:.8;">È quanto bruci in totale in un giorno tipo.</span></div>
+        </div>
+
+        <!-- TARGET KCAL -->
+        <div style="background:rgba(197,241,53,.06);border-radius:10px;padding:11px 13px;margin-bottom:8px;border:1px solid var(--acc);">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;">
+            <div style="font-size:11px;font-weight:700;color:var(--acc);letter-spacing:1px;">TARGET KCAL OGGI</div>
+            <div class="bebas" style="font-size:22px;color:var(--acc);">${mac.kcal} kcal</div>
+          </div>
+          <div style="font-size:11px;color:var(--mut);line-height:1.5;">${ST.p.t==='cut'?`<strong style="color:var(--text);">Definizione</strong>: TDEE − 500 kcal/giorno = deficit per perdere ~0.5 kg/settimana di grasso senza perdere muscolo.`:`<strong style="color:var(--text);">Massa</strong>: TDEE + 300 kcal/giorno = surplus moderato per crescere muscolo limitando il grasso.`}${an?.calAdj?`<br><span style="color:var(--ora);">+ ${an.calAdj>0?'+':''}${an.calAdj} kcal di aggiustamento AI in base ai tuoi progressi reali</span>`:''}</div>
+        </div>
+
+        <!-- MACRO -->
+        <div style="background:var(--bg);border-radius:10px;padding:11px 13px;margin-bottom:14px;">
+          <div style="font-size:11px;font-weight:700;color:var(--mut);letter-spacing:1px;margin-bottom:8px;">RIPARTIZIONE MACRO</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;">
+            <div style="text-align:center;background:var(--surf);border-radius:8px;padding:8px 4px;"><div class="bebas" style="font-size:18px;color:var(--acc);line-height:1;">${mac.prot}g</div><div style="font-size:9px;color:var(--mut);margin-top:3px;">PROTEINE</div></div>
+            <div style="text-align:center;background:var(--surf);border-radius:8px;padding:8px 4px;"><div class="bebas" style="font-size:18px;color:var(--blu);line-height:1;">${mac.carb}g</div><div style="font-size:9px;color:var(--mut);margin-top:3px;">CARBO</div></div>
+            <div style="text-align:center;background:var(--surf);border-radius:8px;padding:8px 4px;"><div class="bebas" style="font-size:18px;color:var(--yel);line-height:1;">${mac.fat}g</div><div style="font-size:9px;color:var(--mut);margin-top:3px;">GRASSI</div></div>
+          </div>
+          <div style="font-size:11px;color:var(--mut);line-height:1.5;">
+            <strong style="color:var(--text);">Proteine</strong>: ${(ST.p.sessions||0)===0?(sx==='f'?1.0:1.2):(sx==='f'?1.8:2.2)}g per kg di peso ${(ST.p.sessions||0)===0?'(senza allenamento)':(sx==='f'?'(donna che si allena)':'(uomo che si allena)')}<br>
+            <strong style="color:var(--text);">Grassi</strong>: ${sx==='f'?1.0:0.8}g per kg di peso (essenziali ormoni)<br>
+            <strong style="color:var(--text);">Carboidrati</strong>: il resto del target kcal — sono il carburante delle prestazioni
+          </div>
+        </div>
+
+        <div style="font-size:10px;color:var(--mut);font-style:italic;line-height:1.5;text-align:center;">💡 Cambiando il tuo peso, altezza, età, sesso o sessioni di allenamento (in Configurazione), tutti i numeri si adattano automaticamente.</div>
+      </div>
+    `:''}
   </div>
   <div class="card card-warn">
     <div class="badge" style="background:var(--ora);color:#000;">CHEAT DETECTOR AI</div>
@@ -5146,7 +5348,26 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
         `<button class="btn-s btn-action" style="font-size:11px;padding:6px 10px;flex:1;color:var(--purp);border-color:var(--purp);" onclick="openCustomMealEditor('${m.id}',${m.kcal})">✏️ PERSONALIZZA QUESTO PASTO</button>`}
       </div>
       ${m.opts.length>1?`<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:8px;">${m.opts.map((o,i)=>`<button onclick="pickMealOpt('${m.id}',${i})" style="flex:0 0 auto;padding:6px 12px;border-radius:8px;border:1.5px solid ${selIdx===i?'var(--acc)':'var(--bord)'};background:${selIdx===i?'rgba(197,241,53,.1)':'var(--surf)'};color:${selIdx===i?'var(--acc)':'var(--mut)'};font-size:12px;font-weight:600;cursor:pointer;">${o.lbl}</button>`).join('')}</div>`:''}
-      <div>${opt.items.map(item=>`<div style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--bord);"><div style="width:6px;height:6px;border-radius:50%;background:var(--acc);flex-shrink:0;margin-top:7px;"></div><div style="font-size:13px;line-height:1.4;">${item}</div></div>`).join('')}</div>
+      ${(() => {
+        // TURNO 2/3: rendering opzione con TITOLO PIATTO + BREAKDOWN GRAMMI + ICONA RICETTA
+        const recipe = (typeof findRecipeForOpt==='function') ? findRecipeForOpt(opt.lbl, m.id) : null;
+        return `<div style="background:var(--surf);border-radius:12px;padding:14px;border:1px solid var(--bord);">
+          <!-- Titolo del piatto (lbl) in evidenza -->
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--bord);">
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:16px;font-weight:700;color:var(--text);line-height:1.25;">${opt.lbl}</div>
+              <div style="font-size:10px;color:var(--mut);margin-top:3px;letter-spacing:.5px;">${opt.isCustom?`✏️ Personalizzato · ${opt.actualKcal||m.kcal} kcal`:`Target ${m.kcal} kcal · ${opt.items.length} ingredienti`}</div>
+            </div>
+            ${recipe?`<button onclick="openRecipeSheet('${recipe.id}')" style="background:rgba(167,139,250,.12);border:1px solid var(--purp);color:var(--purp);border-radius:10px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0;display:flex;align-items:center;gap:4px;" title="Vedi ricetta">💡 RICETTA</button>`:''}
+          </div>
+          <!-- Breakdown ingredienti con grammature -->
+          <div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:8px;">INGREDIENTI</div>
+          ${opt.items.map(item=>`<div style="display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px dashed var(--bord);">
+            <div style="width:5px;height:5px;border-radius:50%;background:var(--acc);flex-shrink:0;margin-top:8px;"></div>
+            <div style="font-size:13px;line-height:1.5;color:var(--text);flex:1;">${item}</div>
+          </div>`).join('')}
+        </div>`;
+      })()}
     </div>`;
   }).join('')}`;
 }
@@ -5922,6 +6143,36 @@ window.render = function() {
         <button class="btn" style="flex:1;padding:12px;" onclick="saveCustomMeal()">SALVA</button>
       </div>
       <div style="font-size:10px;color:var(--mut);text-align:center;margin-top:10px;line-height:1.4;">💡 Se lasci vuoto il pasto e salvi, torni ai consigli automatici.</div>
+    </div></div>`;
+  })():
+  // TURNO 3: sheet ricetta (popup con istruzioni passo-passo)
+  ST.sheet==='recipe'&&ST.sheetData?.recipe?(()=>{
+    const r=ST.sheetData.recipe;
+    return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div>
+      <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;">
+        <div style="flex:1;min-width:0;">
+          <div class="bebas" style="font-size:24px;line-height:1.1;">${escapeHtml(r.t)}</div>
+          <div style="font-size:11px;color:var(--mut);margin-top:4px;display:flex;gap:10px;align-items:center;">
+            <span>⏱️ ${escapeHtml(r.time)}</span>
+            <span>·</span>
+            <span>${r.steps.length} passi</span>
+          </div>
+        </div>
+        <button onclick="closeSheet()" style="background:transparent;border:1px solid var(--bord);color:var(--mut);width:30px;height:30px;border-radius:50%;font-size:14px;cursor:pointer;flex-shrink:0;">✕</button>
+      </div>
+      <div style="background:rgba(167,139,250,.06);border:1px solid var(--purp);border-radius:12px;padding:12px 14px;margin-bottom:14px;">
+        <div style="font-size:13px;line-height:1.55;color:var(--text);font-style:italic;">${escapeHtml(r.desc)}</div>
+      </div>
+      <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:10px;">PREPARAZIONE</div>
+      ${r.steps.map((s,i)=>`<div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;padding:10px 12px;background:var(--surf);border:1px solid var(--bord);border-radius:10px;">
+        <div style="width:28px;height:28px;border-radius:50%;background:var(--acc);color:#000;font-family:'Bebas Neue';font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${i+1}</div>
+        <div style="font-size:13px;line-height:1.55;color:var(--text);padding-top:4px;">${escapeHtml(s)}</div>
+      </div>`).join('')}
+      <div style="background:var(--bg);border-radius:10px;padding:10px 12px;margin-top:14px;">
+        <div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:5px;">💡 SUGGERIMENTI</div>
+        <div style="font-size:11px;color:var(--mut);line-height:1.5;">Le grammature dei singoli ingredienti sono nella card del pasto. Adatta la cottura ai tuoi gusti — la ricetta è una linea guida, non una regola rigida.</div>
+      </div>
+      <button class="btn btn-action" style="width:100%;padding:12px;margin-top:14px;" onclick="closeSheet()">CHIUDI</button>
     </div></div>`;
   })():
   // FIX SGARRI: sheet inserimento cibo da DB (alternativa al testo libero)
