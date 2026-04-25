@@ -289,7 +289,16 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
 
 // ─── § 1. UTILITY GLOBALI ──────────────────────────────────────────────────
 function hp(s) { let h=0; for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;} return 'h'+Math.abs(h).toString(36)+s.length; }
-function getToday() { return new Date().toISOString().split('T')[0]; }
+// FIX BUG MEZZANOTTE: usa data LOCALE, non UTC.
+// Prima: toISOString() ritornava la data UTC; per un utente italiano dopo mezzanotte
+// (es. 00:30 ora locale = 23:30 UTC) la data era ancora "ieri"
+function getToday() {
+  const d=new Date();
+  const y=d.getFullYear();
+  const m=String(d.getMonth()+1).padStart(2,'0');
+  const day=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
 // escapeHtml: prevenzione XSS quando si reinietta input utente in innerHTML
 function escapeHtml(s){ return (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
 window.escapeHtml=escapeHtml;
@@ -3004,6 +3013,29 @@ window.openRecipeSheet=function(recipeId){
 // STATE
 window.AU={user:null,tab:'login',msg:'',fgStep:1,fgUser:'',fgSecOk:false};
 window.currentDateStr=getToday();
+
+// FIX BUG MEZZANOTTE: timer che riallinea currentDateStr quando passa la mezzanotte
+// Controllo ogni 30 secondi (precisione sufficiente, costo CPU trascurabile)
+// Solo se l'utente è loggato e non sta navigando date passate
+if(window.__midnightWatcher) clearInterval(window.__midnightWatcher);
+window.__midnightWatcher = setInterval(()=>{
+  const now=getToday();
+  // Se currentDateStr era la data di oggi (utente non sta navigando passate) e oggi è cambiato
+  // allora aggiorno e ri-renderizzo
+  if(window.currentDateStr && window.currentDateStr !== now){
+    // Verifico che non sia un utente che sta esplorando giorni passati:
+    // se currentDateStr è in passato rispetto al giorno PRIMA di now, allora non toccare
+    const prev = new Date(now); prev.setDate(prev.getDate()-1);
+    const prevStr = `${prev.getFullYear()}-${String(prev.getMonth()+1).padStart(2,'0')}-${String(prev.getDate()).padStart(2,'0')}`;
+    if(window.currentDateStr === prevStr || window.currentDateStr === now){
+      // L'utente era su "ieri" (cioè ieri-quando-è-stato-aperto-il-app, cioè oggi prima della mezzanotte)
+      // → aggiorno a oggi reale
+      window.currentDateStr = now;
+      if(typeof render==='function' && AU.user) render();
+    }
+    // Se currentDateStr è in passato remoto (utente esplora storia), non toccare
+  }
+},30000);
 window.drawerOpen=false;
 window.toggleDrawer=function(){window.drawerOpen=!window.drawerOpen;render();}
 window.closeDrawer=function(){window.drawerOpen=false;render();}
@@ -3026,10 +3058,21 @@ window.saveU=async function(){
       p:ST.p,h:ST.h,wLog:ST.wLog,nutri:ST.nutri,water:ST.water,life:ST.life,
       cheatDebt:ST.cheatDebt,measures:ST.measures,notes:ST.notes,suppLog:ST.suppLog,
       chatHistory:ST.chatHistory,exPrefs:ST.exPrefs,wHistory:ST.wHistory,
-      programStart:ST.programStart,mealOpts:ST.mealOpts,aiPlan:ST.aiPlan
+      programStart:ST.programStart,mealOpts:ST.mealOpts,aiPlan:ST.aiPlan,
+      activities:ST.activities,stopwatch:ST.stopwatch
     };
     if(AU.profile) payload.profile=AU.profile;
     await window.DB.s('ft_u_'+window.AU.user,payload);
+    // FIX BUG RESET: cache locale dell'ultimo stato salvato
+    // Così se al prossimo avvio Firestore non risponde, usiamo questa cache
+    // invece di mostrare il setup come fosse un nuovo utente
+    try{
+      const cacheKey='ft_cache_'+window.AU.user;
+      localStorage.setItem(cacheKey, JSON.stringify({...payload, _ts:Date.now()}));
+    }catch(e){
+      // Quota piena o privacy mode → ignora silenziosamente, il salvataggio Firestore basta
+      console.warn('Cache locale fallita:', e?.message);
+    }
   }
   window._sv=false;
 }
@@ -3273,7 +3316,36 @@ window.__initAuthListener=function(){
     if(user){
       const un=user.displayName||user.email?.split('@')[0]||'user';
       AU.user=un;
-      const data=await window.DB.g('ft_u_'+un);
+      // FIX BUG RESET: retry su DB.g + fallback cache locale
+      // Prima problema: se la prima chiamata Firestore falliva (rete lenta, freddo cold-start),
+      // data era null e l'app mostrava il setup come se fosse un nuovo utente.
+      let data = null;
+      let attempts = 0;
+      while(attempts < 3 && data === null){
+        attempts++;
+        data = await window.DB.g('ft_u_'+un);
+        if(data === null && attempts < 3){
+          // Aspetta 600ms x N prima di ritentare (backoff)
+          await new Promise(r => setTimeout(r, 600 * attempts));
+        }
+      }
+      // Se dopo 3 tentativi Firestore continua a non rispondere, prova la cache locale
+      if(data === null){
+        try{
+          const cacheKey='ft_cache_'+un;
+          const cached=localStorage.getItem(cacheKey);
+          if(cached){
+            const parsed=JSON.parse(cached);
+            // Solo se cache recente (< 30 giorni) e contiene dati profilo
+            if(parsed && parsed._ts && parsed.p && (Date.now()-parsed._ts) < 30*86400*1000){
+              data=parsed;
+              console.log('🔵 Usando cache locale (Firestore non risponde dopo 3 tentativi)');
+            }
+          }
+        }catch(e){
+          console.warn('Lettura cache locale fallita:', e?.message);
+        }
+      }
       if(data){
         Object.assign(ST,{...defST(),...data});
         if(!ST.chartFilter) ST.chartFilter=30;
@@ -4788,17 +4860,20 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
       </div>
     </div>`;
   } else if(restAlreadyLogged){
-    // Riposo registrato
+    // Riposo registrato — mostra anche eventuale sport del giorno
+    const hasSport = todayActs.length>0;
+    const sportSummary = hasSport ? `${todayActs.length} ${todayActs.length===1?'attività':'attività'} · ${actsKcal} kcal · ${actsMin} min` : null;
     woCardHtml=`<div style="background:${woCardStyle.bg};border:2px solid ${woCardStyle.border};border-radius:18px;padding:14px 16px;" onclick="ST.tab='work';render()">
       <div style="display:flex;align-items:center;gap:12px;">
         <div style="width:40px;height:40px;border-radius:50%;background:rgba(34,197,94,.2);border:2px solid var(--gre);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--gre);flex-shrink:0;">✓</div>
         <div style="flex:1;min-width:0;">
-          <div style="font-size:10px;font-weight:700;color:var(--gre);letter-spacing:1.5px;">RIPOSO REGISTRATO</div>
-          <div style="font-size:14px;font-weight:700;color:var(--text);line-height:1.25;margin-top:2px;">😌 Recupero attivo</div>
-          <div style="font-size:11px;color:var(--mut);margin-top:2px;">Stretching, camminata, 7-8h di sonno</div>
+          <div style="font-size:10px;font-weight:700;color:var(--gre);letter-spacing:1.5px;">RIPOSO REGISTRATO${hasSport?' + SPORT':''}</div>
+          <div style="font-size:14px;font-weight:700;color:var(--text);line-height:1.25;margin-top:2px;">${hasSport?`🏃 ${todayActs[0].emo||''} ${escapeHtml(todayActs[0].name||'Attività')}${todayActs.length>1?` +${todayActs.length-1}`:''}`:'😌 Recupero attivo'}</div>
+          <div style="font-size:11px;color:var(--mut);margin-top:2px;">${sportSummary||'Stretching, camminata, 7-8h di sonno'}</div>
         </div>
         <div style="color:var(--mut);font-size:18px;">›</div>
       </div>
+      ${!hasSport?`<button onclick="event.stopPropagation();openActivitySheet();" style="width:100%;margin-top:10px;padding:10px;background:var(--surf);border:1px dashed var(--blu);color:var(--blu);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;">+ Aggiungi attività al recupero</button>`:''}
     </div>`;
   } else if(woInfo){
     // Allenamento da fare
