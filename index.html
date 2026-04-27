@@ -3015,27 +3015,23 @@ render();
 // STATE
 window.AU={user:null,tab:‘login’,msg:’’,fgStep:1,fgUser:’’,fgSecOk:false};
 window.currentDateStr=getToday();
+window._userPickedDate=false; // FIX: flag per midnight watcher (se utente seleziona data manualmente)
 
 // FIX BUG MEZZANOTTE: timer che riallinea currentDateStr quando passa la mezzanotte
 // Controllo ogni 30 secondi (precisione sufficiente, costo CPU trascurabile)
 // Solo se l’utente è loggato e non sta navigando date passate
 if(window.__midnightWatcher) clearInterval(window.__midnightWatcher);
 window.__midnightWatcher = setInterval(()=>{
+// FIX BUG: se l’utente sta esplorando un giorno diverso da oggi (selezione manuale),
+// NON toccare la data. Il watcher serve solo a passare automaticamente da
+// “oggi-prima-di-mezzanotte” a “oggi-dopo-mezzanotte” quando l’app è lasciata aperta.
+if(window._userPickedDate) return;
 const now=getToday();
-// Se currentDateStr era la data di oggi (utente non sta navigando passate) e oggi è cambiato
-// allora aggiorno e ri-renderizzo
 if(window.currentDateStr && window.currentDateStr !== now){
-// Verifico che non sia un utente che sta esplorando giorni passati:
-// se currentDateStr è in passato rispetto al giorno PRIMA di now, allora non toccare
-const prev = new Date(now); prev.setDate(prev.getDate()-1);
-const prevStr = `${prev.getFullYear()}-${String(prev.getMonth()+1).padStart(2,'0')}-${String(prev.getDate()).padStart(2,'0')}`;
-if(window.currentDateStr === prevStr || window.currentDateStr === now){
-// L’utente era su “ieri” (cioè ieri-quando-è-stato-aperto-il-app, cioè oggi prima della mezzanotte)
-// → aggiorno a oggi reale
+// L’utente NON ha scelto una data manualmente, ma currentDateStr è diversa da oggi.
+// Significa: era oggi quando ha aperto l’app, è passata la mezzanotte → aggiorno.
 window.currentDateStr = now;
 if(typeof render===‘function’ && AU.user) render();
-}
-// Se currentDateStr è in passato remoto (utente esplora storia), non toccare
 }
 },30000);
 window.drawerOpen=false;
@@ -3603,7 +3599,13 @@ ST.p.g=g;ST.p.t=t;ST.p.dur=dur;ST.p.targetD=tDate.toISOString().split(‘T’)[0
 ST.p.times=times;ST.p.workoutTime=workoutTime;
 save();alert(‘Programma aggiornato! Consigli nutrizionali e allenamenti ricalcolati.’);
 }
-window.changeCurrentDate=function(dStr){currentDateStr=dStr;render();}
+window.changeCurrentDate=function(dStr){
+currentDateStr=dStr;
+// FIX BUG: marca che l’utente ha SCELTO una data manualmente.
+// Il midnight watcher non deve toccarla finché l’utente non torna esplicitamente a “oggi”.
+window._userPickedDate = (dStr !== getToday());
+render();
+}
 window.logWeight=function(){
 // FIX: l’input in Home ha id=“nW” (maiuscolo), era vv(‘nw’) che non trovava nulla
 const w=parseFloat(vv(‘nW’)||vv(‘nw’));
@@ -6234,7 +6236,7 @@ ST.sheet===‘cheatDb’&&ST.sheetData?(()=>{
 const d=ST.sheetData;
 if(!d.selectedFood){
 // Schermata 1: ricerca cibo
-return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div> <div class="bebas" style="font-size:22px;margin-bottom:4px;">🔍 SCEGLI DAL DB</div> <div style="font-size:12px;color:var(--mut);margin-bottom:12px;line-height:1.5;">Cerca tra ${(window.FOOD_DB||[]).length} cibi italiani con valori nutrizionali precisi.</div> <input id="cheatDbSearch" type="text" maxlength="50" value="${escapeHtml(d.foodQuery||'')}" placeholder="🔍 Cerca cibo (es. fritto misto, pizza, gelato...)" oninput="updateCheatFoodQuery(this.value)" style="margin-bottom:8px;font-size:14px;padding:10px;"> <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;"> ${(window.FOOD_CATS||[]).map(c=>`<button class="btn-s" style="font-size:10px;padding:4px 8px;background:${d.foodCat===c.id?'var(--purp)':'var(--surf)'};color:${d.foodCat===c.id?'#fff':'var(--mut)'};border:1px solid ${d.foodCat===c.id?'var(--purp)':'var(--bord)'};" onclick="setCheatFoodCat('${c.id}')">${c.emo} ${c.short||c.lbl}</button>`).join('')} </div> <div id="cheatDbList" style="max-height:50vh;overflow-y:auto;">${_buildCheatDbListHtml()}</div> <button class="btn btn-action" style="margin-top:12px;width:100%;padding:12px;" onclick="closeSheet()">ANNULLA</button> </div></div>`;
+return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div> <div class="bebas" style="font-size:22px;margin-bottom:4px;">🔍 SCEGLI DAL DB</div> <div style="font-size:12px;color:var(--mut);margin-bottom:12px;line-height:1.5;">Cerca tra ${(window.FOOD_DB||[]).length} cibi italiani con valori nutrizionali precisi.</div> <input id="cheatDbSearch" type="text" maxlength="50" value="${escapeHtml(d.foodQuery||'')}" placeholder="🔍 Cerca cibo (es. fritto misto, pizza, gelato...)" oninput="updateCheatFoodQuery(this.value)" style="margin-bottom:8px;font-size:14px;padding:10px;"> <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;"> ${(window.FOOD_CATS||[]).map(c=>`<button class="btn-s" style="font-size:10px;padding:4px 8px;background:${d.foodCat===c.id?'var(--purp)':'var(--surf)'};color:${d.foodCat===c.id?'#fff':'var(--mut)'};border:1px solid ${d.foodCat===c.id?'var(--purp)':'var(--bord)'};" onclick="setCheatFoodCat('${c.id}')">${c.emo} ${c.short||c.lbl}</button>`).join('')} </div> <div id="cheatDbList" style="height:50vh;overflow-y:auto;">${_buildCheatDbListHtml()}</div> <button class="btn btn-action" style="margin-top:12px;width:100%;padding:12px;" onclick="closeSheet()">ANNULLA</button> </div></div>`;
 }
 // Schermata 2: imposta grammi/quantità
 const f=d.selectedFood;
@@ -6269,7 +6271,7 @@ ST.sheet===‘activity’&&ST.sheetData?(()=>{
 const d=ST.sheetData;
 if(d.mode===‘select’){
 // Schermata selezione sport
-return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div> <div class="bebas" style="font-size:22px;margin-bottom:4px;">🏃 NUOVA ATTIVITÀ</div> <div style="font-size:12px;color:var(--mut);margin-bottom:14px;">Scegli lo sport o l'attività che hai fatto (o stai per fare). Le kcal sono calcolate dal tuo peso.</div> <input id="sportSearch" type="text" maxlength="50" placeholder="🔍 Cerca (es. corsa, padel, yoga...)" oninput="updateActivityQuery(this.value)" style="margin-bottom:10px;font-size:14px;padding:10px;" value="${escapeHtml(d.q||'')}"> <div id="sportListContainer" style="max-height:50vh;overflow-y:auto;">${_buildSportListHtml()}</div> <button class="btn btn-action" style="margin-top:12px;width:100%;padding:12px;" onclick="closeSheet()">ANNULLA</button> </div></div>`;
+return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div> <div class="bebas" style="font-size:22px;margin-bottom:4px;">🏃 NUOVA ATTIVITÀ</div> <div style="font-size:12px;color:var(--mut);margin-bottom:14px;">Scegli lo sport o l'attività che hai fatto (o stai per fare). Le kcal sono calcolate dal tuo peso.</div> <input id="sportSearch" type="text" maxlength="50" placeholder="🔍 Cerca (es. corsa, padel, yoga...)" oninput="updateActivityQuery(this.value)" style="margin-bottom:10px;font-size:14px;padding:10px;" value="${escapeHtml(d.q||'')}"> <div id="sportListContainer" style="height:50vh;overflow-y:auto;">${_buildSportListHtml()}</div> <button class="btn btn-action" style="margin-top:12px;width:100%;padding:12px;" onclick="closeSheet()">ANNULLA</button> </div></div>`;
 }
 // Schermata config (minuti manuali o cronometro)
 const sport=sportById(d.sportId);
