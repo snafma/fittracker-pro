@@ -3320,29 +3320,30 @@ render();
 window.__initAuthListener=function(){
 if(!window.FBAuth) return;
 window.FBAuth.onAuthStateChanged(async (user)=>{
+// FIX CRITICO BLOCCO BOOT: try/catch globale per garantire che render() venga SEMPRE chiamato
+// alla fine del callback, qualunque cosa accada. Senza questo, qualunque eccezione non gestita
+// (anche transient) lascia l’app bloccata sullo splash “SYSTEM BOOTING”.
+try {
 if(user){
 const un=user.displayName||user.email?.split(’@’)[0]||‘user’;
-// FIX URGENTE: race condition. Se l’auth callback viene chiamata mentre un’altra
-// istanza precedente sta ancora caricando dati, evito conflitti tracciando l’ultimo user
 window.*lastAuthUser=un;
 AU.user=un;
-// Retry semplice: 2 tentativi con piccolo delay (non 3 secondi)
+// Retry semplice: 1 tentativo aggiuntivo dopo 800ms in caso di null transient
 let data = null;
 try{
 data = await window.DB.g(’ft_u*’+un);
 if(data===null){
-// Aspetta 800ms e ritenta una sola volta (per cold-start Firestore)
 await new Promise(r => setTimeout(r, 800));
-// Verifica che siamo ancora l’utente corrente prima di procedere
-if(window.*lastAuthUser !== un) return;
+if(window.*lastAuthUser === un){
 data = await window.DB.g(’ft_u*’+un);
+}
 }
 }catch(e){
 console.warn(‘Caricamento dati fallito:’, e?.message||e);
 }
-// Se nel frattempo l’utente è cambiato (logout/relogin rapido), abort
-if(window._lastAuthUser !== un) return;
-if(data){
+// Se nel frattempo l’utente è cambiato, NON fare return prematuro:
+// continua e chiama render() comunque (il flusso più recente avrà già aggiornato ST)
+if(window._lastAuthUser === un && data){
 Object.assign(ST,{…defST(),…data});
 if(!ST.chartFilter) ST.chartFilter=30;
 AU.profile=data.profile||null;
@@ -3368,15 +3369,27 @@ kcalEl.textContent=’~’+kcal+’ kcal’;
 }
 AU.msg=’’;
 }else{
-// FIX URGENTE: branch logout. Prima azzerava sempre ST anche per logout transient
-// (es. token refresh in Firebase). Ora azzero SOLO se prima non c’era utente loggato
-// O se è passato del tempo (logout reale, non glitch).
-window._lastAuthUser=null;
+window.*lastAuthUser=null;
 AU.user=null;
 AU.profile=null;
 Object.assign(ST,defST());
 }
-render();
+} catch(globalErr) {
+// Qualunque errore non gestito → log e procedi con render
+console.error(‘Auth callback error (catturato per evitare blocco boot):’, globalErr);
+}
+// GARANZIA: render() è SEMPRE chiamato, anche dopo errori
+try { render(); } catch(renderErr) {
+console.error(‘Render error:’, renderErr);
+// Ultima ancora di salvezza: forza UI di login
+try {
+const app = document.getElementById(‘app’);
+if(app && typeof renderAuth===‘function’){
+AU.user=null;
+renderAuth(app);
+}
+} catch(*) {}
+}
 });
 };
 // PUNTO 11: nasconde/mostra i campi legati all’allenamento in base al numero sessioni
@@ -6484,6 +6497,21 @@ const drawerH=`<div class="drawer-ov ${window.drawerOpen?'on':''}" onclick="clos
 window.bootApp = async function() {
   try {
     window.__initAuthListener();
+    // FIX CRITICO BLOCCO BOOT: timeout di emergenza di 8s.
+    // Se entro 8s l'auth callback non ha mai chiamato render() (es. Firebase
+    // non risponde, network issue, blocco indefinito), forziamo render comunque.
+    setTimeout(() => {
+      // Se lo splash è ancora visibile dopo 8s → forza render
+      const app = document.getElementById('app');
+      if(app && app.querySelector('.loader-wrap')){
+        console.warn('Boot timeout 8s: forzo render');
+        try {
+          if(typeof render==='function') render();
+        } catch(e){
+          console.error('Render forzato fallito:', e);
+        }
+      }
+    }, 8000);
   } catch(e) {
     console.error("Boot Error", e);
     render();
