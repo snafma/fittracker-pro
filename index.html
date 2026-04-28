@@ -181,20 +181,22 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
       }
     },
     async s(k, v) {
-      if(!firestore) return false;
+      if(!firestore) return {ok:false, reason:"firestore non inizializzato"};
       if (!auth?.currentUser) {
         for(let i=0; i<10 && !auth?.currentUser; i++){
           await new Promise(r=>setTimeout(r, 200));
         }
       }
+      if (!auth?.currentUser) return {ok:false, reason:"non autenticato (auth.currentUser=null dopo 2s)"};
       const safeK = resolveKey(k);
-      if (!safeK) return false;
+      if (!safeK) return {ok:false, reason:"chiave non valida: "+k};
       try {
         await setDoc(doc(firestore,"fittracker_data",safeK), { value: v });
-        return true;
+        return {ok:true, path:safeK};
       } catch(e){
-        console.warn("DB.s failed:", e?.code||e);
-        return false;
+        const code = e?.code || e?.message || String(e);
+        console.warn("DB.s failed:", code);
+        return {ok:false, reason:"Firestore: "+code};
       }
     },
     async d(k) {
@@ -3085,10 +3087,11 @@ window.saveU=async function(){
     };
     if(AU.profile) payload.profile=AU.profile;
     const result = await window.DB.s("ft_u_"+window.AU.user, payload);
-    if(result === false){
-      errMsg = "Salvataggio non riuscito";
-    } else {
+    // result è un oggetto {ok:bool, reason?:string, path?:string}
+    if(result && result.ok){
       ok = true;
+    } else {
+      errMsg = (result && result.reason) ? result.reason : "errore sconosciuto";
     }
   }catch(e){
     errMsg = e?.message || String(e);
