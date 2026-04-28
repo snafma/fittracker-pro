@@ -172,21 +172,22 @@ await new Promise(r=>setTimeout(r, 200));
 }
 const safeK = resolveKey(k);
 if (!safeK) {
-console.warn(’[DB.g] resolveKey null, key=’ + k);
+console.warn(’[DB.g] resolveKey null! key=’ + k + ‘, auth.currentUser=’ + (auth?.currentUser ? auth.currentUser.uid : ‘null’));
 return null;
 }
 try {
 const s = await getDoc(doc(firestore,“fittracker_data”,safeK));
-return s.exists() ? s.data().value : null;
-} catch(e){ console.warn(’[DB.g]’, e?.code||e); return null; }
+const exists = s.exists();
+console.log(’[DB.g] path=’ + safeK + ’ (uid=’ + auth.currentUser.uid + ‘) ’ + (exists?‘EXISTS’:‘NOT FOUND’));
+return exists ? s.data().value : null;
+} catch(e){ console.warn(’[DB.g] error path=’ + safeK + ‘:’, e?.code||e); return null; }
 },
 async s(k, v) {
 if(!firestore) {
 console.warn(’[DB.s] firestore non disponibile’);
 return false;
 }
-// Se auth.currentUser è null, aspetto fino a 2 secondi che torni disponibile
-// (es. durante token refresh transient di Firebase Auth)
+// Aspetta auth.currentUser fino a 2 secondi
 if (!auth?.currentUser) {
 for(let i=0; i<10 && !auth?.currentUser; i++){
 await new Promise(r=>setTimeout(r, 200));
@@ -194,14 +195,15 @@ await new Promise(r=>setTimeout(r, 200));
 }
 const safeK = resolveKey(k);
 if (!safeK) {
-console.warn(’[DB.s] resolveKey ritornato null (auth.currentUser=’ + (auth?.currentUser ? ‘presente’ : ‘null’) + ‘), key=’ + k);
+console.warn(’[DB.s] resolveKey null! key=’ + k + ‘, auth.currentUser=’ + (auth?.currentUser ? auth.currentUser.uid : ‘null’));
 return false;
 }
 try {
 await setDoc(doc(firestore,“fittracker_data”,safeK), { value: v });
+console.log(’[DB.s] OK path=’ + safeK + ’ (uid=’ + auth.currentUser.uid + ‘)’);
 return true;
 } catch(e){
-console.warn(’[DB.s] setDoc fallito:’, e?.code||e);
+console.warn(’[DB.s] setDoc fallito su path=’ + safeK + ‘:’, e?.code||e);
 return false;
 }
 },
@@ -3076,13 +3078,13 @@ aWo:null,step:0,woPhase:‘ready’,currentSet:0,setElapsed:0,tmr:0,tmrId:null,s
 };
 }
 window.ST=defST();
-window.*sv=false;
+window._sv=false;
 window.saveU=async function(){
 if(!window.AU.user) {
 console.warn(’[saveU] saltato: AU.user è null’);
 return;
 }
-if(window.*sv) {
+if(window._sv) {
 console.log(’[saveU] saltato: già in corso’);
 return;
 }
@@ -3102,12 +3104,9 @@ programStart:ST.programStart,mealOpts:ST.mealOpts,aiPlan:ST.aiPlan,
 activities:ST.activities,stopwatch:ST.stopwatch
 };
 if(AU.profile) payload.profile=AU.profile;
-// DB.s ha try/catch interno e non lancia, ma verifichiamo se ha effettivamente salvato
-// tramite il return value (che ora ritorna true/false)
 const result = await window.DB.s(’ft_u*’+window.AU.user, payload);
 if(result === false){
-errMsg = ‘Salvataggio fallito (auth.currentUser non disponibile?)’;
-console.warn(’[saveU]’, errMsg);
+errMsg = ‘DB.s ha ritornato false’;
 } else {
 ok = true;
 console.log(’[saveU] OK utente=’ + window.AU.user);
@@ -3118,18 +3117,69 @@ console.error(’[saveU] errore:’, errMsg);
 }finally{
 window.*sv=false;
 }
-// Toast visivo per debug: solo se errore (per non disturbare in caso normale)
-if(!ok && typeof document !== ‘undefined’){
+// Toast feedback: rosso se errore, verde discreto se OK
+if(typeof document !== ‘undefined’){
 try{
+// rimuovi eventuale toast precedente
+const old = document.getElementById(’__saveToast’);
+if(old) old.remove();
 const t = document.createElement(‘div’);
-t.style.cssText=‘position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:9999;background:#dc2626;color:#fff;padding:10px 16px;border-radius:10px;font-size:12px;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,.4);max-width:90vw;text-align:center;’;
-t.textContent = ’⚠️ Salvataggio fallito: ’ + (errMsg||‘sconosciuto’);
+t.id = ‘__saveToast’;
+if(ok){
+t.style.cssText=‘position:fixed;top:60px;right:12px;z-index:9999;background:rgba(34,197,94,.95);color:#fff;padding:6px 12px;border-radius:8px;font-size:11px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.3);’;
+t.textContent = ‘✓ Salvato’;
 document.body.appendChild(t);
-setTimeout(()=>{t.style.opacity=‘0’;t.style.transition=‘opacity .4s’;setTimeout(()=>t.remove(),400);}, 4000);
+setTimeout(()=>{t.style.opacity=‘0’;t.style.transition=‘opacity .3s’;setTimeout(()=>t.remove(),300);}, 1200);
+} else {
+t.style.cssText=‘position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:9999;background:#dc2626;color:#fff;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,.4);max-width:90vw;text-align:center;’;
+t.textContent = ’⚠️ NON salvato: ’ + (errMsg||‘sconosciuto’);
+document.body.appendChild(t);
+setTimeout(()=>{t.style.opacity=‘0’;t.style.transition=‘opacity .4s’;setTimeout(()=>t.remove(),400);}, 5000);
+}
 }catch(*){}
 }
 }
 window.save=async function(){await saveU();render();}
+
+// ═══════════════════════════════════════════════════════════════
+// DIAGNOSTICA: comando da lanciare dalla console del browser
+// per testare end-to-end il salvataggio. Risponde con un report.
+// Uso: apri DevTools (F12) → Console → digita: testSave()
+// ═══════════════════════════════════════════════════════════════
+window.testSave = async function(){
+console.log(‘═══════ TEST SAVE/LOAD ═══════’);
+console.log(‘AU.user =’, AU.user);
+console.log(‘window.DB disponibile:’, !!window.DB);
+
+if(!AU.user) {
+console.error(‘❌ AU.user è null. L'utente non è loggato.’);
+return ‘FAIL: utente non loggato’;
+}
+
+// Test 1: scrivi un valore di test
+const testKey = ‘ft_u_’+AU.user;
+const testValue = {p:ST.p, *testFlag:’test*’+Date.now()};
+console.log(‘1. Salvo con DB.s, key=’, testKey, ‘flag=’, testValue._testFlag);
+const writeOk = await window.DB.s(testKey, testValue);
+console.log(’   risultato write:’, writeOk);
+
+if(!writeOk) return ‘FAIL: scrittura fallita’;
+
+// Test 2: leggi e verifica
+console.log(‘2. Leggo con DB.g, key=’, testKey);
+const readBack = await window.DB.g(testKey);
+console.log(’   risultato read:’, readBack ? ‘OK (flag=’+readBack._testFlag+’)’ : ‘NULL’);
+
+if(!readBack) return ‘FAIL: lettura ritorna null’;
+if(readBack._testFlag !== testValue._testFlag) {
+return ‘FAIL: flag letto diverso da scritto. Scritto=’+testValue._testFlag+’, letto=’+readBack._testFlag;
+}
+
+console.log(‘═══════ RISULTATO: OK ═══════’);
+console.log(‘Salvataggio Firestore funziona. Se i dati sembrano persi al reload,’);
+console.log(‘il problema è altrove (es. il wrapper saveU non chiama testSave correttamente).’);
+return ‘OK: scrittura+lettura confermate sullo stesso path’;
+};
 window.el=id=>document.getElementById(id);
 window.vv=id=>el(id)?.value;
 // ═══════════════════════════════════════════════════════════════
@@ -3137,7 +3187,7 @@ window.vv=id=>el(id)?.value;
 // Al primo login dei 4 utenti esistenti:
 //  1. Verifica username+password nel vecchio sistema (ft_reg)
 //  2. Crea account Firebase Auth con STESSA password
-//  3. Copia i dati da ft_u*<username> a ft_u*<uid>
+//  3. Copia i dati da ft_u_<username> a ft_u_<uid>
 //  4. Fa login Firebase Auth
 // L’utente non si accorge di niente: usa le stesse credenziali.
 // ═══════════════════════════════════════════════════════════════
@@ -3374,15 +3424,18 @@ render();
 window._*initAuthListener=function(){
 if(!window.FBAuth) return;
 window.FBAuth.onAuthStateChanged(async (user)=>{
+console.log(’[AUTH] callback fired, user=’ + (user ? (user.email||user.uid) : ‘null’));
 try {
 if(user){
 const un = user.displayName || user.email?.split(’@’)[0] || ‘user’;
 AU.user = un;
+console.log(’[AUTH] user logged in: un=’ + un + ‘, uid=’ + user.uid);
 let data = null;
 try {
 data = await window.DB.g(’ft_u*’+un);
+console.log(’[AUTH] DB.g result: ’ + (data ? ‘data caricati (keys=’ + Object.keys(data).slice(0,5).join(’,’) + ‘…)’ : ‘NULL’));
 } catch(e){
-console.warn(‘DB.g error:’, e?.message||e);
+console.warn(’[AUTH] DB.g error:’, e?.message||e);
 }
 if(data){
 Object.assign(ST, {…defST(), …data});
@@ -3408,14 +3461,20 @@ kcalEl.textContent = ‘~’+kcal+’ kcal’;
 }
 AU.msg = ‘’;
 } else {
+// FIX: se eravamo già loggati e ora user=null, è probabile un evento transient di Firebase
+// (token refresh, riconnessione). NON azzero ST se ho già un AU.user valido.
+if (AU.user) {
+console.warn(’[AUTH] user=null ricevuto ma AU.user=’+AU.user+’ → IGNORO (probabile transient)’);
+} else {
+console.log(’[AUTH] logout vero (AU.user era null)’);
 AU.user = null;
 AU.profile = null;
 Object.assign(ST, defST());
 }
-} catch(err) {
-console.error(‘Auth callback error:’, err);
 }
-// GARANZIA: render() chiamato sempre, qualunque cosa accada
+} catch(err) {
+console.error(’[AUTH] callback error:’, err);
+}
 try { render(); } catch(e) { console.error(‘Render error:’, e); }
 });
 };
