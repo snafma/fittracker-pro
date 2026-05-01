@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-FIX-INVALID-ARG-v2">
+<meta name="ft-version" content="build-SESSION1-UX">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -447,7 +447,8 @@ window.BeepPlayer = {
   // Va chiamato una volta su un gesto utente (es. click "INIZIA SERIE") per
   // sbloccare l'audio sui browser mobile (autoplay policy).
   unlock() { this._ensureCtx(); },
-  beep(frequency = 880, duration = 0.18, type = 'sine', volume = 0.4) {
+  // Beep base con attacco/decay più ricchi (più udibili che esponenziale brutale)
+  beep(frequency = 880, duration = 0.18, type = 'sine', volume = 0.7) {
     const ctx = this._ensureCtx();
     if (!ctx) return;
     try {
@@ -455,22 +456,58 @@ window.BeepPlayer = {
       const gain = ctx.createGain();
       osc.type = type;
       osc.frequency.value = frequency;
-      gain.gain.setValueAtTime(volume, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+      // ADSR migliorato: attacco rapido ma non click, decay più morbido
+      const t0 = ctx.currentTime;
+      gain.gain.setValueAtTime(0.0001, t0);
+      gain.gain.exponentialRampToValueAtTime(volume, t0 + 0.01);
+      gain.gain.setValueAtTime(volume, t0 + duration * 0.6);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
       osc.connect(gain); gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + duration);
+      osc.start(t0);
+      osc.stop(t0 + duration);
     } catch(e) { /* noop */ }
   },
-  // Sequenza "fine pausa": tre beep crescenti
-  endOfRest() {
-    this.beep(660, 0.12, 'sine', 0.35);
-    setTimeout(() => this.beep(880, 0.12, 'sine', 0.4), 160);
-    setTimeout(() => this.beep(1175, 0.22, 'sine', 0.45), 320);
+  // Beep con due frequenze in armonia (più ricco e udibile)
+  chord(f1, f2, duration = 0.2, volume = 0.6) {
+    const ctx = this._ensureCtx();
+    if (!ctx) return;
+    try {
+      const t0 = ctx.currentTime;
+      [f1, f2].forEach(freq => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.0001, t0);
+        gain.gain.exponentialRampToValueAtTime(volume * 0.5, t0 + 0.01);
+        gain.gain.setValueAtTime(volume * 0.5, t0 + duration * 0.6);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(t0);
+        osc.stop(t0 + duration);
+      });
+    } catch(e) {}
   },
-  // Tick degli ultimi 3 secondi (più discreto)
-  tick() {
-    this.beep(440, 0.06, 'square', 0.2);
+  // Sequenza "fine pausa": più potente e chiaramente percepibile
+  // 3 chord crescenti + 1 chord finale rinforzato (tipo campanella)
+  endOfRest() {
+    this.chord(523, 659, 0.15, 0.7);                                  // DO + MI
+    setTimeout(() => this.chord(659, 784, 0.15, 0.75), 180);          // MI + SOL
+    setTimeout(() => this.chord(784, 1047, 0.30, 0.85), 360);         // SOL + DO alto, lungo
+    // Doppio beep di rinforzo finale per non perdere l'avviso
+    setTimeout(() => this.beep(1568, 0.15, 'sine', 0.6), 700);        // SOL alto
+    setTimeout(() => this.beep(1568, 0.15, 'sine', 0.6), 880);
+  },
+  // Tick degli ultimi 3 secondi: più alto in tono ad ogni tick (countdown chiaro)
+  tick(secLeft = 1) {
+    // 3s → 800Hz, 2s → 1000Hz, 1s → 1200Hz
+    const freq = 600 + (4 - Math.max(1, Math.min(3, secLeft))) * 200;
+    this.beep(freq, 0.10, 'square', 0.45);
+  },
+  // Esercizio completato: chord trionfale
+  exerciseDone() {
+    this.chord(659, 784, 0.18, 0.7);
+    setTimeout(() => this.chord(784, 988, 0.30, 0.8), 200);
   }
 };
 
@@ -2428,11 +2465,43 @@ window.getSuggest=function(exId,wHist,unitOverride){
   // Determino il tipo: usa l'unit salvata se c'è (nuovo schema), altrimenti deduce
   const unit = last.unit || (last.kg != null ? 'kg' : (last.sec != null ? 'sec' : 'reps'));
   const val = last.kg ?? last.sec ?? last.reps ?? null;
+  // ── Helper: arrotondamento intelligente al "carico realistico" della palestra ──
+  // Manubri/macchine isotoniche: step di 1kg minimo (peso piccolo), 2kg sopra i 20kg
+  // Bilanciere: step di 2.5kg minimo (1.25kg per lato), 5kg sopra i 60kg
+  // Heuristica: se l'esercizio contiene "bilanciere|stacco|squat|panca" → bilanciere; altrimenti manubri
+  function roundGymWeight(kg, exId){
+    if(!isFinite(kg) || kg <= 0) return kg;
+    const exName = (typeof EX !== 'undefined' && EX[exId]?.name || exId || '').toLowerCase();
+    const isBarbell = /bilanciere|stacco|panca\s*(piana|inclinata|declinata)|squat|military|press[ ]?\d|french[ ]?press|rematore[ ]?bilanciere/.test(exName);
+    if(isBarbell){
+      // Step 2.5kg sotto 60, 5kg sopra
+      const step = kg < 60 ? 2.5 : 5;
+      return Math.round(kg/step)*step;
+    } else {
+      // Manubri/macchine: step 1kg sotto 20, 2kg sopra
+      const step = kg < 20 ? 1 : 2;
+      return Math.round(kg/step)*step;
+    }
+  }
   // Suggerimento progressivo: se 3+ sessioni completate ok consecutivamente, suggerisci +5%
   if (entries.length >= 3 && entries.slice(0,3).every(e => e[exId]?.ok) && val > 0) {
-    const next = +(val * 1.05).toFixed(1);
+    let next;
+    if (unit === 'kg') {
+      // Arrotondo al carico realistico, garantendo almeno +1kg di incremento
+      const raw = val * 1.05;
+      next = roundGymWeight(raw, exId);
+      if (next <= val) next = roundGymWeight(val + (val < 20 ? 1 : 2), exId);
+    } else if (unit === 'sec') {
+      // Tempo: +5s minimo
+      next = Math.round(val * 1.05);
+      if (next <= val) next = val + 5;
+    } else {
+      // Reps: +1 minimo
+      next = Math.round(val * 1.05);
+      if (next <= val) next = val + 1;
+    }
     const u = unit === 'sec' ? 's' : (unit === 'reps' ? ' reps' : ' kg');
-    return {kg: unit === 'kg' ? next : null, val: next, unit, hint: `🔼 Tenta ${next}${u} (+5%)`};
+    return {kg: unit === 'kg' ? next : null, val: next, unit, hint: `🔼 Tenta ${next}${u} (era ${val}${u})`};
   }
   if (val > 0) {
     const u = unit === 'sec' ? 's' : (unit === 'reps' ? ' reps' : ' kg');
@@ -2454,6 +2523,22 @@ window.parseMeanReps=function(repsStr){
   if(!nums||nums.length===0) return 10;
   return Math.round(nums.reduce((s,n)=>s+parseInt(n),0)/nums.length);
 }
+
+// Stima kcal bruciate durante allenamento di forza
+// Formula: MET * peso_corporeo (kg) * durata (ore)
+// MET allenamento forza moderato/intenso: 5-6 (Compendium of Physical Activities)
+// Useremo MET 5.5 + bonus volume per pesare l'intensità
+window.estimateWorkoutKcal = function(durationMin, currentWeightKg, volumeKg){
+  if(!durationMin || durationMin <= 0) return 0;
+  const bw = currentWeightKg || 70;
+  const hours = durationMin / 60;
+  // Base MET 5.5 (allenamento di resistenza/forza vigoroso)
+  const baseMet = 5.5;
+  // Bonus per volume elevato: ogni 1000kg di volume aggiunge 0.5 al MET (max +1.5)
+  const volBonus = Math.min(1.5, (volumeKg || 0) / 2000);
+  const effectiveMet = baseMet + volBonus;
+  return Math.round(effectiveMet * bw * hours);
+};
 
 // ═════════════════════════════════════════════════════════════
 // PUNTO 6 — Analytics granulari per singolo esercizio
@@ -2788,7 +2873,7 @@ Regole:
 // Allenamento: col 22% / sp1 8% / pra 30% / sp2 10% / cen 30%  =  100%
 // Riposo:      col 22% / sp1 8% / pra 32% / sp2 8%  / cen 30%  =  100%
 // Le grammature in ogni opzione sono adattate al kcal del singolo pasto.
-window.buildMeals=function(macros,intol=[],sex='m',isRestDay=false,diet='omnivore',times,usesSupplements=false,favs=null){
+window.buildMeals=function(macros,intol=[],sex='m',isRestDay=false,diet='omnivore',times,usesSupplements=false,favs=null,workoutTime=null){
   const haG=intol.includes('gluten'),haL=intol.includes('lactose'),haE=intol.includes('eggs'),haN=intol.includes('nuts'),haF=intol.includes('fish');
   const isVeg=diet==='vegetarian'||diet==='vegan',isVegan=diet==='vegan';
   // Orari personalizzati o default
@@ -2847,10 +2932,19 @@ window.buildMeals=function(macros,intol=[],sex='m',isRestDay=false,diet='omnivor
   }
   if(!praOpts.length) praOpts.push({lbl:'🫘 Base',items:[`${gP_pra}g Legumi cotti`,`${gR_pra}g Riso (crudo)`,olio,'Verdure']});
   // ── PRE-WORKOUT o SPUNTINO POMERIDIANO ──
-  const sp2 = isRestDay
+  // Logica intelligente: lo spuntino sp2 diventa "pre-workout" SOLO se:
+  // 1. Non è giorno di riposo
+  // 2. È nelle ~2 ore prima dell'allenamento
+  // Se uno fa palestra al mattino o dopo cena, lo sp2 delle 16 resta normale spuntino.
+  function timeToMin(t){ if(!t) return null; const [h,m]=t.split(':').map(Number); return h*60+(m||0); }
+  const sp2Min = timeToMin(T.sp2);
+  const woMin = timeToMin(workoutTime);
+  const isPreWorkoutSlot = !isRestDay && sp2Min!==null && woMin!==null && (woMin - sp2Min) >= 30 && (woMin - sp2Min) <= 150;
+  const sp2 = !isPreWorkoutSlot
     ? {id:'sp2',pct:PCT.sp2,n:`🍎 SPUNTINO POMERIDIANO  ${T.sp2}`,kcal:kSp2,opts:[
         {lbl:'🍌 Frutto + frutta secca',items:['1 frutto di stagione',(!haN?'15g Noci':'1 cucchiaino miele'),'Tè verde']},
         {lbl:'🥛 Yogurt pomeridiano',items:[(!haL?'150g Yogurt Greco 0%':'150g Yogurt soia'),'1 frutto']},
+        {lbl:'🥖 Pane & companatico',items:['1 fetta pane integrale',(!haL?'1 fettina bresaola o petto pollo':'2 fette tofu affumicato'),'Tè o caffè']},
       ],isRestSnack:true}
     : {id:'sp2',pct:PCT.sp2,n:`⚡ PRE-WORKOUT  ${T.sp2}`,kcal:kSp2,opts:[
         {lbl:'⚡ Pre-WO base',items:['1 banana','Caffè nero (opzionale)','1 fetta pane integrale + miele']},
@@ -3264,7 +3358,7 @@ window.doLogin=async function(){
     const pw2=vv('lP');
     if(!ident||!pw2) return setMsg('Inserisci credenziali!');
 
-    setMsg('Accesso in corso...');
+    setMsg('⏳ Accesso in corso...');
 
     // STRATEGIA: se ident è un'email, proviamo Firebase Auth diretto.
     // Se fallisce OPPURE se ident è uno username (legacy), tentiamo auto-migrazione.
@@ -3654,6 +3748,13 @@ window.deleteWeight=function(){
   ST.h=ST.h.filter(x=>x.d!==currentDateStr);save();
 }
 window.logSleep=function(v){initLife();ST.life[currentDateStr].sleep=parseFloat(v);save();}
+window.logSleepBtn=function(){
+  const v=parseFloat(vv('nSleep'));
+  if(isNaN(v) || v<0 || v>14) return alert('Inserisci un valore di sonno valido (0-14 ore)');
+  initLife();
+  ST.life[currentDateStr].sleep=v;
+  save();
+}
 window.logRestDay=function(){
   if(confirm(`Registrare ${currentDateStr===getToday()?'oggi':currentDateStr} come Riposo?`)){
     const e=ST.wLog.findIndex(x=>x.d===currentDateStr);
@@ -4266,6 +4367,7 @@ window.getEx=function(){return getWo().exercises[ST.step];}
 window.startWo=function(id){
   clearInterval(ST.tmrId);clearInterval(ST.setTmrId);
   ST.aWo=id;ST.step=0;ST.currVol=0;ST.woPhase='ready';ST.currentSet=0;ST.setElapsed=0;ST.tmr=0;
+  ST.workoutStartTs = Date.now(); // Timestamp inizio per calcolo kcal live
   const e=ST.wLog.findIndex(x=>x.d===currentDateStr&&x.isRest===true);
   if(e>=0) ST.wLog.splice(e,1);
   // PUNTO 2: tieni schermo acceso durante l'allenamento
@@ -4296,35 +4398,51 @@ window.completeSet=function(){
     // PUNTO 7: leggi il valore corretto in base al tipo di esercizio
     const unit = getExerciseUnit(ex);
     const inputEl = el('wkW');
-    let value = parseFloat(inputEl?.value || 0);
+    // FIX peso pre-serie persistente: leggo prima dall'input, poi da draftValues, poi 0
+    let value = parseFloat(inputEl?.value || (ST.draftValues && ST.draftValues[ex.id]) || 0);
     // Se l'esercizio è a tempo e l'utente non ha inserito nulla, usa il timer della serie
     if (unit === 'sec' && (!value || value <= 0) && ST.setElapsed > 0) {
       value = ST.setElapsed;
     }
+    // FIX reps tracking: per esercizi kg, leggo anche le ripetizioni effettuate (input separato)
+    let actualReps = null;
+    if (unit === 'kg') {
+      const repsEl = el('wkReps');
+      const repsRaw = parseFloat(repsEl?.value || (ST.draftReps && ST.draftReps[ex.id]) || 0);
+      if (repsRaw > 0) actualReps = Math.round(repsRaw);
+    }
     if(!ST.wHistory[currentDateStr]) ST.wHistory[currentDateStr]={};
-    // PUNTO 5+8: salvo struttura completa (val + unit) per memoria precisa
+    // Salvo struttura completa (val + unit + reps) per memoria precisa
     ST.wHistory[currentDateStr][ex.id] = {
       kg: unit === 'kg' && value > 0 ? value : null,
       sec: unit === 'sec' && value > 0 ? value : null,
-      reps: unit === 'reps' && value > 0 ? value : null,
+      reps: unit === 'reps' && value > 0 ? value : (actualReps || null),
+      actualReps: actualReps, // ripetizioni realmente fatte (per esercizi kg)
       unit: unit,
       ok: true
     };
-    if (unit === 'kg' && value > 0) ST.currVol += Math.round(value * parseMeanReps(ex.reps));
+    // Volume: usa reps reali se disponibili, altrimenti la media suggerita
+    if (unit === 'kg' && value > 0) {
+      const repsForVol = actualReps || parseMeanReps(ex.reps);
+      ST.currVol += Math.round(value * repsForVol);
+    }
+    // Pulisco il draft di questo esercizio (serie completata)
+    if (ST.draftValues) delete ST.draftValues[ex.id];
+    if (ST.draftReps) delete ST.draftReps[ex.id];
   }
   ST.currentSet++;
   const totalSets=parseInt(ex.sets)||1;
   if(ST.currentSet>=totalSets){
     ST.woPhase='exercise_done';
-    BeepPlayer.beep(880, 0.25, 'sine', 0.4); // beep esercizio completato
+    BeepPlayer.exerciseDone(); // chord trionfale esercizio completato
     render();
   }
   else{
     ST.woPhase='rest';ST.tmr=ex.rest||60;render();
     ST.tmrId=setInterval(()=>{
       ST.tmr--;const e=el('tmrUI');if(e)e.textContent=ST.tmr;
-      // PUNTO 4: tick negli ultimi 3 secondi
-      if (ST.tmr === 3 || ST.tmr === 2 || ST.tmr === 1) BeepPlayer.tick();
+      // Tick crescente in tono negli ultimi 3 secondi (countdown chiaro)
+      if (ST.tmr === 3 || ST.tmr === 2 || ST.tmr === 1) BeepPlayer.tick(ST.tmr);
       if(ST.tmr<=0){
         clearInterval(ST.tmrId);
         BeepPlayer.endOfRest();  // PUNTO 4: beep "fine pausa"
@@ -4349,24 +4467,56 @@ window.advanceExercise=function(){
   }else{
     const e=ST.wLog.findIndex(x=>x.d===currentDateStr);
     if(e>=0) ST.wLog.splice(e,1);
-    ST.wLog.push({d:currentDateStr,t:wo.name,vol:ST.currVol,dur:ST.p.dur,isRest:false,woId:ST.aWo});
-    ST.wLog.sort((a,b)=>new Date(a.d)-new Date(b.d));ST.cheatDebt=0;ST.aWo=null;save();
+    // Calcolo durata reale e kcal bruciate
+    const _durRealMin = ST.workoutStartTs ? Math.max(1, Math.round((Date.now() - ST.workoutStartTs) / 60000)) : (ST.p.dur || 60);
+    const _kcalBurned = estimateWorkoutKcal(_durRealMin, currentWeightKg(), ST.currVol);
+    ST.wLog.push({d:currentDateStr,t:wo.name,vol:ST.currVol,dur:_durRealMin,kcal:_kcalBurned,isRest:false,woId:ST.aWo});
+    ST.wLog.sort((a,b)=>new Date(a.d)-new Date(b.d));ST.cheatDebt=0;ST.aWo=null;ST.workoutStartTs=null;save();
     WakeLockMgr.disable();  // PUNTO 2: rilascia wake lock a fine workout
-    BeepPlayer.beep(523, 0.15, 'sine', 0.35);
-    setTimeout(() => BeepPlayer.beep(659, 0.15, 'sine', 0.4), 180);
-    setTimeout(() => BeepPlayer.beep(784, 0.4, 'sine', 0.45), 360);
-    alert(`🏆 ALLENAMENTO COMPLETATO!\n\nVolume totale: ${ST.currVol} kg`);
+    BeepPlayer.exerciseDone();
+    setTimeout(() => BeepPlayer.chord(784, 988, 0.4, 0.85), 400);
+    alert(`🏆 ALLENAMENTO COMPLETATO!\n\n📊 Volume: ${ST.currVol} kg\n🔥 Kcal bruciate: ~${_kcalBurned}\n⏱ Durata: ${_durRealMin} min`);
   }
 }
-// ── FIX 5: openSwap con spiegazione che è un sostituto, NON un salto ──
-window.openSwap=function(slot){
+// ── openSwap: funziona sia da fuori scheda che da dentro l'allenamento ──
+window.openSwap=function(slot, exId){
   const defs=getDefs(AU.profile?.sx||'m',ST.p?.loc||'gym');
-  const curId=(ST.exPrefs&&ST.exPrefs[slot])||defs[slot];
+  let curId, slotKey;
+  // Se slot è valorizzato, sono dalla view scheda → uso il preferito o default
+  if(slot){
+    curId = (ST.exPrefs && ST.exPrefs[slot]) || defs[slot];
+    slotKey = slot;
+  } else if(exId){
+    // Sono dentro l'allenamento attivo → cerco lo slot corrispondente all'esercizio
+    curId = exId;
+    // Trovo lo slot corrispondente: controllo defs e exPrefs per matching exId
+    slotKey = Object.keys(defs).find(k => {
+      const currentForSlot = (ST.exPrefs && ST.exPrefs[k]) || defs[k];
+      return currentForSlot === exId;
+    }) || null;
+  } else {
+    return; // nessun riferimento
+  }
+  // Trovo gruppo di esercizi alternativi (stessa categoria muscolare)
   const catKey=Object.keys(EX_G).find(k=>EX_G[k].includes(curId));
   const alts=(catKey?EX_G[catKey]:[curId]).map(id=>({id,...EX[id]}));
-  ST.sheet='swap';ST.sheetData={slot,curId,alts};render();
+  ST.sheet='swap';
+  ST.sheetData={slot:slotKey, curId, alts, fromActive: !slot};
+  render();
 }
-window.swapEx=function(slot,newId){if(!ST.exPrefs)ST.exPrefs={};ST.exPrefs[slot]=newId;ST.sheet=null;save();}
+window.swapEx=function(slot,newId){
+  if(!slot){
+    // Caso edge: chiamato senza slot valido. Avviso utente.
+    alert("Impossibile sostituire: questo esercizio non è in una scheda standard. Aggiorna la scheda dalle opzioni.");
+    ST.sheet=null; render(); return;
+  }
+  if(!ST.exPrefs)ST.exPrefs={};
+  ST.exPrefs[slot]=newId;
+  // Se sono dentro l'allenamento attivo, aggiorno aWo perché il prossimo render
+  // pesca da exPrefs/defs e l'esercizio corrente cambierà
+  ST.sheet=null;
+  save();
+}
 window.closeSheet=function(){ST.sheet=null;ST.sheetData=null;render();}
 
 // PUNTO 15: tour guidato per nuovi utenti
@@ -4661,7 +4811,17 @@ window.renderAuth = function(root){
     <button class="btn" style="margin-top:16px" onclick="doReg()">CREA ACCOUNT ▸</button>
     </div>`}`;
   }
-  root.innerHTML=`<div class="auth-w"> <div style="text-align:center;margin-bottom:24px;"> <div class="bebas" style="font-size:60px;color:var(--acc);line-height:.85;letter-spacing:3px;">FIT</div> <div class="bebas" style="font-size:60px;color:var(--text);line-height:.85;letter-spacing:3px;">TRACKER</div> <div class="bebas" style="font-size:60px;color:var(--text);line-height:.85;letter-spacing:3px;">PRO</div> <div style="font-size:10px;color:var(--mut);letter-spacing:3px;margin-top:10px;">ADAPTIVE AI COACH · MULTI-USER</div> </div> <div style="width:100%;max-width:380px;"> ${AU.msg?`<div class="${AU.msg.startsWith('✅')?'':'err-box'}" style="${AU.msg.startsWith('✅')?'background:rgba(74,222,128,.1);border:1px solid var(--gre);border-radius:10px;padding:11px 13px;font-size:13px;color:var(--gre);margin-bottom:12px;':''}">${AU.msg}</div>`:''}
+  // Helper: stile messaggio in base al prefisso emoji/contenuto
+  // ✅ = successo (verde), ⏳ ✉️ = info/loading (blu neutro), altro = errore (rosso)
+  const __msgIsSuccess = AU.msg && AU.msg.startsWith('✅');
+  const __msgIsInfo = AU.msg && (AU.msg.startsWith('⏳') || AU.msg.startsWith('✉️') || /accesso in corso|caricamento|attendere/i.test(AU.msg));
+  const __msgStyle = __msgIsSuccess
+    ? 'background:rgba(74,222,128,.1);border:1px solid var(--gre);border-radius:10px;padding:11px 13px;font-size:13px;color:var(--gre);margin-bottom:12px;'
+    : __msgIsInfo
+    ? 'background:rgba(96,165,250,.1);border:1px solid var(--blu);border-radius:10px;padding:11px 13px;font-size:13px;color:var(--blu);margin-bottom:12px;'
+    : '';
+  const __msgClass = (__msgIsSuccess || __msgIsInfo) ? '' : 'err-box';
+  root.innerHTML=`<div class="auth-w"> <div style="text-align:center;margin-bottom:24px;"> <div class="bebas" style="font-size:60px;color:var(--acc);line-height:.85;letter-spacing:3px;">FIT</div> <div class="bebas" style="font-size:60px;color:var(--text);line-height:.85;letter-spacing:3px;">TRACKER</div> <div class="bebas" style="font-size:60px;color:var(--text);line-height:.85;letter-spacing:3px;">PRO</div> <div style="font-size:10px;color:var(--mut);letter-spacing:3px;margin-top:10px;">ADAPTIVE AI COACH · MULTI-USER</div> </div> <div style="width:100%;max-width:380px;"> ${AU.msg?`<div class="${__msgClass}" style="${__msgStyle}">${AU.msg}</div>`:''}
   ${content}
   <div style="text-align:center;margin-top:12px;font-size:11px;color:var(--mut);">🔒 Database sicuro in Cloud · Ogni account è privato</div>
   </div></div>`;
@@ -4717,6 +4877,22 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
   const stepsSaved=ST.life[t2]&&ST.life[t2].steps>0;
   const stepsValue=ST.life[t2]?.steps||0;
   const stepsGoal=sx==='f'?10000:12000;
+  // Sonno: default = ore di ieri se presente, altrimenti 7.5h
+  const sleepSavedToday = ST.life[t2]?.sleep || null;
+  const sleepSaved = sleepSavedToday !== null && sleepSavedToday > 0;
+  // Cerco ieri: data precedente in life
+  const __yesterdayKey = (()=>{
+    const d = new Date(t2);
+    d.setDate(d.getDate()-1);
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const dd = String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${dd}`;
+  })();
+  const __yesterdaySleep = ST.life[__yesterdayKey]?.sleep;
+  const sleepDefault = __yesterdaySleep && __yesterdaySleep > 0 ? __yesterdaySleep : 7.5;
+  const sleepValue = sleepSavedToday || sleepDefault;
+  const sleepHint = sleepSaved ? `Salvato. Modifica e tocca AGG. per aggiornare.` : (__yesterdaySleep ? `Ieri hai dormito ${__yesterdaySleep}h. Conferma o modifica.` : 'Indica le ore dormite ieri notte (4-12h)');
   const noTraining=(ST.p.sessions||0)===0;
   const todayActs=(ST.activities&&ST.activities[t2])||[];
   const actsKcal=todayActs.reduce((s,a)=>s+(a.kcal||0),0);
@@ -5080,13 +5256,16 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
     </div>
 
     <!-- SONNO -->
-    <div style="background:var(--surf);border-radius:14px;padding:16px;border:1.5px solid var(--bord);">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+    <div style="background:var(--surf);border-radius:14px;padding:16px;border:1.5px solid ${sleepSaved?'var(--purp)':'var(--bord)'};">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
         <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:24px;">😴</span><span style="font-size:13px;color:var(--mut);font-weight:700;letter-spacing:1.5px;">SONNO</span></div>
-        <div class="bebas" style="font-size:24px;color:var(--purp);" id="slpD">${ST.life[t2]?.sleep||7.5}<span style="font-size:13px;color:var(--mut);">h</span></div>
+        <div class="bebas" style="font-size:24px;color:${sleepSaved?'var(--purp)':'var(--text)'};">${sleepValue}<span style="font-size:13px;color:var(--mut);"> h</span></div>
       </div>
-      <input type="range" min="4" max="12" step=".5" value="${ST.life[t2]?.sleep||7.5}" oninput="document.getElementById('slpD').innerHTML=this.value+'<span style=\\'font-size:13px;color:var(--mut)\\'>h</span>'" onchange="logSleep(this.value)" style="width:100%;height:32px;margin:0;padding:0;cursor:pointer;">
-      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--mut);margin-top:4px;"><span>4h</span><span>8h ideale</span><span>12h</span></div>
+      <div style="display:flex;gap:8px;">
+        <input type="number" id="nSleep" value="${sleepSavedToday||''}" placeholder="Es. ${sleepDefault}" step=".5" min="0" max="14" style="margin:0;font-size:15px;padding:14px;text-align:center;flex:1;min-height:50px;border-radius:10px;">
+        <button onclick="logSleepBtn()" style="background:${sleepSaved?'var(--blu)':'var(--purp)'};color:#fff;border:none;border-radius:10px;padding:14px 22px;font-size:15px;font-weight:700;cursor:pointer;flex-shrink:0;min-height:50px;min-width:64px;">${sleepSaved?'AGG.':'SALVA'}</button>
+      </div>
+      <div style="font-size:11px;color:var(--mut);margin-top:8px;text-align:center;">${sleepHint}</div>
     </div>
   </div>`;
 
@@ -5112,21 +5291,29 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
 
   ${bannerHtml}
 
+  <!-- MESSAGGIO COACH (prominente, subito dopo banner) -->
+  ${motivMessageHome(an,ST,cW,mac,pWeek)}
+
   <!-- BLOCCO OGGI IN NUMERI -->
   ${todayBlock}
-
-  <!-- MESSAGGIO COACH -->
-  ${motivMessageHome(an,ST,cW,mac,pWeek)}
   `;
 }
 
-// Wrapper messaggio motivazionale (compatto in fondo Home)
+// Wrapper messaggio motivazionale (più prominente e motivante in Home)
 window.motivMessageHome=function(an,st,cW,mac,pWeek){
   const motiv=(typeof getMotivationalMsg==='function')?getMotivationalMsg(an,st,cW,mac,pWeek):null;
   if(!motiv||!motiv.msg) return '';
-  return `<div style="background:linear-gradient(135deg,rgba(197,241,53,.04),rgba(197,241,53,.01));border:1px dashed var(--bord);border-radius:14px;padding:14px 16px;margin-bottom:10px;">
-    <div style="font-size:10px;font-weight:700;color:var(--acc);letter-spacing:1px;margin-bottom:4px;">💭 IL TUO COACH</div>
-    <div style="font-size:13px;line-height:1.5;color:var(--text);">${escapeHtml(motiv.msg)}</div>
+  // Card prominente con bordo accent + gradient + icon grande
+  return `<div style="background:linear-gradient(135deg,rgba(197,241,53,.18),rgba(197,241,53,.05));border:2px solid var(--acc);border-radius:18px;padding:16px 18px;margin-bottom:12px;box-shadow:0 4px 16px rgba(197,241,53,.12);position:relative;overflow:hidden;">
+    <div style="position:absolute;top:-20px;right:-10px;font-size:80px;opacity:.08;pointer-events:none;">💪</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;position:relative;">
+      <div style="width:36px;height:36px;border-radius:50%;background:rgba(197,241,53,.25);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">💭</div>
+      <div style="flex:1;">
+        <div style="font-size:11px;font-weight:800;color:var(--acc);letter-spacing:2px;">IL TUO COACH</div>
+        <div style="font-size:10px;color:var(--mut);font-weight:600;">Messaggio del giorno</div>
+      </div>
+    </div>
+    <div style="font-size:14px;line-height:1.55;color:var(--text);font-weight:500;position:relative;">${escapeHtml(motiv.msg)}</div>
   </div>`;
 };
 // ── renderWork: FIX 1 (riposo=niente schede), FIX 2 (sequenza A→B→C), FIX 3 (calendario reale) ──
@@ -5411,7 +5598,7 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
   // PUNTO 11: se 0 sessioni allenamento, tutti i giorni sono "rest day" (niente pre-workout)
   const noTraining=(ST.p.sessions||0)===0;
   const isRestDay=noTraining||loggedRest||(todayWoId==='rest')||(todayWoId==='cardio');
-  const meals=buildMeals(mac,ST.p.intol||[],sx,isRestDay,ST.p.diet||'omnivore',ST.p.times,ST.p.usesSupplements||false,ST.p.favs||null);
+  const meals=buildMeals(mac,ST.p.intol||[],sx,isRestDay,ST.p.diet||'omnivore',ST.p.times,ST.p.usesSupplements||false,ST.p.favs||null,ST.p.workoutTime||null);
   const dLog=ST.nutri[t2]||{k:0,p:0,c:0,f:0,logged:[],skipped:[],cheatLog:[]};
   if(!dLog.cheatLog) dLog.cheatLog=[];
   const remK=Math.max(0,mac.kcal-dLog.k);
@@ -5443,7 +5630,7 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
       </div>
     </div>
   </div>`:''}
-  ${isRestDay?`<div style="background:rgba(167,139,250,.08);border:1px solid var(--purp);border-radius:14px;padding:12px 14px;margin-bottom:12px;font-size:13px;color:var(--purp);font-weight:600;">💤 Giorno di riposo — niente pre-workout. Menù adattato con spuntino pomeridiano.</div>`:''}
+  ${isRestDay?`<div style="background:rgba(167,139,250,.08);border:1px solid var(--purp);border-radius:14px;padding:12px 14px;margin-bottom:12px;font-size:13px;color:var(--purp);font-weight:600;">💤 Giorno di riposo — alimentazione adattata: meno carboidrati al pomeriggio, più recupero proteico.</div>`:''}
   <div class="card card-hi">
     <div class="r" style="margin-bottom:14px;">
       <div><div class="bebas" style="font-size:20px;">BILANCIO DEL GIORNO</div><div style="font-size:11px;color:var(--mut);">Target adattato: ${mac.kcal} kcal <button onclick="window.showCalcDetail=true;render();setTimeout(()=>document.querySelector('[onclick*=showCalcDetail]')?.scrollIntoView({behavior:'smooth',block:'center'}),100)" style="background:transparent;border:1px solid var(--mut);color:var(--mut);width:16px;height:16px;border-radius:50%;font-size:10px;font-weight:700;cursor:pointer;padding:0;line-height:14px;display:inline-flex;align-items:center;justify-content:center;margin-left:4px;vertical-align:middle;" title="Come calcoliamo">?</button></div></div>
@@ -6135,7 +6322,7 @@ window.renderSettings = function(mac){
   <!-- ORARI PERSONALIZZATI -->
   <div class="card" style="border-color:var(--ora);">
     <div class="bebas" style="font-size:20px;color:var(--ora);margin-bottom:6px;">🕐 ORARI PERSONALIZZATI</div>
-    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:14px;">Imposta i TUOI orari di pasti e allenamento. Il menù di alimentazione e il piano si adattano: lo "spuntino delle 16" diventa "pre-workout" automaticamente nelle ore prima del tuo allenamento.</div>
+    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:14px;">Imposta i TUOI orari di pasti e allenamento. Il menù si adatta: lo spuntino pomeridiano diventa "pre-workout" automaticamente solo se cade nelle 2 ore prima del tuo allenamento (quindi rimane spuntino normale se ti alleni la mattina o dopo cena).</div>
     <div class="g2">
       <div><span class="lbl">🌅 COLAZIONE</span><input type="time" id="tCol" value="${ST.p.times?.col||'07:00'}"></div>
       <div><span class="lbl">🍎 SPUNTINO MATTINA</span><input type="time" id="tSp1" value="${ST.p.times?.sp1||'10:30'}"></div>
@@ -6240,8 +6427,17 @@ window.render = function() {
       <div style="padding:14px;border-top:1px solid var(--bord);"><button class="btn" style="height:68px;font-size:22px;background:${isLastEx?'var(--gre)':wo.col||'var(--acc)'};" onclick="advanceExercise()">${isLastEx?'🏁 SALVA E TERMINA':'➡️ PROSSIMO'}</button></div></div>`;return;
     }
     const isActive=ST.woPhase==='active';
+    // Calcolo kcal live in base a durata trascorsa + volume corrente
+    const __cW = currentWeightKg();
+    const __durMin = ST.workoutStartTs ? Math.max(1, Math.round((Date.now() - ST.workoutStartTs) / 60000)) : (ST.p.dur || 60);
+    const __kcalLive = estimateWorkoutKcal(__durMin, __cW, ST.currVol);
     root.innerHTML=`<div class="wo"><div class="wo-head"><div><div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;text-transform:uppercase;">${escapeHtml(wo.name)} · Es. ${ST.step+1}/${wo.exercises.length}</div><div class="bebas" style="font-size:20px;color:${wo.col||theme};">${escapeHtml(ex.name)}</div></div><button class="btn-s btn-action" onclick="closeWo()">✕ ESCI</button></div>
     <div class="bw" style="height:4px;border-radius:0;"><div class="bf" style="width:${((ST.step)/(wo.exercises.length)*100).toFixed(0)}%;height:4px;background:${wo.col||theme};border-radius:0;"></div></div>
+    <div style="display:flex;gap:8px;padding:8px 14px;background:var(--surf);border-bottom:1px solid var(--bord);">
+      <div style="flex:1;text-align:center;"><div style="font-size:9px;color:var(--mut);font-weight:700;letter-spacing:1px;">⏱ DURATA</div><div class="bebas" style="font-size:18px;color:var(--text);line-height:1.1;">${__durMin}<span style="font-size:11px;color:var(--mut);">min</span></div></div>
+      <div style="flex:1;text-align:center;border-left:1px solid var(--bord);border-right:1px solid var(--bord);"><div style="font-size:9px;color:var(--mut);font-weight:700;letter-spacing:1px;">📊 VOLUME</div><div class="bebas" style="font-size:18px;color:var(--text);line-height:1.1;">${ST.currVol||0}<span style="font-size:11px;color:var(--mut);">kg</span></div></div>
+      <div style="flex:1;text-align:center;"><div style="font-size:9px;color:var(--mut);font-weight:700;letter-spacing:1px;">🔥 KCAL</div><div class="bebas" style="font-size:18px;color:var(--ora);line-height:1.1;">${__kcalLive}</div></div>
+    </div>
     <div style="padding:16px;flex:1;overflow-y:auto;padding-bottom:100px;">
       <div style="background:${isActive?'rgba(74,222,128,.07)':'rgba(197,241,53,.05)'};border:1.5px solid ${isActive?'var(--gre)':wo.col||'var(--acc)'};border-radius:14px;padding:18px;margin-bottom:14px;text-align:center;box-shadow:${isActive?'0 0 20px rgba(74,222,128,0.2)':'none'};transition:0.3s;">
         <div style="font-size:12px;color:var(--mut);font-weight:700;letter-spacing:2px;margin-bottom:6px;">${isActive?'🟢 IN CORSO':'PROSSIMA SERIE'}</div>
@@ -6258,8 +6454,8 @@ window.render = function() {
         <div style="font-size:12px;color:${ex.isWarmup?'var(--acc)':'var(--purp)'};font-weight:700;letter-spacing:1px;margin-bottom:4px;">${ex.isWarmup?'⏱ TEMPO STIMATO: '+ex.reps:'⏱ TEMPO STIMATO: '+ex.reps}</div>
         <div style="font-size:12px;color:var(--mut);line-height:1.5;">${ex.isWarmup?'Nessun peso — esegui a corpo libero rispettando i tempi indicati':'Nessun peso — allungamento statico. Non forzare mai oltre la soglia del dolore.'}</div>
       </div>`:`
-      <div class="card" style="padding:14px;margin-bottom:10px;"><div class="r" style="margin-bottom:8px;"><div><div class="lbl" style="margin-bottom:2px;">${exUnit==='sec'?'DURATA (SECONDI)':exUnit==='reps'?'RIPETIZIONI EFFETTUATE':'PESO USATO (KG)'}</div><div style="font-size:11px;color:var(--mut);">${sug.hint}</div></div>${sug.val?`<div class="bebas" style="font-size:26px;color:${theme};">${sug.val}${exUnit==='sec'?'s':exUnit==='reps'?' reps':'kg'}</div>`:''}</div><input type="number" id="wkW" placeholder="${sug.val||(exUnit==='sec'?'Es. 30':exUnit==='reps'?'Es. 10':'Es. 12')}" step="${exUnit==='kg'?'.5':'1'}" value="${sug.val||''}" style="margin:0;font-size:24px;font-weight:700;text-align:center;">${exUnit==='sec'&&ST.setElapsed>0?`<div style="font-size:11px;color:var(--blu);text-align:center;margin-top:6px;">⏱ Timer corrente: ${ST.setElapsed}s — premi "Serie completata" per registrare</div>`:''}</div>
-      <button class="btn btn-action" style="font-size:14px;width:100%;" onclick="openSwap('${ex.slot||''}')">🔄 SOSTITUISCI QUESTO ESERCIZIO</button>`}
+      <div class="card" style="padding:14px;margin-bottom:10px;"><div class="r" style="margin-bottom:8px;"><div><div class="lbl" style="margin-bottom:2px;">${exUnit==='sec'?'DURATA (SECONDI)':exUnit==='reps'?'RIPETIZIONI EFFETTUATE':'PESO USATO (KG)'}</div><div style="font-size:11px;color:var(--mut);">${sug.hint}</div></div>${sug.val?`<div class="bebas" style="font-size:26px;color:${theme};">${sug.val}${exUnit==='sec'?'s':exUnit==='reps'?' reps':'kg'}</div>`:''}</div><input type="number" id="wkW" placeholder="${sug.val||(exUnit==='sec'?'Es. 30':exUnit==='reps'?'Es. 10':'Es. 12')}" step="${exUnit==='kg'?'.5':'1'}" value="${(ST.draftValues&&ST.draftValues[ex.id]!=null)?ST.draftValues[ex.id]:(sug.val||'')}" oninput="if(!ST.draftValues)ST.draftValues={};ST.draftValues['${ex.id}']=this.value;" style="margin:0;font-size:24px;font-weight:700;text-align:center;">${exUnit==='kg'?`<div style="display:flex;align-items:center;gap:10px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--bord);"><div style="flex:1;"><div class="lbl" style="margin-bottom:2px;">RIPETIZIONI EFFETTUATE</div><div style="font-size:11px;color:var(--mut);">Suggerite: ${ex.reps||'8-10'} — inserisci quelle che hai fatto davvero</div></div><input type="number" id="wkReps" placeholder="${parseMeanReps(ex.reps)}" step="1" min="1" max="50" value="${(ST.draftReps&&ST.draftReps[ex.id]!=null)?ST.draftReps[ex.id]:''}" oninput="if(!ST.draftReps)ST.draftReps={};ST.draftReps['${ex.id}']=this.value;" style="margin:0;font-size:20px;font-weight:700;text-align:center;width:90px;flex-shrink:0;"></div>`:''}${exUnit==='sec'&&ST.setElapsed>0?`<div style="font-size:11px;color:var(--blu);text-align:center;margin-top:6px;">⏱ Timer corrente: ${ST.setElapsed}s — premi "Serie completata" per registrare</div>`:''}</div>
+      <button class="btn btn-action" style="font-size:14px;width:100%;" onclick="openSwap('${ex.slot||''}','${ex.id||''}')">🔄 SOSTITUISCI QUESTO ESERCIZIO</button>`}
     </div>
     <div style="position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--bord);padding:14px;">${!isActive?`<button class="btn btn-gre" style="height:72px;font-size:24px;" onclick="startSet()">▶ INIZIA SERIE ${ST.currentSet+1}/${totalSets}</button>`:`<button class="btn" style="height:72px;font-size:22px;" onclick="completeSet()">✅ SERIE COMPLETATA</button>`}</div></div>`;return;
   }
