@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION1-UX">
+<meta name="ft-version" content="build-SESSION2-CONTENT">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -672,6 +672,54 @@ const EX={
   st_hip_flex:{cat:'mobility',t:'isometric',name:'Stretch Flessori Anca',mus:'Flessori Anca',steps:['In affondo alto, ginocchio posteriore a terra','Spingi i fianchi in avanti','Mantieni 30-45 secondi','Alterna gamba'],cues:['Importante per chi sta seduto molte ore','Senti stretch, non dolore']},
   st_thoracic:{cat:'mobility',t:'isometric',name:'Mobility Toracica',mus:'Toracica/Schiena Alta',steps:['A quattro zampe','Mano dietro la testa','Ruota gomito verso soffitto, guarda in alto','Poi giù verso il braccio opposto, 10 reps'],cues:['Ottimo pre-allenamento spalle/panca','Migliora postura']},
 
+    // ═══ ESERCIZI AGGIUNTI SESSIONE 2 ═══
+  // CHEST extras
+  ch_pec_deck:{cat:'chest',t:'isolation',name:'Pec Deck (Macchina)',mus:'Petto',steps:['Siediti alla pec deck con schiena ben aderente','Avambracci sulle imbottiture, gomiti a 90°','Avvicina i gomiti davanti al petto stringendo','Torna controllato senza superare le spalle dietro'],cues:['Stringi forte al centro, mantieni 1 secondo','Schiena sempre attaccata allo schienale']},
+  ch_dumbbell_pullover:{cat:'chest',t:'isolation',name:'Pullover con Manubrio',mus:'Petto Alto / Gran Dorsale',steps:['Sdraiato traversalmente sulla panca, manubrio a due mani sopra il petto','Abbassa il manubrio dietro la testa con braccia leggermente piegate','Senti lo stretch a costole/petto','Torna su senza spingere con le spalle'],cues:['Movimento lento e controllato','Glutei leggermente bassi per stabilizzare']},
+  ch_landmine_press:{cat:'chest',t:'compound',name:'Landmine Press',mus:'Petto Alto / Spalle',steps:['Bilanciere fissato a terra, impugna l\'estremità libera con una mano','In ginocchio o in piedi, spingi verso l\'alto-fuori dal corpo','Estendi senza bloccare il gomito','Torna controllato'],cues:['Ottimo per dolori alla spalla — angolo di lavoro più gentile','Alterna lato per simmetria']},
+
+  // BACK extras
+  bk_seated_row:{cat:'back',t:'compound',name:'Seated Row Cavo',mus:'Dorsali / Romboidi',steps:['Seduto alla macchina cavo, piedi sulla pedana','Schiena dritta, tira l\'impugnatura verso l\'addome','Stringi le scapole insieme alla fine del movimento','Torna controllato in 3 secondi'],cues:['Niente spinta col busto: solo braccia e schiena','Petto in fuori, mai schiena curva']},
+  bk_lat_pulldown:{cat:'back',t:'compound',name:'Lat Machine (Pulldown)',mus:'Gran Dorsale',steps:['Seduto alla macchina, ginocchia sotto il rullo','Impugnatura larga, tira l\'asta verso il petto alto','Gomiti spingono verso il basso e indietro','Torna lento all\'estensione completa'],cues:['Mai dietro il collo: lesioni cuffia','Petto in fuori, schiena leggermente arcuata']},
+  bk_chest_supported:{cat:'back',t:'compound',name:'Rematore Petto Appoggiato',mus:'Dorsali / Trapezio Medio',steps:['Petto appoggiato su panca inclinata 30°','Manubri a braccia distese verso il basso','Tira i manubri verso i fianchi, gomiti vicini al corpo','Stringi le scapole alla fine'],cues:['Ottima alternativa al rematore classico se hai la lombare debole','Niente swing: solo schiena']},
+
+  // SHOULDERS extras
+  sh_db_press_seated:{cat:'shoulders',t:'compound',name:'Shoulder Press Seduto Manubri',mus:'Spalle (deltoide)',steps:['Seduto su panca con schienale','Manubri all\'altezza delle orecchie','Spingi verso l\'alto fino quasi alla completa estensione','Abbassa lento alle orecchie'],cues:['Schiena ferma allo schienale','Mai bloccare i gomiti in cima']},
+  sh_cable_lat:{cat:'shoulders',t:'isolation',name:'Alzate Laterali Cavo',mus:'Deltoide Laterale',steps:['Cavo basso, impugna il manico con la mano opposta','Braccio quasi disteso, alza lateralmente fino all\'altezza della spalla','Mantieni leggera flessione del gomito','Torna controllato'],cues:['Lavora sul controllo, non sul peso','Mai oltre l\'orizzontale']},
+  sh_face_pull_band:{cat:'shoulders',t:'isolation',name:'Face Pull Elastico',mus:'Deltoide Posteriore / Cuffia',steps:['Elastico fissato all\'altezza del viso, presa pronata','Tira verso il viso allargando i gomiti','Stringi forte a fine movimento','Torna lento'],cues:['Fondamentale per salute della spalla','3 serie da 15-20 reps a fine ogni allenamento']},
+
+  // ARMS extras
+  bi_drag_curl:{cat:'biceps',t:'isolation',name:'Drag Curl Bilanciere',mus:'Bicipite (Capo Lungo)',steps:['Bilanciere a presa supina, gomiti dietro al busto','Trascina il bilanciere lungo il corpo verso l\'alto','I gomiti vanno indietro durante la salita','Torna lento'],cues:['Movimento corto: il bilanciere non sale oltre l\'ombelico','Stimola di più il capo lungo del bicipite']},
+  bi_spider:{cat:'biceps',t:'isolation',name:'Spider Curl',mus:'Bicipite (picco)',steps:['Petto appoggiato su panca inclinata 60°, faccia in giù','Manubri o bilanciere appesi','Curl mantenendo i gomiti davanti al corpo','Stringi forte in alto'],cues:['Massimo isolamento del bicipite','Peso leggero per controllo perfetto']},
+  tri_overhead_rope:{cat:'triceps',t:'isolation',name:'Overhead Triceps Rope',mus:'Tricipite (Capo Lungo)',steps:['Cavo basso, corda dietro la testa con due mani','Estendi i gomiti verso l\'alto e indietro','Mantieni i gomiti vicini alla testa','Torna lento'],cues:['Stretch massimo del tricipite','Schiena dritta, busto leggermente avanti']},
+
+  // LEGS extras
+  lg_goblet_squat:{cat:'quads',t:'compound',name:'Goblet Squat',mus:'Quadricipiti / Glutei',steps:['Tieni un manubrio o kettlebell verticale al petto','Piedi larghezza spalle, punte leggermente in fuori','Scendi dritto fino a femori paralleli a terra','Risali spingendo dai talloni'],cues:['Petto su, schiena dritta','Ottimo per chi ha problemi alla lombare con back squat']},
+  lg_leg_extension:{cat:'quads',t:'isolation',name:'Leg Extension',mus:'Quadricipite',steps:['Seduto, piedi sotto il rullo','Estendi le gambe fino quasi alla completa estensione','Tieni 1 secondo in alto','Torna lento in 3 secondi'],cues:['Non bloccare le ginocchia in alto','Schiena attaccata allo schienale']},
+  lg_leg_curl:{cat:'glutes',t:'isolation',name:'Leg Curl Sdraiato',mus:'Femorali',steps:['Sdraiato a pancia in giù, caviglie sotto il rullo','Piega le ginocchia portando i talloni verso i glutei','Stringi i femorali in alto','Torna lento'],cues:['Bacino aderente alla panca','Movimento lento, mai a strappi']},
+  lg_kettlebell_swing:{cat:'glutes',t:'compound',name:'Kettlebell Swing',mus:'Glutei / Femorali / Core',steps:['Piedi larghezza spalle, kettlebell tra le gambe','Inclina il busto avanti, oscilla la kettlebell tra le gambe','Estendi le anche esplosivamente fino all\'altezza degli occhi','Lascia scendere e ripeti'],cues:['Spinta dai glutei, NON dalle braccia','Schiena sempre dritta, mai curva']},
+  lg_walking_lunge:{cat:'quads',t:'compound',name:'Affondi in Camminata',mus:'Quadricipiti / Glutei',steps:['In piedi con manubri ai lati o senza peso','Fai un passo lungo avanti, scendi col ginocchio posteriore quasi a terra','Spingi sul tallone anteriore per alzarti e fai il passo successivo','Continua per tutta la lunghezza prevista'],cues:['Ginocchio anteriore allineato col piede, mai dentro','Busto eretto, sguardo avanti']},
+  lg_box_squat:{cat:'quads',t:'compound',name:'Box Squat',mus:'Quadricipiti / Glutei / Core',steps:['Posizionati davanti a una panca o cassa con bilanciere o manubri','Scendi controllando fino a sederti brevemente sulla cassa','Mantieni la tensione, NON rilassarti','Risali esplosivo'],cues:['Insegna a controllare la fase eccentrica','Cassa all\'altezza dove i femori sono paralleli al pavimento']},
+
+  // CORE extras
+  co_hollow_body:{cat:'core',t:'isometric',name:'Hollow Body Hold',mus:'Core / Addome Inferiore',steps:['Sdraiato sulla schiena, gambe distese e braccia oltre la testa','Solleva spalle e gambe da terra','Mantieni la posizione tenendo la lombare schiacciata a terra','Respira regolarmente'],cues:['Se la lombare si stacca → piega le gambe','Posizione fondamentale per ginnastica']},
+  co_hanging_knee:{cat:'core',t:'compound',name:'Knee Raises (sospeso)',mus:'Addome Inferiore',steps:['Appeso a una sbarra, presa larghezza spalle','Porta le ginocchia al petto controllato','Tieni 1 secondo in alto','Scendi lento, niente swing'],cues:['Niente slancio: solo addominali','Versione facilitata: sulla parallel bar (gomiti)']},
+  co_ab_wheel:{cat:'core',t:'compound',name:'Ab Wheel (Ruota)',mus:'Core / Addome Completo',steps:['In ginocchio, mani sulla ruota','Rotola in avanti distendendo il corpo','Mantieni la lombare neutra (no archi)','Torna in posizione contraendo l\'addome'],cues:['Esercizio molto difficile, partire piccoli','Mai inarcare la schiena']},
+
+  // CARDIO/HOME extras
+  ex_burpee:{cat:'cardio',t:'cardio',name:'Burpee',mus:'Cardio / Tutto il corpo',steps:['In piedi, scendi in posizione plank','Fai un piegamento','Risali in posizione plank, salta riportando i piedi alle mani','Salta in alto con braccia sopra'],cues:['Esercizio completo cardio + forza','Modula intensità: senza piegamento o senza salto']},
+  ex_mountain:{cat:'cardio',t:'cardio',name:'Mountain Climbers',mus:'Cardio / Core',steps:['Posizione di plank con braccia distese','Alterna velocemente le gambe portando le ginocchia al petto','Mantieni la posizione del busto stabile','Respira ritmicamente'],cues:['Veloci ma controllati','30 secondi → 30 secondi pausa']},
+  ex_jump_rope:{cat:'cardio',t:'cardio',name:'Salto della Corda',mus:'Cardio / Polpacci',steps:['Corda di lunghezza adatta','Salti piccoli, atterraggio sulle punte','Polsi muovono la corda, non spalle','Mantieni un ritmo costante'],cues:['Brucia ~10 kcal/min','Ottimo riscaldamento o cardio finisher']},
+  ex_assault_bike:{cat:'cardio',t:'cardio',name:'Assault Bike (Air Bike)',mus:'Cardio / Tutto il corpo',steps:['Siediti sulla bici a aria','Pedala con braccia e gambe simultaneamente','Resistenza si adatta alla tua forza','Sprint o ritmo costante'],cues:['Ottimo per HIIT: 20 sec sprint / 40 sec recupero','Brucia ~15-20 kcal/min']},
+
+  // FOREARMS extras
+  fa_dead_hang:{cat:'forearms',t:'isometric',name:'Dead Hang',mus:'Avambracci / Presa',steps:['Appeso a una sbarra a braccia distese','Mantieni la posizione il più a lungo possibile','Spalle attive (non rilassate completamente)','Respira normalmente'],cues:['Costruisce presa per stacchi e trazioni','Obiettivo: 60 secondi continuativi']},
+  fa_plate_pinch:{cat:'forearms',t:'isometric',name:'Plate Pinch',mus:'Avambracci / Presa',steps:['Tieni 1-2 dischi tra pollice e dita','Mantieni la presa il più a lungo possibile','Braccia distese ai lati','Cambia mano alla fine'],cues:['Costruisce la "pinch grip", utile in molti sport','Inizia con un disco da 10kg']},
+
+  // GLUTES extras
+  lg_glute_kickback_cable:{cat:'glutes',t:'isolation',name:'Glute Kickback Cavo',mus:'Glutei',steps:['Cavo basso fissato a una caviglia','Mani su appoggio per stabilizzazione','Estendi la gamba indietro mantenendo il ginocchio leggermente piegato','Stringi il gluteo in alto'],cues:['Movimento lento, mai a strappi','Niente arching della schiena']},
+  lg_clamshell:{cat:'glutes',t:'isolation',name:'Clamshell',mus:'Glutei (Medio)',steps:['Sdraiato sul fianco, ginocchia piegate a 90°','Mantenendo i piedi uniti, apri il ginocchio superiore','Stringi il gluteo medio in alto','Torna lento'],cues:['Ottimo per stabilità del bacino','Aggiunge banda elastica per intensità']},
+
   // RISCALDAMENTO
   wu_general:{cat:'warmup',t:'warmup',name:'🔥 RISCALDAMENTO (5 min)',mus:'Tutto il corpo',isWarmup:true,sets:1,reps:'5 minuti',rest:0,steps:['1 min — Jumping Jacks (saltelli con braccia e gambe allargate)','1 min — Arm Circles (rotazioni delle braccia avanti e indietro)','1 min — Leg Swings (oscillazioni delle gambe avanti/indietro e laterali)','1 min — Hip Circles (rotazioni delle anche in cerchio)','1 min — Torso Rotations (rotazioni del busto con mani alle spalle)'],cues:['Il riscaldamento riduce le lesioni del 50% — non saltarlo mai','Aumenta gradualmente l\'intensità nei primi 5 minuti','Il corpo deve essere sudato leggermente prima di iniziare a caricare']},
   wu_cut:{cat:'warmup',t:'warmup',name:'🔥 RISCALDAMENTO + CARDIO (8 min)',mus:'Tutto il corpo + Cardio',isWarmup:true,sets:1,reps:'8 minuti',rest:0,steps:['3 min — Camminata veloce o bici leggera (50-55% FC max)','1 min — Jumping Jacks','1 min — Arm Circles','1 min — Leg Swings','1 min — Hip Circles','1 min — Jump Rope o Marcia sul posto veloce'],cues:['Per la definizione: 3 minuti di cardio leggero prima dei pesi accelera il metabolismo fin dall\'inizio','Non esaurirti — il cardio di riscaldamento è leggero, non intenso']},
@@ -680,16 +728,17 @@ const EX={
   cd_stretch:{cat:'cooldown',t:'cooldown',name:'🧘 DEFATICAMENTO & STRETCHING (5 min)',mus:'Tutto il corpo',isCooldown:true,sets:1,reps:'5 minuti',rest:0,steps:['45 sec — Child\'s Pose: inginocchiati, porta le braccia in avanti e la testa a terra','45 sec — Quad Stretch: in piedi, porta il piede verso il gluteo tenendo la caviglia','45 sec — Chest Opener: mani intrecciate dietro la schiena, apri il petto verso l\'alto','45 sec — Hamstring Stretch: seduto, gambe dritte, raggiungi le punte dei piedi','45 sec — Pigeon Pose (o Figura 4): allungamento intenso dei flessori dell\'anca','45 sec — Spinal Twist: seduto, ruota il busto con un ginocchio piegato al petto'],cues:['Lo stretching post-workout migliora il recupero del 30%','Ogni posizione si mantiene 30-45 secondi — senti lo stretch, mai dolore','Respira profondamente durante ogni posizione: l\'espirazione aiuta il rilassamento muscolare','Non rimandare: lo stretching va fatto caldo, subito dopo l\'allenamento']},
 };
 const EX_G={
-  chest:['ch_man','ch_bil','ch_incl','ch_croci','ch_pieg','ch_pieg_inc','ch_pieg_dec','ch_dip_bench','ch_floor_press','ch_cable_cross','ch_svend','ex_push_exp'],
-  triceps:['tri_fr','tri_push','tri_dips','tri_oh','tri_dips_chair','tri_rope','tri_skull','tri_kickback','tri_closebench'],
-  shoulders:['sh_mil','sh_lat','sh_frt','sh_fp','sh_pike','sh_lat_home','sh_arnold','sh_upright','sh_rear_db','sh_shrug_band','sh_ytw'],
-  back:['bk_rb','bk_rm','bk_traz','bk_lat','bk_st','bk_super','bk_door','bk_face_pull','bk_tbar','bk_shrug_db','bk_pullover','bk_superman'],
-  biceps:['bi_cb','bi_cm','bi_mar','bi_con','bi_towel','bi_hammer','bi_prea','bi_cable','bi_zottman'],
-  glutes:['lg_hip','lg_rum','lg_lc','lg_bridge','lg_hip_thrust','lg_rdl_db','lg_bulgarian','lg_glute_kick','ex_kb_swing'],
-  quads:['lg_squat','lg_af','lg_sq_jump','lg_leg_press','lg_front_squat','lg_hack_squat','lg_step_up','lg_lunge_walk','ex_box_jump'],
+  chest:['ch_man','ch_bil','ch_incl','ch_croci','ch_pieg','ch_pieg_inc','ch_pieg_dec','ch_dip_bench','ch_floor_press','ch_cable_cross','ch_svend','ex_push_exp','ch_pec_deck','ch_dumbbell_pullover','ch_landmine_press'],
+  triceps:['tri_fr','tri_push','tri_dips','tri_oh','tri_dips_chair','tri_rope','tri_skull','tri_kickback','tri_closebench','tri_overhead_rope'],
+  shoulders:['sh_mil','sh_lat','sh_frt','sh_fp','sh_pike','sh_lat_home','sh_arnold','sh_upright','sh_rear_db','sh_shrug_band','sh_ytw','sh_db_press_seated','sh_cable_lat','sh_face_pull_band'],
+  back:['bk_rb','bk_rm','bk_traz','bk_lat','bk_st','bk_super','bk_door','bk_face_pull','bk_tbar','bk_shrug_db','bk_pullover','bk_superman','bk_seated_row','bk_lat_pulldown','bk_chest_supported'],
+  biceps:['bi_cb','bi_cm','bi_mar','bi_con','bi_towel','bi_hammer','bi_prea','bi_cable','bi_zottman','bi_drag_curl','bi_spider'],
+  glutes:['lg_hip','lg_rum','lg_lc','lg_bridge','lg_hip_thrust','lg_rdl_db','lg_bulgarian','lg_glute_kick','ex_kb_swing','lg_leg_curl','lg_kettlebell_swing','lg_glute_kickback_cable','lg_clamshell'],
+  quads:['lg_squat','lg_af','lg_sq_jump','lg_leg_press','lg_front_squat','lg_hack_squat','lg_step_up','lg_lunge_walk','ex_box_jump','lg_goblet_squat','lg_leg_extension','lg_walking_lunge','lg_box_squat'],
   calves:['lg_calf','lg_calf_standing','lg_calf_seated','lg_calf_donkey'],
-  core:['co_plk','co_cr','co_rus','co_lr','co_plkl','co_hang_leg','co_deadbug','co_bird_dog','co_sidebridge'],
-  forearms:['fa_wrist_curl','fa_rev_curl','fa_farmer'],
+  core:['co_plk','co_cr','co_rus','co_lr','co_plkl','co_hang_leg','co_deadbug','co_bird_dog','co_sidebridge','co_hollow_body','co_hanging_knee','co_ab_wheel'],
+  forearms:['fa_wrist_curl','fa_rev_curl','fa_farmer','fa_dead_hang','fa_plate_pinch'],
+  cardio:['ex_burpee','ex_mountain','ex_jump_rope','ex_assault_bike'],
 };
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1850,7 +1899,48 @@ window.FOOD_DB=[
   {id:'burger_vegetale',name:'Burger vegetale (1 pz)',cat:'piatti_pronti',kcal:230,p:20,c:10,f:13},
   {id:'seitan_cucinato',name:'Seitan alla piastra (100g)',cat:'piatti_pronti',kcal:130,p:24,c:5,f:2},
   {id:'tempeh_cucinato',name:'Tempeh marinato (100g)',cat:'piatti_pronti',kcal:195,p:20,c:9,f:11},
-  {id:'bowl_quinoa',name:'Bowl di quinoa con verdure',cat:'piatti_pronti',kcal:130,p:6,c:22,f:3}
+  {id:'bowl_quinoa',name:'Bowl di quinoa con verdure',cat:'piatti_pronti',kcal:130,p:6,c:22,f:3},
+
+  // ═══ CIBI AGGIUNTI SESSIONE 2 ═══
+  // Street food italiano
+  {id:'maritozzo',name:'Maritozzo con panna',cat:'piatti_pronti',kcal:380,p:6,c:48,f:18},
+  {id:'arancino_ragu',name:'Arancino al ragù (100g)',cat:'piatti_pronti',kcal:230,p:8,c:32,f:8},
+  {id:'arancino_burro',name:'Arancino al burro (100g)',cat:'piatti_pronti',kcal:280,p:10,c:35,f:11},
+  {id:'suppli_classico',name:'Supplì al telefono',cat:'piatti_pronti',kcal:190,p:7,c:25,f:7},
+  {id:'panzerotto_pomodoro',name:'Panzerotto fritto pomodoro/mozzarella',cat:'piatti_pronti',kcal:340,p:11,c:32,f:18},
+  {id:'piadina_prosciutto',name:'Piadina prosciutto e stracchino',cat:'piatti_pronti',kcal:520,p:23,c:55,f:23},
+  {id:'piadina_vegetariana',name:'Piadina vegetariana',cat:'piatti_pronti',kcal:380,p:14,c:50,f:14},
+  {id:'focaccia_genovese',name:'Focaccia genovese (100g)',cat:'cereali',kcal:295,p:7,c:40,f:11},
+  {id:'cornetto_crema',name:'Cornetto con crema',cat:'piatti_pronti',kcal:295,p:5,c:38,f:14},
+  {id:'cornetto_marmellata',name:'Cornetto con marmellata',cat:'piatti_pronti',kcal:280,p:5,c:42,f:11},
+  {id:'cornetto_cioccolato',name:'Cornetto al cioccolato',cat:'piatti_pronti',kcal:310,p:5,c:38,f:16},
+  {id:'cornetto_vuoto',name:'Cornetto vuoto',cat:'piatti_pronti',kcal:240,p:5,c:32,f:11},
+
+  // Polpette e secondi
+  {id:'polpetta_carne',name:'Polpetta di carne (50g)',cat:'carne',kcal:140,p:14,c:5,f:8},
+  {id:'polpette_sugo',name:'Polpette al sugo (porzione)',cat:'piatti_pronti',kcal:380,p:32,c:12,f:21},
+  {id:'cotoletta_milanese',name:'Cotoletta alla milanese (150g)',cat:'piatti_pronti',kcal:480,p:36,c:18,f:30},
+  {id:'cotoletta_pollo',name:'Cotoletta di pollo (150g)',cat:'piatti_pronti',kcal:340,p:35,c:14,f:17},
+
+  // Dolci specifici
+  {id:'biscotto_savoiardo',name:'Biscotto savoiardo (1 unità)',cat:'piatti_pronti',kcal:30,p:0.7,c:6,f:0.3},
+  {id:'colomba_pasquale',name:'Colomba pasquale (50g)',cat:'piatti_pronti',kcal:185,p:3,c:30,f:6},
+  {id:'pastiera_napoletana',name:'Pastiera napoletana (100g)',cat:'piatti_pronti',kcal:295,p:7,c:38,f:13},
+  {id:'zeppola_san_giuseppe',name:'Zeppola di San Giuseppe',cat:'piatti_pronti',kcal:280,p:5,c:30,f:16},
+
+  // Internazionali / fast food
+  {id:'kebap_pollo',name:'Kebap di pollo nel pane',cat:'piatti_pronti',kcal:550,p:38,c:55,f:18},
+  {id:'sushi_nigiri',name:'Sushi nigiri (1 pz, 30g)',cat:'piatti_pronti',kcal:50,p:3,c:8,f:0.5},
+  {id:'sushi_maki',name:'Sushi maki (1 pz, 25g)',cat:'piatti_pronti',kcal:45,p:1.5,c:8,f:0.5},
+  {id:'sushi_uramaki_salmone',name:'Uramaki salmone avocado (1 pz)',cat:'piatti_pronti',kcal:75,p:2.5,c:9,f:3},
+  {id:'sushi_temaki',name:'Temaki (cono di sushi)',cat:'piatti_pronti',kcal:160,p:7,c:18,f:6},
+  {id:'poke_classica',name:'Poke bowl classica',cat:'piatti_pronti',kcal:520,p:28,c:60,f:18},
+  {id:'hamburger_classico',name:'Hamburger classico (Big Mac style)',cat:'piatti_pronti',kcal:540,p:25,c:45,f:28},
+  {id:'patatine_mcdonalds',name:'Patatine fritte (porzione media)',cat:'piatti_pronti',kcal:340,p:4,c:43,f:17},
+  {id:'cheeseburger',name:'Cheeseburger',cat:'piatti_pronti',kcal:300,p:15,c:33,f:13},
+  {id:'pizza_4_stagioni',name:'Pizza 4 stagioni',cat:'piatti_pronti',kcal:850,p:35,c:90,f:38},
+  {id:'pizza_capricciosa',name:'Pizza capricciosa',cat:'piatti_pronti',kcal:870,p:36,c:88,f:40},
+  {id:'calzone_classico',name:'Calzone al forno',cat:'piatti_pronti',kcal:780,p:30,c:80,f:36}
 
 ];
 
@@ -3097,6 +3187,383 @@ window.RECIPE_DB=[
   {id:'cen_pollo_curry',k:['pollo','curry'],t:'🍛 Pollo al Curry Light',time:'25 min',
     desc:'Variazione esotica con pochi grassi.',
     steps:['Taglia il pollo a cubetti, rosola in padella','Aggiungi 200ml latte di cocco light e 1 cucchiaino curry','Sobbolli 10 min finché il pollo è morbido','Servi con riso basmati e foglie di coriandolo fresco']},
+
+  // ─── COLAZIONI v2 ───
+  {id:'col_porridge',k:['porridge','avena'],t:'🥣 Porridge Caldo Cremoso',time:'8 min',
+    desc:'Colazione invernale che riscalda e sazia.',
+    steps:['Versa 250ml di latte (anche vegetale) in pentolino','Aggiungi 50g avena, mescola','Cuoci a fuoco basso 5-6 min mescolando','Spegni, aggiungi 1 cucchiaino miele, cannella, e frutti di bosco']},
+  {id:'col_overnight_oats',k:['overnight','avena','frigo'],t:'🌙 Overnight Oats (la sera prima)',time:'2 min + notte',
+    desc:'Da preparare la sera, pronto al mattino.',
+    steps:['In barattolo: 50g avena + 200ml latte/yogurt','Aggiungi 1 cucchiaino miele e cannella','Chiudi e tieni in frigo 8h o tutta la notte','Al mattino guarnisci con frutta fresca e mandorle']},
+  {id:'col_french_toast',k:['french toast','uova','pane'],t:'🍞 French Toast Proteico',time:'8 min',
+    desc:'Variante dolce-salata con poco zucchero.',
+    steps:['Sbatti 2 uova con 50ml latte e cannella','Inzuppa 2 fette di pane integrale 30 sec per lato','Cuoci in padella antiaderente 2 min per lato','Servi con yogurt greco e frutta']},
+  {id:'col_smoothie_bowl',k:['smoothie','bowl','frullato'],t:'🍓 Smoothie Bowl',time:'5 min',
+    desc:'Frullato denso da mangiare col cucchiaio.',
+    steps:['Frulla 1 banana congelata + 100g frutti rossi + 100ml latte','Versa in ciotola, deve essere denso','Aggiungi sopra: granola, mandorle, semi di chia','Mescola e mangia subito']},
+  {id:'col_uova_avocado',k:['uova','avocado','toast'],t:'🥑 Avocado Toast con Uovo',time:'10 min',
+    desc:'Colazione moderna ricca di grassi buoni.',
+    steps:['Tosta 1 fetta di pane integrale','Schiaccia ½ avocado con sale e limone','Spalma sul pane','Sopra: 1 uovo in camicia o strapazzato']},
+
+  // ─── PRIMI PIATTI v2 ───
+  {id:'pra_carbonara_light',k:['carbonara','pasta','uova'],t:'🍝 Carbonara Light',time:'15 min',
+    desc:'Versione alleggerita ma fedele al gusto.',
+    steps:['Cuoci 80g spaghetti in acqua salata','Sbatti 1 uovo intero + 1 tuorlo + 30g pecorino','Rosola 30g guanciale tagliato a listarelle senza olio','Scola la pasta tenendo 2 cucchiai d\'acqua','Spegni, manteca con uova fuori dal fuoco aggiungendo acqua di cottura','Aggiungi guanciale e pepe, servi subito']},
+  {id:'pra_amatriciana',k:['amatriciana','pasta','guanciale','pomodoro'],t:'🍝 Bucatini all\'Amatriciana',time:'20 min',
+    desc:'Classico romano, intenso e saporito.',
+    steps:['Taglia 50g guanciale a listarelle, rosola in padella','Sfuma con un cucchiaio di vino bianco','Aggiungi 200g passata di pomodoro e peperoncino','Cuoci 80g bucatini, scola al dente','Manteca in padella, completa con pecorino']},
+  {id:'pra_cacio_pepe',k:['cacio','pepe','pasta'],t:'🍝 Cacio e Pepe',time:'12 min',
+    desc:'3 ingredienti, tecnica perfetta.',
+    steps:['Cuoci 80g tonnarelli in acqua poco salata','In una ciotola: 50g pecorino grattugiato + pepe nero macinato fresco','Aggiungi 2 cucchiai di acqua di cottura nel pecorino, mescola fino a crema','Scola la pasta, manteca subito col pecorino fuori dal fuoco','Aggiungi altro pepe e servi']},
+  {id:'pra_pesto_genovese',k:['pesto','genovese','pasta'],t:'🌿 Pasta al Pesto Genovese',time:'12 min',
+    desc:'Profumi liguri in 12 minuti.',
+    steps:['Cuoci 80g trofie o linguine in acqua salata','In ultimi 4 min aggiungi 50g fagiolini e 1 patata piccola a cubetti','Scola e condisci con 30g pesto genovese','Manteca con 1 cucchiaio acqua di cottura']},
+  {id:'pra_pasta_pomodoro',k:['pasta','pomodoro','semplice'],t:'🍅 Pasta al Pomodoro Classica',time:'20 min',
+    desc:'Il sapore vero della cucina italiana.',
+    steps:['Soffriggi 1 spicchio aglio in olio EVO','Aggiungi 200g passata, sale, basilico','Cuoci 15 min a fuoco medio','Cuoci 80g pasta, scola e manteca col sugo','Completa con basilico fresco e parmigiano']},
+  {id:'pra_risotto_zafferano',k:['risotto','zafferano','milanese'],t:'🌾 Risotto allo Zafferano',time:'25 min',
+    desc:'Il classico milanese.',
+    steps:['Tosta 80g riso carnaroli in pentola','Sfuma con vino bianco','Aggiungi brodo bollente poco alla volta mescolando','A metà cottura aggiungi 1 bustina zafferano sciolta in brodo','Cuoci 18 min, manteca con burro e parmigiano fuori fuoco']},
+  {id:'pra_pasta_tonno',k:['pasta','tonno','olive'],t:'🐟 Pasta Tonno e Olive',time:'15 min',
+    desc:'Veloce e saporita.',
+    steps:['Cuoci 80g pasta','In padella: aglio, peperoncino, 80g tonno sgocciolato, olive nere','Aggiungi mezzo bicchiere di acqua di cottura','Manteca la pasta in padella','Completa con prezzemolo']},
+  {id:'pra_pasta_zucchine',k:['pasta','zucchine','estate'],t:'🥒 Pasta con Zucchine',time:'18 min',
+    desc:'Estiva, leggera e veloce.',
+    steps:['Affetta 200g zucchine, salta in padella con aglio EVO 8 min','Cuoci 80g pasta','Scola e unisci alle zucchine','Aggiungi parmigiano e basilico','Mescola e servi']},
+  {id:'pra_lasagne_light',k:['lasagne','besciamella','classico'],t:'🍝 Lasagne alla Bolognese (light)',time:'90 min',
+    desc:'Versione casalinga classica.',
+    steps:['Prepara ragù: soffriggi sedano-carote-cipolla, aggiungi 300g macinato magro, sfuma con vino','Aggiungi passata e cuoci 60 min','Prepara besciamella light con latte parz. scremato','Strato per strato in teglia: ragù, sfoglia, besciamella, parmigiano','Inforna 30 min a 180°C']},
+  {id:'pra_orecchiette_cime',k:['orecchiette','cime di rapa','pugliese'],t:'🍝 Orecchiette con Cime di Rapa',time:'20 min',
+    desc:'Pugliese DOP.',
+    steps:['Lessa 80g orecchiette insieme a 200g cime di rapa pulite','Soffriggi aglio, peperoncino, e 2 acciughe sott\'olio in padella','Scola pasta+verdure e salta in padella 2 min','Servi con pangrattato tostato sopra']},
+  {id:'pra_pasta_norma',k:['norma','melanzane','siciliana'],t:'🍆 Pasta alla Norma',time:'30 min',
+    desc:'Capolavoro siciliano.',
+    steps:['Friggi 1 melanzana a cubetti in olio (o cuoci al forno)','In altra padella: pomodoro pelato cotto 15 min con basilico','Cuoci 80g pasta corta, scola','Manteca con sugo e melanzane','Completa con ricotta salata grattugiata']},
+  {id:'pra_minestrone',k:['minestrone','verdure','zuppa'],t:'🥕 Minestrone di Verdure',time:'45 min',
+    desc:'Zuppa nutriente, leggera, ottima d\'inverno.',
+    steps:['Taglia: 1 carota, 1 zucchina, 1 patata, 1 cipolla, 1 pomodoro, 1 manciata fagiolini','Soffriggi cipolla in olio EVO','Aggiungi tutte le verdure e copri di brodo vegetale','Cuoci 30-35 min','Aggiungi 50g pasta corta o fagioli ultimi 10 min']},
+
+  // ─── SECONDI v2 ───
+  {id:'cen_orata_forno',k:['orata','forno','pesce'],t:'🐟 Orata al Forno con Patate',time:'40 min',
+    desc:'Pesce al forno classico mediterraneo.',
+    steps:['Pulisci 1 orata (350g), incidi la pelle','Affetta 200g patate sottili, condisci con olio, sale, rosmarino','In teglia: patate sotto, orata sopra','Aggiungi pomodorini, olive, capperi','Inforna a 180°C per 25-30 min']},
+  {id:'cen_salmone_padella',k:['salmone','padella'],t:'🍣 Salmone in Padella al Limone',time:'12 min',
+    desc:'Veloce e ricco di omega-3.',
+    steps:['Asciuga il filetto di salmone, sala','Scalda padella antiaderente con poco olio','Cuoci salmone lato pelle 4-5 min, gira 2 min','Sfuma con succo di mezzo limone','Servi con verdure cotte o insalata']},
+  {id:'cen_polpette_pomodoro',k:['polpette','pomodoro'],t:'🍝 Polpette al Pomodoro',time:'30 min',
+    desc:'Ricetta della nonna.',
+    steps:['Mescola 200g macinato magro + 1 uovo + 30g pangrattato + parmigiano + sale','Forma 8-10 polpette piccole','Soffriggi aglio, aggiungi 200g passata e basilico','Tuffa polpette nel sugo, cuoci 15 min','Servi con pane bruschetta']},
+  {id:'cen_pollo_limone',k:['pollo','limone','padella'],t:'🍋 Petto di Pollo al Limone',time:'15 min',
+    desc:'Profumato, magro, veloce.',
+    steps:['Taglia pollo a fettine sottili, infarina leggermente','Scalda olio in padella, rosola pollo 3 min per lato','Sfuma con succo di 1 limone + brodo','Cuoci 5 min finché si forma cremina','Servi con prezzemolo']},
+  {id:'cen_tagliata_rucola',k:['tagliata','rucola','manzo'],t:'🥩 Tagliata di Manzo con Rucola',time:'12 min',
+    desc:'Carne di qualità, grigliata e profumata.',
+    steps:['Lascia la tagliata fuori dal frigo 15 min prima','Scalda griglia/piastra rovente','Cuoci 2-3 min per lato (sangue) o 4 min (cottura media)','Affetta sottile, servi su rucola','Completa con scaglie parmigiano, balsamico, olio EVO']},
+  {id:'cen_frittata_zucchine',k:['frittata','zucchine','uova'],t:'🍳 Frittata di Zucchine',time:'15 min',
+    desc:'Cena leggera in 15 minuti.',
+    steps:['Taglia 200g zucchine a rondelle, salta 5 min','Sbatti 4 uova con sale, pepe, parmigiano','Versa uova sulle zucchine, cuoci 5 min coperto','Gira con piatto e cuoci altri 3 min','Servi tiepida o fredda']},
+  {id:'cen_omelette_funghi',k:['omelette','funghi','formaggio'],t:'🍳 Omelette ai Funghi',time:'12 min',
+    desc:'Francese, raffinata.',
+    steps:['Salta 100g funghi champignon a fette con aglio','Sbatti 3 uova con sale, pepe','Versa in padella ben calda con burro','Quando si rapprende, metti funghi al centro + 30g formaggio','Piega e servi']},
+  {id:'cen_zucca_arrosto',k:['zucca','arrosto','vegano'],t:'🎃 Zucca Arrosto con Erbe',time:'40 min',
+    desc:'Contorno autunnale o piatto vegano.',
+    steps:['Taglia 400g zucca a fette spesse 2cm','Disponi su teglia con olio, rosmarino, salvia, sale','Inforna a 200°C per 25-30 min','Servi con seitan o legumi per pasto completo']},
+  {id:'cen_seitan_padella',k:['seitan','vegano','vegetariano'],t:'🌱 Seitan in Padella alle Erbe',time:'15 min',
+    desc:'Proteico vegetale ben condito.',
+    steps:['Affetta 150g seitan a fette spesse','Marinala 5 min con olio, salsa soia, aglio, erbe','Scotta in padella ben calda 2 min per lato','Servi con verdure grigliate']},
+  {id:'cen_tofu_grigliato',k:['tofu','grigliato'],t:'🌿 Tofu Marinato Grigliato',time:'15 min + marinatura',
+    desc:'Vegano e saporito.',
+    steps:['Sbriciola o affetta 150g tofu','Marinala 30 min con: salsa soia, aglio, zenzero, miele','Griglia 2-3 min per lato','Servi con riso basmati e verdure stir-fry']},
+  {id:'cen_burger_vegetale',k:['burger','vegano','legumi'],t:'🌱 Burger di Legumi Casalingo',time:'25 min',
+    desc:'Proteico e gustoso.',
+    steps:['Frulla 200g ceci o fagioli + 30g pangrattato + 1 uovo (o purea di patate per vegan)','Aggiungi spezie: cumino, paprika, aglio in polvere','Forma 2 burger, cuoci in padella con poco olio 4 min per lato','Servi su pane integrale con verdure']},
+
+  // ─── INSALATE E PIATTI UNICI ───
+  {id:'pra_caesar_pollo',k:['caesar','pollo','insalata'],t:'🥗 Caesar Salad con Pollo',time:'15 min',
+    desc:'Insalata sostanziosa, pasto completo.',
+    steps:['Griglia 150g petto di pollo a strisce','Lava e taglia lattuga romana','Mescola: 1 cucchiaio yogurt greco + 1 cucchiaino senape + limone + parmigiano','Componi: lattuga, pollo, dressing, crostini, parmigiano']},
+  {id:'pra_caprese',k:['caprese','mozzarella','pomodoro'],t:'🍅 Caprese di Bufala',time:'5 min',
+    desc:'Fresca, estiva, perfetta.',
+    steps:['Affetta 150g mozzarella di bufala','Affetta 2 pomodori maturi','Alterna in piatto: pomodoro, mozzarella, basilico','Condisci con olio EVO, sale, pepe','Servi subito']},
+  {id:'pra_panzanella',k:['panzanella','toscana','pane'],t:'🥖 Panzanella Toscana',time:'15 min + ammollo',
+    desc:'Insalata di pane raffermo, tipica estate.',
+    steps:['Bagna 200g pane raffermo in acqua e aceto 5 min, strizza','In ciotola: pane sbriciolato, pomodori, cetrioli, cipolla rossa, basilico','Condisci con olio EVO, sale','Lascia riposare 10 min in frigo']},
+  {id:'pra_farro_freddo',k:['farro','insalata','freddo'],t:'🌾 Insalata di Farro Estiva',time:'15 min',
+    desc:'Pasta fredda alternativa.',
+    steps:['Lessa 80g farro perlato 30 min','Raffredda sotto acqua corrente','Unisci: tonno, pomodorini, mozzarella a cubetti, olive','Condisci con olio, basilico, limone']},
+  {id:'pra_riso_freddo',k:['riso','insalata','freddo','estate'],t:'🍚 Riso Freddo Estivo',time:'20 min',
+    desc:'Versione classica delle nonne.',
+    steps:['Cuoci 80g riso, scola e raffredda','Taglia a cubetti: prosciutto cotto, formaggio, sottaceti','Unisci tutto, aggiungi olive, mais, tonno','Condisci con olio EVO']},
+
+  // ─── SGARRI MEDI / VERSIONI LEGGERE ───
+  {id:'sg_pizza_casa',k:['pizza','casalinga'],t:'🍕 Pizza Casalinga Light',time:'90 min (con lievitazione)',
+    desc:'Sgarro consapevole, fatto in casa pesa meno della pizzeria.',
+    steps:['Impasta 250g farina + 150ml acqua + 5g lievito + sale + olio','Lievita 1 ora coperta','Stendi sottile, condisci: pomodoro, 100g mozzarella, basilico','Inforna 12 min a 230°C','Una pizza intera ~700-900 kcal, divide a metà se in dieta']},
+  {id:'sg_lasagne_speciali',k:['lasagne','sgarro'],t:'🍝 Lasagne (sgarro consapevole)',time:'90 min',
+    desc:'Una porzione ragionevole entra nella dieta.',
+    steps:['Una porzione media (250g) è circa 400-500 kcal','Riduci la besciamella usando latte parz. scremato','Usa carne magra al posto del macinato grasso','Servi con insalata verde per saziare con meno calorie']},
+  {id:'sg_gelato_ricotta',k:['gelato','dolce','sgarro'],t:'🍦 Gelato + Frutta Casalingo',time:'5 min',
+    desc:'Sostituto sano al gelato classico.',
+    steps:['Frulla 1 banana congelata + 100g frutti rossi','Aggiungi 100g yogurt greco e 1 cucchiaino miele','Frulla fino a consistenza gelato','Servi subito (è una vera coppa di gelato a 150 kcal)']},
+  {id:'sg_tiramisu_light',k:['tiramisu','dolce','light'],t:'🍰 Tiramisù Proteico',time:'30 min + frigo',
+    desc:'Versione light con ricotta e meno zucchero.',
+    steps:['Mescola 250g ricotta light + 50g miele + caffè','Inzuppa savoiardi (10) in caffè veloce','Strato: savoiardi, crema, savoiardi, crema','Cospargi cacao amaro, frigo 4 ore','Una porzione ~250 kcal vs 450 del classico']},
+
+  // ─── CONTORNI E RICETTE BASE ───
+  {id:'pra_verdure_grigliate',k:['verdure','grigliate','contorno'],t:'🥬 Verdure Grigliate Miste',time:'15 min',
+    desc:'Contorno versatile per ogni pasto.',
+    steps:['Affetta: zucchine, melanzane, peperoni, radicchio','Spennella con olio EVO e sale','Griglia 3-4 min per lato su piastra ben calda','Servi con un filo di balsamico o olio crudo']},
+  {id:'pra_patate_forno',k:['patate','forno','contorno'],t:'🥔 Patate al Forno con Rosmarino',time:'40 min',
+    desc:'Classico contorno italiano.',
+    steps:['Taglia 300g patate a spicchi','Condisci con olio EVO, rosmarino, sale, paprika','Disponi su teglia con carta forno','Inforna a 200°C per 30-35 min girando a metà']},
+  {id:'pra_spinaci_burro',k:['spinaci','burro','contorno'],t:'🥬 Spinaci al Burro',time:'10 min',
+    desc:'Veloce e ricco di ferro.',
+    steps:['Lessa 200g spinaci freschi 3 min, scola','Strizza bene per togliere acqua','Salta in padella con un piccolo cucchiaino di burro e aglio','Sala e servi']},
+  {id:'pra_funghi_trifolati',k:['funghi','trifolati','contorno'],t:'🍄 Funghi Trifolati',time:'15 min',
+    desc:'Profumato e leggero.',
+    steps:['Pulisci 200g funghi (porcini, champignon o misti)','Soffriggi aglio in olio EVO','Aggiungi funghi a fette, sale','Cuoci 8 min a fuoco medio-alto','Completa con prezzemolo fresco']},
+
+  // ═══ RICETTE AGGIUNTE SESSIONE 2 — 60+ ricette italiane ═══
+
+  // ─── COLAZIONI EXTRA ───
+  {id:'col_pancake_proteici',k:['pancake','proteici','colazione'],t:'🥞 Pancake Proteici alla Banana',time:'10 min',
+    desc:'Soffici e dolci, ricchi di proteine. 350 kcal, 25g proteine.',
+    steps:['Frulla 1 banana matura con 2 uova intere e 50g di fiocchi d\'avena','Aggiungi 1 cucchiaino di lievito + 1 pizzico di cannella','Scalda padella antiaderente, versa piccoli mestoli (3-4 pancake)','Cuoci 2 min per lato a fuoco medio-basso','Servi con yogurt greco e poche gocce di miele']},
+
+  {id:'col_french_toast',k:['french toast','colazione','dolce'],t:'🍞 French Toast Salutare',time:'8 min',
+    desc:'Versione fit del classico. 320 kcal.',
+    steps:['Sbatti 2 uova con 50ml latte (o bevanda vegetale) e cannella','Inumidisci 2 fette di pane integrale spesso','Cuoci in padella antiaderente 2 min per lato','Servi con frutti di bosco freschi e 1 cucchiaino di sciroppo d\'acero (opzionale)']},
+
+  {id:'col_avocado_toast',k:['avocado','toast','colazione','salata'],t:'🥑 Avocado Toast con Uovo',time:'7 min',
+    desc:'Colazione salata e saziante.',
+    steps:['Tosta 2 fette di pane integrale','Schiaccia mezzo avocado con limone, sale e pepe','Cuoci 1 uovo in camicia in acqua bollente 3 min','Distribuisci avocado sulle fette, posiziona l\'uovo sopra','Aggiungi peperoncino in scaglie a piacere']},
+
+  {id:'col_porridge_bacche',k:['porridge','avena','bacche'],t:'🫐 Porridge con Bacche',time:'8 min',
+    desc:'Colazione calda e cremosa, perfetta in inverno.',
+    steps:['Porta 250ml di latte (o bevanda d\'avena) a sfiorare il bollore','Aggiungi 50g di fiocchi d\'avena, mescola','Cuoci 5 min a fuoco basso fino a consistenza cremosa','Versa in ciotola, completa con frutti di bosco freschi e 10g mandorle a scaglie']},
+
+  {id:'col_smoothie_bowl',k:['smoothie','bowl','frutta','colazione'],t:'🍓 Smoothie Bowl Energetica',time:'5 min',
+    desc:'Fresca, colorata e nutriente.',
+    steps:['Frulla 1 banana congelata con 100g frutti di bosco e 100g yogurt greco','Aggiungi 30ml latte fino alla consistenza desiderata','Versa in ciotola, top con muesli, 5g semi di chia e fettine di kiwi','Mangia subito per non far sciogliere']},
+
+  {id:'col_omelette_spinaci',k:['omelette','frittata','spinaci','colazione'],t:'🍳 Omelette con Spinaci',time:'10 min',
+    desc:'Salata, ricca di proteine. Ottima dopo workout.',
+    steps:['Salta 100g spinaci in padella con olio EVO 2 min','Sbatti 3 uova con sale, pepe e parmigiano grattugiato','Versa nella padella sugli spinaci','Cuoci coperto 4-5 min, ripiega a metà e servi con pane integrale']},
+
+  // ─── PRANZI EXTRA ───
+  {id:'pra_pasta_tonno_olive',k:['pasta','tonno','olive','pranzo'],t:'🍝 Pasta Tonno e Olive',time:'15 min',
+    desc:'Classico veloce, completo. 580 kcal.',
+    steps:['Cuoci 80g di pasta integrale al dente in acqua salata','In padella scalda 1 cucchiaio olio EVO con aglio','Aggiungi 80g tonno al naturale sgocciolato e 8 olive nere snocciolate','Quando la pasta è pronta, scolala e ripassa in padella 1 min con un mestolo di acqua di cottura','Completa con prezzemolo fresco e pepe']},
+
+  {id:'pra_pasta_zucchine_gamberi',k:['pasta','zucchine','gamberi','pranzo'],t:'🦐 Pasta Zucchine e Gamberi',time:'18 min',
+    desc:'Leggera ed elegante. Estiva.',
+    steps:['Cuoci 80g pasta in abbondante acqua salata','Taglia 2 zucchine a julienne sottile','Salta zucchine in padella con olio EVO e aglio 5 min','Aggiungi 100g gamberi sgusciati, cuoci 2-3 min','Scola pasta e ripassa con il sugo, prezzemolo finale']},
+
+  {id:'pra_riso_basmati_pollo_curry',k:['riso','pollo','curry','pranzo'],t:'🍛 Pollo al Curry con Basmati',time:'25 min',
+    desc:'Saporito ed esotico. Macros bilanciati.',
+    steps:['Cuoci 80g riso basmati in acqua salata 12 min','Taglia 150g petto di pollo a cubetti, cuoci in padella con olio 5 min','Aggiungi 1 cipolla tritata, cuoci 3 min','Aggiungi 1 cucchiaio curry e 100ml latte di cocco light','Cuoci 5 min, servi sul riso con coriandolo']},
+
+  {id:'pra_quinoa_verdure_grigliate',k:['quinoa','verdure','vegetariano','pranzo'],t:'🥗 Quinoa con Verdure Grigliate',time:'25 min',
+    desc:'Vegetariana, ricca di proteine vegetali.',
+    steps:['Cuoci 80g quinoa in 200ml acqua salata 12 min','Griglia 1 zucchina, 1 melanzana e 1 peperone a fette','Mescola quinoa con verdure tagliate a cubetti','Condisci con olio EVO, succo di limone, sale e prezzemolo','Aggiungi 30g feta sbriciolata sopra']},
+
+  {id:'pra_insalatona_pollo',k:['insalata','pollo','pranzo'],t:'🥗 Insalatona Caesar Light',time:'12 min',
+    desc:'Versione fit del classico. 450 kcal.',
+    steps:['Griglia 150g petto di pollo, taglia a strisce','Lava lattuga romana e tagliala a strisce','Prepara dressing: 2 cucchiai yogurt greco + succo limone + 1 acciuga + parmigiano','Componi: lattuga, pollo, pomodorini, dressing','Top con 20g crostini integrali tostati']},
+
+  {id:'pra_orzotto_funghi',k:['orzo','funghi','pranzo','vegetariano'],t:'🌾 Orzotto ai Funghi Porcini',time:'30 min',
+    desc:'Sostanzioso e profumato.',
+    steps:['Reidrata 20g porcini secchi in acqua tiepida 10 min','Soffriggi 1 scalogno tritato in olio EVO','Aggiungi 80g orzo perlato, tosta 2 min','Cuoci a poco a poco aggiungendo brodo vegetale (totale 25 min)','Aggiungi i porcini ammollati negli ultimi 10 min','Manteca con 10g parmigiano']},
+
+  {id:'pra_polpette_pollo_zucchine',k:['polpette','pollo','zucchine','pranzo'],t:'🍡 Polpette di Pollo e Zucchine',time:'25 min',
+    desc:'Leggere e gustose. 380 kcal porzione.',
+    steps:['Trita 200g petto di pollo (o usa macinato magro)','Mescola con 1 zucchina grattugiata strizzata, 1 uovo, 30g pangrattato, sale','Forma polpettine grandi come una noce','Cuoci in padella antiaderente con poco olio 8 min, girando','Servi con insalata mista']},
+
+  {id:'pra_zuppa_legumi',k:['zuppa','legumi','vegetariano','pranzo'],t:'🍲 Zuppa di Legumi Mista',time:'35 min',
+    desc:'Ricca, calda, perfetta inverno. Vegana.',
+    steps:['Soffriggi 1 carota, 1 sedano, 1 cipolla tritati in olio EVO','Aggiungi 80g legumi misti secchi (lasciati in ammollo 8h prima)','Copri con brodo vegetale, aggiungi rosmarino','Cuoci 30 min coperto a fuoco basso','Frulla parzialmente per cremosità, servi con pane integrale tostato']},
+
+  {id:'pra_salmone_patate_dolci',k:['salmone','patate','pranzo'],t:'🍣 Salmone al Forno con Patate Dolci',time:'30 min',
+    desc:'Omega-3 + carboidrati lenti. Ottimo dopo workout.',
+    steps:['Taglia 200g patata dolce a cubetti, condisci con olio, rosmarino, sale','Inforna a 200°C per 25 min','Posiziona 150g filetto salmone su teglia con limone, sale e timo','Aggiungi al forno gli ultimi 12 min di cottura patate','Servi con un cucchiaio di yogurt greco al limone']},
+
+  {id:'pra_pasta_pomodoro_basilico',k:['pasta','pomodoro','basilico','pranzo'],t:'🍅 Pasta al Pomodoro Fresco',time:'15 min',
+    desc:'Italiana classica, semplice perfetta.',
+    steps:['Cuoci 80g pasta in acqua salata','Soffriggi aglio in olio EVO 1 min','Aggiungi 200g pomodorini tagliati a metà, sale','Cuoci 8 min a fuoco medio','Scola pasta, ripassa con il sugo + foglie di basilico fresco','Top con parmigiano']},
+
+  // ─── CENE EXTRA ───
+  {id:'cen_branzino_verdure',k:['branzino','pesce','cena'],t:'🐟 Branzino al Cartoccio',time:'35 min',
+    desc:'Leggero, profumato. Ottimo dopo cena pesante.',
+    steps:['Pulisci 1 branzino (~250g), praticando 2 tagli sui lati','Adagia su un foglio di carta forno','Aggiungi limone a fette, prezzemolo, capperi, olio EVO, sale','Chiudi a cartoccio','Inforna a 200°C per 25 min','Servi con verdure al vapore']},
+
+  {id:'cen_tagliata_rucola',k:['tagliata','manzo','rucola','cena'],t:'🥩 Tagliata di Manzo con Rucola',time:'12 min',
+    desc:'Proteica e saporita. 480 kcal.',
+    steps:['Scalda padella ben calda con poco olio EVO','Cuoci una bistecca di manzo 150g 2 min per lato (al sangue) o 4 min (media)','Lascia riposare 2 min, taglia a strisce','Adagia su un letto di rucola','Top con scaglie di parmigiano e olio EVO + balsamico']},
+
+  {id:'cen_orata_olive',k:['orata','pesce','olive','cena'],t:'🐟 Orata con Olive Taggiasche',time:'30 min',
+    desc:'Mediterranea ed elegante.',
+    steps:['Pulisci 1 orata (~250g)','Inforna su teglia con 8 olive taggiasche, 1 spicchio aglio, timo','Aggiungi un filo di olio EVO e mezzo bicchiere vino bianco','Cuoci a 190°C per 22 min','Servi con purè di patate light']},
+
+  {id:'cen_uovo_zucchine_strapazzato',k:['uova','zucchine','strapazzate','cena'],t:'🍳 Uova Strapazzate con Zucchine',time:'12 min',
+    desc:'Cena veloce, leggera, proteica.',
+    steps:['Salta 2 zucchine a rondelle in padella con olio EVO, aglio 6 min','Sbatti 3 uova con sale, pepe e prezzemolo','Versa in padella sulle zucchine','Mescola lentamente fino a strapazzare','Servi con 1 fetta pane integrale']},
+
+  {id:'cen_pollo_limone',k:['pollo','limone','cena'],t:'🍗 Pollo al Limone in Padella',time:'15 min',
+    desc:'Veloce e profumato.',
+    steps:['Taglia 150g petto pollo a fettine sottili','Infarina leggermente con farina integrale (o gluten-free)','Cuoci in padella con olio EVO 3 min per lato','Aggiungi succo di 1 limone + un cucchiaio acqua','Cuoci 1 min finale, prezzemolo fresco','Servi con verdure miste vapore']},
+
+  {id:'cen_minestrone_classico',k:['minestrone','verdure','cena'],t:'🥣 Minestrone Classico',time:'40 min',
+    desc:'Caldo, ricco, vegano. Ottimo serale.',
+    steps:['Trita carota, sedano, cipolla, soffriggi in olio EVO','Aggiungi 1 patata a cubetti, 1 zucchina, 100g fagiolini','Copri con brodo vegetale','Aggiungi 80g fagioli borlotti già cotti','Cuoci 30 min, aggiungi 30g pasta corta integrale ultimi 10 min','Servi con parmigiano e basilico']},
+
+  {id:'cen_frittata_verdure',k:['frittata','verdure','vegetariano','cena'],t:'🍳 Frittata di Verdure',time:'18 min',
+    desc:'Versatile, svuota-frigo proteico.',
+    steps:['Salta 100g zucchine + 80g spinaci + ½ peperone tagliati','Sbatti 3 uova con sale, pepe e parmigiano','Aggiungi le verdure scolate','Cuoci in padella antiaderente 3 min per lato','Servi tagliata a spicchi con insalata']},
+
+  {id:'cen_tofu_saltato',k:['tofu','vegano','cena'],t:'🌱 Tofu Saltato in Padella',time:'15 min',
+    desc:'Vegana, proteica.',
+    steps:['Taglia 200g tofu strizzato a cubetti','Marina 5 min con salsa soia, zenzero grattugiato, aglio','Salta in padella ben calda con olio sesamo 5 min','Aggiungi 200g verdure miste (broccoli, peperone, carote)','Cuoci 5 min, completa con sesamo tostato','Servi con 80g riso basmati']},
+
+  {id:'cen_carpaccio_bresaola',k:['carpaccio','bresaola','cena','leggera'],t:'🥩 Carpaccio di Bresaola con Rucola',time:'5 min',
+    desc:'Velocissima, fresca, super-proteica.',
+    steps:['Disponi 80g bresaola a fette su un piatto','Top con un pugno di rucola','Aggiungi scaglie di parmigiano (15g)','Condisci con olio EVO, succo di limone, pepe nero','Servi con 2 grissini integrali']},
+
+  {id:'cen_filetto_merluzzo',k:['merluzzo','pesce','cena'],t:'🐟 Filetto di Merluzzo Gratinato',time:'25 min',
+    desc:'Leggero, saporito. 290 kcal.',
+    steps:['Disponi 180g filetto merluzzo su teglia','Mescola 2 cucchiai pangrattato + 1 cucchiaio olio + prezzemolo + aglio','Distribuisci sulla superficie del pesce','Inforna a 200°C per 18 min','Servi con verdure cotte al vapore']},
+
+  {id:'cen_scaloppine_funghi',k:['scaloppine','vitello','funghi','cena'],t:'🥩 Scaloppine ai Funghi',time:'18 min',
+    desc:'Classica della cucina italiana.',
+    steps:['Infarina 150g fettine vitello (o tacchino)','Cuoci in padella con olio EVO 1 min per lato, togli','Salta 150g funghi champignon affettati 5 min','Aggiungi 50ml vino bianco, fai sfumare','Rimetti la carne, cuoci 2 min','Sale, prezzemolo, servi con verdure']},
+
+  {id:'cen_seitan_padella',k:['seitan','vegano','cena'],t:'🌱 Seitan in Padella con Verdure',time:'18 min',
+    desc:'Vegana, ricca di proteine vegetali.',
+    steps:['Taglia 150g seitan a fette','Cuoci in padella con olio EVO 2 min per lato','Aggiungi 1 peperone + 1 zucchina a julienne','Salsa soia + zenzero + 100ml acqua','Cuoci 8 min coperto','Servi con 70g riso integrale']},
+
+  // ─── SPUNTINI EXTRA ───
+  {id:'sp_chia_pudding',k:['chia','pudding','spuntino'],t:'🍮 Chia Pudding',time:'5 min + riposo',
+    desc:'Da preparare la sera prima. Ricco di omega-3.',
+    steps:['In un barattolo metti 30g semi di chia + 200ml latte (o bevanda vegetale)','Aggiungi 1 cucchiaino miele e cannella','Mescola bene, lascia in frigo 4-8h (o tutta la notte)','Top con frutti di bosco freschi prima di mangiare']},
+
+  {id:'sp_yogurt_proteico',k:['yogurt','proteico','spuntino'],t:'🥛 Yogurt Proteico Express',time:'2 min',
+    desc:'Spuntino velocissimo, 25g proteine.',
+    steps:['Versa 200g yogurt greco 0% in ciotola','Aggiungi 1 cucchiaino miele e cannella','Top con 15g mandorle a scaglie e 50g mirtilli freschi','Mescola e mangia']},
+
+  {id:'sp_uovo_pane',k:['uovo','pane','spuntino'],t:'🍳 Uovo Sodo + Pane',time:'12 min',
+    desc:'Salato, sostanzioso.',
+    steps:['Cuoci 1 uovo in acqua bollente 9 min (sodo)','Sbuccia e taglia a metà','Spalma 30g hummus su 1 fetta pane integrale','Adagia uovo sopra, sale, pepe e paprica']},
+
+  {id:'sp_frutta_secca_mix',k:['frutta secca','mix','spuntino'],t:'🥜 Mix Frutta Secca Energetico',time:'1 min',
+    desc:'15g per spuntino pre-workout. ~200 kcal.',
+    steps:['Mescola in un sacchettino: 5g mandorle, 5g noci, 5g uvetta','Aggiungi 1 quadretto cioccolato fondente 80% (5g)','Mangia 20-30 min prima di allenarti']},
+
+  {id:'sp_smoothie_proteico',k:['smoothie','proteico','spuntino'],t:'🥤 Smoothie Proteico Post-Workout',time:'4 min',
+    desc:'Ottimo recupero. 30g proteine.',
+    steps:['Frulla 1 banana, 250ml latte, 30g proteine in polvere (o 200g yogurt greco)','Aggiungi 1 cucchiaio burro arachidi','Aggiungi cubetti di ghiaccio','Frulla 30 secondi, bevi subito']},
+
+  {id:'sp_ricotta_miele',k:['ricotta','miele','spuntino'],t:'🧀 Ricotta con Miele e Noci',time:'2 min',
+    desc:'Goloso e proteico.',
+    steps:['Versa 100g ricotta vaccina o di pecora in ciotola','Aggiungi 1 cucchiaino miele d\'acacia','Top con 10g noci spezzettate e cannella','Mescola leggermente e mangia']},
+
+  // ─── CONTORNI EXTRA ───
+  {id:'pra_broccoli_aglio',k:['broccoli','aglio','contorno'],t:'🥦 Broccoli all\'Aglio Saltati',time:'12 min',
+    desc:'Verdure semplici e saporite.',
+    steps:['Lessa 200g cime broccoli 5 min in acqua salata','Scola e tieni da parte','In padella scalda olio EVO con aglio e peperoncino','Salta i broccoli 4 min','Sala, completa con succo limone']},
+
+  {id:'pra_carote_glassate',k:['carote','contorno'],t:'🥕 Carote Glassate',time:'15 min',
+    desc:'Dolci e leggermente caramellate.',
+    steps:['Taglia 250g carote a rondelle','Cuoci in padella con poco olio + 1 bicchiere acqua','Aggiungi 1 cucchiaino miele e timo','Cuoci 12 min finché l\'acqua evapora e si glassano','Sala leggermente']},
+
+  {id:'pra_finocchi_gratinati',k:['finocchi','gratinati','contorno'],t:'🥬 Finocchi Gratinati',time:'30 min',
+    desc:'Profumati e cremosi.',
+    steps:['Lessa 2 finocchi tagliati a spicchi 8 min','Scola e disponi in pirofila','Spolvera con 30g parmigiano + pangrattato + olio EVO','Inforna a 200°C per 15 min finché dorati']},
+
+  {id:'pra_zucchine_grigliate',k:['zucchine','grigliate','contorno'],t:'🥒 Zucchine Grigliate',time:'10 min',
+    desc:'Estive e leggere.',
+    steps:['Taglia 2 zucchine a fette spesse 5mm','Scalda griglia ben calda','Pennella le fette con olio EVO','Griglia 2-3 min per lato','Condisci con sale, menta fresca e succo limone']},
+
+  {id:'pra_purea_patate_dolci',k:['patate dolci','purea','contorno'],t:'🍠 Purea di Patate Dolci',time:'25 min',
+    desc:'Cremosa e dolce naturale.',
+    steps:['Lessa 300g patate dolci a cubetti 18 min','Scola e schiaccia con un cucchiaio di olio EVO','Aggiungi 50ml latte tiepido fino a cremosità','Sala, pepa, aggiungi cannella o noce moscata']},
+
+  {id:'pra_cavolfiore_curry',k:['cavolfiore','curry','contorno','vegetariano'],t:'🥦 Cavolfiore al Curry',time:'25 min',
+    desc:'Aromatico e nutriente.',
+    steps:['Dividi 300g cavolfiore in cimette','Soffriggi 1 cipolla tritata in olio EVO','Aggiungi 1 cucchiaio curry + 1 cucchiaino curcuma','Aggiungi cavolfiore, copri con 100ml acqua','Cuoci 18 min, completa con coriandolo']},
+
+  // ─── PIATTI UNICI EXTRA ───
+  {id:'unico_buddha_bowl',k:['buddha bowl','vegetariano','pranzo','cena'],t:'🍚 Buddha Bowl',time:'30 min',
+    desc:'Piatto unico bilanciato e colorato.',
+    steps:['Cuoci 80g quinoa in acqua salata 12 min','Inforna 150g cavolfiore + 100g ceci con olio, paprica, cumino 20 min a 200°C','Cuoci 1 uovo sodo, 9 min','Componi ciotola: quinoa, verdure cotte, ceci, uovo a metà, avocado a fette','Condisci con tahini + limone + acqua']},
+
+  {id:'unico_couscous_pollo',k:['couscous','pollo','piatto unico'],t:'🥘 Couscous con Pollo e Ceci',time:'25 min',
+    desc:'Mediterraneo, ricco. Mealprep ideale.',
+    steps:['Versa 80g couscous in ciotola, copri con 100ml brodo bollente, copri 5 min','Salta 150g pollo a cubetti in padella con olio + paprica + cumino','Aggiungi 80g ceci cotti, peperone, pomodorini','Sgrana il couscous con forchetta e mescola con pollo','Completa con prezzemolo']},
+
+  {id:'unico_lasagne_verdure',k:['lasagne','verdure','vegetariano'],t:'🍝 Lasagne di Verdure',time:'60 min',
+    desc:'Cena della domenica leggera.',
+    steps:['Prepara besciamella con 30g burro + 30g farina + 500ml latte (o vegetale)','Strati: sfoglie + ratatouille (zucchine, melanzane, peperoni)','Aggiungi besciamella e parmigiano tra ogni strato','Termina con parmigiano','Inforna a 180°C per 35 min']},
+
+  // ─── DOLCI SANI ───
+  {id:'dolce_brownies_proteici',k:['brownies','dolce','proteico'],t:'🍫 Brownies Proteici',time:'30 min',
+    desc:'Dolce post-workout. ~150 kcal a porzione.',
+    steps:['Frulla 200g fagioli neri sciacquati con 2 uova','Aggiungi 30g cacao amaro + 30g proteine in polvere + 1 cucchiaino lievito','Aggiungi 50g miele e 1 cucchiaino vaniglia','Versa in stampo, inforna 25 min a 180°C','Taglia in 8 quadrotti']},
+
+  {id:'dolce_torta_mele_avena',k:['torta','mele','avena','dolce'],t:'🍎 Torta di Mele e Avena',time:'45 min',
+    desc:'Sana, soffice, perfetta colazione domenicale.',
+    steps:['Frulla 100g fiocchi avena fino a farina','Sbatti 3 uova con 50g miele + 50g yogurt greco','Aggiungi farina avena + 1 bustina lievito','Incorpora 2 mele a cubetti + cannella','Versa in stampo, inforna 35 min a 180°C']},
+
+  {id:'dolce_mousse_cioccolato_avo',k:['mousse','cioccolato','avocado','dolce'],t:'🍫 Mousse Cioccolato all\'Avocado',time:'10 min',
+    desc:'Cremosa, vegana, sana.',
+    steps:['Frulla 1 avocado maturo con 30g cacao amaro','Aggiungi 30g miele (o sciroppo d\'acero) e 50ml latte vegetale','Aggiungi 1 cucchiaino vaniglia','Frulla fino a cremoso','Refrigera 30 min, servi in coppette con frutti di bosco']},
+
+  // ─── ZUPPE EXTRA ───
+  {id:'cen_zuppa_zucca',k:['zuppa','zucca','vegetariano','cena'],t:'🎃 Vellutata di Zucca',time:'35 min',
+    desc:'Cremosa autunnale.',
+    steps:['Soffriggi 1 cipolla tritata in olio EVO','Aggiungi 400g zucca a cubetti + 1 patata piccola','Copri con brodo vegetale','Cuoci 25 min','Frulla con minipimer fino a cremoso','Top con semi di zucca tostati e curcuma']},
+
+  {id:'cen_zuppa_lenticchie',k:['zuppa','lenticchie','vegano'],t:'🥣 Zuppa di Lenticchie Toscana',time:'45 min',
+    desc:'Rustica, sostanziosa.',
+    steps:['Soffriggi 1 carota, 1 sedano, 1 cipolla, 2 spicchi aglio in olio EVO','Aggiungi 200g lenticchie secche + 1 cucchiaio concentrato pomodoro','Copri con brodo vegetale + alloro','Cuoci 30 min','Servi con un filo olio EVO crudo e pane abbrustolito']},
+
+  // ─── INSALATE EXTRA ───
+  {id:'pra_caprese',k:['caprese','insalata','pranzo'],t:'🍅 Insalata Caprese',time:'5 min',
+    desc:'Italiana classica.',
+    steps:['Affetta 2 pomodori cuore di bue maturi','Affetta 100g mozzarella di bufala','Alterna sul piatto fette di pomodoro e mozzarella','Aggiungi foglie di basilico fresco','Olio EVO, sale grosso, pepe']},
+
+  {id:'pra_insalata_riso_tonno',k:['insalata','riso','tonno','pranzo'],t:'🍣 Insalata di Riso al Tonno',time:'25 min',
+    desc:'Estiva e completa, ottima da portare a lavoro.',
+    steps:['Cuoci 80g riso, scolalo e raffreddalo sotto acqua','Mescola con 80g tonno al naturale + 2 uova sode a cubetti','Aggiungi pomodorini, mais, olive, capperi','Condisci con olio EVO + limone','Lasciar riposare 20 min']},
+
+  {id:'pra_insalata_farro',k:['insalata','farro','pranzo','vegetariano'],t:'🌾 Insalata di Farro Mediterranea',time:'30 min',
+    desc:'Estiva, leggera, vegetariana.',
+    steps:['Cuoci 80g farro perlato 18 min, scola','Mescola con pomodorini, cetriolo, cipolla rossa, olive','Aggiungi 50g feta a cubetti','Condisci con olio EVO + limone + origano','Mescola e lascia riposare 15 min in frigo']},
+
+  // ─── PRIMI EXTRA ───
+  {id:'pra_pasta_genovese',k:['pasta','pesto','pranzo'],t:'🌿 Pasta al Pesto alla Genovese',time:'15 min',
+    desc:'Classica ligure.',
+    steps:['Cuoci 80g trofie (o pasta) in acqua salata','Negli ultimi 5 min aggiungi 50g fagiolini e 1 patata piccola a cubetti','Scola tutto, mantieni 1 mestolo acqua di cottura','Condisci con 2 cucchiai pesto genovese (o 100g basilico + pinoli + parmigiano + olio frullati)','Mescola con poca acqua di cottura per cremare']},
+
+  {id:'pra_risotto_zucchine',k:['risotto','zucchine','pranzo'],t:'🍚 Risotto alle Zucchine',time:'25 min',
+    desc:'Cremoso, leggero, primaverile.',
+    steps:['Taglia 2 zucchine a cubetti, salta in padella con olio + scalogno 5 min','Aggiungi 80g riso carnaroli, tosta 2 min','Sfuma con 50ml vino bianco','Cuoci aggiungendo brodo vegetale poco a poco (18 min)','Manteca con 15g parmigiano e prezzemolo']},
+
+  {id:'pra_pasta_aglio_olio',k:['pasta','aglio','olio','pranzo'],t:'🌶️ Spaghetti Aglio Olio e Peperoncino',time:'12 min',
+    desc:'Velocissima, romana classica.',
+    steps:['Cuoci 80g spaghetti in acqua salata','Soffriggi 3 spicchi aglio a fette + peperoncino in 1 cucchiaio olio EVO','Quando aglio è dorato, aggiungi 1 mestolo acqua cottura','Scola pasta al dente, ripassa in padella','Completa con prezzemolo']},
+
+  // ─── INTERNAZIONALI ===
+  {id:'pra_burrito_bowl',k:['burrito','messicano','bowl','pranzo'],t:'🌯 Burrito Bowl Messicano',time:'20 min',
+    desc:'Saporito ed esotico.',
+    steps:['Cuoci 80g riso basmati','Salta 100g pollo a cubetti con paprica, cumino, peperoncino','Componi ciotola: riso, pollo, 80g fagioli neri','Top con: avocado, pomodoro a cubetti, mais, coriandolo','Squeeze di lime e cucchiaio yogurt greco']},
+
+  {id:'cen_curry_lenticchie',k:['curry','lenticchie','vegano','cena'],t:'🍛 Curry di Lenticchie Indiano (Dahl)',time:'30 min',
+    desc:'Vegano, speziato e nutriente.',
+    steps:['Soffriggi 1 cipolla tritata + 1 spicchio aglio + zenzero','Aggiungi 1 cucchiaio curry + 1 cucchiaino curcuma','Aggiungi 200g lenticchie rosse + 200ml latte di cocco light + 200ml acqua','Cuoci 22 min finché lenticchie sono cremose','Sala e servi con riso basmati o naan']},
+
+  {id:'cen_pad_thai',k:['pad thai','thailandese','cena'],t:'🍜 Pad Thai Light',time:'25 min',
+    desc:'Tailandese gustoso.',
+    steps:['Cuoci 80g noodles di riso secondo confezione','Salta 100g gamberi sgusciati in olio + aglio 2 min','Aggiungi 100g germogli di soia + 1 carota a julienne','Sbatti 1 uovo, versa in padella e mescola','Mescola noodles in padella con salsa soia + lime + 1 cucchiaino zucchero','Top con arachidi tritate e coriandolo']},
+
 ];
 
 // Trova la ricetta migliore per un'opzione pasto data
@@ -3774,6 +4241,9 @@ window.cheatSimilarPick=null; // {text, similar, items}
 window.logCheat=async function(){
   const txt=el('cheatInput')?.value?.trim();
   if(!txt||txt.length<2) return alert('Descrivi cosa hai mangiato!');
+  // Leggo il pasto selezionato (default: pranzo se non presente)
+  const meal=el('cheatMealSel')?.value||'pra';
+  window.__cheatMeal=meal; // memorizzo per applyCheatToLog
   if(window.cheatLoading) return;
   window.cheatLoading=true;render();
 
@@ -3840,10 +4310,12 @@ window.applyCheatToLog=function(txt,items,total){
   ST.nutri[currentDateStr].k+=totalK;
   ST.nutri[currentDateStr].c+=Math.round(totalK*.4/4);
   ST.nutri[currentDateStr].f+=Math.round(totalK*.5/9);
-  ST.nutri[currentDateStr].cheatLog.push({txt,kcal:totalK,items,ts:Date.now()});
+  ST.nutri[currentDateStr].cheatLog.push({txt,kcal:totalK,items,ts:Date.now(),mealSlot:(window.cheatMealSlot||window.__cheatMeal||'altro')});
   ST.cheatDebt=1;
   if(el('cheatInput'))el('cheatInput').value='';
   window.cheatSimilarPick=null;
+  window.cheatMealSlot=null;
+  window.__cheatMeal=null;
   // FIX SGARRI: feedback toast con impatto sul bilancio del giorno
   showCheatToast(totalK);
   save();
@@ -3918,8 +4390,11 @@ window.hideDietGuide=function(){
 };
 
 window.openCheatDbPicker=function(){
+  // Salvo il meal selezionato nel form principale prima di aprire la sheet
+  const mealSel=document.getElementById('cheatMealSel');
+  if(mealSel) window.__cheatMeal=mealSel.value;
   ST.sheet='cheatDb';
-  ST.sheetData={mode:'select',selectedFood:null,foodQuery:'',foodCat:null,grams:100};
+  ST.sheetData={mode:'select',selectedFood:null,foodQuery:'',foodCat:null,grams:100,meal:(window.__cheatMeal||'pra')};
   render();
 };
 window.selectCheatFoodFromDb=function(foodId){
@@ -5730,28 +6205,54 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
         </div>
       </div>
     `:`
+      <!-- Selettore pasto specifico -->
+      <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:6px;">A QUALE PASTO È RIFERITO?</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;">
+        ${['col','sp1','pra','sp2','cen','altro'].map(slot=>{
+          const isSel = (window.cheatMealSlot||'altro') === slot;
+          const labels = {col:'🌅 Colazione', sp1:'🍎 Spuntino mat.', pra:'🍝 Pranzo', sp2:'🍪 Spuntino pom.', cen:'🍽️ Cena', altro:'🌙 Fuori pasto'};
+          return `<button onclick="window.cheatMealSlot='${slot}';render();" style="padding:7px 11px;font-size:11px;font-weight:600;border-radius:8px;border:1.5px solid ${isSel?'var(--ora)':'var(--bord)'};background:${isSel?'rgba(255,104,53,.15)':'var(--surf)'};color:${isSel?'var(--ora)':'var(--mut)'};cursor:pointer;">${labels[slot]}</button>`;
+        }).join('')}
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center;">
+        <span style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;flex-shrink:0;">🍽 PASTO:</span>
+        <select id="cheatMealSel" style="flex:1;margin:0;padding:8px;font-size:13px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;color:var(--text);">
+          <option value="col">🌅 Colazione</option>
+          <option value="sp1">🍎 Spuntino mattina</option>
+          <option value="pra" selected>🍝 Pranzo</option>
+          <option value="sp2">🍌 Spuntino pomeriggio</option>
+          <option value="cen">🍽 Cena</option>
+          <option value="sp3">🌙 Spuntino sera</option>
+          <option value="other">❓ Generico (non specifico)</option>
+        </select>
+      </div>
       <textarea id="cheatInput" rows="2" placeholder="Es. '50g fritto misto', '2 fette pizza', 'pizza diavola e una birra'" ${window.cheatLoading?'disabled':''}></textarea>
       <div style="display:flex;gap:6px;margin-top:8px;">
         <button class="btn-s btn-ora" style="flex:1;padding:12px;font-size:14px;font-weight:700;${window.cheatLoading?'opacity:.6;pointer-events:none;':''}" onclick="logCheat()">${window.cheatLoading?'🔍 ANALIZZO...':'⚡ INSERISCI VELOCE'}</button>
         <button class="btn-s" style="flex:1;padding:12px;font-size:14px;font-weight:700;background:var(--surf);color:var(--purp);border:1.5px solid var(--purp);" onclick="openCheatDbPicker()">🔍 SCEGLI DA DB</button>
       </div>
       <div style="font-size:11px;color:var(--mut);margin-top:8px;line-height:1.5;">
-        <strong>Veloce</strong>: scrivi quello che hai mangiato in italiano (con grammi se sai). <strong>DB</strong>: scegli il cibo esatto e i grammi precisi tra 666 alimenti italiani.
+        <strong>Veloce</strong>: scrivi quello che hai mangiato in italiano (con grammi se sai). <strong>DB</strong>: scegli il cibo esatto e i grammi precisi tra 666+ alimenti italiani.
       </div>
       ${window.cheatLoading?`<div style="text-align:center;font-size:11px;color:var(--mut);margin-top:8px;">Riconoscimento in corso...</div>`:''}
     `}
     ${dLog.cheatLog.length?`<div style="margin-top:14px;">
       <div style="font-size:11px;color:var(--ora);font-weight:700;letter-spacing:1px;margin-bottom:8px;">📌 SGARRI DI OGGI (${dLog.cheatLog.length})</div>
-      ${dLog.cheatLog.map((e,i)=>`<div style="padding:11px;background:rgba(255,104,53,.08);border:1px solid rgba(255,104,53,.25);border-radius:10px;margin-bottom:6px;">
+      ${dLog.cheatLog.map((e,i)=>{
+        const mealLabels={col:'🌅 Colazione',sp1:'🍎 Spuntino mat.',pra:'🍝 Pranzo',sp2:'🍪 Spuntino pom.',cen:'🍽 Cena',sp3:'🌙 Spuntino sera',altro:'🌙 Fuori pasto',other:'🌙 Fuori pasto'};
+        const slot = e.mealSlot || e.meal || 'altro';
+        const mealLbl = mealLabels[slot] || mealLabels.altro;
+        return `<div style="padding:11px;background:rgba(255,104,53,.08);border:1px solid rgba(255,104,53,.25);border-radius:10px;margin-bottom:6px;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
           <div style="flex:1;min-width:0;">
+            <div style="font-size:10px;color:var(--ora);font-weight:700;letter-spacing:1px;margin-bottom:4px;">${mealLbl}</div>
             <div style="font-size:13px;color:var(--text);margin-bottom:4px;line-height:1.4;">"${e.txt}"</div>
             ${e.items&&e.items.length?`<div style="font-size:11px;color:var(--mut);">${e.items.map(it=>`${it.qty>1?it.qty+'× ':''}${it.label}`).join(' · ')}</div>`:''}
             <div style="font-size:12px;color:var(--ora);font-weight:700;margin-top:4px;">+${e.kcal} kcal</div>
           </div>
           <button class="btn-s btn-red" style="padding:5px 9px;font-size:10px;flex-shrink:0;" onclick="removeCheatEntry(${i})">✕</button>
         </div>
-      </div>`).join('')}
+      </div>`;}).join('')}
     </div>`:''}
   </div>
   ${ST.p.intol?.length?`<div class="card" style="border-color:var(--red);background:rgba(255,71,87,.03);padding:14px;"><div class="badge" style="background:var(--red);color:#fff;">MENU ADATTATO</div><div style="font-size:12px;color:var(--text);line-height:1.6;padding-right:60px;">Pasti adattati per: <strong>${ST.p.intol.map(i=>INTOL_LIST.find(x=>x.id===i)?.label||i).join(', ')}</strong></div></div>`:''}
