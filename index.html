@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION4-LOGIN-FIX">
+<meta name="ft-version" content="build-SESSION4-CHEAT-FIX">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -4351,6 +4351,10 @@ window.doLogin=async function(){
 };
 
 window.doLogout=async function(){
+  // Conferma esplicita prima del logout
+  if (!confirm('Vuoi davvero uscire?\n\nI tuoi dati restano salvati nel cloud, potrai rientrare quando vuoi con la tua email.')) {
+    return;
+  }
   try{
     await saveU();
     await window.FBAuth.signOut();
@@ -4398,17 +4402,66 @@ window.doChangePassword=async function(){
 };
 
 window.doDeleteAccount=async function(){
-  const pw=prompt('Per cancellare l\'account inserisci la tua password:');
-  if(!pw) return;
-  if(!confirm('Sei ASSOLUTAMENTE sicuro? Tutti i dati verranno eliminati definitivamente.')) return;
+  // ═══ CANCELLAZIONE ACCOUNT ULTRA-SICURA (3 step) ═══
+  // Step 1: avvertimento iniziale forte
+  const step1 = confirm(
+    '⚠️ ATTENZIONE: STAI PER CANCELLARE IL TUO ACCOUNT\n\n' +
+    'Questa azione è IRREVERSIBILE. Verranno eliminati:\n' +
+    '• Tutti i tuoi dati di allenamento e nutrizione\n' +
+    '• Lo storico peso, misure, sgarri\n' +
+    '• I record personali (PR) raggiunti\n' +
+    '• Le note esercizio salvate\n' +
+    '• Le schede personalizzate\n\n' +
+    'I dati NON potranno essere recuperati in futuro.\n\n' +
+    'Vuoi procedere?'
+  );
+  if (!step1) return;
+
+  // Step 2: re-inserimento email per conferma identità
+  const currentEmail = window.FBAuth?.auth?.currentUser?.email || '';
+  const inputEmail = prompt(
+    '🔒 CONFERMA IDENTITÀ (1/2)\n\n' +
+    'Per procedere reinserisci la TUA EMAIL completa.\n' +
+    'Questo evita cancellazioni accidentali.'
+  );
+  if (!inputEmail) return;
+  if (inputEmail.trim().toLowerCase() !== currentEmail.toLowerCase()) {
+    return alert('❌ Email non corrispondente. Cancellazione annullata per sicurezza.');
+  }
+
+  // Step 3: re-inserimento password
+  const pw = prompt(
+    '🔒 CONFERMA IDENTITÀ (2/2)\n\n' +
+    'Inserisci la tua PASSWORD attuale per autorizzare la cancellazione.'
+  );
+  if (!pw) return;
+
+  // Step 4: parola magica "CANCELLA" per evitare anche pressioni distratte
+  const magicWord = prompt(
+    '⚠️ ULTIMA CONFERMA\n\n' +
+    'Per essere SICURI al 100%, scrivi la parola:\n\n' +
+    'CANCELLA\n\n' +
+    '(in maiuscolo, esattamente come scritto sopra)'
+  );
+  if (magicWord !== 'CANCELLA') {
+    return alert('❌ Parola non corretta. Account NON cancellato. I tuoi dati sono al sicuro.');
+  }
+
+  // Esecuzione cancellazione
   try{
     if(window.DB && AU.user) await window.DB.d('ft_u_'+AU.user);
     await window.FBAuth.deleteAccount(pw);
     AU.user=null;AU.profile=null;
     Object.assign(ST,defST());
-    alert('✅ Account cancellato.');
+    alert('✅ Account cancellato definitivamente.\n\nGrazie per aver usato FitTracker PRO.');
     render();
-  }catch(e){alert(__fbErr(e));}
+  }catch(e){
+    // Errore comune: password sbagliata
+    const msg = e?.code === 'auth/wrong-password' || e?.code === 'auth/invalid-credential'
+      ? '❌ Password errata. Account NON cancellato.'
+      : '❌ Errore: ' + __fbErr(e);
+    alert(msg);
+  }
 };
 
 window.__initAuthListener=function(){
@@ -4983,13 +5036,33 @@ window.logCheat=async function(){
 window.applyCheatToLog=function(txt,items,total){
   if(!ST.nutri[currentDateStr]) ST.nutri[currentDateStr]={k:0,p:0,c:0,f:0,logged:[],skipped:[],cheatLog:[]};
   if(!ST.nutri[currentDateStr].cheatLog) ST.nutri[currentDateStr].cheatLog=[];
+  if(!ST.nutri[currentDateStr].logged) ST.nutri[currentDateStr].logged=[];
+  if(!ST.nutri[currentDateStr].skipped) ST.nutri[currentDateStr].skipped=[];
   const totalK=total||items.reduce((s,it)=>s+(it.kcal||0)*(it.qty||1),0);
   // Determina pasto: priorità su selezione esplicita, poi ultimo, poi 'altro'
   const mealSlot = window.cheatMealSlot || window.__cheatMeal || ST.lastCheatMealSlot || 'altro';
+
+  // ── Macros realistici per sgarri (pizza/dolci/fritti tipici) ──
+  // Distribuzione media: 12% proteine, 48% carbo, 40% grassi (totale 100%)
+  // Convertendo: prot in grammi (4 kcal/g), carb (4 kcal/g), fat (9 kcal/g)
   ST.nutri[currentDateStr].k+=totalK;
-  ST.nutri[currentDateStr].c+=Math.round(totalK*.4/4);
-  ST.nutri[currentDateStr].f+=Math.round(totalK*.5/9);
+  ST.nutri[currentDateStr].p+=Math.round(totalK*0.12/4);
+  ST.nutri[currentDateStr].c+=Math.round(totalK*0.48/4);
+  ST.nutri[currentDateStr].f+=Math.round(totalK*0.40/9);
   ST.nutri[currentDateStr].cheatLog.push({txt,kcal:totalK,items,ts:Date.now(),mealSlot});
+
+  // ── FIX: Se lo sgarro è per un pasto specifico (non "altro" o "fuori pasto"),
+  // marca quel pasto come "saltato" così l'utente non lo segna ANCHE come fatto.
+  // I 4 pasti principali tracciabili: col, sp1, pra, sp2, cen
+  const trackableSlots = ['col','sp1','pra','sp2','cen'];
+  if (trackableSlots.includes(mealSlot)) {
+    // Solo se non è già loggato come fatto e non è già saltato
+    if (!ST.nutri[currentDateStr].logged.includes(mealSlot) &&
+        !ST.nutri[currentDateStr].skipped.includes(mealSlot)) {
+      ST.nutri[currentDateStr].skipped.push(mealSlot);
+    }
+  }
+
   ST.cheatDebt=1;
   // RICORDA l'ultimo pasto selezionato per i prossimi sgarri (utente che continua a inserire stesso pasto)
   ST.lastCheatMealSlot = mealSlot;
@@ -5095,11 +5168,25 @@ window.confirmCheatFromDb=function(){
   const isPortionFood=['pizze','dolci','gelati','fast_food','snack','bar','piatti_pronti'].includes(f.cat);
   let kcal,label,grams;
   if(isPortionFood){
-    // 1 porzione = valore DB
+    // 1 porzione = valore DB × moltiplicatore tipico per categoria
+    // (i valori in DB sono "per 100g", per le porzioni reali servono moltiplicatori)
     const qty=parseInt(document.getElementById('cheatQty')?.value||1);
     if(isNaN(qty)||qty<1||qty>20) return alert('Quantità non valida (1-20)');
-    kcal=Math.round(f.kcal*qty);
-    label=qty>1?`${qty}× ${f.name}`:f.name;
+    // Moltiplicatori medi grammi-per-porzione realistici:
+    // Pizza intera ~300g, dolce ~120g, gelato ~120g, fast food ~250g, snack ~60g, bar ~80g, piatto pronto ~250g
+    const PORTION_MULTIPLIERS = {
+      pizze: 3.0,         // pizza intera ~300g
+      dolci: 1.2,         // fetta dolce ~120g
+      gelati: 1.2,        // 1 cono/coppetta ~120g
+      fast_food: 2.5,     // hamburger/menu ~250g
+      snack: 0.6,         // 1 snack ~60g (mars, snickers, ecc.)
+      bar: 0.8,           // 1 brioche/cornetto ~80g
+      piatti_pronti: 2.5  // porzione pasta/risotto/lasagna ~250g
+    };
+    const mult = PORTION_MULTIPLIERS[f.cat] || 1;
+    kcal=Math.round(f.kcal * mult * qty);
+    const portionGrams = Math.round(100 * mult);
+    label=qty>1?`${qty}× ${f.name} (~${portionGrams}g cad.)`:`${f.name} (~${portionGrams}g)`;
     grams=null;
   } else {
     grams=parseInt(document.getElementById('cheatGrams')?.value||0);
@@ -5158,11 +5245,29 @@ window.removeCheatEntry=function(idx){
   if(!confirm('Annullare questo sgarro?')) return;
   const day=ST.nutri[currentDateStr];if(!day||!day.cheatLog) return;
   const entry=day.cheatLog[idx];if(!entry) return;
+  // Stessa formula speculare a applyCheatToLog (12% prot, 48% carb, 40% fat)
   day.k-=entry.kcal||0;
-  day.c-=Math.round((entry.kcal||0)*.4/4);
-  day.f-=Math.round((entry.kcal||0)*.5/9);
-  day.k=Math.max(0,day.k);day.c=Math.max(0,day.c);day.f=Math.max(0,day.f);
-  day.cheatLog.splice(idx,1);
+  day.p=Math.max(0,(day.p||0)-Math.round((entry.kcal||0)*0.12/4));
+  day.c=Math.max(0,(day.c||0)-Math.round((entry.kcal||0)*0.48/4));
+  day.f=Math.max(0,(day.f||0)-Math.round((entry.kcal||0)*0.40/9));
+  day.k=Math.max(0,day.k);
+
+  // ── Se questo sgarro era per un pasto specifico, controllo se ci sono ALTRI
+  // sgarri per lo stesso pasto. Se NON ce ne sono, rimuovo la marcatura "saltato".
+  const removedSlot = entry.mealSlot;
+  const trackableSlots = ['col','sp1','pra','sp2','cen'];
+  if (trackableSlots.includes(removedSlot)) {
+    // Controllo dopo la rimozione
+    day.cheatLog.splice(idx,1);
+    const stillHasCheatForSlot = day.cheatLog.some(e => e.mealSlot === removedSlot);
+    if (!stillHasCheatForSlot && day.skipped) {
+      const skipIdx = day.skipped.indexOf(removedSlot);
+      if (skipIdx >= 0) day.skipped.splice(skipIdx, 1);
+    }
+  } else {
+    day.cheatLog.splice(idx,1);
+  }
+
   if(!day.cheatLog.length) ST.cheatDebt=0;
   save();
 }
@@ -6031,12 +6136,46 @@ window.generateLocalCoachingAdvice=function(ctx, an, mac, st){
     }
   }
 
-  // 4. Sgarri / aderenza dieta
+  // 4. Sgarri / aderenza dieta — con analisi pattern per pasto
   const totalCheats=ctx.nutritionLog.reduce((sum,x)=>sum+(x.cheat||0),0);
+
+  // Calcolo distribuzione sgarri per pasto delle ultime 2 settimane
+  const cheatsByMeal = {col:0, sp1:0, pra:0, sp2:0, cen:0, altro:0};
+  if (st.nutri) {
+    const since = new Date(Date.now() - 14*86400000).toISOString().slice(0,10);
+    Object.keys(st.nutri).forEach(d => {
+      if (d < since) return;
+      const day = st.nutri[d];
+      (day.cheatLog || []).forEach(e => {
+        const slot = e.mealSlot || e.meal || 'altro';
+        if (cheatsByMeal[slot] !== undefined) cheatsByMeal[slot]++;
+      });
+    });
+  }
+  const totSlotCheats = Object.values(cheatsByMeal).reduce((s,n)=>s+n, 0);
+
   if(totalCheats>=8){
     parts.push(`Hai accumulato ${totalCheats} sgarri in 2 settimane: prova ad organizzare 1 pasto libero a settimana invece di tanti piccoli sgarri non gestiti.`);
   } else if(totalCheats>=4){
     parts.push(`${totalCheats} sgarri tracciati: nella media. Annotare aiuta la consapevolezza.`);
+  }
+
+  // Pattern detection: trova il pasto più "sgarrato" se rappresenta >40% dei totali
+  if (totSlotCheats >= 4) {
+    const sortedSlots = Object.entries(cheatsByMeal).sort((a,b) => b[1]-a[1]);
+    const top = sortedSlots[0];
+    const topPct = top[1] / totSlotCheats;
+    if (topPct >= 0.4 && top[0] !== 'altro') {
+      const slotNames = {col:'a colazione', sp1:'a metà mattina', pra:'a pranzo', sp2:'a metà pomeriggio', cen:'a cena'};
+      const tips = {
+        col: 'Prova una colazione più sostanziosa con proteine: yogurt greco + frutta + cereali integrali ti tiene sazio fino a pranzo.',
+        sp1: 'Programma uno spuntino solido: 1 frutto + frutta secca + tè verde aiuta a non arrivare affamato a pranzo.',
+        pra: 'A pranzo gli sgarri spesso sono da fame eccessiva: aumenta proteine al mattino e fai pranzi con verdure abbondanti che saziano.',
+        sp2: 'Lo spuntino pomeridiano è critico: yogurt greco con miele e mandorle è la combinazione anti-sgarro più efficace.',
+        cen: 'Sgarri serali = giornata sbilanciata. Mangia di più pranzando, riduci di 100 kcal cena, e tieni un quadretto di cioccolato fondente come dolce concesso.'
+      };
+      parts.push(`Pattern rilevato: ${top[1]} sgarri su ${totSlotCheats} sono ${slotNames[top[0]]||'in quel pasto'}. ${tips[top[0]]||''}`);
+    }
   }
 
   // 5. Consiglio specifico per strategia
@@ -7864,12 +8003,23 @@ window.renderSettings = function(mac){
     <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:10px;">Rileggi il disclaimer medico e l'informativa privacy che hai accettato alla registrazione.</div>
     <button class="btn-s btn-action" style="width:100%;padding:11px;font-size:13px;" onclick="openDisclaimerView()">📖 LEGGI</button>
   </div>
-  <div class="card">
+  <!-- ── ACCOUNT & SICUREZZA (sessione 4) ── -->
+  <div class="card" style="border-color:var(--blu);">
+    <div class="bebas" style="font-size:18px;color:var(--blu);margin-bottom:6px;">🔐 ACCOUNT & SICUREZZA</div>
+    <div style="background:rgba(96,165,250,.08);border-left:3px solid var(--blu);border-radius:0 10px 10px 0;padding:10px 12px;margin-bottom:12px;">
+      <div style="font-size:12px;color:var(--text);line-height:1.6;">
+        <strong style="color:var(--blu);">I tuoi dati sono al sicuro nel cloud.</strong><br>
+        Anche dopo il logout potrai rientrare in qualsiasi momento con la tua email — allenamenti, peso, misure e PR vengono mantenuti automaticamente.
+      </div>
+    </div>
     <button class="btn btn-action" style="padding:14px;width:100%;font-family:'Bebas Neue';font-size:18px;" onclick="doLogout()">🚪 LOGOUT</button>
   </div>
   <div class="card card-red">
     <div class="bebas" style="color:var(--red);font-size:20px;margin-bottom:8px;">⚠️ ZONA PERICOLOSA</div>
-    <p style="font-size:13px;line-height:1.5;margin-bottom:12px;">Azione irreversibile. Tutti i tuoi dati verranno distrutti dal Cloud.</p>
+    <div style="background:rgba(239,68,68,.08);border-left:3px solid var(--red);border-radius:0 10px 10px 0;padding:10px 12px;margin-bottom:12px;font-size:12px;line-height:1.6;color:var(--text);">
+      La cancellazione è <strong>irreversibile</strong>: tutti i tuoi dati (allenamenti, peso, sgarri, note, schede personalizzate, PR) verranno eliminati definitivamente dal cloud e <strong>non potranno essere recuperati</strong>.<br><br>
+      Per evitare cancellazioni accidentali è richiesta una <strong>tripla conferma</strong>: email, password e parola di sicurezza.
+    </div>
     <button class="btn btn-red" onclick="doDeleteAccount()">CANCELLA IL MIO ACCOUNT</button>
   </div>`;
 }
@@ -8200,21 +8350,28 @@ window.render = function() {
     const f=d.selectedFood;
     const isPortionFood=['pizze','dolci','gelati','fast_food','snack','bar','piatti_pronti'].includes(f.cat);
     const grams=d.grams||100;
-    const previewKcal=isPortionFood?f.kcal:Math.round((f.kcal*grams)/100);
+    // Moltiplicatori porzione (allineati a confirmCheatFromDb)
+    const PORTION_MULTIPLIERS = {
+      pizze: 3.0, dolci: 1.2, gelati: 1.2, fast_food: 2.5,
+      snack: 0.6, bar: 0.8, piatti_pronti: 2.5
+    };
+    const portionMult = isPortionFood ? (PORTION_MULTIPLIERS[f.cat] || 1) : 1;
+    const portionGrams = Math.round(100 * portionMult);
+    const previewKcal=isPortionFood?Math.round(f.kcal * portionMult):Math.round((f.kcal*grams)/100);
     return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div>
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
         <div style="font-size:36px;">${(window.FOOD_CATS||[]).find(c=>c.id===f.cat)?.emo||'🍴'}</div>
         <div style="flex:1;min-width:0;">
           <div class="bebas" style="font-size:20px;line-height:1.1;">${escapeHtml(f.name)}</div>
-          <div style="font-size:11px;color:var(--mut);">${f.kcal} kcal${isPortionFood?' (per porzione standard)':'/100g'} · P:${f.p||0}g · C:${f.c||0}g · F:${f.f||0}g</div>
+          <div style="font-size:11px;color:var(--mut);">${f.kcal} kcal${isPortionFood?'/100g · porzione standard ~'+portionGrams+'g':'/100g'} · P:${f.p||0}g · C:${f.c||0}g · F:${f.f||0}g</div>
         </div>
       </div>
       ${isPortionFood ? `
         <!-- Cibi per porzione: chiedi quante porzioni -->
         <div style="background:rgba(255,104,53,.06);border:1.5px solid var(--ora);border-radius:12px;padding:14px;margin-bottom:10px;">
-          <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:10px;">QUANTE PORZIONI?</div>
+          <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:10px;">QUANTE PORZIONI? (1 porzione ≈ ${portionGrams}g)</div>
           <div style="display:grid;grid-template-columns:1fr 100px;gap:8px;margin-bottom:8px;">
-            <input id="cheatQty" type="number" min="1" max="20" value="1" style="margin:0;font-size:14px;padding:10px;text-align:center;" oninput="document.getElementById('cheatPreviewK').textContent=Math.round(${f.kcal}*(parseInt(this.value)||1))+' kcal'">
+            <input id="cheatQty" type="number" min="1" max="20" value="1" style="margin:0;font-size:14px;padding:10px;text-align:center;" oninput="document.getElementById('cheatPreviewK').textContent=Math.round(${f.kcal}*${portionMult}*(parseInt(this.value)||1))+' kcal'">
             <div style="display:flex;align-items:center;justify-content:center;background:var(--bg);border-radius:8px;padding:8px;font-size:13px;color:var(--ora);font-weight:700;"><span id="cheatPreviewK">${previewKcal} kcal</span></div>
           </div>
         </div>
