@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION2-CONTENT">
+<meta name="ft-version" content="build-SESSION3-EXERCISE-DETAILS">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -747,6 +747,245 @@ const EX_G={
 // MET fonte: Compendium of Physical Activities (Ainsworth et al.)
 // Dove ha senso, ogni sport ha 2 intensità (normale / intenso)
 // ═══════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════
+// MUSCLE_SVG — Silhouette anatomiche con muscoli evidenziati
+// Funzione: muscleSvg(cat) → SVG markup colorato per la categoria
+// Categorie: chest, back, shoulders, biceps, triceps, quads, glutes,
+//            calves, core, forearms, cardio
+// ═══════════════════════════════════════════════════════════════════════
+window.muscleSvg = function(cat, view){
+  // Default: front view, ma 'back' rende vista posteriore
+  view = view || (['back','glutes','triceps'].includes(cat) ? 'back' : 'front');
+  const ON = '#c5f135';   // muscolo evidenziato (color accent)
+  const ON2 = '#a8d624';  // sfumatura
+  const OFF = '#3f3f46';  // muscolo a riposo
+  const OUTLINE = '#52525b';
+  const SKIN = '#27272a';
+
+  // Helper: ritorna 'on' se il path è il muscolo target, 'off' altrimenti
+  const c = (target) => {
+    if (Array.isArray(target)) return target.includes(cat) ? ON : OFF;
+    return target === cat ? ON : OFF;
+  };
+
+  if (view === 'back') {
+    // Vista posteriore — schiena, glutei, tricipiti, femorali, polpacci
+    return `<svg viewBox="0 0 200 360" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;max-height:280px;">
+      <!-- Silhouette base -->
+      <path d="M100 18 c-12 0 -22 8 -22 22 c0 8 4 16 10 21 l-3 8 c-22 6 -38 22 -38 42 l0 22 c0 8 2 14 6 20 l-4 4 c-10 12 -14 26 -14 42 l0 36 c0 10 2 18 6 26 l-2 14 c-6 14 -8 30 -8 50 l0 28 c0 6 4 10 10 10 l16 0 c4 0 8 -4 8 -10 l2 -28 l8 -52 l8 56 l2 24 c0 6 4 10 8 10 l16 0 c6 0 10 -4 10 -10 l-2 -56 l8 -52 l8 56 l2 24 c0 6 4 10 8 10 l16 0 c4 0 8 -4 8 -10 l0 -28 c0 -20 -2 -36 -8 -50 l-2 -14 c4 -8 6 -16 6 -26 l0 -36 c0 -16 -4 -30 -14 -42 l-4 -4 c4 -6 6 -12 6 -20 l0 -22 c0 -20 -16 -36 -38 -42 l-3 -8 c6 -5 10 -13 10 -21 c0 -14 -10 -22 -22 -22 z" fill="${SKIN}" stroke="${OUTLINE}" stroke-width="1.5"/>
+
+      <!-- Trapezio superiore -->
+      <path d="M70 65 q30 -8 60 0 l-4 22 q-26 -6 -52 0 z" fill="${c(['back','shoulders'])}" stroke="${OUTLINE}" stroke-width="0.5" opacity="0.85"/>
+
+      <!-- Dorsali (back) -->
+      <path d="M62 90 q38 -6 76 0 l-4 50 q-34 -6 -68 0 z" fill="${c('back')}" stroke="${OUTLINE}" stroke-width="0.5" opacity="0.85"/>
+
+      <!-- Deltoide posteriore (rear delt) -->
+      <ellipse cx="55" cy="92" rx="11" ry="13" fill="${c('shoulders')}" opacity="0.85"/>
+      <ellipse cx="145" cy="92" rx="11" ry="13" fill="${c('shoulders')}" opacity="0.85"/>
+
+      <!-- Tricipiti -->
+      <path d="M40 105 q-4 16 -2 35 q4 -2 10 -2 q4 -16 4 -32 z" fill="${c('triceps')}" stroke="${OUTLINE}" stroke-width="0.5" opacity="0.85"/>
+      <path d="M160 105 q4 16 2 35 q-4 -2 -10 -2 q-4 -16 -4 -32 z" fill="${c('triceps')}" stroke="${OUTLINE}" stroke-width="0.5" opacity="0.85"/>
+
+      <!-- Avambracci (vista back) -->
+      <path d="M36 145 q-2 22 -2 38 q6 0 10 -2 q2 -18 2 -34 z" fill="${c('forearms')}" stroke="${OUTLINE}" stroke-width="0.5" opacity="0.85"/>
+      <path d="M164 145 q2 22 2 38 q-6 0 -10 -2 q-2 -18 -2 -34 z" fill="${c('forearms')}" stroke="${OUTLINE}" stroke-width="0.5" opacity="0.85"/>
+
+      <!-- Lombare -->
+      <path d="M75 145 q25 -2 50 0 l-2 18 q-22 -2 -46 0 z" fill="${c(['back','core'])}" stroke="${OUTLINE}" stroke-width="0.5" opacity="0.7"/>
+
+      <!-- Glutei -->
+      <path d="M68 175 q14 -4 32 -4 q18 0 32 4 l-2 32 q-14 4 -30 4 q-16 0 -30 -4 z" fill="${c('glutes')}" stroke="${OUTLINE}" stroke-width="0.5" opacity="0.9"/>
+
+      <!-- Femorali -->
+      <path d="M70 215 q14 -2 26 0 l-4 56 q-12 2 -22 0 z" fill="${c('glutes')}" stroke="${OUTLINE}" stroke-width="0.5" opacity="0.85"/>
+      <path d="M104 215 q14 -2 26 0 l-4 56 q-12 2 -22 0 z" fill="${c('glutes')}" stroke="${OUTLINE}" stroke-width="0.5" opacity="0.85"/>
+
+      <!-- Polpacci -->
+      <path d="M72 280 q12 -2 22 0 l-4 38 q-8 2 -14 0 z" fill="${c('calves')}" stroke="${OUTLINE}" stroke-width="0.5" opacity="0.9"/>
+      <path d="M106 280 q12 -2 22 0 l-4 38 q-8 2 -14 0 z" fill="${c('calves')}" stroke="${OUTLINE}" stroke-width="0.5" opacity="0.9"/>
+
+      <text x="100" y="350" text-anchor="middle" font-family="Arial" font-size="9" fill="#71717a">Vista posteriore</text>
+    </svg>`;
+  }
+
+  // Vista anteriore — petto, addominali, quadricipiti, bicipiti, deltoidi anteriori
+  return `<svg viewBox="0 0 200 360" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;max-height:280px;">
+    <!-- Silhouette base -->
+    <path d="M100 18 c-12 0 -22 8 -22 22 c0 8 4 16 10 21 l-3 8 c-22 6 -38 22 -38 42 l0 22 c0 8 2 14 6 20 l-4 4 c-10 12 -14 26 -14 42 l0 36 c0 10 2 18 6 26 l-2 14 c-6 14 -8 30 -8 50 l0 28 c0 6 4 10 10 10 l16 0 c4 0 8 -4 8 -10 l2 -28 l8 -52 l8 56 l2 24 c0 6 4 10 8 10 l16 0 c6 0 10 -4 10 -10 l-2 -56 l8 -52 l8 56 l2 24 c0 6 4 10 8 10 l16 0 c4 0 8 -4 8 -10 l0 -28 c0 -20 -2 -36 -8 -50 l-2 -14 c4 -8 6 -16 6 -26 l0 -36 c0 -16 -4 -30 -14 -42 l-4 -4 c4 -6 6 -12 6 -20 l0 -22 c0 -20 -16 -36 -38 -42 l-3 -8 c6 -5 10 -13 10 -21 c0 -14 -10 -22 -22 -22 z" fill="${SKIN}" stroke="${OUTLINE}" stroke-width="1.5"/>
+
+    <!-- Trapezio (lato) -->
+    <path d="M88 60 q12 -2 24 0 l4 18 q-16 -2 -32 0 z" fill="${c(['shoulders','back'])}" stroke="${OUTLINE}" stroke-width="0.5" opacity="0.85"/>
+
+    <!-- Deltoidi anteriori -->
+    <ellipse cx="58" cy="92" rx="13" ry="14" fill="${c('shoulders')}" stroke="${OUTLINE}" stroke-width="0.5" opacity="0.9"/>
+    <ellipse cx="142" cy="92" rx="13" ry="14" fill="${c('shoulders')}" stroke="${OUTLINE}" stroke-width="0.5" opacity="0.9"/>
+
+    <!-- Petto (gran pettorale) -->
+    <path d="M75 86 q25 -3 50 0 l5 30 q-30 -4 -60 0 z" fill="${c('chest')}" stroke="${OUTLINE}" stroke-width="0.5" opacity="0.9"/>
+    <line x1="100" y1="86" x2="100" y2="116" stroke="${OUTLINE}" stroke-width="1" opacity="0.5"/>
+
+    <!-- Bicipiti -->
+    <ellipse cx="48" cy="118" rx="9" ry="22" fill="${c('biceps')}" stroke="${OUTLINE}" stroke-width="0.5" opacity="0.9"/>
+    <ellipse cx="152" cy="118" rx="9" ry="22" fill="${c('biceps')}" stroke="${OUTLINE}" stroke-width="0.5" opacity="0.9"/>
+
+    <!-- Avambracci (vista front) -->
+    <path d="M40 145 q-2 22 -2 38 q6 0 10 -2 q2 -18 2 -34 z" fill="${c('forearms')}" stroke="${OUTLINE}" stroke-width="0.5" opacity="0.85"/>
+    <path d="M160 145 q2 22 2 38 q-6 0 -10 -2 q-2 -18 -2 -34 z" fill="${c('forearms')}" stroke="${OUTLINE}" stroke-width="0.5" opacity="0.85"/>
+
+    <!-- Addominali (core) -->
+    <path d="M82 120 q18 -2 36 0 l0 8 q-18 -1 -36 0 z" fill="${c('core')}" stroke="${OUTLINE}" stroke-width="0.5" opacity="0.85"/>
+    <path d="M82 132 q18 -2 36 0 l0 8 q-18 -1 -36 0 z" fill="${c('core')}" stroke="${OUTLINE}" stroke-width="0.5" opacity="0.85"/>
+    <path d="M82 144 q18 -2 36 0 l0 8 q-18 -1 -36 0 z" fill="${c('core')}" stroke="${OUTLINE}" stroke-width="0.5" opacity="0.85"/>
+    <path d="M82 156 q18 -2 36 0 l0 8 q-18 -1 -36 0 z" fill="${c('core')}" stroke="${OUTLINE}" stroke-width="0.5" opacity="0.85"/>
+    <line x1="100" y1="120" x2="100" y2="170" stroke="${OUTLINE}" stroke-width="1" opacity="0.5"/>
+
+    <!-- Obliqui -->
+    <path d="M70 132 q-4 14 -4 28 l8 4 q4 -16 4 -30 z" fill="${c('core')}" stroke="${OUTLINE}" stroke-width="0.5" opacity="0.7"/>
+    <path d="M130 132 q4 14 4 28 l-8 4 q-4 -16 -4 -30 z" fill="${c('core')}" stroke="${OUTLINE}" stroke-width="0.5" opacity="0.7"/>
+
+    <!-- Quadricipiti -->
+    <path d="M70 215 q14 -2 26 0 l-4 56 q-12 2 -22 0 z" fill="${c('quads')}" stroke="${OUTLINE}" stroke-width="0.5" opacity="0.9"/>
+    <path d="M104 215 q14 -2 26 0 l-4 56 q-12 2 -22 0 z" fill="${c('quads')}" stroke="${OUTLINE}" stroke-width="0.5" opacity="0.9"/>
+    <line x1="83" y1="220" x2="80" y2="265" stroke="${OUTLINE}" stroke-width="0.7" opacity="0.4"/>
+    <line x1="117" y1="220" x2="120" y2="265" stroke="${OUTLINE}" stroke-width="0.7" opacity="0.4"/>
+
+    <!-- Polpacci (parte anteriore tibia) -->
+    <path d="M72 280 q12 -2 22 0 l-4 38 q-8 2 -14 0 z" fill="${c('calves')}" stroke="${OUTLINE}" stroke-width="0.5" opacity="0.85"/>
+    <path d="M106 280 q12 -2 22 0 l-4 38 q-8 2 -14 0 z" fill="${c('calves')}" stroke="${OUTLINE}" stroke-width="0.5" opacity="0.85"/>
+
+    ${cat==='cardio' ? `
+    <!-- Indicatore cardio: cuore stilizzato -->
+    <g transform="translate(150, 80)">
+      <path d="M0 8 c-6 -10 -16 -10 -16 0 c0 8 16 16 16 16 c0 0 16 -8 16 -16 c0 -10 -10 -10 -16 0 z" fill="#ef4444" opacity="0.9"/>
+    </g>` : ''}
+
+    <text x="100" y="350" text-anchor="middle" font-family="Arial" font-size="9" fill="#71717a">Vista anteriore</text>
+  </svg>`;
+};
+
+// Helper: titolo categoria muscolare leggibile in italiano
+window.muscleCatLabel = function(cat){
+  const labels = {
+    chest: 'Petto', back: 'Schiena', shoulders: 'Spalle',
+    biceps: 'Bicipiti', triceps: 'Tricipiti', quads: 'Quadricipiti',
+    glutes: 'Glutei / Femorali', calves: 'Polpacci', core: 'Core / Addome',
+    forearms: 'Avambracci', cardio: 'Cardio',
+    warmup: 'Riscaldamento', cooldown: 'Defaticamento', mobility: 'Mobilità'
+  };
+  return labels[cat] || cat;
+};
+
+// ═══════════════════════════════════════════════════════════════════════
+// EXERCISE HELPERS — Arricchiscono dinamicamente le info esercizio
+// (errori comuni, respirazione, tempo recupero suggerito)
+// ═══════════════════════════════════════════════════════════════════════
+
+// Tempo di recupero ottimale per esercizio (in secondi)
+// Compound pesanti: 2-3 min; isolation: 60-90s; isometric/cardio: 30-60s
+window.getRecommendedRest = function(ex){
+  if (!ex) return 60;
+  if (ex.isWarmup || ex.isCooldown) return 0;
+  if (ex.t === 'cardio') return 60;
+  if (ex.t === 'isometric') return 45;
+  // Compound pesanti: lista nomi che ne fanno parte
+  const name = (ex.name || '').toLowerCase();
+  const heavyCompound = ['stacco', 'squat', 'panca piana', 'panca inclinata', 'military press',
+                          'rematore bilanciere', 'trazion', 'front squat', 'hack squat',
+                          'box squat', 'goblet squat', 'leg press', 'shoulder press'];
+  if (heavyCompound.some(k => name.includes(k))) return 150;  // 2.5 min per i grossi
+  // Compound medi
+  if (ex.t === 'compound') return 90;
+  // Isolation
+  return 60;
+};
+
+// Errori comuni per categoria muscolare (da mostrare come avvertimento)
+window.getCommonMistakes = function(ex){
+  if (!ex || ex.isWarmup || ex.isCooldown) return [];
+  const cat = ex.cat;
+  const name = (ex.name || '').toLowerCase();
+
+  const mistakes = {
+    chest: [
+      'Non rimbalzare il bilanciere/manubrio sul petto',
+      'Scapole sempre retratte e abbassate per proteggere le spalle',
+      'Non sollevare i glutei dalla panca per "trovare leva"'
+    ],
+    back: [
+      'Mai con la schiena curva: lombari neutri sempre',
+      'Tira con i gomiti, non con i bicipiti',
+      'Petto in fuori, scapole che si avvicinano alla fine del movimento'
+    ],
+    shoulders: [
+      'Mai dietro il collo per i press: alto rischio cuffia rotatori',
+      'Niente swing del busto per le alzate laterali',
+      'Trapezi rilassati durante le alzate (non sollevarli)'
+    ],
+    biceps: [
+      'Niente swing del busto per "aiutare"',
+      'Non muovere i gomiti durante il curl: fissi al fianco',
+      'Controlla sempre la fase eccentrica (discesa lenta)'
+    ],
+    triceps: [
+      'Gomiti vicini al corpo, non si aprono',
+      'Non bloccare completamente i gomiti in cima (tensione costante)',
+      'Movimento solo ai gomiti, niente spalle'
+    ],
+    quads: [
+      'Le ginocchia seguono la direzione delle punte dei piedi (non cedono dentro)',
+      'Schiena dritta, petto in fuori durante tutta la discesa',
+      'Discesa fino a quando i femori sono paralleli al pavimento (full ROM)'
+    ],
+    glutes: [
+      'Spinta dai talloni, non dalla pianta',
+      'Stringi i glutei in cima al movimento per 1 secondo',
+      'Bacino neutro, non inarcare la lombare'
+    ],
+    calves: [
+      'Pausa breve in cima e stretch profondo in basso',
+      'Movimento lento e controllato, niente rimbalzi'
+    ],
+    core: [
+      'Tira l\'ombelico verso la colonna durante l\'esercizio',
+      'Lombare neutra: mai inarcata e mai schiacciata oltre',
+      'Espira durante la fase di contrazione'
+    ],
+    forearms: [
+      'Polsi dritti, non piegati lateralmente',
+      'Movimento lento, niente strappi'
+    ]
+  };
+  return mistakes[cat] || [];
+};
+
+// Pattern di respirazione consigliato
+window.getBreathingPattern = function(ex){
+  if (!ex || ex.isWarmup || ex.isCooldown) return null;
+  if (ex.t === 'isometric') return 'Respira regolarmente durante la tenuta — non trattenere il fiato.';
+  if (ex.t === 'cardio') return 'Ritmo costante — inspira dal naso, espira dalla bocca.';
+  // Default per esercizi di forza
+  return 'Inspira durante la fase di discesa (eccentrica). Espira con forza durante la spinta/sollevamento (concentrica).';
+};
+
+// Note libere per esercizio (persistenti tra sessioni)
+// Salvate in ST.exNotes[exId]
+window.getExerciseNote = function(exId){
+  if (!ST.exNotes) return '';
+  return ST.exNotes[exId] || '';
+};
+
+window.saveExerciseNote = function(exId, text){
+  if (!ST.exNotes) ST.exNotes = {};
+  if (!text || !text.trim()){
+    delete ST.exNotes[exId];
+  } else {
+    ST.exNotes[exId] = text.trim().slice(0, 500);
+  }
+  save();
+};
+
 const SPORT_DB=[
   // Camminata / passeggiate
   {id:'walk_slow',  name:'Camminata lenta',         emo:'🚶', cat:'camminata', met:3.0},
@@ -3645,7 +3884,7 @@ window.saveU=async function(){
       cheatDebt:ST.cheatDebt,measures:ST.measures,notes:ST.notes,suppLog:ST.suppLog,
       chatHistory:ST.chatHistory,exPrefs:ST.exPrefs,wHistory:ST.wHistory,
       programStart:ST.programStart,mealOpts:ST.mealOpts,aiPlan:ST.aiPlan,
-      activities:ST.activities,stopwatch:ST.stopwatch
+      activities:ST.activities,stopwatch:ST.stopwatch,lastCheatMealSlot:ST.lastCheatMealSlot,exNotes:ST.exNotes
     };
     if(AU.profile) payload.profile=AU.profile;
     // DB.s sanifica il payload internamente con JSON round-trip
@@ -4189,6 +4428,104 @@ window.updateProgram=function(){
   ST.p.times=times;ST.p.workoutTime=workoutTime;
   save();alert('Programma aggiornato! Consigli nutrizionali e allenamenti ricalcolati.');
 }
+
+// ── SAVE FUNCTIONS PER SEZIONE (sessione 3) ──
+// Ognuna salva solo la propria sezione e mostra feedback minimo
+
+window.updateProgramOnly=function(){
+  // Salva: peso obiettivo, data, strategia, location, sessioni, durata, cardio
+  const g=parseFloat(vv('eG')),t=vv('eT'),dur=parseInt(vv('eDur')),tRaw=vv('eDate'),loc=vv('eLoc');
+  const sessRaw=parseInt(vv('eSess'));
+  const sess=Number.isNaN(sessRaw)?(ST.p.sessions!=null?ST.p.sessions:3):sessRaw;
+  const clRaw=parseInt(vv('eCardio'));
+  const cl=Number.isNaN(clRaw)?(ST.p.cardioLevel||1):clRaw;
+  if(!g||!tRaw) return alert('Compila peso obiettivo e data!');
+  // Warning non bloccanti
+  if(sess===0&&t==='bulk'){
+    if(!confirm('⚠️ Aumentare massa muscolare richiede allenamento. Senza palestra l\'aumento sarà prevalentemente grasso. Procedo?')) return;
+  }
+  if(sess===1&&t==='bulk'){
+    if(!confirm('⚠️ Per massa sono consigliate almeno 2-3 sessioni/settimana. Procedo?')) return;
+  }
+  // Aggiorna data se troppo ravvicinata per sessioni
+  let tDate=new Date(tRaw);
+  const currW=ST.h[ST.h.length-1]?.w||70;
+  const maxRate=t==='cut'?(sess===0?0.4:sess<3?0.6:0.8):(sess===0?0.15:sess<3?0.2:0.3);
+  const minWk=Math.abs(currW-g)/maxRate;
+  if((tDate-new Date())/(7*864e5)<minWk){
+    tDate=new Date(new Date().getTime()+minWk*7*864e5);
+    alert('⚠️ Data obiettivo corretta.\n\nCon '+sess+' sessioni/settimana il rate massimo realistico è '+maxRate+' kg/settimana. Nuova data: '+tDate.toLocaleDateString('it-IT'));
+  }
+  ST.p.g=g; ST.p.t=t; ST.p.dur=dur; ST.p.targetD=tDate.toISOString().split('T')[0];
+  ST.p.sessions=sess; ST.p.cardioLevel=cl; ST.p.loc=loc;
+  save();
+  alert('✓ Programma salvato.');
+}
+
+window.updateTimes=function(){
+  // Salva: orari pasti + allenamento
+  const times={
+    col:vv('tCol')||ST.p.times?.col||'07:00',
+    sp1:vv('tSp1')||ST.p.times?.sp1||'10:30',
+    pra:vv('tPra')||ST.p.times?.pra||'13:00',
+    sp2:vv('tSp2')||ST.p.times?.sp2||'16:00',
+    cen:vv('tCen')||ST.p.times?.cen||'19:30',
+  };
+  const workoutTime=vv('tWo')||ST.p.workoutTime||'18:00';
+  ST.p.times=times; ST.p.workoutTime=workoutTime;
+  save();
+  alert('✓ Orari salvati. I pasti suggeriti rispetteranno i tuoi orari.');
+}
+
+window.updateIntolerances=function(){
+  // Salva: solo intolleranze (chip)
+  const intolEls=document.querySelectorAll('.intol-chip2.on');
+  const intol=[...intolEls].map(c=>c.dataset.id);
+  ST.p.intol=intol;
+  save();
+  alert(intol.length>0?`✓ ${intol.length} intolleranza/e salvata/e.`:'✓ Nessuna intolleranza.');
+}
+
+window.updateFocus=function(){
+  // Salva: focus allenamento
+  const focusEl=document.querySelector('.focus-chip2.on');
+  const focus=focusEl?.dataset?.focus||ST.p.focus||'total';
+  ST.p.focus=focus;
+  save();
+  alert('✓ Focus allenamento salvato. Le prossime schede si adatteranno.');
+}
+
+window.updateDiet=function(){
+  // Salva: omnivoro/vegetariano/vegano
+  const dietEl=document.querySelector('.diet-chip2.on');
+  const diet=dietEl?.dataset?.diet||ST.p.diet||'omnivore';
+  ST.p.diet=diet;
+  save();
+  const labels={omnivore:'Onnivoro',vegetarian:'Vegetariano',vegan:'Vegano'};
+  alert(`✓ Alimentazione: ${labels[diet]}.`);
+}
+
+window.updateSupplements=function(){
+  // Salva: integratori sì/no
+  const suppEl=document.querySelector('.supp-chip2.on');
+  const usesSupplements=suppEl?(suppEl.dataset?.supp==='yes'):(ST.p.usesSupplements||false);
+  ST.p.usesSupplements=usesSupplements;
+  save();
+  alert(usesSupplements?'✓ Integratori attivi nelle proposte.':'✓ Solo cibi nelle proposte.');
+}
+
+window.updateFavs=function(){
+  // Salva: cibi preferiti (3 textarea)
+  const sanitizeFav=v=>(v||'').toString().slice(0,200).replace(/[<>]/g,'').trim();
+  const newFavs={
+    col:sanitizeFav(vv('eFavCol')),
+    pra:sanitizeFav(vv('eFavPra')),
+    cen:sanitizeFav(vv('eFavCen'))
+  };
+  ST.p.favs=newFavs;
+  save();
+  alert('✓ Piatti preferiti salvati.');
+}
 window.changeCurrentDate=function(dStr){
   currentDateStr=dStr;
   // FIX BUG: marca che l'utente ha SCELTO una data manualmente.
@@ -4241,9 +4578,6 @@ window.cheatSimilarPick=null; // {text, similar, items}
 window.logCheat=async function(){
   const txt=el('cheatInput')?.value?.trim();
   if(!txt||txt.length<2) return alert('Descrivi cosa hai mangiato!');
-  // Leggo il pasto selezionato (default: pranzo se non presente)
-  const meal=el('cheatMealSel')?.value||'pra';
-  window.__cheatMeal=meal; // memorizzo per applyCheatToLog
   if(window.cheatLoading) return;
   window.cheatLoading=true;render();
 
@@ -4307,16 +4641,20 @@ window.applyCheatToLog=function(txt,items,total){
   if(!ST.nutri[currentDateStr]) ST.nutri[currentDateStr]={k:0,p:0,c:0,f:0,logged:[],skipped:[],cheatLog:[]};
   if(!ST.nutri[currentDateStr].cheatLog) ST.nutri[currentDateStr].cheatLog=[];
   const totalK=total||items.reduce((s,it)=>s+(it.kcal||0)*(it.qty||1),0);
+  // Determina pasto: priorità su selezione esplicita, poi ultimo, poi 'altro'
+  const mealSlot = window.cheatMealSlot || window.__cheatMeal || ST.lastCheatMealSlot || 'altro';
   ST.nutri[currentDateStr].k+=totalK;
   ST.nutri[currentDateStr].c+=Math.round(totalK*.4/4);
   ST.nutri[currentDateStr].f+=Math.round(totalK*.5/9);
-  ST.nutri[currentDateStr].cheatLog.push({txt,kcal:totalK,items,ts:Date.now(),mealSlot:(window.cheatMealSlot||window.__cheatMeal||'altro')});
+  ST.nutri[currentDateStr].cheatLog.push({txt,kcal:totalK,items,ts:Date.now(),mealSlot});
   ST.cheatDebt=1;
+  // RICORDA l'ultimo pasto selezionato per i prossimi sgarri (utente che continua a inserire stesso pasto)
+  ST.lastCheatMealSlot = mealSlot;
   if(el('cheatInput'))el('cheatInput').value='';
   window.cheatSimilarPick=null;
-  window.cheatMealSlot=null;
+  // NON resetto cheatMealSlot: rimane la selezione visibile per il prossimo sgarro
+  // (l'utente vede chiaramente che il pasto è "ricordato")
   window.__cheatMeal=null;
-  // FIX SGARRI: feedback toast con impatto sul bilancio del giorno
   showCheatToast(totalK);
   save();
 }
@@ -4390,11 +4728,10 @@ window.hideDietGuide=function(){
 };
 
 window.openCheatDbPicker=function(){
-  // Salvo il meal selezionato nel form principale prima di aprire la sheet
-  const mealSel=document.getElementById('cheatMealSel');
-  if(mealSel) window.__cheatMeal=mealSel.value;
+  // Usa il pasto selezionato dalle chip (cheatMealSlot) o l'ultimo usato
+  const mealSlot = window.cheatMealSlot || ST.lastCheatMealSlot || 'altro';
   ST.sheet='cheatDb';
-  ST.sheetData={mode:'select',selectedFood:null,foodQuery:'',foodCat:null,grams:100,meal:(window.__cheatMeal||'pra')};
+  ST.sheetData={mode:'select',selectedFood:null,foodQuery:'',foodCat:null,grams:100,meal:mealSlot};
   render();
 };
 window.selectCheatFoodFromDb=function(foodId){
@@ -4913,7 +5250,10 @@ window.completeSet=function(){
     render();
   }
   else{
-    ST.woPhase='rest';ST.tmr=ex.rest||60;render();
+    ST.woPhase='rest';
+    // Tempo recupero adattato: compound pesanti 150s, compound 90s, isolation 60s, isometric 45s
+    ST.tmr = (typeof getRecommendedRest==='function') ? getRecommendedRest(ex) : (ex.rest||60);
+    render();
     ST.tmrId=setInterval(()=>{
       ST.tmr--;const e=el('tmrUI');if(e)e.textContent=ST.tmr;
       // Tick crescente in tono negli ultimi 3 secondi (countdown chiaro)
@@ -5213,6 +5553,8 @@ window.aiRecalculatePlan=async function(){
     aiAnalysisMsg:an.msg,
   };
   const sys=`Sei un personal trainer e nutrizionista italiano con 20+ anni di esperienza. L'utente ti passa i suoi dati reali. Dai un consiglio CONCRETO e BREVE (max 200 parole) su come adattare il piano per la prossima settimana. Sii specifico: quante kcal aggiungere/togliere, quale tipo di cardio, quali esercizi privilegiare, cosa modificare nei pasti. Tono motivante ma diretto. Italiano. NIENTE markdown, niente liste, prosa scorrevole.`;
+  // Genera analisi locale basata sui dati reali — sempre disponibile, no API
+  const localAdvice = generateLocalCoachingAdvice(ctx, an, mac, ST);
   try{
     const r=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',headers:{'Content-Type':'application/json'},
@@ -5221,16 +5563,105 @@ window.aiRecalculatePlan=async function(){
         messages:[{role:'user',content:'Ecco i miei dati attuali in JSON:\n'+JSON.stringify(ctx,null,2)+'\n\nDammi il tuo consiglio per la prossima settimana.'}]
       })
     });
+    if(!r.ok) throw new Error('API status '+r.status);
     const d=await r.json();
-    const advice=d.content?.[0]?.text||'AI non disponibile, riprova.';
-    ST.aiPlan={advice,date:new Date().toLocaleDateString('it-IT'),context:ctx};
+    const advice=d.content?.[0]?.text||localAdvice;
+    ST.aiPlan={advice,date:new Date().toLocaleDateString('it-IT'),context:ctx,source:'ai',_ts:Date.now()};
     window.AI_CACHE.plan[cacheKey]=ST.aiPlan;
     saveAiCache();
   }catch(e){
-    ST.aiPlan={advice:'⚠️ AI temporaneamente non disponibile. Riprova tra qualche minuto.',date:new Date().toLocaleDateString('it-IT')};
+    // Fallback locale: usa l'analisi rule-based completa
+    ST.aiPlan={advice:localAdvice,date:new Date().toLocaleDateString('it-IT'),context:ctx,source:'local',_ts:Date.now()};
   }
   window.aiPlanLoading=false;
   save();
+}
+
+// Generatore di consigli locale (no API) — basato sull'analisi rule-based
+// Sempre disponibile, non richiede rete
+window.generateLocalCoachingAdvice=function(ctx, an, mac, st){
+  const parts=[];
+  const w=ctx.currentWeight, s=ctx.startWeight, g=ctx.goalWeight;
+  const strategy=ctx.strategy==='cut'?'definizione':'massa';
+  const isCut=ctx.strategy==='cut';
+  const completion=ctx.workoutsCompleted14d, target14=ctx.workoutsTarget14d;
+  const compliance=target14>0?Math.round(100*completion/target14):0;
+  const weekNum=ctx.weekNumber;
+
+  // 1. Apertura — stato globale
+  if(an.status==='good'){
+    parts.push(`Ottimo lavoro questa settimana: ${an.msg.toLowerCase()}.`);
+  } else if(an.status==='warn'){
+    parts.push(`Attenzione: ${an.msg.toLowerCase()}.`);
+  } else if(an.status==='bad'){
+    parts.push(`Ricalibra: ${an.msg.toLowerCase()}.`);
+  } else {
+    parts.push(`Settimana ${weekNum} di programma in ${strategy}.`);
+  }
+
+  // 2. Aderenza allenamenti
+  if(target14>0){
+    if(compliance>=90){
+      parts.push(`Hai completato ${completion}/${target14} allenamenti previsti — costanza eccellente.`);
+    } else if(compliance>=60){
+      parts.push(`Hai fatto ${completion}/${target14} allenamenti: prova a recuperarne uno extra prossima settimana.`);
+    } else if(compliance>=30){
+      parts.push(`Solo ${completion}/${target14} allenamenti completati: ridurre le sessioni a un livello sostenibile è meglio che saltarle.`);
+    } else if(completion===0){
+      parts.push(`Nessun allenamento registrato in 2 settimane: parti con sessioni brevi 30 min, costanza prima di tutto.`);
+    }
+  }
+
+  // 3. Andamento peso
+  if(s && w){
+    const delta=Math.round((w-s)*10)/10;
+    if(isCut){
+      if(delta<=-0.3){
+        parts.push(`Hai perso ${Math.abs(delta)}kg da inizio programma: ritmo corretto, mantieni le ${ctx.targetKcal} kcal target.`);
+      } else if(delta<0){
+        parts.push(`Calo lieve di ${Math.abs(delta)}kg: aggiungi 1-2 sessioni cardio leggero (30 min, 110-130 bpm) per accelerare.`);
+      } else if(delta>=0 && delta<0.5){
+        parts.push(`Peso stabile: probabile recomposizione (perdi grasso, guadagni muscolo). Continua e misura le pieghe se possibile.`);
+      } else {
+        parts.push(`Aumento di ${delta}kg in fase di ${strategy}: rivedi le porzioni di carbo a colazione e pranzo, taglia 200 kcal.`);
+      }
+    } else {
+      // bulk
+      if(delta>=0.3){
+        parts.push(`Aumento di ${delta}kg: ottimo se vuoi massa. Se senti che è grasso, riduci surplus a +200 kcal.`);
+      } else if(delta<0){
+        parts.push(`Stai calando in fase massa: aumenta di 250 kcal/giorno (+1 frutto a colazione, +50g pasta a pranzo).`);
+      } else {
+        parts.push(`Peso fermo: aggiungi 1 spuntino proteico nel pomeriggio (yogurt greco + frutta secca).`);
+      }
+    }
+  }
+
+  // 4. Sgarri / aderenza dieta
+  const totalCheats=ctx.nutritionLog.reduce((sum,x)=>sum+(x.cheat||0),0);
+  if(totalCheats>=8){
+    parts.push(`Hai accumulato ${totalCheats} sgarri in 2 settimane: prova ad organizzare 1 pasto libero a settimana invece di tanti piccoli sgarri non gestiti.`);
+  } else if(totalCheats>=4){
+    parts.push(`${totalCheats} sgarri tracciati: nella media. Annotare aiuta la consapevolezza.`);
+  }
+
+  // 5. Consiglio specifico per strategia
+  if(isCut){
+    parts.push(`Mantieni proteine ad almeno ${mac.prot}g/giorno per preservare massa magra. Privilegia esercizi multiarticolari (squat, panca, stacchi) e tieni alto il volume di camminata quotidiana.`);
+  } else {
+    parts.push(`Per crescere: sovraccarico progressivo settimanale (2.5kg sui compound, 1kg sugli isolamenti se completi tutte le serie). 1.6-2g proteine per kg di peso, 7-8h sonno sono critici.`);
+  }
+
+  // 6. Chiusura motivante
+  const closes=[
+    `Continua così, i risultati arrivano con la costanza, non con la perfezione.`,
+    `Piccoli passi quotidiani battono grandi sforzi sporadici.`,
+    `Il tuo programma sta funzionando: fidati del processo.`,
+    `Una settimana alla volta, un allenamento alla volta.`
+  ];
+  parts.push(closes[weekNum%closes.length]);
+
+  return parts.join(' ');
 }
 window.copyLink=function(){const url=window.location.href.split('?')[0];navigator.clipboard?navigator.clipboard.writeText(url).then(()=>alert('✅ Link copiato!')):alert(url);}
 window.shareViaEmail=function(){const url=window.location.href.split('?')[0];const b=encodeURIComponent(`Ciao! Unisciti a FitTracker PRO:\n${url}`);window.location.href=`mailto:?subject=${encodeURIComponent('FitTracker PRO')}&body=${b}`;}
@@ -6205,35 +6636,41 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
         </div>
       </div>
     `:`
-      <!-- Selettore pasto specifico -->
-      <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:6px;">A QUALE PASTO È RIFERITO?</div>
-      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;">
+      <!-- Selettore pasto unico (chip) — ricorda ultimo selezionato -->
+      <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:8px;">A QUALE PASTO È RIFERITO?${(ST.lastCheatMealSlot && !window.cheatMealSlot)?` <span style="color:var(--ora);font-weight:600;text-transform:none;letter-spacing:0;">· Ultimo: ${({col:'Colazione',sp1:'Spuntino mat.',pra:'Pranzo',sp2:'Spuntino pom.',cen:'Cena',altro:'Fuori pasto'})[ST.lastCheatMealSlot]}</span>`:''}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;">
         ${['col','sp1','pra','sp2','cen','altro'].map(slot=>{
-          const isSel = (window.cheatMealSlot||'altro') === slot;
+          // Default: cheatMealSlot esplicito → quello, altrimenti l\'ultimo usato, altrimenti "altro"
+          const currentSel = window.cheatMealSlot || ST.lastCheatMealSlot || 'altro';
+          const isSel = currentSel === slot;
           const labels = {col:'🌅 Colazione', sp1:'🍎 Spuntino mat.', pra:'🍝 Pranzo', sp2:'🍪 Spuntino pom.', cen:'🍽️ Cena', altro:'🌙 Fuori pasto'};
-          return `<button onclick="window.cheatMealSlot='${slot}';render();" style="padding:7px 11px;font-size:11px;font-weight:600;border-radius:8px;border:1.5px solid ${isSel?'var(--ora)':'var(--bord)'};background:${isSel?'rgba(255,104,53,.15)':'var(--surf)'};color:${isSel?'var(--ora)':'var(--mut)'};cursor:pointer;">${labels[slot]}</button>`;
+          return `<button onclick="window.cheatMealSlot='${slot}';render();" style="padding:9px 13px;font-size:12px;font-weight:600;border-radius:10px;border:1.5px solid ${isSel?'var(--ora)':'var(--bord)'};background:${isSel?'rgba(255,104,53,.15)':'var(--surf)'};color:${isSel?'var(--ora)':'var(--mut)'};cursor:pointer;flex:1;min-width:auto;white-space:nowrap;">${labels[slot]}</button>`;
         }).join('')}
       </div>
-      <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center;">
-        <span style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;flex-shrink:0;">🍽 PASTO:</span>
-        <select id="cheatMealSel" style="flex:1;margin:0;padding:8px;font-size:13px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;color:var(--text);">
-          <option value="col">🌅 Colazione</option>
-          <option value="sp1">🍎 Spuntino mattina</option>
-          <option value="pra" selected>🍝 Pranzo</option>
-          <option value="sp2">🍌 Spuntino pomeriggio</option>
-          <option value="cen">🍽 Cena</option>
-          <option value="sp3">🌙 Spuntino sera</option>
-          <option value="other">❓ Generico (non specifico)</option>
-        </select>
+
+      <!-- DB picker primario (modalità sicura, consigliata) -->
+      <button class="btn" style="width:100%;padding:14px;font-size:15px;font-weight:700;background:var(--purp);color:#fff;border:none;border-radius:12px;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;" onclick="openCheatDbPicker()">
+        <span style="font-size:18px;">🔍</span>
+        <span>SCEGLI DAL DATABASE (consigliato)</span>
+      </button>
+      <div style="font-size:11px;color:var(--mut);text-align:center;margin-bottom:12px;line-height:1.5;">
+        Più preciso: scegli il cibo e i grammi esatti tra 698 alimenti
       </div>
-      <textarea id="cheatInput" rows="2" placeholder="Es. '50g fritto misto', '2 fette pizza', 'pizza diavola e una birra'" ${window.cheatLoading?'disabled':''}></textarea>
-      <div style="display:flex;gap:6px;margin-top:8px;">
-        <button class="btn-s btn-ora" style="flex:1;padding:12px;font-size:14px;font-weight:700;${window.cheatLoading?'opacity:.6;pointer-events:none;':''}" onclick="logCheat()">${window.cheatLoading?'🔍 ANALIZZO...':'⚡ INSERISCI VELOCE'}</button>
-        <button class="btn-s" style="flex:1;padding:12px;font-size:14px;font-weight:700;background:var(--surf);color:var(--purp);border:1.5px solid var(--purp);" onclick="openCheatDbPicker()">🔍 SCEGLI DA DB</button>
-      </div>
-      <div style="font-size:11px;color:var(--mut);margin-top:8px;line-height:1.5;">
-        <strong>Veloce</strong>: scrivi quello che hai mangiato in italiano (con grammi se sai). <strong>DB</strong>: scegli il cibo esatto e i grammi precisi tra 666+ alimenti italiani.
-      </div>
+
+      <!-- Sezione "veloce" (testo libero) collassabile -->
+      <details style="background:var(--surf);border:1px solid var(--bord);border-radius:10px;padding:0;overflow:hidden;">
+        <summary style="padding:10px 14px;font-size:12px;color:var(--mut);cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;justify-content:space-between;">
+          <span>⚡ Inserimento veloce (descrivi a parole)</span>
+          <span style="font-size:10px;">▼</span>
+        </summary>
+        <div style="padding:10px 14px 12px;border-top:1px solid var(--bord);">
+          <textarea id="cheatInput" rows="2" placeholder="Es. '50g fritto misto', '2 fette pizza'" ${window.cheatLoading?'disabled':''} style="font-size:13px;margin-bottom:8px;"></textarea>
+          <button class="btn-s btn-ora" style="width:100%;padding:11px;font-size:13px;font-weight:700;${window.cheatLoading?'opacity:.6;pointer-events:none;':''}" onclick="logCheat()">${window.cheatLoading?'🔍 ANALIZZO...':'INSERISCI VELOCE'}</button>
+          <div style="font-size:10px;color:var(--mut);margin-top:8px;line-height:1.4;">
+            Meno preciso del DB: l\'AI cerca di interpretare quello che scrivi. Usa solo se il cibo non è nel database.
+          </div>
+        </div>
+      </details>
       ${window.cheatLoading?`<div style="text-align:center;font-size:11px;color:var(--mut);margin-top:8px;">Riconoscimento in corso...</div>`:''}
     `}
     ${dLog.cheatLog.length?`<div style="margin-top:14px;">
@@ -6726,40 +7163,89 @@ window.renderSettings = function(mac){
     <button class="btn" style="width:100%;padding:12px;background:var(--blu);color:#fff;" onclick="updateProfile()">SALVA DATI PROFILO</button>
   </div>
 
+  <!-- ════ 1. PROGRAMMA (obiettivo, strategia, sessioni) ════ -->
   <div class="card">
-    <div class="bebas" style="font-size:20px;margin-bottom:14px;">⚙️ MODIFICA PROGRAMMA</div>
+    <div class="bebas" style="font-size:20px;margin-bottom:6px;">⚙️ PROGRAMMA</div>
+    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:14px;">Obiettivo, strategia e dettagli operativi degli allenamenti.</div>
     <span class="lbl">PESO OBIETTIVO (KG)</span><input type="number" id="eG" value="${ST.p.g}" step=".1">
     <span class="lbl">DATA OBIETTIVO</span><input type="date" id="eDate" value="${ST.p.targetD}">
     <span class="lbl">STRATEGIA</span><select id="eT"><option value="cut" ${ST.p.t==='cut'?'selected':''}>Definizione (Perdita Grasso)</option><option value="bulk" ${ST.p.t==='bulk'?'selected':''}>Massa (Aumento Muscolo)</option></select>
     <div id="wrapELoc"><span class="lbl">DOVE TI ALLENI?</span><select id="eLoc"><option value="gym" ${ST.p.loc==='gym'?'selected':''}>🏋️ In Palestra</option><option value="home" ${ST.p.loc==='home'?'selected':''}>🏠 A Casa</option></select></div>
     <span class="lbl">SESSIONI / SETTIMANA</span><select id="eSess" onchange="toggleSessVisibilitySettings()">${[0,1,2,3,4,5,6].map(n=>`<option value="${n}" ${(ST.p.sessions!=null?ST.p.sessions:3)===n?'selected':''}>${n===0?'0 — Solo Nutrizione & Passi':n+' sessioni'}</option>`).join('')}</select>
     <div id="wrapEDur"><span class="lbl">DURATA SESSIONE</span><select id="eDur"><option value="45" ${ST.p.dur===45?'selected':''}>45 minuti</option><option value="60" ${ST.p.dur===60?'selected':''}>60 minuti</option><option value="90" ${ST.p.dur===90?'selected':''}>90 minuti</option></select></div>
-    <div id="wrapECardio"><span class="lbl">CARDIO BASE / SETTIMANA (l'AI ricalcola)</span><select id="eCardio"><option value="0" ${ST.p.cardioLevel===0?'selected':''}>0 — Solo pesi</option><option value="1" ${ST.p.cardioLevel===1?'selected':''}>1 — Leggero</option><option value="2" ${ST.p.cardioLevel===2?'selected':''}>2 — Moderato</option><option value="3" ${ST.p.cardioLevel===3?'selected':''}>3 — Intenso</option></select></div>
-    <span class="lbl" style="margin-bottom:8px;">INTOLLERANZE (aggiorna)</span>
-    <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;">${INTOL_LIST.map(i=>`<span class="intol-chip2 ${(ST.p.intol||[]).includes(i.id)?'on':''}" data-id="${i.id}" onclick="toggleIntolChip(this)">${i.icon} ${i.label}</span>`).join('')}</div>
-    <div id="wrapEFocus"><span class="lbl" style="margin-bottom:8px;">FOCUS DI ALLENAMENTO</span>
+    <div id="wrapECardio"><span class="lbl">CARDIO BASE / SETTIMANA</span><select id="eCardio"><option value="0" ${ST.p.cardioLevel===0?'selected':''}>0 — Solo pesi</option><option value="1" ${ST.p.cardioLevel===1?'selected':''}>1 — Leggero</option><option value="2" ${ST.p.cardioLevel===2?'selected':''}>2 — Moderato</option><option value="3" ${ST.p.cardioLevel===3?'selected':''}>3 — Intenso</option></select></div>
+    <button class="btn" style="width:100%;padding:14px;background:var(--blu);color:#fff;font-size:15px;font-weight:700;letter-spacing:1px;border-radius:12px;border:none;cursor:pointer;margin-top:6px;" onclick="updateProgramOnly()">SALVA PROGRAMMA</button>
+  </div>
+
+  <!-- ════ 2. ORARI PERSONALIZZATI ════ -->
+  <div class="card" style="border-color:var(--ora);">
+    <div class="bebas" style="font-size:20px;color:var(--ora);margin-bottom:6px;">🕐 ORARI PERSONALIZZATI</div>
+    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:14px;">Imposta i tuoi orari di pasti e allenamento. Lo spuntino pomeridiano diventa "pre-workout" solo se cade nelle 2 ore prima dell\'allenamento.</div>
+    <div class="g2">
+      <div><span class="lbl">🌅 COLAZIONE</span><input type="time" id="tCol" value="${ST.p.times?.col||'07:00'}"></div>
+      <div><span class="lbl">🍎 SPUNTINO MATTINA</span><input type="time" id="tSp1" value="${ST.p.times?.sp1||'10:30'}"></div>
+    </div>
+    <div class="g2">
+      <div><span class="lbl">🍽️ PRANZO</span><input type="time" id="tPra" value="${ST.p.times?.pra||'13:00'}"></div>
+      <div><span class="lbl">⚡ SPUNTINO POMERIGGIO</span><input type="time" id="tSp2" value="${ST.p.times?.sp2||'16:00'}"></div>
+    </div>
+    <div class="g2">
+      <div><span class="lbl">🌙 CENA</span><input type="time" id="tCen" value="${ST.p.times?.cen||'19:30'}"></div>
+      <div><span class="lbl">🏋️ ALLENAMENTO</span><input type="time" id="tWo" value="${ST.p.workoutTime||'18:00'}"></div>
+    </div>
+    <button class="btn" style="width:100%;padding:14px;background:var(--blu);color:#fff;font-size:15px;font-weight:700;letter-spacing:1px;border-radius:12px;border:none;cursor:pointer;margin-top:8px;" onclick="updateTimes()">SALVA ORARI</button>
+  </div>
+
+  <!-- ════ 3. INTOLLERANZE ════ -->
+  <div class="card">
+    <div class="bebas" style="font-size:20px;margin-bottom:6px;">⚠️ INTOLLERANZE ALIMENTARI</div>
+    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:14px;">Tocca per attivare/disattivare. I cibi corrispondenti verranno esclusi dai pasti suggeriti.</div>
+    <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px;">${INTOL_LIST.map(i=>`<span class="intol-chip2 ${(ST.p.intol||[]).includes(i.id)?'on':''}" data-id="${i.id}" onclick="toggleIntolChip(this)">${i.icon} ${i.label}</span>`).join('')}</div>
+    <button class="btn" style="width:100%;padding:14px;background:var(--blu);color:#fff;font-size:15px;font-weight:700;letter-spacing:1px;border-radius:12px;border:none;cursor:pointer;margin-top:6px;" onclick="updateIntolerances()">SALVA INTOLLERANZE</button>
+  </div>
+
+  <!-- ════ 4. FOCUS ALLENAMENTO ════ -->
+  <div id="wrapEFocus"><div class="card">
+    <div class="bebas" style="font-size:20px;margin-bottom:6px;">💪 FOCUS DI ALLENAMENTO</div>
+    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:14px;">Scegli quali gruppi muscolari privilegiare nelle schede.</div>
     <div id="focusChips" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:10px;">
       ${FOCUS_LIST.map(f=>{const isOn=(ST.p.focus||'total')===f.id;return`<div class="focus-chip2 ${isOn?'on':''}" data-focus="${f.id}" data-col="${f.col}" style="border-color:${isOn?f.col:'var(--bord)'};background:${isOn?f.col+'12':'var(--surf)'};padding:10px 6px;border:2px solid var(--bord);border-radius:12px;cursor:pointer;text-align:center;transition:.2s;" onclick="pickFocusChip(this)"><div style="font-size:16px;margin-bottom:2px;">${f.icon}</div><div style="font-size:10px;font-weight:700;line-height:1.2;">${f.label}</div></div>`;}).join('')}
     </div>
-    <div id="focusDesc2" style="font-size:12px;color:var(--mut);margin-bottom:14px;padding:8px 12px;background:var(--bg);border-radius:8px;line-height:1.5;">${(FOCUS_LIST.find(f=>f.id===(ST.p.focus||'total'))||FOCUS_LIST[0]).desc}</div></div>
-    <span class="lbl" style="margin-bottom:8px;">ALIMENTAZIONE</span>
+    <div id="focusDesc2" style="font-size:12px;color:var(--mut);margin-bottom:14px;padding:8px 12px;background:var(--bg);border-radius:8px;line-height:1.5;">${(FOCUS_LIST.find(f=>f.id===(ST.p.focus||'total'))||FOCUS_LIST[0]).desc}</div>
+    <button class="btn" style="width:100%;padding:14px;background:var(--blu);color:#fff;font-size:15px;font-weight:700;letter-spacing:1px;border-radius:12px;border:none;cursor:pointer;margin-top:0;" onclick="updateFocus()">SALVA FOCUS</button>
+  </div></div>
+
+  <!-- ════ 5. ALIMENTAZIONE (omnivoro/vegetariano/vegano) ════ -->
+  <div class="card">
+    <div class="bebas" style="font-size:20px;margin-bottom:6px;">🥗 ALIMENTAZIONE</div>
+    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:14px;">Tipo di alimentazione che segui.</div>
     <div id="dietChips" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:14px;">
       ${[{id:'omnivore',icon:'🥩',lbl:'Onnivoro'},{id:'vegetarian',icon:'🥦',lbl:'Vegetariano'},{id:'vegan',icon:'🌱',lbl:'Vegano'}].map(d=>{const isOn=(ST.p.diet||'omnivore')===d.id;return`<div class="diet-chip2 ${isOn?'on':''}" data-diet="${d.id}" style="padding:12px 6px;border-radius:12px;border:2px solid ${isOn?'var(--acc)':'var(--bord)'};background:${isOn?'rgba(197,241,53,.08)':'var(--surf)'};cursor:pointer;text-align:center;transition:.2s;" onclick="pickDietChip(this)"><div style="font-size:20px;margin-bottom:3px;">${d.icon}</div><div style="font-size:10px;font-weight:700;">${d.lbl}</div></div>`;}).join('')}
     </div>
-    <span class="lbl" style="margin-bottom:8px;">INTEGRATORI PROTEICI</span>
+    <button class="btn" style="width:100%;padding:14px;background:var(--blu);color:#fff;font-size:15px;font-weight:700;letter-spacing:1px;border-radius:12px;border:none;cursor:pointer;margin-top:0;" onclick="updateDiet()">SALVA ALIMENTAZIONE</button>
+  </div>
+
+  <!-- ════ 6. INTEGRATORI ════ -->
+  <div class="card">
+    <div class="bebas" style="font-size:20px;margin-bottom:6px;">💊 INTEGRATORI PROTEICI</div>
+    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:14px;">Se usi proteine in polvere/whey, lo includiamo nei suggerimenti.</div>
     <div id="suppChips" style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px;">
       ${[{id:'yes',icon:'💪',lbl:'Sì, li uso'},{id:'no',icon:'🌱',lbl:'No, solo cibi'}].map(s=>{const cur=ST.p.usesSupplements?'yes':'no';const isOn=cur===s.id;return`<div class="supp-chip2 ${isOn?'on':''}" data-supp="${s.id}" style="padding:12px 6px;border-radius:12px;border:2px solid ${isOn?'var(--acc)':'var(--bord)'};background:${isOn?'rgba(197,241,53,.08)':'var(--surf)'};cursor:pointer;text-align:center;transition:.2s;" onclick="pickSuppChip(this)"><div style="font-size:20px;margin-bottom:3px;">${s.icon}</div><div style="font-size:10px;font-weight:700;">${s.lbl}</div></div>`;}).join('')}
     </div>
-    <!-- PUNTO 16: cibi preferiti (editabili in qualsiasi momento) -->
-    <span class="lbl" style="margin-bottom:8px;">🍽️ I TUOI PIATTI / CIBI PREFERITI (opzionale)</span>
-    <div style="font-size:11px;color:var(--mut);line-height:1.5;margin-bottom:10px;">Cercheremo di includerli nei consigli mantenendo il target calorico. Max 200 caratteri ciascuno.</div>
+    <button class="btn" style="width:100%;padding:14px;background:var(--blu);color:#fff;font-size:15px;font-weight:700;letter-spacing:1px;border-radius:12px;border:none;cursor:pointer;margin-top:0;" onclick="updateSupplements()">SALVA INTEGRATORI</button>
+  </div>
+
+  <!-- ════ 7. PIATTI PREFERITI ════ -->
+  <div class="card">
+    <div class="bebas" style="font-size:20px;margin-bottom:6px;">🍽️ I MIEI PIATTI PREFERITI</div>
+    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:14px;">Cercheremo di includerli nei consigli mantenendo il target calorico. Opzionale.</div>
     <span class="lbl" style="margin-bottom:4px;">🌅 COLAZIONE</span>
     <textarea id="eFavCol" maxlength="200" rows="2" placeholder="Es. cappuccino, cornetto..." style="margin-bottom:10px;font-size:13px;">${escapeHtml(ST.p.favs?.col||'')}</textarea>
     <span class="lbl" style="margin-bottom:4px;">🍽️ PRANZO</span>
     <textarea id="eFavPra" maxlength="200" rows="2" placeholder="Es. pasta al pomodoro..." style="margin-bottom:10px;font-size:13px;">${escapeHtml(ST.p.favs?.pra||'')}</textarea>
     <span class="lbl" style="margin-bottom:4px;">🌙 CENA</span>
     <textarea id="eFavCen" maxlength="200" rows="2" placeholder="Es. pesce alla griglia..." style="margin-bottom:14px;font-size:13px;">${escapeHtml(ST.p.favs?.cen||'')}</textarea>
-    <button class="btn" onclick="updateProgram()">SALVA E RICALCOLA TUTTO</button>
+    <button class="btn" style="width:100%;padding:14px;background:var(--blu);color:#fff;font-size:15px;font-weight:700;letter-spacing:1px;border-radius:12px;border:none;cursor:pointer;margin-top:0;" onclick="updateFavs()">SALVA PREFERITI</button>
   </div>
 
   <!-- PREFERENZE ALLENAMENTO -->
@@ -6820,34 +7306,18 @@ window.renderSettings = function(mac){
     <button class="btn" style="background:var(--purp);color:#fff;padding:12px;" onclick="openCustomWorkoutEditor()">+ CREA NUOVA SCHEDA</button>
   </div>
 
-  <!-- ORARI PERSONALIZZATI -->
-  <div class="card" style="border-color:var(--ora);">
-    <div class="bebas" style="font-size:20px;color:var(--ora);margin-bottom:6px;">🕐 ORARI PERSONALIZZATI</div>
-    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:14px;">Imposta i TUOI orari di pasti e allenamento. Il menù si adatta: lo spuntino pomeridiano diventa "pre-workout" automaticamente solo se cade nelle 2 ore prima del tuo allenamento (quindi rimane spuntino normale se ti alleni la mattina o dopo cena).</div>
-    <div class="g2">
-      <div><span class="lbl">🌅 COLAZIONE</span><input type="time" id="tCol" value="${ST.p.times?.col||'07:00'}"></div>
-      <div><span class="lbl">🍎 SPUNTINO MATTINA</span><input type="time" id="tSp1" value="${ST.p.times?.sp1||'10:30'}"></div>
-    </div>
-    <div class="g2">
-      <div><span class="lbl">🍽️ PRANZO</span><input type="time" id="tPra" value="${ST.p.times?.pra||'13:00'}"></div>
-      <div><span class="lbl">⚡ SPUNTINO POMERIGGIO</span><input type="time" id="tSp2" value="${ST.p.times?.sp2||'16:00'}"></div>
-    </div>
-    <div class="g2">
-      <div><span class="lbl">🌙 CENA</span><input type="time" id="tCen" value="${ST.p.times?.cen||'19:30'}"></div>
-      <div><span class="lbl">🏋️ ALLENAMENTO</span><input type="time" id="tWo" value="${ST.p.workoutTime||'18:00'}"></div>
-    </div>
-    <div style="font-size:11px;color:var(--mut);text-align:center;margin-top:6px;">Salva sopra con "SALVA E RICALCOLA TUTTO" per applicare</div>
-  </div>
-
   <!-- AI RICALCOLO PIANO -->
   <div class="card" style="border-color:var(--acc);">
-    <div class="bebas" style="font-size:20px;color:var(--acc);margin-bottom:6px;">🤖 RICALCOLO AI</div>
-    <div style="font-size:12px;color:var(--mut);line-height:1.55;margin-bottom:12px;">L'AI analizza i tuoi progressi reali (peso, allenamenti completati, sgarri, costanza) e ti propone aggiustamenti su calorie, cardio e nutrizione come farebbe un coach esperto.</div>
+    <div class="bebas" style="font-size:20px;color:var(--acc);margin-bottom:6px;">🤖 RICALCOLO COACHING</div>
+    <div style="font-size:12px;color:var(--mut);line-height:1.55;margin-bottom:12px;">Genera un'analisi dei tuoi progressi reali (peso, allenamenti completati, sgarri, costanza) e ti propone aggiustamenti su calorie, cardio e nutrizione come farebbe un coach esperto. Funziona sempre — anche offline usa una rule-based engine.</div>
     ${ST.aiPlan?`<div style="background:rgba(197,241,53,.06);border:1px solid var(--acc);border-radius:10px;padding:12px;margin-bottom:12px;">
-      <div style="font-size:11px;color:var(--acc);font-weight:700;margin-bottom:6px;">ULTIMO CONSIGLIO AI · ${ST.aiPlan.date||''}</div>
+      <div style="font-size:11px;color:var(--acc);font-weight:700;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">
+        <span>ULTIMO CONSIGLIO · ${ST.aiPlan.date||''}</span>
+        <span style="font-size:9px;background:${ST.aiPlan.source==='ai'?'rgba(96,165,250,.2)':'rgba(167,139,250,.2)'};color:${ST.aiPlan.source==='ai'?'var(--blu)':'var(--purp)'};padding:2px 7px;border-radius:6px;letter-spacing:.5px;">${ST.aiPlan.source==='ai'?'☁️ AI Cloud':'⚙️ Locale'}</span>
+      </div>
       <div style="font-size:12px;color:var(--text);line-height:1.55;white-space:pre-wrap;">${(ST.aiPlan.advice||'').replace(/</g,'&lt;')}</div>
     </div>`:''}
-    <button class="btn ${window.aiPlanLoading?'':'btn-action'}" style="${window.aiPlanLoading?'opacity:.6;pointer-events:none;':''}" onclick="aiRecalculatePlan()">${window.aiPlanLoading?'🔍 ANALISI IN CORSO...':'🧠 RICALCOLA CON AI'}</button>
+    <button class="btn ${window.aiPlanLoading?'':'btn-action'}" style="${window.aiPlanLoading?'opacity:.6;pointer-events:none;':''}" onclick="aiRecalculatePlan()">${window.aiPlanLoading?'🔍 ANALISI IN CORSO...':'🧠 GENERA NUOVO CONSIGLIO'}</button>
   </div>
   <div class="card" style="border-color:var(--purp);">
     <div class="bebas" style="font-size:20px;color:var(--purp);margin-bottom:14px;">🔑 CAMBIA PASSWORD</div>
@@ -6885,6 +7355,22 @@ window.renderSettings = function(mac){
 window.render = function() {
   const root=document.getElementById('app');
   if(!AU.user){renderAuth(root);return;}
+
+  // Auto-ricalcolo coaching settimanale: se sono passati >= 7 giorni dall'ultimo
+  // consiglio, rigenera automaticamente in background al primo render utile.
+  // Solo se: utente loggato, profilo configurato, almeno 1 settimana di programma,
+  // e non già in corso un calcolo.
+  if(ST.p && ST.programStart && !window.aiPlanLoading && !window.__autoRecalcDone){
+    const lastAdviceDate = ST.aiPlan?._ts || 0;
+    const daysSince = (Date.now() - lastAdviceDate) / 86400000;
+    if(daysSince >= 7){
+      window.__autoRecalcDone = true; // evita loop nel singolo session
+      // Ritardo di 2 secondi per non bloccare il render iniziale
+      setTimeout(()=>{
+        if(typeof aiRecalculatePlan==='function') aiRecalculatePlan();
+      }, 2000);
+    }
+  }
   const sx=AU.profile?.sx||'m';
   const ht=AU.profile?.ht||170,ag=AU.profile?.ag||25;
   const pWeek=pwk(ST.programStart);
@@ -6950,6 +7436,37 @@ window.render = function() {
       <div style="display:flex;gap:8px;justify-content:center;margin-bottom:16px;">${Array(totalSets).fill(0).map((_,i)=>`<div class="set-dot ${i<ST.currentSet?'done':i===ST.currentSet?'current':''}"></div>`).join('')}</div>
       <div class="card" style="padding:16px;margin-bottom:10px;"><div class="lbl" style="margin-bottom:10px;">📋 ESECUZIONE:</div>${(ex.steps||[]).map((s,i)=>`<div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;"><div class="step-n">${i+1}</div><div style="font-size:13px;line-height:1.5;color:var(--text);padding-top:2px;">${s}</div></div>`).join('')}</div>
       ${(ex.cues||[]).length?`<div style="margin-bottom:12px;"><div class="lbl">💡 TIPS:</div>${ex.cues.map(c=>`<div class="cue-box">${c}</div>`).join('')}</div>`:''}
+
+      ${ex.cat && !ex.isWarmup && !ex.isCooldown ? `
+      <!-- SVG anatomico muscolo -->
+      <div class="card" style="padding:10px;margin-bottom:10px;text-align:center;">
+        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:6px;">🎯 MUSCOLO LAVORATO</div>
+        ${muscleSvg(ex.cat)}
+        <div style="font-size:11px;color:var(--mut);margin-top:4px;">${muscleCatLabel(ex.cat)}</div>
+      </div>` : ''}
+
+      ${(getCommonMistakes(ex)||[]).length ? `
+      <!-- Errori comuni -->
+      <div class="card" style="padding:14px;margin-bottom:10px;background:rgba(239,68,68,.04);border-color:rgba(239,68,68,.3);">
+        <div class="lbl" style="color:#ef4444;margin-bottom:8px;">⚠️ ERRORI COMUNI DA EVITARE:</div>
+        ${getCommonMistakes(ex).map(m=>`<div style="font-size:12px;color:var(--text);line-height:1.5;padding:6px 10px;background:var(--bg);border-radius:6px;margin-bottom:5px;">⛔ ${m}</div>`).join('')}
+      </div>` : ''}
+
+      ${getBreathingPattern(ex) ? `
+      <!-- Respirazione -->
+      <div class="card" style="padding:12px 14px;margin-bottom:10px;background:rgba(96,165,250,.05);border-color:rgba(96,165,250,.3);">
+        <div class="lbl" style="color:var(--blu);margin-bottom:6px;">💨 RESPIRAZIONE</div>
+        <div style="font-size:12px;color:var(--text);line-height:1.55;">${getBreathingPattern(ex)}</div>
+      </div>` : ''}
+
+      ${!ex.isWarmup && !ex.isCooldown ? `
+      <!-- Note libere persistenti -->
+      <div class="card" style="padding:14px;margin-bottom:10px;border-color:var(--purp);">
+        <div class="lbl" style="color:var(--purp);margin-bottom:8px;">📝 LE TUE NOTE PER QUESTO ESERCIZIO</div>
+        <textarea id="exNote_${ex.id}" maxlength="500" rows="2" placeholder="Es. peso massimo raggiunto, sensazioni, problemi tecnici da ricordare..." style="margin:0;font-size:13px;width:100%;background:var(--bg);border:1px solid var(--bord);color:var(--text);padding:8px;border-radius:8px;">${escapeHtml(getExerciseNote(ex.id))}</textarea>
+        <button class="btn-s" style="width:100%;margin-top:8px;padding:8px;background:var(--purp);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;" onclick="saveExerciseNote('${ex.id}', document.getElementById('exNote_${ex.id}').value)">💾 SALVA NOTA</button>
+        <div style="font-size:10px;color:var(--mut);margin-top:6px;line-height:1.4;">La nota viene mostrata ogni volta che fai questo esercizio. Max 500 caratteri.</div>
+      </div>` : ''}
       ${(ex.isWarmup||ex.isCooldown)?`
       <div class="card" style="padding:14px;background:${ex.isWarmup?'rgba(197,241,53,.04)':'rgba(167,139,250,.04)'};border-color:${ex.isWarmup?'var(--acc)':'var(--purp)'};">
         <div style="font-size:12px;color:${ex.isWarmup?'var(--acc)':'var(--purp)'};font-weight:700;letter-spacing:1px;margin-bottom:4px;">${ex.isWarmup?'⏱ TEMPO STIMATO: '+ex.reps:'⏱ TEMPO STIMATO: '+ex.reps}</div>
@@ -6967,7 +7484,8 @@ window.render = function() {
       <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px;">ℹ️ Come funziona</div>
       <div style="font-size:12px;color:var(--mut);line-height:1.6;">Tutti gli esercizi qui sotto lavorano lo <strong style="color:var(--text);">stesso gruppo muscolare</strong>. Scegli quello che preferisci o che si adatta al tuo equipaggiamento — ma <strong style="color:var(--acc);">devi eseguirlo comunque</strong>, non lo stai saltando!</div>
     </div>
-    <div style="font-size:11px;color:var(--mut);margin-bottom:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Muscolo: ${EX[ST.sheetData.curId]?.mus||'—'}</div>
+    <div style="font-size:11px;color:var(--mut);margin-bottom:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Muscolo: ${muscleCatLabel(EX[ST.sheetData.curId]?.cat)} · ${EX[ST.sheetData.curId]?.mus||'—'}</div>
+    ${EX[ST.sheetData.curId]?.cat ? `<div style="display:flex;justify-content:center;background:var(--bg);border-radius:12px;padding:8px;margin-bottom:14px;border:1px solid var(--bord);">${muscleSvg(EX[ST.sheetData.curId].cat)}</div>` : ''}
     ${ST.sheetData.alts.map(alt=>{const cur=alt.id===ST.sheetData.curId;return`<div onclick="swapEx('${ST.sheetData.slot}','${alt.id}')" style="cursor:pointer;padding:14px;border-radius:12px;border:1.5px solid ${cur?'var(--acc)':'var(--bord)'};background:${cur?'rgba(197,241,53,.08)':'var(--surf)'};margin-bottom:7px;transition:.15s;"><div class="r"><div><div style="font-weight:700;font-size:14px;color:${cur?'var(--acc)':'var(--text)'};">${alt.name||alt.id}</div><div style="font-size:11px;color:var(--mut);margin-top:2px;">${alt.mus||''} · ${alt.t==='compound'?'Multi-articolare':alt.t==='isometric'?'Isometrico':'Isolamento'}</div></div>${cur?`<span style="background:var(--acc);color:#000;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;">✓ ATTUALE</span>`:''}</div>${alt.cues?.[0]?`<div style="font-size:11px;color:var(--mut);margin-top:8px;padding:6px 10px;background:var(--bg);border-radius:6px;">💡 ${alt.cues[0]}</div>`:''}</div>`;}).join('')}
     <button class="btn btn-action" style="margin-top:12px;width:100%;padding:12px;" onclick="closeSheet()">ANNULLA</button>
   </div></div>`:
