@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION4-CHEAT-FIX">
+<meta name="ft-version" content="build-SESSION5-STATS-PRO">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -2355,6 +2355,68 @@ window.FOOD_DB=[
 
 ];
 
+// ── Helper centralizzato per riconoscere cibi "a porzione fissa" ──
+// I cibi di certe categorie si misurano in PORZIONI (1 birra media, 1 pizza intera).
+// Inoltre alcune voci nelle altre categorie hanno il nome che indica già una porzione
+// fissa (es. "Coca lattina (330ml)", "Birra media (0.4L)", "Vino calice 150ml").
+// Per questi il valore kcal nel DB è il TOTALE per la singola porzione standard,
+// quindi NON va più moltiplicato per il moltiplicatore-categoria.
+window.foodUsesPortion = function(f) {
+  if (!f) return { byPortion: false, mult: 1, gramsLabel: 100 };
+
+  // ── 1. DRINK con porzione esplicita (DRINK_PORTIONS mapping) ──
+  // Prioritario: ha sempre porzione fissa (lattina, calice, ecc.)
+  if (window.DRINK_PORTIONS && window.DRINK_PORTIONS[f.id]) {
+    const dp = window.DRINK_PORTIONS[f.id];
+    return {
+      byPortion: true,
+      mult: dp.ml / 100,            // kcal sono per 100ml, moltiplicatore = ml/100
+      gramsLabel: dp.ml,
+      portionLabel: dp.label,        // "media (40cl)", "lattina (33cl)", ecc.
+      isDrink: true
+    };
+  }
+
+  const portionCats = ['pizze','dolci','gelati','fast_food','snack','bar','piatti_pronti'];
+  // Pattern nome: contiene (Xg), (Xml), (X.YL), "lattina", "calice", "bicchiere", "tazza", "bottiglia", "fetta", "trancio"
+  const portionNameRe = /\((\d+\s*(?:g|ml|cl|l)|\d*\.?\d+\s*(?:l|ml|cl))\)|\b(lattina|calice|bicchiere|tazza|bottiglia|trancio|fetta|cono|coppetta|barretta|cornetto|brioche|porzione|pezzo|piccola|media|grande|flute)\b/i;
+  const isPortionByName = portionNameRe.test(f.name || '');
+
+  if (portionCats.includes(f.cat)) {
+    // Categorie a porzione: moltiplicatore tipico
+    const PORTION_MULTIPLIERS = {
+      pizze: 3.0, dolci: 1.2, gelati: 1.2, fast_food: 2.5,
+      snack: 0.6, bar: 0.8, piatti_pronti: 2.5
+    };
+    const PORTION_LABELS = {
+      pizze: 'intera (~300g)',
+      dolci: 'fetta (~120g)',
+      gelati: 'cono/coppa (~120g)',
+      fast_food: 'porzione (~250g)',
+      snack: 'pezzo (~60g)',
+      bar: 'pezzo (~80g)',
+      piatti_pronti: 'porzione (~250g)'
+    };
+    // Se il nome dice già "(Xg)" o simili → il valore è GIÀ totale, mult=1
+    if (isPortionByName) {
+      const m = (f.name||'').match(/\((\d+)\s*g\)/i);
+      const gramsLabel = m ? parseInt(m[1]) : Math.round(100 * (PORTION_MULTIPLIERS[f.cat] || 1));
+      return { byPortion: true, mult: 1, gramsLabel, portionLabel: gramsLabel + 'g' };
+    }
+    return {
+      byPortion: true,
+      mult: PORTION_MULTIPLIERS[f.cat] || 1,
+      gramsLabel: Math.round(100 * (PORTION_MULTIPLIERS[f.cat] || 1)),
+      portionLabel: PORTION_LABELS[f.cat] || 'porzione'
+    };
+  }
+  // Categorie a peso (verdure, carne, ecc.): se il nome indica porzione fissa, lo trattiamo come porzione
+  if (isPortionByName) {
+    return { byPortion: true, mult: 1, gramsLabel: null, portionLabel: 'porzione' };
+  }
+  return { byPortion: false, mult: 1, gramsLabel: 100 };
+};
+
 // Categorie con etichette user-friendly italiane + emoji
 window.FOOD_CATS=[
   {id:'cereali',  lbl:'Cereali e Pane', short:'Cereali', emo:'🌾'},
@@ -2383,6 +2445,69 @@ window.FOOD_CATS=[
 
 // Lookup veloce: id → cibo
 window.foodById=function(id){return window.FOOD_DB.find(f=>f.id===id);};
+
+// ── DRINK_PORTIONS: bevande/cocktail con porzione standard (ml)
+// Per questi cibi, lo sgarro chiede "QUANTI?" non "GRAMMI?"
+// I valori sono in ml di porzione (le kcal nel DB sono per 100ml)
+window.DRINK_PORTIONS = {
+  // Birre
+  'birra_chiara':       {ml: 400, label: 'media (40cl)'},
+  'birra_doppio_malto': {ml: 400, label: 'media (40cl)'},
+  'birra_piccola':      {ml: 200, label: 'piccola (20cl)'},
+  'birra_media':        {ml: 400, label: 'media (40cl)'},
+  'birra_grande':       {ml: 660, label: 'grande (66cl)'},
+  // Vino
+  'vino_rosso':         {ml: 150, label: 'calice (15cl)'},
+  'vino_bianco':        {ml: 150, label: 'calice (15cl)'},
+  'prosecco':           {ml: 100, label: 'flute (10cl)'},
+  // Cocktail / aperitivi
+  'aperol_spritz':      {ml: 200, label: 'spritz (20cl)'},
+  'mojito':             {ml: 250, label: 'cocktail (25cl)'},
+  'gin_tonic':          {ml: 250, label: 'cocktail (25cl)'},
+  'negroni':            {ml: 100, label: 'cocktail (10cl)'},
+  'martini_cocktail':   {ml: 90,  label: 'cocktail (9cl)'},
+  // Bibite
+  'coca_cola':          {ml: 330, label: 'lattina (33cl)'},
+  'coca_cola_zero':     {ml: 330, label: 'lattina (33cl)'},
+  'limonata':           {ml: 250, label: 'bicchiere (25cl)'},
+  'gatorade':           {ml: 500, label: 'bottiglia (50cl)'},
+  'redbull':            {ml: 250, label: 'lattina (25cl)'},
+  // Succhi
+  'spremuta_arancia_v2': {ml: 200, label: 'bicchiere (20cl)'},
+  'succo_mela':          {ml: 200, label: 'bicchiere (20cl)'},
+  'succo_ace':           {ml: 200, label: 'bicchiere (20cl)'},
+  // Caffè / latte (porzione tazza)
+  'cappuccino':         {ml: 150, label: 'tazza'},
+  'macchiato':          {ml: 50,  label: 'tazzina'},
+  'caffe_espresso':     {ml: 30,  label: 'tazzina'},
+  'caffe_americano':    {ml: 200, label: 'tazza grande'},
+};
+
+// Helper: ritorna info porzione di un cibo. Se ha porzione standard (drink, pizza,
+// dolce, ecc.) ritorna {isPortion:true, grams:N, label:'media (40cl)'}.
+// Altrimenti {isPortion:false} (chiede grammi).
+window.getFoodPortionInfo = function(foodId, foodCat) {
+  // Drink con porzione esplicita
+  if (window.DRINK_PORTIONS[foodId]) {
+    const dp = window.DRINK_PORTIONS[foodId];
+    return { isPortion: true, grams: dp.ml, label: dp.label, type: 'drink' };
+  }
+  // Categorie a porzione
+  const PORTION_CATS = {
+    pizze:         { grams: 300, label: 'intera (~300g)' },
+    dolci:         { grams: 120, label: 'fetta (~120g)' },
+    gelati:        { grams: 120, label: 'cono/coppa (~120g)' },
+    fast_food:     { grams: 250, label: 'porzione (~250g)' },
+    snack:         { grams: 60,  label: 'pezzo (~60g)' },
+    bar:           { grams: 80,  label: 'pezzo (~80g)' },
+    piatti_pronti: { grams: 250, label: 'porzione (~250g)' }
+  };
+  if (PORTION_CATS[foodCat]) {
+    return { isPortion: true, grams: PORTION_CATS[foodCat].grams, label: PORTION_CATS[foodCat].label, type: 'food' };
+  }
+  return { isPortion: false };
+};
+
 
 // Filtra per categoria
 window.foodsByCat=function(cat){return window.FOOD_DB.filter(f=>f.cat===cat);};
@@ -5165,28 +5290,24 @@ window.selectCheatFoodFromDb=function(foodId){
 window.confirmCheatFromDb=function(){
   if(!ST.sheetData||!ST.sheetData.selectedFood) return;
   const f=ST.sheetData.selectedFood;
-  const isPortionFood=['pizze','dolci','gelati','fast_food','snack','bar','piatti_pronti'].includes(f.cat);
+  const portInfo = foodUsesPortion(f);
   let kcal,label,grams;
-  if(isPortionFood){
-    // 1 porzione = valore DB × moltiplicatore tipico per categoria
-    // (i valori in DB sono "per 100g", per le porzioni reali servono moltiplicatori)
+  if(portInfo.byPortion){
+    // Cibo/drink a porzione fissa: chiedi solo "quante"
     const qty=parseInt(document.getElementById('cheatQty')?.value||1);
     if(isNaN(qty)||qty<1||qty>20) return alert('Quantità non valida (1-20)');
-    // Moltiplicatori medi grammi-per-porzione realistici:
-    // Pizza intera ~300g, dolce ~120g, gelato ~120g, fast food ~250g, snack ~60g, bar ~80g, piatto pronto ~250g
-    const PORTION_MULTIPLIERS = {
-      pizze: 3.0,         // pizza intera ~300g
-      dolci: 1.2,         // fetta dolce ~120g
-      gelati: 1.2,        // 1 cono/coppetta ~120g
-      fast_food: 2.5,     // hamburger/menu ~250g
-      snack: 0.6,         // 1 snack ~60g (mars, snickers, ecc.)
-      bar: 0.8,           // 1 brioche/cornetto ~80g
-      piatti_pronti: 2.5  // porzione pasta/risotto/lasagna ~250g
-    };
-    const mult = PORTION_MULTIPLIERS[f.cat] || 1;
-    kcal=Math.round(f.kcal * mult * qty);
-    const portionGrams = Math.round(100 * mult);
-    label=qty>1?`${qty}× ${f.name} (~${portionGrams}g cad.)`:`${f.name} (~${portionGrams}g)`;
+    kcal=Math.round(f.kcal * portInfo.mult * qty);
+    // Label intelligente:
+    // - Drink (es. birra): "2× Birra chiara (media 40cl)"
+    // - Cibo a porzione fissa: usa nome così com'è
+    // - Categoria con moltiplicatore: aggiunge i grammi medi
+    if (portInfo.isDrink) {
+      label = qty > 1 ? `${qty}× ${f.name} (${portInfo.portionLabel})` : `${f.name} (${portInfo.portionLabel})`;
+    } else if (portInfo.mult === 1) {
+      label = qty > 1 ? `${qty}× ${f.name}` : f.name;
+    } else {
+      label = qty > 1 ? `${qty}× ${f.name} (~${portInfo.gramsLabel}g cad.)` : `${f.name} (~${portInfo.gramsLabel}g)`;
+    }
     grams=null;
   } else {
     grams=parseInt(document.getElementById('cheatGrams')?.value||0);
@@ -5826,43 +5947,55 @@ window.TOUR_STEPS=[
   {
     icon:'👋',
     title:'Benvenuto in FitTracker PRO!',
-    body:'Hai appena creato il tuo programma personalizzato. Ti accompagniamo in 7 passi rapidi tra tutte le funzionalità chiave dell\'app.',
+    body:'Il tuo programma personalizzato è pronto. Ti accompagniamo in 9 passi rapidi tra tutte le funzionalità chiave dell\'app.',
     color:'var(--acc)'
   },
   {
     icon:'🏠',
     title:'Tab "Home" — Il tuo dashboard',
-    body:'In Home trovi: il messaggio del coach del giorno, la tua attività di oggi (allenamento o pasto principale), peso, sonno, sport outdoor e passi. Tocca ogni card per registrare i dati. Sotto vedi il riepilogo numerico di kcal, macro e progressi della settimana.',
+    body:'Tutto in un colpo d\'occhio: messaggio del coach del giorno, allenamento o pasto di oggi, peso, sonno, sport outdoor, passi. Tocca ogni card per registrare i dati. Per il peso puoi anche connettere una bilancia Bluetooth (Mi Body, Renpho, YUNMAI, Withings) toccando "📡 CONNETTI BILANCIA BLUETOOTH".',
     color:'var(--blu)'
   },
   {
     icon:'🏋️',
     title:'Tab "Allenamento"',
-    body:'Le schede del giorno: riscaldamento, esercizi e stretching. Premi ▶ INIZIA SERIE per partire. Per ogni serie inserisci il peso E le ripetizioni effettive. Vedi banner live con DURATA · VOLUME · KCAL bruciate. Ogni esercizio ha SVG anatomico, errori comuni, respirazione e note libere persistenti che ricompaiono nelle sessioni future.',
+    body:'Le schede del giorno: riscaldamento, esercizi e stretching. Premi ▶ INIZIA SERIE per partire. Per ogni serie inserisci peso E ripetizioni effettive. Banner live con DURATA · VOLUME · KCAL. Ogni esercizio ha SVG anatomico, errori comuni, respirazione e note libere persistenti. Quando batti un record vedi banner dorato 🏆 PR durante il recupero, con suoni di celebrazione.',
     color:'var(--gre)'
   },
   {
     icon:'🥗',
     title:'Tab "Alimentazione"',
-    body:'Piano alimentare giornaliero con kcal e macro target. Per ogni pasto hai diverse opzioni con istruzioni; tocca "💡 RICETTA" per la ricetta dettagliata (oltre 120 ricette italiane). Lo "spuntino pomeridiano" diventa "pre-workout" automaticamente solo se cade prima del tuo orario allenamento. Puoi personalizzare ogni pasto con "✏️ Personalizza".',
+    body:'Piano giornaliero con kcal e macro target. Per ogni pasto vedi gli ingredienti dettagliati e tocca "📖 VEDI LA RICETTA COMPLETA" per la ricetta passo-passo (oltre 120 ricette italiane). Lo "spuntino pomeridiano" diventa "pre-workout" automaticamente solo se cade prima del tuo orario allenamento. Puoi personalizzare ogni pasto con "✏️ Personalizza".',
     color:'var(--ora)'
   },
   {
     icon:'🍔',
     title:'Hai sgarrato? Nessun problema',
-    body:'Nella tab Alimentazione, sezione SGARRO: scegli il pasto a cui è riferito (le chip arancioni) e premi "🔍 SCEGLI DAL DATABASE" per inserire con precisione tra 698 alimenti italiani. L\'app ricorda l\'ultimo pasto selezionato per inserimenti rapidi successivi. L\'analisi calorica si aggiorna live.',
+    body:'Nella tab Alimentazione, sezione SGARRO: scegli prima il pasto a cui è riferito (chip arancioni: colazione, pranzo, ecc.) — quel pasto verrà automaticamente segnato come saltato. Poi "🔍 SCEGLI DAL DATABASE" per cercare tra 700 alimenti italiani. Per pizze, dolci, fast food ti chiede "QUANTE PORZIONI". Per drink (birra, spritz, mojito) "QUANTI". Macros e kcal calcolati con precisione realistica.',
     color:'var(--ora)'
   },
   {
-    icon:'📊',
-    title:'Tab "Misure" + "Analisi"',
-    body:'Registra peso e circonferenze (vita, braccia, cosce) ogni 1-2 settimane. In "Analisi & Progressi" vedi grafici di volume allenamento, PR (record personali) per esercizio, progressione 1RM e andamento peso. Più dati registri, più i suggerimenti diventano precisi.',
+    icon:'📐',
+    title:'Tab "Misure Corporee"',
+    body:'Registra circonferenze ogni 1-2 settimane: collo, spalle, petto, vita, addome, fianchi, braccia (dx/sx, rilassate e contratte), avambracci, cosce, polpacci, % grasso. Le frecce mostrano variazione vs ultima misura. ↓ verde = riduzione, ↑ rosso = aumento. Più dati = grafici progressione più precisi.',
     color:'var(--blu)'
+  },
+  {
+    icon:'📊',
+    title:'Tab "Analisi & Progressi" — Statistiche pro',
+    body:'Statistiche avanzate: Consistency Score 30 giorni, streak attuale e record, totali all-time (sessioni, volume in tonnellate, kcal, PR), trend peso 4 settimane con regressione lineare e PROIEZIONE data raggiungimento obiettivo. Confronto settimana corrente vs precedente. Top esercizi più frequenti. Banner deload week ogni 5 settimane per recupero programmato.',
+    color:'var(--purp)'
+  },
+  {
+    icon:'🏆',
+    title:'Tab "Classifica Amici"',
+    body:'Confronto pubblico fra utenti FitTracker: podio 🥇🥈🥉 e classifica completa. Visualizzi solo metriche aggregate (sessioni 7 giorni, volume, streak) — nessun dato personale (peso, foto, misure) viene mai condiviso. Il tuo ranking si aggiorna automaticamente ad ogni salvataggio.',
+    color:'var(--ora)'
   },
   {
     icon:'⚙️',
     title:'Tab "Configurazione"',
-    body:'Tutte le impostazioni in card separate: profilo, programma, orari pasti/allenamento, intolleranze, focus muscolare, alimentazione, integratori, piatti preferiti. Ogni card ha il suo bottone SALVA. La sezione "🤖 RICALCOLO COACHING" genera consigli mirati basati sui tuoi progressi reali — funziona sempre, anche offline. Buon allenamento! 💪',
+    body:'Tutte le impostazioni in card separate: profilo, programma, orari pasti/allenamento, intolleranze, focus muscolare, dieta, integratori, piatti preferiti. Ogni card ha il suo SALVA. "🤖 RICALCOLO COACHING" genera consigli mirati basati sui tuoi progressi reali — funziona sempre, anche offline. Sezione Account & Sicurezza per logout (i dati restano nel cloud) e cancellazione (tripla conferma). Buon allenamento! 💪',
     color:'var(--purp)'
   }
 ];
@@ -6692,7 +6825,10 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
         <input type="number" id="nW" value="${wEntry?wEntry.w:''}" placeholder="Es. ${cW}" step=".1" style="margin:0;font-size:15px;padding:14px;text-align:center;flex:1;min-height:50px;border-radius:10px;">
         <button onclick="logWeight()" style="background:${weightSaved?'var(--blu)':'var(--gre)'};color:#000;border:none;border-radius:10px;padding:14px 22px;font-size:15px;font-weight:700;cursor:pointer;flex-shrink:0;min-height:50px;min-width:64px;">${weightSaved?'AGG.':'SALVA'}</button>
       </div>
-      ${('bluetooth' in navigator) ? `<button onclick="connectBluetoothScale()" style="margin-top:8px;width:100%;padding:10px;background:var(--surf);border:1px dashed var(--blu);color:var(--blu);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;">📡 CONNETTI BILANCIA BLUETOOTH</button>` : ''}
+      ${('bluetooth' in navigator) ? `<button onclick="connectBluetoothScale()" style="margin-top:10px;width:100%;padding:12px;background:linear-gradient(135deg,rgba(96,165,250,.15),rgba(96,165,250,.05));border:2px solid var(--blu);color:var(--blu);border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:.3px;">
+        <span style="font-size:18px;">📡</span>
+        <span>LEGGI DA BILANCIA BLUETOOTH</span>
+      </button>` : ''}
     </div>
 
     <!-- SONNO -->
@@ -7490,10 +7626,6 @@ window.renderBody = function(cW,mac,theme,pWeek,sx){
     ${[['KG PERSI',`${lost>=0?'-':'+'}${Math.abs(lost).toFixed(1)}kg`,'var(--acc)'],['MANCANTI',Math.abs(ST.p.g-cW).toFixed(1)+' kg','var(--ora)'],['MEDIA 7G',avg7+' kg','var(--blu)'],['SESSIONI',wLogF.length,'var(--purp)']].map(([l,v,col])=>`<div class="card" style="text-align:center;padding:14px;border-top:3px solid ${col};"><div class="bebas" style="font-size:28px;color:${col};line-height:1;">${v}</div><div style="font-size:9px;color:var(--mut);letter-spacing:1.5px;margin-top:2px;">${l}</div></div>`).join('')}
   </div>
   <div class="card"><span class="lbl">PESO CORPOREO (${ST.chartFilter} gg)</span>${svg(wArr,'w',theme,110,ST.p.g)}</div>
-  <div class="card" style="border:1px dashed var(--bord);text-align:center;padding:14px;">
-    <div style="font-size:13px;color:var(--mut);margin-bottom:8px;">Vuoi inserire le tue circonferenze corporee?</div>
-    <button class="btn-s btn-action" style="padding:10px 18px;" onclick="ST.tab='measures';render()">📐 VAI A MISURE</button>
-  </div>
   <!-- ═══ GRAFICI PROGRESSI MISURE ═══ -->
   ${(()=>{
     const waistArr=getMeasureArr('waist');
@@ -7529,6 +7661,412 @@ window.renderBody = function(cW,mac,theme,pWeek,sx){
     return`<div class="bebas" style="font-size:18px;color:var(--mut);margin:16px 0 10px;letter-spacing:1px;">📈 TREND MISURE</div>${charts}`;
   })()}
   ${wLogF.length>=2?`<div class="card"><span class="lbl">VOLUME ALLENAMENTI (KG)</span>${svg(wLogF,'vol',theme,90)}</div>`:''}
+
+  <!-- ═══ STATISTICHE AVANZATE (sessione 5) ═══ -->
+  ${(() => {
+    // Raccolta dati per statistiche pro
+    const now = Date.now();
+    const day = 86400000;
+    const allW = ST.h || [];
+    const allWo = ST.wLog || [];
+    const allWoF = allWo.filter(w => !w.isRest);
+
+    // 1. CONSISTENCY SCORE (giorni con allenamento + dieta tracciata negli ultimi 30)
+    const last30Days = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(now - i*day).toISOString().slice(0,10);
+      last30Days.push(d);
+    }
+    let daysWithWorkout = 0;
+    let daysWithDiet = 0;
+    let daysWithBoth = 0;
+    last30Days.forEach(d => {
+      const hasWo = allWoF.some(w => w.d === d);
+      const hasDiet = ST.nutri[d] && (ST.nutri[d].logged?.length > 0 || ST.nutri[d].cheatLog?.length > 0);
+      if (hasWo) daysWithWorkout++;
+      if (hasDiet) daysWithDiet++;
+      if (hasWo && hasDiet) daysWithBoth++;
+    });
+    const consistencyPct = Math.round((daysWithBoth / 30) * 100);
+
+    // 2. STREAK CORRENTE (giorni consecutivi con allenamento O dieta)
+    let currentStreak = 0;
+    for (let i = 0; i < 365; i++) {
+      const d = new Date(now - i*day).toISOString().slice(0,10);
+      const hasWo = allWoF.some(w => w.d === d);
+      const hasDiet = ST.nutri[d] && (ST.nutri[d].logged?.length > 0 || ST.nutri[d].cheatLog?.length > 0);
+      if (hasWo || hasDiet) currentStreak++;
+      else if (i === 0) continue; // oggi può ancora aggiungere
+      else break;
+    }
+
+    // 3. RECORD STREAK (più lunga sequenza consecutiva mai)
+    let recordStreak = 0;
+    let tempStreak = 0;
+    for (let i = 364; i >= 0; i--) {
+      const d = new Date(now - i*day).toISOString().slice(0,10);
+      const hasWo = allWoF.some(w => w.d === d);
+      const hasDiet = ST.nutri[d] && (ST.nutri[d].logged?.length > 0 || ST.nutri[d].cheatLog?.length > 0);
+      if (hasWo || hasDiet) tempStreak++;
+      else { recordStreak = Math.max(recordStreak, tempStreak); tempStreak = 0; }
+    }
+    recordStreak = Math.max(recordStreak, tempStreak, currentStreak);
+
+    // 4. KCAL TOTALI BRUCIATE
+    const totalKcalBurned = allWoF.reduce((s,w) => s + (w.kcal||0), 0);
+
+    // 5. VOLUME TOTALE LIFTATO
+    const totalVolume = allWoF.reduce((s,w) => s + (w.vol||0), 0);
+
+    // 6. ALLENAMENTO PIÙ INTENSO (record kcal singolo)
+    const maxKcalSession = Math.max(0, ...allWoF.map(w => w.kcal||0));
+
+    // 7. PR COUNT (record personali totali registrati)
+    let prCount = 0;
+    Object.keys(ST.wHistory||{}).forEach(d => {
+      Object.keys(ST.wHistory[d]||{}).forEach(eid => {
+        if (ST.wHistory[d][eid]?.isPR) prCount++;
+      });
+    });
+
+    // 8. AVG SESSIONI/SETTIMANA (ultime 4 settimane)
+    const last28Days = allWoF.filter(w => {
+      const wDate = new Date(w.d).getTime();
+      return wDate >= now - 28*day;
+    }).length;
+    const avgSessPerWeek = (last28Days / 4).toFixed(1);
+
+    // 9. TASSO ADERENZA DIETA (% pasti loggati negli ultimi 7 gg / pasti previsti)
+    let mealsLogged = 0;
+    let mealsExpected = 0;
+    const last7Days = [];
+    for (let i = 6; i >= 0; i--) last7Days.push(new Date(now - i*day).toISOString().slice(0,10));
+    last7Days.forEach(d => {
+      mealsExpected += 5; // colazione, sp1, pranzo, sp2, cena
+      const day = ST.nutri[d];
+      if (day) {
+        mealsLogged += (day.logged?.length || 0);
+        mealsLogged += (day.skipped?.length || 0); // saltato è anche tracciato
+      }
+    });
+    const dietAdherencePct = mealsExpected > 0 ? Math.round((mealsLogged / mealsExpected) * 100) : 0;
+
+    // 10. ANDAMENTO PESO (regressione lineare semplice ultime 4 settimane)
+    const recentW = allW.filter(x => new Date(x.d).getTime() >= now - 28*day);
+    let trendKgPerWeek = 0;
+    if (recentW.length >= 3) {
+      const xs = recentW.map((x,i) => i);
+      const ys = recentW.map(x => x.w);
+      const n = xs.length;
+      const xMean = xs.reduce((a,b) => a+b, 0) / n;
+      const yMean = ys.reduce((a,b) => a+b, 0) / n;
+      let num = 0, den = 0;
+      for (let i = 0; i < n; i++) { num += (xs[i]-xMean)*(ys[i]-yMean); den += (xs[i]-xMean)**2; }
+      const slope = den > 0 ? num/den : 0; // kg per giorno
+      trendKgPerWeek = slope * 7;
+    }
+
+    // 11. ESERCIZIO PIÙ FREQUENTE
+    const exFreq = {};
+    Object.keys(ST.wHistory||{}).forEach(d => {
+      Object.keys(ST.wHistory[d]||{}).forEach(eid => {
+        if (ST.wHistory[d][eid]?.ok) exFreq[eid] = (exFreq[eid]||0) + 1;
+      });
+    });
+    const topExEntries = Object.entries(exFreq).sort((a,b)=>b[1]-a[1]).slice(0,3);
+
+    // 12. PROGETTO PROIEZIONE: a questo ritmo, quando raggiungi il goal?
+    let projDate = null, daysToGoal = null;
+    if (ST.p && ST.p.g && trendKgPerWeek !== 0 && recentW.length) {
+      const currentW = recentW[recentW.length-1].w;
+      const remainingKg = ST.p.g - currentW;
+      const isCut = ST.p.t === 'cut';
+      const correctDirection = isCut ? trendKgPerWeek < 0 : trendKgPerWeek > 0;
+      if (correctDirection) {
+        const weeksNeeded = Math.abs(remainingKg / trendKgPerWeek);
+        daysToGoal = Math.round(weeksNeeded * 7);
+        const projTs = now + daysToGoal * day;
+        projDate = new Date(projTs).toLocaleDateString('it-IT', {day:'2-digit',month:'long',year:'numeric'});
+      }
+    }
+
+    // ── Render della card ──
+    const consColor = consistencyPct >= 70 ? 'var(--gre)' : consistencyPct >= 40 ? 'var(--ora)' : 'var(--red)';
+    const consLabel = consistencyPct >= 70 ? 'ECCELLENTE' : consistencyPct >= 40 ? 'BUONA' : consistencyPct >= 20 ? 'DA MIGLIORARE' : 'INIZIA OGGI';
+
+    return `<div class="card" style="border-color:var(--purp);">
+      <div class="bebas" style="font-size:20px;color:var(--purp);margin-bottom:14px;">🎯 STATISTICHE AVANZATE</div>
+
+      <!-- CONSISTENCY -->
+      <div style="background:var(--surf);border-radius:12px;padding:14px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <div>
+            <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;">CONSISTENCY SCORE (30gg)</div>
+            <div style="font-size:10px;color:var(--mut);">Giorni con allenamento + dieta tracciata</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="bebas" style="font-size:32px;color:${consColor};line-height:1;">${consistencyPct}%</div>
+            <div style="font-size:9px;color:${consColor};font-weight:800;letter-spacing:1px;">${consLabel}</div>
+          </div>
+        </div>
+        <div style="height:8px;background:var(--bg);border-radius:4px;overflow:hidden;">
+          <div style="width:${consistencyPct}%;height:100%;background:${consColor};transition:width .6s ease;"></div>
+        </div>
+        <div style="font-size:10px;color:var(--mut);margin-top:6px;">${daysWithBoth}/30 giorni completi · ${daysWithWorkout} con workout · ${daysWithDiet} con dieta</div>
+      </div>
+
+      <!-- STREAK -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        <div style="background:var(--surf);border-radius:12px;padding:12px;text-align:center;">
+          <div style="font-size:24px;">🔥</div>
+          <div class="bebas" style="font-size:26px;color:var(--ora);line-height:1;">${currentStreak}</div>
+          <div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:.5px;">STREAK ATTUALE</div>
+        </div>
+        <div style="background:var(--surf);border-radius:12px;padding:12px;text-align:center;">
+          <div style="font-size:24px;">🏆</div>
+          <div class="bebas" style="font-size:26px;color:var(--acc);line-height:1;">${recordStreak}</div>
+          <div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:.5px;">RECORD STREAK</div>
+        </div>
+      </div>
+
+      <!-- TOTALI ALL-TIME -->
+      <div style="background:linear-gradient(135deg,rgba(167,139,250,.08),rgba(96,165,250,.05));border:1px solid var(--purp);border-radius:12px;padding:12px;margin-bottom:10px;">
+        <div style="font-size:11px;color:var(--purp);font-weight:800;letter-spacing:1px;margin-bottom:8px;">📊 TOTALI ALL-TIME</div>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
+          <div>
+            <div class="bebas" style="font-size:22px;color:var(--text);line-height:1;">${allWoF.length}</div>
+            <div style="font-size:10px;color:var(--mut);">Sessioni</div>
+          </div>
+          <div>
+            <div class="bebas" style="font-size:22px;color:var(--text);line-height:1;">${(totalVolume/1000).toFixed(1)}t</div>
+            <div style="font-size:10px;color:var(--mut);">Volume liftato</div>
+          </div>
+          <div>
+            <div class="bebas" style="font-size:22px;color:var(--text);line-height:1;">${totalKcalBurned.toLocaleString('it-IT')}</div>
+            <div style="font-size:10px;color:var(--mut);">Kcal bruciate</div>
+          </div>
+          <div>
+            <div class="bebas" style="font-size:22px;color:var(--acc);line-height:1;">${prCount}</div>
+            <div style="font-size:10px;color:var(--mut);">PR raggiunti</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- METRICHE LIVE -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        <div style="background:var(--surf);border-radius:10px;padding:10px;">
+          <div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:.5px;">💪 MEDIA SESS./SETT.</div>
+          <div class="bebas" style="font-size:24px;color:var(--blu);line-height:1.1;">${avgSessPerWeek}</div>
+          <div style="font-size:9px;color:var(--mut);">ultime 4 sett.</div>
+        </div>
+        <div style="background:var(--surf);border-radius:10px;padding:10px;">
+          <div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:.5px;">🥗 ADERENZA DIETA</div>
+          <div class="bebas" style="font-size:24px;color:${dietAdherencePct>=70?'var(--gre)':dietAdherencePct>=40?'var(--ora)':'var(--red)'};line-height:1.1;">${dietAdherencePct}%</div>
+          <div style="font-size:9px;color:var(--mut);">ultimi 7 gg</div>
+        </div>
+      </div>
+
+      ${trendKgPerWeek !== 0 && recentW.length >= 3 ? `
+      <!-- TREND PESO + PROIEZIONE -->
+      <div style="background:var(--surf);border-radius:12px;padding:12px;margin-bottom:10px;">
+        <div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:6px;">📉 TREND PESO (4 sett.)</div>
+        <div class="bebas" style="font-size:22px;line-height:1;color:${(ST.p?.t==='cut'?trendKgPerWeek<0:trendKgPerWeek>0)?'var(--gre)':'var(--red)'};">${trendKgPerWeek>0?'+':''}${trendKgPerWeek.toFixed(2)} kg/sett.</div>
+        ${projDate ? `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--bord);">
+          <div style="font-size:11px;color:var(--text);">A questo ritmo raggiungerai il tuo obiettivo di <strong style="color:var(--acc);">${ST.p.g}kg</strong> entro:</div>
+          <div class="bebas" style="font-size:18px;color:var(--acc);margin-top:4px;">${projDate}</div>
+          <div style="font-size:10px;color:var(--mut);margin-top:2px;">~${daysToGoal} giorni</div>
+        </div>` : `<div style="font-size:11px;color:var(--ora);margin-top:6px;">⚠️ Trend non allineato all'obiettivo (${ST.p?.t==='cut'?'cut':'bulk'}). Rivedi il piano.</div>`}
+      </div>` : ''}
+
+      ${maxKcalSession > 0 ? `
+      <!-- RECORD SINGOLI -->
+      <div style="background:var(--surf);border-radius:10px;padding:10px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:.5px;">🔥 RECORD KCAL/SESSIONE</div>
+            <div class="bebas" style="font-size:22px;color:var(--ora);line-height:1.1;">${maxKcalSession} kcal</div>
+          </div>
+          <div style="font-size:32px;">⚡</div>
+        </div>
+      </div>` : ''}
+
+      ${topExEntries.length ? `
+      <!-- TOP ESERCIZI -->
+      <div style="background:var(--surf);border-radius:12px;padding:12px;">
+        <div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:8px;">🏋️ ESERCIZI PIÙ FREQUENTI</div>
+        ${topExEntries.map(([eid,n],i) => {
+          const ex = (window.EX||[]).find(x=>x.id===eid);
+          const exName = ex?.name || eid;
+          const medal = i===0?'🥇':i===1?'🥈':'🥉';
+          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;${i<topExEntries.length-1?'border-bottom:1px dashed var(--bord);':''}">
+            <div style="font-size:13px;color:var(--text);">${medal} ${escapeHtml(exName)}</div>
+            <div style="font-size:11px;color:var(--mut);font-weight:700;">${n}×</div>
+          </div>`;
+        }).join('')}
+      </div>` : ''}
+    </div>`;
+  })()}
+
+  <!-- ── STATISTICHE AVANZATE (sessione 5) ── -->
+  ${(()=>{
+    if(ST.wLog.length<3) return '';
+    // Calcoli aggregati professionali
+    const allW=ST.wLog.filter(w=>!w.isRest);
+    const allDays=Object.keys(ST.measures).length;
+    const sessionsTot=allW.length;
+    const totVolume=allW.reduce((s,w)=>s+(w.vol||0),0);
+    const totKcalGym=allW.reduce((s,w)=>s+(w.kcal||0),0);
+    const avgSessionsWeek=Math.round((sessionsTot/Math.max(1,(pWeek||1)))*10)/10;
+
+    // Streak attuale e migliore
+    const stk=typeof streak==='function'?streak(ST.wLog):0;
+    let bestStreak=0, currentStreak=0;
+    const sortedDates=[...new Set(ST.wLog.filter(w=>!w.isRest).map(w=>w.d))].sort();
+    let prevDate=null;
+    sortedDates.forEach(d=>{
+      if(prevDate){
+        const diff=(new Date(d)-new Date(prevDate))/86400000;
+        if(diff<=2) currentStreak++; else currentStreak=1;
+      } else currentStreak=1;
+      bestStreak=Math.max(bestStreak,currentStreak);
+      prevDate=d;
+    });
+
+    // Aderenza dieta ultimi 30gg (% giorni con almeno 2 pasti loggati)
+    const last30Dates=[];
+    for(let i=0;i<30;i++){
+      const d=new Date(); d.setDate(d.getDate()-i);
+      last30Dates.push(d.toISOString().slice(0,10));
+    }
+    const dietAdh=last30Dates.filter(d=>{
+      const n=ST.nutri[d];
+      return n && (n.logged?.length||0)>=2;
+    }).length;
+    const dietPct=Math.round((dietAdh/30)*100);
+
+    // Frequenza sgarri ultimi 30gg
+    const cheats30=last30Dates.reduce((s,d)=>s+(ST.nutri[d]?.cheatLog?.length||0),0);
+
+    // Esercizio top (più frequente)
+    const exFreq={};
+    ST.wLog.forEach(w=>{
+      if(!w.exercises) return;
+      Object.keys(w.exercises||{}).forEach(exId=>{ exFreq[exId]=(exFreq[exId]||0)+1; });
+    });
+    const exStats=typeof buildExerciseStats==='function'?buildExerciseStats(ST.wHistory||{}):[];
+    const topExId=Object.entries(exFreq).sort((a,b)=>b[1]-a[1])[0]?.[0];
+    const topExName=topExId&&typeof EX!=='undefined'?(EX.find(e=>e.id===topExId)?.name||topExId):null;
+    // Conta PR totali (esercizi con isPR true)
+    const totPRs=Object.values(ST.wHistory||{}).reduce((sum,day)=>{
+      return sum+Object.values(day).filter(e=>e.isPR).length;
+    },0);
+
+    // Tasso completamento serie (% serie ok vs schedulate, approssimazione su wHistory)
+    const allHistEntries=Object.values(ST.wHistory||{}).reduce((arr,day)=>arr.concat(Object.values(day)),[]);
+    const okEntries=allHistEntries.filter(e=>e.ok).length;
+
+    // Volume allenamento medio per sessione (kg)
+    const avgVolSession=sessionsTot>0?Math.round(totVolume/sessionsTot):0;
+
+    // Variazione peso totale (vs primo)
+    const wDelta=ST.h.length>=2?(ST.h[ST.h.length-1].w-ST.h[0].w):0;
+    const wDeltaPct=ST.h[0]?.w>0?Math.round((wDelta/ST.h[0].w)*1000)/10:0;
+
+    // 1RM stimato per esercizio principale
+    const top1RM=topExId?(exStats.find(s=>s.exId===topExId)?.best1RM||0):0;
+
+    return `<div class="bebas" style="font-size:22px;color:var(--ora);margin:24px 0 12px;letter-spacing:1px;">📊 STATISTICHE AVANZATE</div>
+      <!-- Card big metrics -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+        <div class="card" style="padding:14px;border-left:3px solid var(--acc);">
+          <div style="font-size:9px;color:var(--mut);letter-spacing:1.5px;font-weight:700;">VOLUME TOTALE</div>
+          <div class="bebas" style="font-size:26px;color:var(--acc);line-height:1.1;">${(totVolume/1000).toFixed(1)}<span style="font-size:13px;">k</span></div>
+          <div style="font-size:10px;color:var(--mut);">kg sollevati</div>
+        </div>
+        <div class="card" style="padding:14px;border-left:3px solid var(--ora);">
+          <div style="font-size:9px;color:var(--mut);letter-spacing:1.5px;font-weight:700;">KCAL BRUCIATE</div>
+          <div class="bebas" style="font-size:26px;color:var(--ora);line-height:1.1;">${totKcalGym.toLocaleString('it')}</div>
+          <div style="font-size:10px;color:var(--mut);">in palestra</div>
+        </div>
+        <div class="card" style="padding:14px;border-left:3px solid var(--blu);">
+          <div style="font-size:9px;color:var(--mut);letter-spacing:1.5px;font-weight:700;">FREQUENZA</div>
+          <div class="bebas" style="font-size:26px;color:var(--blu);line-height:1.1;">${avgSessionsWeek}</div>
+          <div style="font-size:10px;color:var(--mut);">sessioni/sett.</div>
+        </div>
+        <div class="card" style="padding:14px;border-left:3px solid var(--purp);">
+          <div style="font-size:9px;color:var(--mut);letter-spacing:1.5px;font-weight:700;">VOL/SESSIONE</div>
+          <div class="bebas" style="font-size:26px;color:var(--purp);line-height:1.1;">${avgVolSession.toLocaleString('it')}</div>
+          <div style="font-size:10px;color:var(--mut);">kg medio</div>
+        </div>
+      </div>
+
+      <!-- Streak + serie OK -->
+      <div class="card" style="margin-bottom:10px;padding:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1.5px;">🔥 STREAK</div>
+          <div style="font-size:10px;color:var(--mut);">Migliore di sempre</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div class="bebas" style="font-size:32px;color:var(--ora);line-height:1;">${stk||currentStreak}</div>
+            <div style="font-size:10px;color:var(--mut);">giorni attuali</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="bebas" style="font-size:24px;color:var(--text);line-height:1;">${bestStreak}</div>
+            <div style="font-size:10px;color:var(--mut);">record</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Aderenza dieta -->
+      <div class="card" style="margin-bottom:10px;padding:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+          <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1.5px;">🥗 ADERENZA DIETA (30 gg)</div>
+          <div class="bebas" style="font-size:22px;color:${dietPct>=70?'var(--acc)':dietPct>=40?'var(--yel)':'var(--red)'};line-height:1;">${dietPct}%</div>
+        </div>
+        <div style="background:var(--bg);height:8px;border-radius:4px;overflow:hidden;">
+          <div style="width:${dietPct}%;height:100%;background:${dietPct>=70?'var(--acc)':dietPct>=40?'var(--yel)':'var(--red)'};transition:width .3s;"></div>
+        </div>
+        <div style="font-size:10px;color:var(--mut);margin-top:6px;">${dietAdh}/30 giorni con almeno 2 pasti tracciati · ${cheats30} sgarri totali</div>
+      </div>
+
+      <!-- Personal records -->
+      ${totPRs > 0 ? `<div class="card" style="margin-bottom:10px;padding:14px;border-left:3px solid #fbbf24;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <div style="font-size:24px;">🏆</div>
+          <div style="flex:1;">
+            <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1.5px;">PERSONAL RECORDS</div>
+            <div class="bebas" style="font-size:24px;color:#fbbf24;line-height:1;">${totPRs} PR battuti</div>
+          </div>
+        </div>
+        ${topExName?`<div style="font-size:11px;color:var(--mut);line-height:1.5;">Esercizio top: <strong style="color:var(--text);">${escapeHtml(topExName)}</strong>${top1RM>0?` · 1RM stimato <strong style="color:var(--acc);">${top1RM}kg</strong>`:''}</div>`:''}
+      </div>`:''}
+
+      <!-- Variazione peso -->
+      ${wDelta!==0?`<div class="card" style="margin-bottom:10px;padding:14px;border-left:3px solid ${wDelta<0?'var(--acc)':'var(--ora)'};">
+        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1.5px;">⚖️ VARIAZIONE PESO TOTALE</div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:4px;">
+          <div class="bebas" style="font-size:28px;color:${wDelta<0?'var(--acc)':'var(--ora)'};line-height:1;">${wDelta>0?'+':''}${wDelta.toFixed(1)} kg</div>
+          <div style="font-size:13px;color:var(--mut);font-weight:700;">${wDeltaPct>0?'+':''}${wDeltaPct}%</div>
+        </div>
+        <div style="font-size:10px;color:var(--mut);margin-top:4px;">dall'inizio del programma (${ST.h.length} pesate registrate)</div>
+      </div>`:''}
+
+      <!-- Serie completate totali -->
+      <div class="card" style="padding:14px;border-left:3px solid var(--blu);">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;">
+          <div>
+            <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1.5px;">💪 SERIE COMPLETATE</div>
+            <div class="bebas" style="font-size:24px;color:var(--blu);line-height:1;margin-top:4px;">${okEntries}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:11px;color:var(--mut);">esercizi unici</div>
+            <div class="bebas" style="font-size:18px;color:var(--text);line-height:1;">${Object.keys(exFreq).length}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  })()}
 
   <!-- ── CONFRONTO SETTIMANE (sessione 4) ── -->
   ${(() => {
@@ -7606,41 +8144,6 @@ window.renderBody = function(cW,mac,theme,pWeek,sx){
     </div>`;
   })()}
 
-  <!-- ── CLASSIFICA AMICI (sessione 4) ── -->
-  <div class="card" style="border-color:var(--purp);">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-      <div class="bebas" style="font-size:20px;color:var(--purp);">🏆 CLASSIFICA AMICI</div>
-      <button onclick="loadLeaderboard()" style="background:var(--surf);border:1px solid var(--purp);color:var(--purp);border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;">${window.__leaderboardLoading?'⏳':'🔄'} AGGIORNA</button>
-    </div>
-    <div style="font-size:11px;color:var(--mut);margin-bottom:14px;line-height:1.5;">Confronto pubblico fra utenti FitTracker. Solo metriche aggregate (volume, sessioni, streak). Nessun dato personale.</div>
-    <div id="leaderboardContainer">
-      ${window.__leaderboard ? (() => {
-        const data = window.__leaderboard;
-        if (!data.length) return `<div style="text-align:center;padding:20px;color:var(--mut);font-size:13px;">Nessun dato. Tocca AGGIORNA per caricare la classifica.</div>`;
-        // Sort by sessions7d desc
-        const sorted = [...data].sort((a,b) => (b.sessions7d||0) - (a.sessions7d||0));
-        return sorted.map((u, i) => {
-          const isMe = u.user === AU.user;
-          const medals = ['🥇','🥈','🥉'];
-          const rank = i < 3 ? medals[i] : `${i+1}°`;
-          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:${isMe?'rgba(167,139,250,.12)':'var(--surf)'};border:1.5px solid ${isMe?'var(--purp)':'var(--bord)'};border-radius:12px;margin-bottom:7px;">
-            <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">
-              <div style="font-size:20px;width:32px;text-align:center;flex-shrink:0;">${rank}</div>
-              <div style="flex:1;min-width:0;">
-                <div style="font-size:14px;font-weight:700;color:${isMe?'var(--purp)':'var(--text)'};">${escapeHtml(u.user)}${isMe?' (tu)':''}</div>
-                <div style="font-size:10px;color:var(--mut);margin-top:1px;">${u.streak||0}🔥 streak · ${u.totalSessions||0} sessioni totali</div>
-              </div>
-            </div>
-            <div style="text-align:right;flex-shrink:0;">
-              <div class="bebas" style="font-size:22px;color:${isMe?'var(--purp)':'var(--text)'};line-height:1;">${u.sessions7d||0}</div>
-              <div style="font-size:9px;color:var(--mut);letter-spacing:.5px;">SESS. 7G</div>
-            </div>
-          </div>`;
-        }).join('');
-      })() : `<div style="text-align:center;padding:20px;color:var(--mut);font-size:13px;">Tocca <strong style="color:var(--purp);">🔄 AGGIORNA</strong> per vedere come vai rispetto agli amici.</div>`}
-    </div>
-  </div>
-
   <!-- PUNTO 6: ANALISI GRANULARE PER ESERCIZIO -->
   ${(() => {
     const allStats = buildExerciseStats(ST.wHistory || {});
@@ -7709,6 +8212,124 @@ window.renderBody = function(cW,mac,theme,pWeek,sx){
   </div>`;
 }
 // PUNTO 10: tab "Condividi App" dedicata
+// ── TAB CLASSIFICA AMICI dedicata (sessione 5) ──
+window.renderSocial = function() {
+  const data = window.__leaderboard;
+  const isLoading = window.__leaderboardLoading;
+
+  // Auto-load al primo accesso (se non ancora caricato)
+  if (!data && !isLoading && !window.__leaderboardAttempted) {
+    window.__leaderboardAttempted = true;
+    setTimeout(() => loadLeaderboard(), 100);
+  }
+
+  let myStats = null, myRank = null;
+
+  if (data && data.length) {
+    const sorted = [...data].sort((a,b) => (b.sessions7d||0) - (a.sessions7d||0));
+    const idx = sorted.findIndex(u => u.user === AU.user);
+    if (idx >= 0) { myStats = sorted[idx]; myRank = idx + 1; }
+  }
+
+  const podioHtml = data && data.length ? (() => {
+    const sorted = [...data].sort((a,b) => (b.sessions7d||0) - (a.sessions7d||0));
+    const top3 = sorted.slice(0, 3);
+    if (!top3.length) return '';
+    // Podio visuale: 2-1-3 (oro al centro più alto)
+    const ord = [];
+    if (top3[1]) ord.push({pos:2, u:top3[1], h:90, col:'#94a3b8'});
+    if (top3[0]) ord.push({pos:1, u:top3[0], h:120, col:'#fbbf24'});
+    if (top3[2]) ord.push({pos:3, u:top3[2], h:70, col:'#cd7f32'});
+    return `<div style="display:flex;align-items:flex-end;justify-content:center;gap:8px;margin:20px 0 10px;padding:0 8px;">
+      ${ord.map(o => {
+        const isMe = o.u.user === AU.user;
+        return `<div style="flex:1;max-width:110px;text-align:center;">
+          <div style="font-size:32px;line-height:1;margin-bottom:4px;">${o.pos===1?'🥇':o.pos===2?'🥈':'🥉'}</div>
+          <div style="font-size:12px;font-weight:700;color:${isMe?'var(--purp)':'var(--text)'};margin-bottom:6px;line-height:1.2;word-break:break-word;">${escapeHtml(o.u.user)}${isMe?' (tu)':''}</div>
+          <div style="background:linear-gradient(180deg,${o.col},${o.col}aa);height:${o.h}px;border-radius:8px 8px 0 0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#000;border:2px solid ${o.col};border-bottom:none;">
+            <div class="bebas" style="font-size:28px;line-height:1;">${o.u.sessions7d||0}</div>
+            <div style="font-size:8px;font-weight:800;letter-spacing:1px;">SESS 7G</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  })() : '';
+
+  const fullListHtml = data && data.length ? (() => {
+    const sorted = [...data].sort((a,b) => (b.sessions7d||0) - (a.sessions7d||0));
+    return sorted.map((u, i) => {
+      const isMe = u.user === AU.user;
+      const medals = ['🥇','🥈','🥉'];
+      const rank = i < 3 ? medals[i] : `${i+1}°`;
+      const volK = Math.round((u.volume7d||0)/1000*10)/10;
+      return `<div style="display:flex;align-items:center;padding:14px;background:${isMe?'rgba(167,139,250,.15)':'var(--surf)'};border:2px solid ${isMe?'var(--purp)':'var(--bord)'};border-radius:14px;margin-bottom:8px;${isMe?'box-shadow:0 2px 12px rgba(167,139,250,.2);':''}">
+        <div style="font-size:22px;width:40px;text-align:center;flex-shrink:0;">${rank}</div>
+        <div style="flex:1;min-width:0;margin-left:6px;">
+          <div style="font-size:15px;font-weight:700;color:${isMe?'var(--purp)':'var(--text)'};margin-bottom:3px;">${escapeHtml(u.user)}${isMe?' (tu)':''}</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:10px;color:var(--mut);">
+            <span>🔥 ${u.streak||0} streak</span>
+            <span>🏋️ ${u.totalSessions||0} totali</span>
+            ${volK > 0 ? `<span>📈 ${volK}k vol</span>` : ''}
+            ${u.kcal7d > 0 ? `<span>⚡ ${u.kcal7d} kcal</span>` : ''}
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div class="bebas" style="font-size:26px;color:${isMe?'var(--purp)':'var(--acc)'};line-height:1;">${u.sessions7d||0}</div>
+          <div style="font-size:9px;color:var(--mut);letter-spacing:.5px;font-weight:700;">SESS. 7G</div>
+        </div>
+      </div>`;
+    }).join('');
+  })() : '';
+
+  return `<div class="screen-fade">
+    <!-- Hero header -->
+    <div style="background:linear-gradient(135deg,rgba(167,139,250,.18),rgba(139,92,246,.05));border:2px solid var(--purp);border-radius:18px;padding:20px;margin-bottom:14px;text-align:center;">
+      <div style="font-size:48px;line-height:1;margin-bottom:6px;">🏆</div>
+      <div class="bebas" style="font-size:28px;color:var(--purp);letter-spacing:1px;line-height:1;margin-bottom:4px;">CLASSIFICA AMICI</div>
+      <div style="font-size:12px;color:var(--mut);line-height:1.5;">Confronto settimanale. Solo metriche pubbliche aggregate.</div>
+    </div>
+
+    ${myStats && myRank ? `
+    <!-- Card "tu sei qui" -->
+    <div style="background:linear-gradient(135deg,var(--purp),#8b5cf6);color:#fff;border-radius:16px;padding:16px;margin-bottom:14px;display:flex;align-items:center;gap:14px;">
+      <div style="font-size:42px;line-height:1;">${myRank<=3?['🥇','🥈','🥉'][myRank-1]:`#${myRank}`}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:11px;opacity:.85;letter-spacing:1px;font-weight:700;">SEI IN POSIZIONE</div>
+        <div class="bebas" style="font-size:24px;line-height:1;color:#fff;">${myRank}° su ${data.length}</div>
+        <div style="font-size:11px;opacity:.85;margin-top:3px;">${myStats.sessions7d||0} sessioni · ${myStats.streak||0}🔥 streak</div>
+      </div>
+    </div>` : ''}
+
+    <!-- Bottone aggiorna -->
+    <button onclick="loadLeaderboard()" style="width:100%;padding:14px;background:${isLoading?'var(--surf)':'var(--purp)'};color:${isLoading?'var(--mut)':'#fff'};border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:14px;${isLoading?'pointer-events:none;':''}">
+      ${isLoading?'⏳ Caricamento classifica...':data?'🔄 AGGIORNA CLASSIFICA':'🚀 CARICA CLASSIFICA'}
+    </button>
+
+    ${data && data.length ? `
+    ${podioHtml}
+    <div class="bebas" style="font-size:18px;color:var(--mut);margin:20px 0 10px;letter-spacing:1px;">📋 CLASSIFICA COMPLETA</div>
+    ${fullListHtml}
+
+    <!-- Note finali -->
+    <div style="background:var(--surf);border:1px solid var(--bord);border-radius:12px;padding:14px;margin-top:14px;font-size:11px;color:var(--mut);line-height:1.6;">
+      <strong style="color:var(--text);">ℹ️ Come funziona</strong><br>
+      • La classifica si aggiorna automaticamente ad ogni salvataggio dati<br>
+      • Vengono mostrate solo metriche aggregate (sessioni, volume, kcal, streak)<br>
+      • Nessun dato personale (peso, foto, misure) viene condiviso<br>
+      • L'ordinamento è per <strong>sessioni-7g</strong>: chi si allena di più di recente
+    </div>` : data ? `
+    <div class="card" style="text-align:center;padding:30px;">
+      <div style="font-size:48px;margin-bottom:10px;">🤷</div>
+      <div style="font-size:14px;color:var(--mut);">Nessun utente ancora in classifica.</div>
+    </div>` : `
+    <div class="card" style="text-align:center;padding:30px;">
+      <div style="font-size:48px;margin-bottom:10px;">📊</div>
+      <div style="font-size:14px;color:var(--text);font-weight:600;margin-bottom:6px;">Pronto al confronto?</div>
+      <div style="font-size:12px;color:var(--mut);line-height:1.5;">Tocca <strong style="color:var(--purp);">"CARICA CLASSIFICA"</strong> per vedere come vai rispetto agli altri utenti FitTracker PRO.</div>
+    </div>`}
+  </div>`;
+};
+
 window.renderShare = function(){
   return `
   <div class="bebas" style="font-size:30px;color:var(--blu);margin:8px 0 4px;">📤 CONDIVIDI L'APP</div>
@@ -8348,28 +8969,36 @@ window.render = function() {
     }
     // Schermata 2: imposta grammi/quantità
     const f=d.selectedFood;
-    const isPortionFood=['pizze','dolci','gelati','fast_food','snack','bar','piatti_pronti'].includes(f.cat);
+    const portInfo = foodUsesPortion(f);
+    const isPortionFood = portInfo.byPortion;
+    const portionMult = portInfo.mult;
+    const portionGrams = portInfo.gramsLabel;
+    const portionLabel = portInfo.portionLabel || 'porzione';
+    const isDrink = portInfo.isDrink || false;
     const grams=d.grams||100;
-    // Moltiplicatori porzione (allineati a confirmCheatFromDb)
-    const PORTION_MULTIPLIERS = {
-      pizze: 3.0, dolci: 1.2, gelati: 1.2, fast_food: 2.5,
-      snack: 0.6, bar: 0.8, piatti_pronti: 2.5
-    };
-    const portionMult = isPortionFood ? (PORTION_MULTIPLIERS[f.cat] || 1) : 1;
-    const portionGrams = Math.round(100 * portionMult);
     const previewKcal=isPortionFood?Math.round(f.kcal * portionMult):Math.round((f.kcal*grams)/100);
+    // Etichetta header diversa se è già porzione fissa (mult=1) vs categoria
+    const headerKcalText = isPortionFood
+      ? (isDrink
+          ? `${f.kcal} kcal/100ml · ${portionLabel}`
+          : (portionMult === 1 ? `${f.kcal} kcal a porzione` : `${f.kcal} kcal/100g · ${portionLabel}`))
+      : `${f.kcal} kcal/100g`;
+    // Etichetta della domanda (drink vs cibo)
+    const qtyLabel = isDrink
+      ? `QUANTI? (1 = ${portionLabel})`
+      : (portionMult === 1 ? 'QUANTE PORZIONI?' : `QUANTE PORZIONI? (1 ≈ ${portionGrams}g)`);
     return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div>
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
         <div style="font-size:36px;">${(window.FOOD_CATS||[]).find(c=>c.id===f.cat)?.emo||'🍴'}</div>
         <div style="flex:1;min-width:0;">
           <div class="bebas" style="font-size:20px;line-height:1.1;">${escapeHtml(f.name)}</div>
-          <div style="font-size:11px;color:var(--mut);">${f.kcal} kcal${isPortionFood?'/100g · porzione standard ~'+portionGrams+'g':'/100g'} · P:${f.p||0}g · C:${f.c||0}g · F:${f.f||0}g</div>
+          <div style="font-size:11px;color:var(--mut);">${headerKcalText} · P:${f.p||0}g · C:${f.c||0}g · F:${f.f||0}g</div>
         </div>
       </div>
       ${isPortionFood ? `
-        <!-- Cibi per porzione: chiedi quante porzioni -->
+        <!-- Cibi/drink per porzione: chiedi quanti -->
         <div style="background:rgba(255,104,53,.06);border:1.5px solid var(--ora);border-radius:12px;padding:14px;margin-bottom:10px;">
-          <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:10px;">QUANTE PORZIONI? (1 porzione ≈ ${portionGrams}g)</div>
+          <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:10px;">${qtyLabel}</div>
           <div style="display:grid;grid-template-columns:1fr 100px;gap:8px;margin-bottom:8px;">
             <input id="cheatQty" type="number" min="1" max="20" value="1" style="margin:0;font-size:14px;padding:10px;text-align:center;" oninput="document.getElementById('cheatPreviewK').textContent=Math.round(${f.kcal}*${portionMult}*(parseInt(this.value)||1))+' kcal'">
             <div style="display:flex;align-items:center;justify-content:center;background:var(--bg);border-radius:8px;padding:8px;font-size:13px;color:var(--ora);font-weight:700;"><span id="cheatPreviewK">${previewKcal} kcal</span></div>
@@ -8550,6 +9179,7 @@ window.render = function() {
     {id:'diet',ic:'🥗',lbl:'Alimentazione'},
     {id:'body',ic:'📊',lbl:'Analisi & Progressi'},
     {id:'measures',ic:'📐',lbl:'Misure Corporee'},
+    {id:'social',ic:'🏆',lbl:'Classifica Amici'},
     {id:'coach',ic:'🤖',lbl:'AI Coach'},
     {id:'share',ic:'📤',lbl:'Condividi App'},
     {id:'set',ic:'⚙️',lbl:'Configurazione'},
@@ -8615,6 +9245,7 @@ window.render = function() {
   else if(ST.tab==='diet') H+=renderDiet(currentDateStr,mac,an,sx,todayWoId);
   else if(ST.tab==='body') H+=renderBody(cW,mac,theme,pWeek,sx);
   else if(ST.tab==='measures') H+=renderMeasures(cW,mac,theme,pWeek,sx);
+  else if(ST.tab==='social') H+=renderSocial();
   else if(ST.tab==='coach') H+=renderCoach();
   else if(ST.tab==='share') H+=renderShare();
   else if(ST.tab==='set') H+=renderSettings(mac);
