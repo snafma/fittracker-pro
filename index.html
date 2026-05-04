@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION5-STATS-PRO">
+<meta name="ft-version" content="build-SESSION6-GDPR-INTEGRATIONS">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -251,6 +251,13 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
         snap.forEach(d => { out.push({ user: d.id, ...d.data() }); });
         return out;
       } catch(e) { console.warn('Leaderboard read fail:', e?.code||e); return []; }
+    },
+    async remove(username) {
+      if (!firestore || !username) return false;
+      try {
+        await deleteDoc(doc(firestore, "fittracker_leaderboard", username));
+        return true;
+      } catch(e) { console.warn('Leaderboard remove fail:', e?.code||e); return false; }
     }
   };
   console.log("[FB-INIT] window.LeaderboardDB esposto");
@@ -330,6 +337,67 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
     <div style="color:var(--mut);font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:1px;">Connessione al Cloud Secure Database...</div>
   </div>
 </div>
+
+<!-- ── BANNER GDPR / COOKIE-STORAGE (sessione 6) ── -->
+<!-- Mostrato solo al primo accesso. NON blocca Firebase (servizio essenziale). -->
+<div id="gdprBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:99999;background:rgba(13,13,15,.97);backdrop-filter:blur(10px);border-top:2px solid var(--acc);padding:18px 20px;box-shadow:0 -4px 20px rgba(0,0,0,.5);">
+  <div style="max-width:720px;margin:0 auto;">
+    <div style="display:flex;align-items:flex-start;gap:12px;">
+      <div style="font-size:30px;line-height:1;flex-shrink:0;">🔒</div>
+      <div style="flex:1;font-size:13px;line-height:1.6;color:var(--text);">
+        <div style="font-weight:700;margin-bottom:6px;">Privacy &amp; cookie tecnici</div>
+        FitTracker PRO usa <strong>Firebase di Google</strong> per login e database (servizio essenziale) e <strong>localStorage</strong> del tuo browser per mantenere la sessione attiva e migliorare le prestazioni. Non usiamo cookie pubblicitari né di profilazione.
+        <a href="privacy.html" target="_blank" style="color:var(--acc);">Leggi la privacy policy completa</a>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;">
+      <button onclick="window.acceptGdprConsent()" style="padding:10px 24px;background:var(--acc);color:#000;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;">OK, HO CAPITO</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── FOOTER privacy globale ── -->
+<div id="gdprFooter" style="position:fixed;bottom:8px;right:8px;z-index:9998;display:none;">
+  <a href="privacy.html" target="_blank" style="font-size:10px;color:var(--mut);text-decoration:none;background:rgba(26,26,31,.9);padding:4px 10px;border-radius:6px;border:1px solid var(--bord);backdrop-filter:blur(8px);">🔒 Privacy</a>
+</div>
+
+<script>
+// Banner GDPR: mostra solo se consenso non già dato in localStorage
+(function() {
+  try {
+    const consent = localStorage.getItem('ft_gdpr_consent_v1');
+    if (consent !== 'accepted') {
+      // Mostra banner dopo 1500ms (lascio caricare l'app)
+      setTimeout(() => {
+        const b = document.getElementById('gdprBanner');
+        if (b) b.style.display = 'block';
+      }, 1500);
+    } else {
+      // Mostra footer privacy sempre
+      setTimeout(() => {
+        const f = document.getElementById('gdprFooter');
+        if (f) f.style.display = 'block';
+      }, 2000);
+    }
+  } catch(_) {}
+
+  window.acceptGdprConsent = function() {
+    try { localStorage.setItem('ft_gdpr_consent_v1', 'accepted'); } catch(_) {}
+    const b = document.getElementById('gdprBanner');
+    if (b) b.style.display = 'none';
+    const f = document.getElementById('gdprFooter');
+    if (f) f.style.display = 'block';
+  };
+
+  // Reset consenso (utilizzabile dalle impostazioni)
+  window.resetGdprConsent = function() {
+    if (!confirm('Vuoi rivedere il banner privacy al prossimo accesso?')) return;
+    try { localStorage.removeItem('ft_gdpr_consent_v1'); } catch(_) {}
+    alert('Consenso resettato. Ricarica la pagina per rivedere il banner.');
+  };
+})();
+</script>
+
 <script>
 'use strict';
 // ═══════════════════════════════════════════════════════════════════════════════════════════
@@ -1652,9 +1720,6 @@ window.FOOD_DB=[
   {id:'cornflakes',name:'Cornflakes',cat:'cereali',kcal:380,p:8,c:84,f:1},
   {id:'muesli',name:'Muesli',cat:'cereali',kcal:370,p:10,c:65,f:8},
   {id:'cereali_cioccolato',name:'Cereali al cioccolato',cat:'cereali',kcal:400,p:7,c:78,f:7},
-  {id:'pizza_margherita',name:'Pizza margherita',cat:'cereali',kcal:250,p:11,c:30,f:9},
-  {id:'pizza_marinara',name:'Pizza marinara',cat:'cereali',kcal:220,p:7,c:36,f:5},
-  {id:'pizza_capricciosa',name:'Pizza capricciosa',cat:'cereali',kcal:280,p:13,c:28,f:13},
   {id:'farina_00',name:'Farina 00',cat:'cereali',kcal:340,p:10,c:75,f:1},
   {id:'farina_integrale',name:'Farina integrale',cat:'cereali',kcal:320,p:13,c:65,f:2.5},
   {id:'farina_mandorle',name:'Farina di mandorle',cat:'cereali',kcal:580,p:21,c:20,f:50},
@@ -1663,7 +1728,6 @@ window.FOOD_DB=[
   {id:'pancake_misc',name:'Pancake (1 pezzo medio)',cat:'cereali',kcal:230,p:6,c:30,f:9},
   {id:'crepes',name:'Crepes',cat:'cereali',kcal:170,p:6,c:23,f:6},
   {id:'brioche_vuota',name:'Brioche vuota',cat:'cereali',kcal:380,p:9,c:50,f:16},
-  {id:'cornetto_marmellata',name:'Cornetto alla marmellata',cat:'cereali',kcal:380,p:7,c:54,f:14},
   {id:'biscotti_secchi',name:'Biscotti secchi',cat:'cereali',kcal:430,p:8,c:75,f:11},
   {id:'biscotti_frollini',name:'Biscotti frollini',cat:'cereali',kcal:475,p:6,c:67,f:21},
   {id:'wafer',name:'Wafer',cat:'cereali',kcal:520,p:6,c:65,f:26},
@@ -1695,6 +1759,20 @@ window.FOOD_DB=[
   {id:'cinghiale',name:'Cinghiale',cat:'carne',kcal:120,p:21,c:0,f:3.5},
   {id:'anatra_petto',name:'Anatra petto (senza pelle)',cat:'carne',kcal:135,p:24,c:0,f:4},
   {id:'cavallo_carne',name:'Cavallo carne',cat:'carne',kcal:115,p:21,c:0,f:3},
+  {id:'castrato',name:'Castrato (montone)',cat:'carne',kcal:240,p:18,c:0,f:18},
+  {id:'pecora',name:'Pecora (carne)',cat:'carne',kcal:230,p:18,c:0,f:17},
+  {id:'capretto',name:'Capretto',cat:'carne',kcal:155,p:20,c:0,f:8},
+  {id:'capra',name:'Carne di capra',cat:'carne',kcal:165,p:21,c:0,f:9},
+  {id:'cinghiale',name:'Cinghiale',cat:'carne',kcal:160,p:22,c:0,f:8},
+  {id:'cervo',name:'Cervo (carne)',cat:'carne',kcal:120,p:23,c:0,f:3},
+  {id:'lepre',name:'Lepre',cat:'carne',kcal:130,p:23,c:0,f:4},
+  {id:'fagiano',name:'Fagiano',cat:'carne',kcal:135,p:23,c:0,f:4},
+  {id:'quaglia',name:'Quaglia',cat:'carne',kcal:160,p:22,c:0,f:8},
+  {id:'anatra',name:'Anatra',cat:'carne',kcal:215,p:18,c:0,f:16},
+  {id:'oca',name:'Oca',cat:'carne',kcal:340,p:16,c:0,f:30},
+  {id:'faraona',name:'Faraona',cat:'carne',kcal:160,p:25,c:0,f:7},
+  {id:'tacchino_petto',name:'Petto di tacchino',cat:'carne',kcal:105,p:24,c:0,f:1},
+  {id:'tacchino_coscia',name:'Coscia di tacchino',cat:'carne',kcal:160,p:20,c:0,f:8},
   {id:'fegato_vitello',name:'Fegato di vitello',cat:'carne',kcal:135,p:21,c:5,f:3.5},
   {id:'prosciutto_crudo',name:'Prosciutto crudo (sgrassato)',cat:'carne',kcal:225,p:30,c:0,f:12},
   {id:'prosciutto_cotto',name:'Prosciutto cotto',cat:'carne',kcal:160,p:20,c:1,f:9},
@@ -1734,6 +1812,13 @@ window.FOOD_DB=[
   {id:'merluzzo_surgelato',name:'Filetto di merluzzo surgelato',cat:'pesce',kcal:75,p:17,c:0,f:0.5},
   {id:'baccala',name:'Baccalà ammollato',cat:'pesce',kcal:135,p:30,c:0,f:1},
   {id:'orata',name:'Orata',cat:'pesce',kcal:120,p:20,c:0,f:4},
+  {id:'dentice',name:'Dentice',cat:'pesce',kcal:110,p:19,c:0,f:3.5},
+  {id:'cernia',name:'Cernia',cat:'pesce',kcal:90,p:18,c:0,f:1.5},
+  {id:'pagello',name:'Pagello',cat:'pesce',kcal:95,p:18,c:0,f:2.5},
+  {id:'ricciola',name:'Ricciola',cat:'pesce',kcal:140,p:21,c:0,f:6},
+  {id:'palamita',name:'Palamita',cat:'pesce',kcal:160,p:22,c:0,f:8},
+  {id:'cefalo_muggine',name:'Cefalo (muggine)',cat:'pesce',kcal:150,p:18,c:0,f:8},
+  {id:'razza',name:'Razza',cat:'pesce',kcal:90,p:21,c:0,f:0.5},
   {id:'branzino',name:'Branzino (spigola)',cat:'pesce',kcal:115,p:18,c:0,f:5},
   {id:'sogliola',name:'Sogliola',cat:'pesce',kcal:85,p:17,c:0,f:1.5},
   {id:'platessa',name:'Platessa',cat:'pesce',kcal:80,p:17,c:0,f:1},
@@ -1929,7 +2014,6 @@ window.FOOD_DB=[
   {id:'pomodori_secchi',name:'Pomodori secchi',cat:'verdure',kcal:260,p:14,c:55,f:3},
   {id:'sottaceti',name:'Verdure sottaceto miste',cat:'verdure',kcal:30,p:1,c:6,f:0.2},
   {id:'verdure_grigliate',name:'Verdure grigliate (zucchine, melanzane, peperoni)',cat:'verdure',kcal:35,p:1.5,c:5,f:1},
-  {id:'minestrone',name:'Minestrone (verdure miste cotte)',cat:'verdure',kcal:35,p:1.5,c:6,f:0.5},
   {id:'crauti',name:'Crauti',cat:'verdure',kcal:20,p:1,c:3.5,f:0.2},
   {id:'curgette',name:'Zucchine (cotto)',cat:'verdure',kcal:18,p:1.5,c:3,f:0.3},
   {id:'kale',name:'Cavolo riccio (kale)',cat:'verdure',kcal:35,p:3,c:4.5,f:0.5},
@@ -2042,7 +2126,6 @@ window.FOOD_DB=[
   {id:'acqua_frizzante',name:'Acqua frizzante',cat:'bevande',kcal:0,p:0,c:0,f:0},
   {id:'caffe_espresso',name:'Caffè espresso (senza zucchero)',cat:'bevande',kcal:2,p:0.1,c:0.3,f:0},
   {id:'caffe_americano',name:'Caffè americano',cat:'bevande',kcal:2,p:0.1,c:0,f:0},
-  {id:'cappuccino',name:'Cappuccino (senza zucchero)',cat:'bevande',kcal:60,p:3,c:5,f:3},
   {id:'macchiato',name:'Caffè macchiato',cat:'bevande',kcal:15,p:0.7,c:1,f:1},
   {id:'orzo_solubile',name:'Orzo solubile (preparato)',cat:'bevande',kcal:5,p:0.2,c:1,f:0},
   {id:'te_verde',name:'Tè verde',cat:'bevande',kcal:1,p:0,c:0,f:0},
@@ -2121,7 +2204,6 @@ window.FOOD_DB=[
   {id:'peperonata',name:'Peperonata',cat:'piatti_pronti',kcal:75,p:2,c:9,f:4},
   {id:'frittata_patate',name:'Frittata di patate',cat:'piatti_pronti',kcal:180,p:9,c:12,f:11},
   {id:'frittata_zucchine',name:'Frittata di zucchine',cat:'piatti_pronti',kcal:140,p:10,c:5,f:9},
-  {id:'baccala',name:'Baccalà alla vicentina',cat:'piatti_pronti',kcal:170,p:18,c:6,f:8},
   {id:'fritto_misto',name:'Fritto misto di pesce',cat:'piatti_pronti',kcal:260,p:18,c:10,f:17},
   {id:'insalata_mare',name:'Insalata di mare',cat:'piatti_pronti',kcal:120,p:15,c:5,f:4},
   {id:'orata_forno',name:'Orata al forno con patate',cat:'piatti_pronti',kcal:145,p:18,c:10,f:4},
@@ -2142,7 +2224,6 @@ window.FOOD_DB=[
   {id:'pizza_bianca',name:'Pizza bianca (focaccia)',cat:'pizze',kcal:265,p:7,c:42,f:8},
   {id:'pizza_wurstel_patate',name:'Pizza wurstel e patatine',cat:'pizze',kcal:310,p:12,c:32,f:16},
   {id:'pizza_trancio',name:'Trancio di pizza al taglio (100g)',cat:'pizze',kcal:250,p:9,c:32,f:10},
-  {id:'focaccia_genovese',name:'Focaccia genovese',cat:'pizze',kcal:295,p:7,c:40,f:12},
   {id:'focaccia_ligure',name:'Focaccia con cipolle',cat:'pizze',kcal:275,p:7,c:40,f:10},
   {id:'calzone',name:'Calzone (ripieno)',cat:'pizze',kcal:285,p:13,c:32,f:12},
 
@@ -2206,7 +2287,6 @@ window.FOOD_DB=[
   {id:'mcmenu_medio',name:'McMenu medio (panino+patatine+bibita)',cat:'fast_food',kcal:1050,p:30,c:120,f:47},
   {id:'kebab_panino',name:'Kebab in panino',cat:'fast_food',kcal:620,p:35,c:60,f:28},
   {id:'kebab_piadina',name:'Kebab in piadina',cat:'fast_food',kcal:680,p:32,c:70,f:30},
-  {id:'piadina_prosciutto',name:'Piadina prosciutto e formaggio',cat:'fast_food',kcal:490,p:20,c:50,f:23},
   {id:'piadina_nutella',name:'Piadina con Nutella',cat:'fast_food',kcal:540,p:9,c:75,f:22},
   {id:'panino_salame',name:'Panino con salame',cat:'fast_food',kcal:430,p:18,c:40,f:22},
   {id:'panino_prosciutto',name:'Panino prosciutto crudo e mozzarella',cat:'fast_food',kcal:430,p:22,c:40,f:20},
@@ -2259,7 +2339,6 @@ window.FOOD_DB=[
   {id:'birra_piccola',name:'Birra piccola (0.2L)',cat:'bevande',kcal:85,p:1,c:7,f:0},
   {id:'birra_media',name:'Birra media (0.4L)',cat:'bevande',kcal:170,p:2,c:14,f:0},
   {id:'birra_grande',name:'Birra grande (0.66L)',cat:'bevande',kcal:280,p:3,c:23,f:0},
-  {id:'birra_doppio_malto',name:'Birra doppio malto media (0.4L)',cat:'bevande',kcal:220,p:2,c:16,f:0},
   {id:'vino_calice',name:'Vino (calice 150ml)',cat:'bevande',kcal:125,p:0,c:4,f:0},
   {id:'vino_bicchiere',name:'Vino (bicchiere piccolo 100ml)',cat:'bevande',kcal:85,p:0,c:2.5,f:0},
   {id:'spritz',name:'Spritz Aperol (aperitivo)',cat:'bevande',kcal:190,p:0,c:18,f:0},
@@ -2273,14 +2352,10 @@ window.FOOD_DB=[
   {id:'cocacola_lattina',name:'Coca-Cola lattina (330ml)',cat:'bevande',kcal:140,p:0,c:35,f:0},
   {id:'fanta_lattina',name:'Fanta lattina (330ml)',cat:'bevande',kcal:145,p:0,c:35,f:0},
   {id:'sprite_lattina',name:'Sprite lattina (330ml)',cat:'bevande',kcal:130,p:0,c:34,f:0},
-  {id:'redbull',name:'Red Bull (250ml)',cat:'bevande',kcal:115,p:0,c:28,f:0},
   {id:'the_freddo',name:'Tè freddo pesca (bottiglia 500ml)',cat:'bevande',kcal:120,p:0,c:30,f:0},
-  {id:'gatorade',name:'Gatorade (500ml)',cat:'bevande',kcal:125,p:0,c:30,f:0},
   {id:'succo_pesca',name:'Succo di pesca (bottiglia 200ml)',cat:'bevande',kcal:110,p:0,c:27,f:0},
 
   // ─── FRUTTA PIATTI PRONTI ───
-  {id:'macedonia',name:'Macedonia di frutta (porzione)',cat:'frutta',kcal:65,p:1,c:16,f:0.3},
-  {id:'frutta_sciroppo',name:'Frutta sciroppata (porzione)',cat:'frutta',kcal:95,p:0.4,c:23,f:0.1},
   {id:'smoothie_frutta',name:'Smoothie frutta (300ml)',cat:'bevande',kcal:160,p:2,c:35,f:1},
 
   // ─── PESCE / SUSHI ───
@@ -2295,9 +2370,6 @@ window.FOOD_DB=[
   {id:'paella',name:'Paella valenciana (porzione)',cat:'piatti_pronti',kcal:180,p:10,c:25,f:5},
   {id:'tacos',name:'Tacos (1 pz)',cat:'piatti_pronti',kcal:170,p:8,c:15,f:8},
   {id:'burrito',name:'Burrito (1 pz)',cat:'piatti_pronti',kcal:430,p:18,c:55,f:15},
-  {id:'hummus',name:'Hummus (100g)',cat:'piatti_pronti',kcal:165,p:8,c:14,f:10},
-  {id:'falafel',name:'Falafel (100g, 4-5 polpette)',cat:'piatti_pronti',kcal:330,p:13,c:32,f:18},
-
   // ─── BISCOTTI SPECIFICI MARCHE ───
   {id:'mulino_bianco_pangocciolini',name:'Pan di stelle (3 biscotti)',cat:'dolci',kcal:130,p:2,c:18,f:5},
   {id:'oro_saiwa',name:'Oro Saiwa (4 biscotti)',cat:'dolci',kcal:130,p:3,c:22,f:3},
@@ -2322,15 +2394,8 @@ window.FOOD_DB=[
   {id:'piadina_prosciutto',name:'Piadina prosciutto e stracchino',cat:'piatti_pronti',kcal:520,p:23,c:55,f:23},
   {id:'piadina_vegetariana',name:'Piadina vegetariana',cat:'piatti_pronti',kcal:380,p:14,c:50,f:14},
   {id:'focaccia_genovese',name:'Focaccia genovese (100g)',cat:'cereali',kcal:295,p:7,c:40,f:11},
-  {id:'cornetto_crema',name:'Cornetto con crema',cat:'piatti_pronti',kcal:295,p:5,c:38,f:14},
-  {id:'cornetto_marmellata',name:'Cornetto con marmellata',cat:'piatti_pronti',kcal:280,p:5,c:42,f:11},
-  {id:'cornetto_cioccolato',name:'Cornetto al cioccolato',cat:'piatti_pronti',kcal:310,p:5,c:38,f:16},
-  {id:'cornetto_vuoto',name:'Cornetto vuoto',cat:'piatti_pronti',kcal:240,p:5,c:32,f:11},
-
   // Polpette e secondi
   {id:'polpetta_carne',name:'Polpetta di carne (50g)',cat:'carne',kcal:140,p:14,c:5,f:8},
-  {id:'polpette_sugo',name:'Polpette al sugo (porzione)',cat:'piatti_pronti',kcal:380,p:32,c:12,f:21},
-  {id:'cotoletta_milanese',name:'Cotoletta alla milanese (150g)',cat:'piatti_pronti',kcal:480,p:36,c:18,f:30},
   {id:'cotoletta_pollo',name:'Cotoletta di pollo (150g)',cat:'piatti_pronti',kcal:340,p:35,c:14,f:17},
 
   // Dolci specifici
@@ -2348,9 +2413,7 @@ window.FOOD_DB=[
   {id:'poke_classica',name:'Poke bowl classica',cat:'piatti_pronti',kcal:520,p:28,c:60,f:18},
   {id:'hamburger_classico',name:'Hamburger classico (Big Mac style)',cat:'piatti_pronti',kcal:540,p:25,c:45,f:28},
   {id:'patatine_mcdonalds',name:'Patatine fritte (porzione media)',cat:'piatti_pronti',kcal:340,p:4,c:43,f:17},
-  {id:'cheeseburger',name:'Cheeseburger',cat:'piatti_pronti',kcal:300,p:15,c:33,f:13},
   {id:'pizza_4_stagioni',name:'Pizza 4 stagioni',cat:'piatti_pronti',kcal:850,p:35,c:90,f:38},
-  {id:'pizza_capricciosa',name:'Pizza capricciosa',cat:'piatti_pronti',kcal:870,p:36,c:88,f:40},
   {id:'calzone_classico',name:'Calzone al forno',cat:'piatti_pronti',kcal:780,p:30,c:80,f:36}
 
 ];
@@ -2477,7 +2540,7 @@ window.DRINK_PORTIONS = {
   'succo_mela':          {ml: 200, label: 'bicchiere (20cl)'},
   'succo_ace':           {ml: 200, label: 'bicchiere (20cl)'},
   // Caffè / latte (porzione tazza)
-  'cappuccino':         {ml: 150, label: 'tazza'},
+  // Nota: 'cappuccino' è in cat 'bar' (gestito da PORTION_MULTIPLIERS)
   'macchiato':          {ml: 50,  label: 'tazzina'},
   'caffe_espresso':     {ml: 30,  label: 'tazzina'},
   'caffe_americano':    {ml: 200, label: 'tazza grande'},
@@ -4187,6 +4250,8 @@ window.defST=function(){
     workoutStartTs:null,         // timestamp inizio workout per kcal live (sessione 1)
     draftValues:{},              // peso pre-serie persistente (sessione 1)
     draftReps:{},                // reps pre-serie persistente (sessione 1)
+    // ── Campi sessione 6 ──
+    shareLeaderboardConsent:false, // opt-in per classifica amici (privacy by default)
   };
 }
 window.ST=defST();
@@ -4254,6 +4319,9 @@ window.save=async function(){await saveU();render();}
 window.updateMyLeaderboard = async function() {
   try {
     if (!AU.user || !window.LeaderboardDB) return;
+    // ── OPT-IN: solo se l'utente ha esplicitamente dato consenso ──
+    // Default false: la classifica è privacy-by-default
+    if (!ST.shareLeaderboardConsent) return;
     // Calcolo metriche aggregate (no info personali sensibili)
     const wLogF = (ST.wLog || []).filter(w => !w.isRest);
     const last7 = new Date(Date.now() - 7*86400000).toISOString().slice(0,10);
@@ -4302,6 +4370,31 @@ window.loadLeaderboard = async function() {
   }
   window.__leaderboardLoading = false;
   render();
+};
+
+// ── CONSENSO CLASSIFICA AMICI (opt-in / opt-out) ──
+window.enableLeaderboardConsent = async function() {
+  ST.shareLeaderboardConsent = true;
+  await save();
+  // Carico la classifica subito dopo aver dato consenso
+  if (typeof loadLeaderboard === 'function') {
+    setTimeout(() => loadLeaderboard(), 300);
+  }
+};
+
+window.disableLeaderboardConsent = async function() {
+  if (!confirm('Vuoi disattivare la condivisione classifica?\n\nI tuoi dati verranno rimossi dal cloud entro 24 ore. Potrai riattivare quando vorrai.')) return;
+  ST.shareLeaderboardConsent = false;
+  // Tento di rimuovere il proprio doc dalla leaderboard (se possibile)
+  try {
+    if (window.LeaderboardDB?.remove && AU.user) {
+      await window.LeaderboardDB.remove(AU.user);
+    }
+  } catch(e) { console.warn('LB remove fail:', e); }
+  // Reset stato locale leaderboard
+  window.__leaderboard = null;
+  window.__leaderboardAttempted = false;
+  await save();
 };
 window.el=id=>document.getElementById(id);
 window.vv=id=>el(id)?.value;
@@ -4524,6 +4617,74 @@ window.doChangePassword=async function(){
     await window.FBAuth.changePw(cur,np);
     alert('✅ Password cambiata!');
   }catch(e){alert(__fbErr(e));}
+};
+
+// ── EXPORT DATI UTENTE (GDPR Art. 20 - Portabilità) ──
+// Genera un file JSON scaricabile con TUTTI i dati dell'utente
+window.exportMyData = function() {
+  try {
+    if (!AU.user) return alert('Devi essere loggato per esportare i dati.');
+    const exportData = {
+      _meta: {
+        app: 'FitTracker PRO',
+        version: document.querySelector('meta[name="ft-version"]')?.content || 'unknown',
+        exportDate: new Date().toISOString(),
+        format: 'JSON v1',
+        gdprNote: 'Export GDPR Art. 20 (Portabilità). Contiene tutti i dati personali raccolti.'
+      },
+      account: {
+        username: AU.user,
+        email: window.FBAuth?.auth?.currentUser?.email || null,
+        emailVerified: window.FBAuth?.auth?.currentUser?.emailVerified || false
+      },
+      profile: AU.profile || null,
+      programma: ST.p || null,
+      programStart: ST.programStart || null,
+      pesoStorico: ST.h || [],
+      misure: ST.measures || {},
+      allenamenti: ST.wLog || [],
+      cronologiaPesi: ST.wHistory || {},
+      nutrizione: ST.nutri || {},
+      idratazione: ST.water || {},
+      sonno: ST.life || {},
+      attivita: ST.activities || {},
+      integratori: ST.suppLog || {},
+      noteEsercizi: ST.exNotes || {},
+      preferenzeEsercizi: ST.exPrefs || {},
+      pastiPersonalizzati: ST.mealOpts || {},
+      shortcuts: ST.shortcuts || [],
+      cheatDebt: ST.cheatDebt || 0,
+      lastCheatMealSlot: ST.lastCheatMealSlot || null,
+      aiPlan: ST.aiPlan || null,
+      chatHistory: ST.chatHistory || [],
+      consensi: {
+        shareLeaderboard: ST.shareLeaderboardConsent || false,
+        gdprBanner: localStorage.getItem('ft_gdpr_consent_v1') || null
+      }
+    };
+
+    // Genera file JSON
+    const json = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `fittracker-pro-${AU.user}-${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    // Toast conferma
+    const t = document.createElement('div');
+    t.style.cssText = 'position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:99999;background:rgba(34,197,94,.95);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.3);';
+    t.textContent = '✓ Export completato. File scaricato.';
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  } catch(e) {
+    console.error('Export fail:', e);
+    alert('Errore durante l\'export: ' + (e?.message || e));
+  }
 };
 
 window.doDeleteAccount=async function(){
@@ -5004,6 +5165,135 @@ window.logWeight=function(){
 // ── WEB BLUETOOTH BILANCE (sessione 4) ──
 // Supporta bilance smart standard via Web Bluetooth API
 // Servizio standard "Weight Scale" UUID 0x181D, caratteristica 0x2A9D
+// ── IMPORT APPLE HEALTH (XML export) ──
+// L'utente esporta i dati da iOS Salute → "Esporta tutti i dati" → riceve un .zip
+// Estrae export.xml e lo carica qui. Importiamo: peso, passi, sonno, allenamenti.
+window.importAppleHealth = function() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.xml,.zip,application/xml,application/zip';
+  input.onchange = async (ev) => {
+    const file = ev.target.files[0];
+    if (!file) return;
+    try {
+      let xmlText;
+      if (file.name.endsWith('.zip')) {
+        return alert('⚠️ Hai caricato un .zip. Estrai prima il file e carica solo "export.xml" o "export_cda.xml".');
+      } else {
+        xmlText = await file.text();
+      }
+      // Parsing XML in modo defensive (non blocca se fallisce)
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(xmlText, 'application/xml');
+      const errs = doc.getElementsByTagName('parsererror');
+      if (errs.length) return alert('⚠️ File XML non valido. Controlla di aver caricato export.xml di Salute iOS.');
+
+      // Estrazione dati: peso, passi, sonno, allenamenti
+      const records = doc.getElementsByTagName('Record');
+      let importedW = 0, importedSteps = 0, importedSleep = 0;
+      const stepsByDay = {}; // giorno → totale passi
+      const sleepByDay = {};
+
+      for (let i = 0; i < records.length; i++) {
+        const r = records[i];
+        const type = r.getAttribute('type');
+        const value = parseFloat(r.getAttribute('value'));
+        const startDate = r.getAttribute('startDate');
+        const unit = r.getAttribute('unit');
+        if (!startDate || isNaN(value)) continue;
+        const d = new Date(startDate).toISOString().slice(0, 10);
+
+        // PESO (BodyMass)
+        if (type === 'HKQuantityTypeIdentifierBodyMass') {
+          // Converti in kg se necessario
+          let kg = value;
+          if (unit === 'lb') kg = value * 0.45359237;
+          if (kg > 30 && kg < 300) {
+            const existing = ST.h.find(x => x.d === d);
+            if (!existing) {
+              ST.h.push({ d, w: Math.round(kg * 10) / 10 });
+              importedW++;
+            }
+          }
+        }
+        // PASSI (StepCount)
+        else if (type === 'HKQuantityTypeIdentifierStepCount') {
+          stepsByDay[d] = (stepsByDay[d] || 0) + Math.round(value);
+        }
+        // SONNO (SleepAnalysis) - ore stimate
+        else if (type === 'HKCategoryTypeIdentifierSleepAnalysis') {
+          const endDate = r.getAttribute('endDate');
+          if (endDate) {
+            const durMs = new Date(endDate) - new Date(startDate);
+            const hours = durMs / 3600000;
+            if (hours > 0 && hours < 16) {
+              sleepByDay[d] = (sleepByDay[d] || 0) + hours;
+            }
+          }
+        }
+      }
+
+      // Applica passi (max 30000/giorno)
+      Object.entries(stepsByDay).forEach(([d, steps]) => {
+        if (steps < 1 || steps > 50000) return;
+        if (!ST.life[d]) ST.life[d] = {};
+        if (!ST.life[d].steps) {
+          ST.life[d].steps = steps;
+          importedSteps++;
+        }
+      });
+      // Applica sonno
+      Object.entries(sleepByDay).forEach(([d, h]) => {
+        if (!ST.life[d]) ST.life[d] = {};
+        if (!ST.life[d].sleep) {
+          ST.life[d].sleep = Math.round(h * 10) / 10;
+          importedSleep++;
+        }
+      });
+
+      ST.h.sort((a, b) => new Date(a.d) - new Date(b.d));
+      await save();
+      alert(`✓ Import completato!\n\n• ${importedW} pesate\n• ${importedSteps} giorni con passi\n• ${importedSleep} notti di sonno\n\nDati duplicati ignorati.`);
+    } catch (e) {
+      console.error('Apple Health import fail:', e);
+      alert('Errore durante l\'import: ' + (e?.message || e));
+    }
+  };
+  input.click();
+};
+
+// ── EXPORT MYFITNESSPAL-COMPATIBLE (CSV) ──
+// Crea CSV con peso e nutrizione importabile in MFP/Cronometer/etc.
+window.exportToMyFitnessPal = function() {
+  try {
+    const lines = ['date,weight_kg,kcal_in,protein_g,carbs_g,fat_g,water_ml'];
+    // Set di date uniche
+    const dates = new Set();
+    (ST.h || []).forEach(x => dates.add(x.d));
+    Object.keys(ST.nutri || {}).forEach(d => dates.add(d));
+    Object.keys(ST.water || {}).forEach(d => dates.add(d));
+    [...dates].sort().forEach(d => {
+      const w = (ST.h || []).find(x => x.d === d)?.w || '';
+      const n = ST.nutri[d] || {};
+      const water = ST.water[d] || '';
+      lines.push([d, w, n.k || '', n.p || '', n.c || '', n.f || '', water].join(','));
+    });
+    const csv = lines.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `fittracker-${AU.user}-${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    alert('✓ CSV scaricato. Importabile su MyFitnessPal, Cronometer, Excel, Google Sheets.');
+  } catch (e) {
+    alert('Errore export: ' + (e?.message || e));
+  }
+};
+
 window.connectBluetoothScale = async function() {
   if (!('bluetooth' in navigator)) {
     return alert('⚠️ Bluetooth non supportato dal browser. Usa Chrome o Edge su Android/Desktop.');
@@ -5272,8 +5562,66 @@ window.openCheatDbPicker=function(){
   // Usa il pasto selezionato dalle chip (cheatMealSlot) o l'ultimo usato
   const mealSlot = window.cheatMealSlot || ST.lastCheatMealSlot || 'altro';
   ST.sheet='cheatDb';
-  ST.sheetData={mode:'select',selectedFood:null,foodQuery:'',foodCat:null,grams:100,meal:mealSlot};
+  // mode 'select' = scegli cibo dalla lista; 'configure' = imposta qty/grammi del cibo selezionato
+  // cart = array di item già aggiunti allo sgarro composito
+  ST.sheetData={mode:'select',selectedFood:null,foodQuery:'',foodCat:null,grams:100,meal:mealSlot,cart:[]};
   render();
+};
+
+// ── CARRELLO SGARRO MULTI-CIBO (sessione 6) ──
+// Aggiunge il cibo correntemente selezionato (con qty/grams) al carrello.
+// L'utente può poi aggiungere altri cibi e infine confermare TUTTO come 1 sgarro.
+window.addToCheatCart=function(){
+  if(!ST.sheetData||!ST.sheetData.selectedFood) return;
+  const f=ST.sheetData.selectedFood;
+  const portInfo = foodUsesPortion(f);
+  let kcal,label,qty,grams;
+  if(portInfo.byPortion){
+    qty=parseInt(document.getElementById('cheatQty')?.value||1);
+    if(isNaN(qty)||qty<1||qty>20) return alert('Quantità non valida (1-20)');
+    kcal=Math.round(f.kcal * portInfo.mult * qty);
+    if (portInfo.isDrink) {
+      label = qty > 1 ? `${qty}× ${f.name} (${portInfo.portionLabel})` : `${f.name} (${portInfo.portionLabel})`;
+    } else if (portInfo.mult === 1) {
+      label = qty > 1 ? `${qty}× ${f.name}` : f.name;
+    } else {
+      label = qty > 1 ? `${qty}× ${f.name} (~${portInfo.gramsLabel}g cad.)` : `${f.name} (~${portInfo.gramsLabel}g)`;
+    }
+    grams=null;
+  } else {
+    grams=parseInt(document.getElementById('cheatGrams')?.value||0);
+    if(isNaN(grams)||grams<1||grams>5000) return alert('Grammi non validi (1-5000)');
+    kcal=Math.round((f.kcal*grams)/100);
+    label=`${f.name} (${grams}g)`;
+    qty=1;
+  }
+  // Aggiungo al carrello
+  if (!ST.sheetData.cart) ST.sheetData.cart = [];
+  ST.sheetData.cart.push({label, kcal, qty, foodId:f.id, grams});
+  // Reset selezione: torno alla schermata "scegli cibo" per aggiungerne un altro
+  ST.sheetData.mode = 'select';
+  ST.sheetData.selectedFood = null;
+  ST.sheetData.grams = 100;
+  render();
+};
+
+window.removeFromCheatCart=function(idx){
+  if(!ST.sheetData?.cart) return;
+  ST.sheetData.cart.splice(idx, 1);
+  render();
+};
+
+// Conferma TUTTI gli item del carrello come UN UNICO sgarro composito
+window.confirmCheatCart=function(){
+  if(!ST.sheetData?.cart || !ST.sheetData.cart.length) return;
+  const cart = ST.sheetData.cart;
+  const totalKcal = cart.reduce((s,it) => s + (it.kcal||0), 0);
+  // Label aggregato: "Pizza margherita (~300g) + 2× Birra chiara (media 40cl) + Tiramisù (~120g)"
+  const aggregateLabel = cart.map(it => it.label).join(' + ');
+  // Passa al log come UN solo sgarro
+  applyCheatToLog(aggregateLabel, cart, totalKcal);
+  ST.sheet=null;
+  ST.sheetData=null;
 };
 window.selectCheatFoodFromDb=function(foodId){
   if(!ST.sheetData) return;
@@ -8214,6 +8562,42 @@ window.renderBody = function(cW,mac,theme,pWeek,sx){
 // PUNTO 10: tab "Condividi App" dedicata
 // ── TAB CLASSIFICA AMICI dedicata (sessione 5) ──
 window.renderSocial = function() {
+  // ── OPT-IN: se l'utente non ha dato consenso, mostra schermata di scelta ──
+  if (!ST.shareLeaderboardConsent) {
+    return `<div class="bebas" style="font-size:32px;margin-bottom:6px;">🏆 CLASSIFICA AMICI</div>
+    <div style="font-size:13px;color:var(--mut);margin-bottom:18px;">Sezione opzionale per il confronto amichevole con altri utenti FitTracker PRO.</div>
+
+    <div class="card" style="border-color:var(--purp);background:linear-gradient(135deg,rgba(167,139,250,.08),rgba(96,165,250,.04));">
+      <div style="text-align:center;font-size:48px;margin-bottom:10px;">🔒</div>
+      <div class="bebas" style="font-size:22px;color:var(--purp);text-align:center;margin-bottom:10px;">PARTECIPAZIONE OPZIONALE</div>
+      <div style="font-size:13px;color:var(--text);line-height:1.6;margin-bottom:14px;">
+        La classifica amici è <strong>privacy-by-default</strong>: i tuoi dati di allenamento <strong>NON vengono condivisi</strong> finché non dai esplicito consenso.
+      </div>
+
+      <div style="background:var(--surf);border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px;line-height:1.7;">
+        <strong style="color:var(--gre);">✓ Cosa viene condiviso (se attivi):</strong><br>
+        • Username (es. "${AU.user}")<br>
+        • Numero di sessioni allenamento (totale e ultimi 7gg)<br>
+        • Volume totale liftato (kg)<br>
+        • Kcal bruciate complessive (ultimi 7gg)<br>
+        • Streak giorni consecutivi<br>
+        • Variazione peso percentuale (±X%)<br>
+        • Strategia (cut/bulk)<br><br>
+        <strong style="color:var(--red);">✗ Cosa NON viene MAI condiviso:</strong><br>
+        • Peso assoluto (kg)<br>
+        • Misure corporee, foto, % grasso<br>
+        • Email, password, dati personali<br>
+        • Pasti consumati, sgarri specifici<br>
+        • Note esercizio, schede personalizzate
+      </div>
+
+      <button class="btn" style="width:100%;padding:14px;background:var(--purp);color:#fff;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;border:none;border-radius:12px;margin-bottom:8px;cursor:pointer;" onclick="enableLeaderboardConsent()">✓ ATTIVA CLASSIFICA AMICI</button>
+      <div style="font-size:11px;color:var(--mut);text-align:center;line-height:1.5;">
+        Puoi disattivarla in qualsiasi momento. Anche dopo la disattivazione, i tuoi dati condivisi verranno cancellati dal cloud entro 24 ore.
+      </div>
+    </div>`;
+  }
+
   const data = window.__leaderboard;
   const isLoading = window.__leaderboardLoading;
 
@@ -8327,6 +8711,14 @@ window.renderSocial = function() {
       <div style="font-size:14px;color:var(--text);font-weight:600;margin-bottom:6px;">Pronto al confronto?</div>
       <div style="font-size:12px;color:var(--mut);line-height:1.5;">Tocca <strong style="color:var(--purp);">"CARICA CLASSIFICA"</strong> per vedere come vai rispetto agli altri utenti FitTracker PRO.</div>
     </div>`}
+
+    <!-- Footer privacy + disattivazione -->
+    <div style="margin-top:18px;padding:12px;background:var(--surf);border-radius:10px;border:1px solid var(--bord);">
+      <div style="font-size:11px;color:var(--mut);line-height:1.6;margin-bottom:8px;">
+        🔒 Stai partecipando alla classifica. Le metriche aggregate vengono aggiornate ad ogni salvataggio.
+      </div>
+      <button class="btn-s" style="width:100%;padding:8px;background:transparent;border:1px solid var(--red);color:var(--red);font-size:11px;font-weight:600;border-radius:8px;cursor:pointer;" onclick="disableLeaderboardConsent()">DISATTIVA CONDIVISIONE</button>
+    </div>
   </div>`;
 };
 
@@ -8624,6 +9016,80 @@ window.renderSettings = function(mac){
     <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:10px;">Rileggi il disclaimer medico e l'informativa privacy che hai accettato alla registrazione.</div>
     <button class="btn-s btn-action" style="width:100%;padding:11px;font-size:13px;" onclick="openDisclaimerView()">📖 LEGGI</button>
   </div>
+
+  <!-- ── INTEGRAZIONI BILANCE / APPS SALUTE (sessione 6) ── -->
+  <div class="card" style="border-color:var(--blu);">
+    <div class="bebas" style="font-size:18px;color:var(--blu);margin-bottom:6px;">🔌 INTEGRAZIONI</div>
+    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:12px;">
+      Importa dati da bilance smart e app salute, esporta in formato standard.
+    </div>
+
+    <!-- Bilancia Bluetooth -->
+    ${('bluetooth' in navigator) ? `
+    <div style="background:var(--surf);border-radius:10px;padding:12px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <div style="font-size:24px;">⚖️</div>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:700;color:var(--text);">Bilancia Bluetooth</div>
+          <div style="font-size:10px;color:var(--mut);">Mi Body, Renpho, YUNMAI, Withings</div>
+        </div>
+      </div>
+      <button class="btn-s" style="width:100%;padding:10px;background:rgba(96,165,250,.1);border:1px solid var(--blu);color:var(--blu);font-size:12px;font-weight:600;border-radius:8px;cursor:pointer;" onclick="connectBluetoothScale()">📡 CONNETTI BILANCIA</button>
+    </div>` : `
+    <div style="background:var(--surf);border-radius:10px;padding:12px;margin-bottom:8px;opacity:.6;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="font-size:24px;">⚖️</div>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:700;color:var(--mut);">Bilancia Bluetooth</div>
+          <div style="font-size:10px;color:var(--mut);">Browser non supportato. Usa Chrome o Edge su Android/Desktop.</div>
+        </div>
+      </div>
+    </div>`}
+
+    <!-- Apple Health -->
+    <div style="background:var(--surf);border-radius:10px;padding:12px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <div style="font-size:24px;">🍎</div>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:700;color:var(--text);">Apple Salute (iOS)</div>
+          <div style="font-size:10px;color:var(--mut);">Importa peso, passi, sonno da export.xml</div>
+        </div>
+      </div>
+      <button class="btn-s" style="width:100%;padding:10px;background:rgba(96,165,250,.1);border:1px solid var(--blu);color:var(--blu);font-size:12px;font-weight:600;border-radius:8px;cursor:pointer;" onclick="importAppleHealth()">📥 IMPORTA DA APPLE HEALTH</button>
+      <div style="font-size:10px;color:var(--mut);margin-top:6px;line-height:1.5;">
+        Su iPhone: app <strong>Salute</strong> → tap profilo (in alto a destra) → <strong>Esporta tutti i dati</strong> → estrai il .zip → carica <code>export.xml</code>.
+      </div>
+    </div>
+
+    <!-- MyFitnessPal / Cronometer -->
+    <div style="background:var(--surf);border-radius:10px;padding:12px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <div style="font-size:24px;">🥗</div>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:700;color:var(--text);">MyFitnessPal / Cronometer</div>
+          <div style="font-size:10px;color:var(--mut);">Esporta peso e nutrizione in CSV</div>
+        </div>
+      </div>
+      <button class="btn-s" style="width:100%;padding:10px;background:rgba(96,165,250,.1);border:1px solid var(--blu);color:var(--blu);font-size:12px;font-weight:600;border-radius:8px;cursor:pointer;" onclick="exportToMyFitnessPal()">📤 ESPORTA CSV</button>
+      <div style="font-size:10px;color:var(--mut);margin-top:6px;line-height:1.5;">
+        File CSV importabile in MyFitnessPal, Cronometer, Excel, Google Sheets.
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PRIVACY & DATI (GDPR — sessione 6) ── -->
+  <div class="card" style="border-color:var(--gre);">
+    <div class="bebas" style="font-size:18px;color:var(--gre);margin-bottom:6px;">🛡️ PRIVACY & I MIEI DATI</div>
+    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:12px;">
+      Esercita i tuoi diritti GDPR: scarica una copia dei tuoi dati, rivedi le impostazioni privacy o consulta l'informativa completa.
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <button class="btn-s" style="width:100%;padding:11px;font-size:13px;background:rgba(34,197,94,.1);border:1px solid var(--gre);color:var(--gre);font-weight:600;border-radius:8px;cursor:pointer;" onclick="exportMyData()">📥 ESPORTA I MIEI DATI (JSON)</button>
+      <a href="privacy.html" target="_blank" style="display:block;text-align:center;padding:11px;font-size:13px;background:var(--surf);border:1px solid var(--bord);color:var(--text);font-weight:600;border-radius:8px;text-decoration:none;">📋 INFORMATIVA PRIVACY</a>
+      <button class="btn-s" style="width:100%;padding:11px;font-size:13px;background:var(--surf);border:1px solid var(--bord);color:var(--mut);font-weight:600;border-radius:8px;cursor:pointer;" onclick="resetGdprConsent()">🔄 RIVEDI BANNER PRIVACY</button>
+    </div>
+  </div>
+
   <!-- ── ACCOUNT & SICUREZZA (sessione 4) ── -->
   <div class="card" style="border-color:var(--blu);">
     <div class="bebas" style="font-size:18px;color:var(--blu);margin-bottom:6px;">🔐 ACCOUNT & SICUREZZA</div>
@@ -8955,16 +9421,33 @@ window.render = function() {
   ST.sheet==='cheatDb'&&ST.sheetData?(()=>{
     const d=ST.sheetData;
     if(!d.selectedFood){
-      // Schermata 1: ricerca cibo
+      // Schermata 1: ricerca cibo + carrello composito
+      const cart = d.cart || [];
+      const cartTotalKcal = cart.reduce((s,it) => s + (it.kcal||0), 0);
+      const cartHtml = cart.length ? `
+        <div style="background:rgba(255,104,53,.08);border:1.5px solid var(--ora);border-radius:12px;padding:10px 12px;margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <div style="font-size:11px;color:var(--ora);font-weight:800;letter-spacing:1px;">🛒 SGARRO IN COSTRUZIONE</div>
+            <div class="bebas" style="font-size:16px;color:var(--ora);">${cartTotalKcal} kcal</div>
+          </div>
+          ${cart.map((it,i) => `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;${i<cart.length-1?'border-bottom:1px dashed var(--bord);':''}">
+            <div style="font-size:12px;color:var(--text);flex:1;min-width:0;line-height:1.3;">${escapeHtml(it.label)}</div>
+            <div style="font-size:11px;color:var(--mut);margin:0 8px;flex-shrink:0;">${it.kcal} kcal</div>
+            <button onclick="removeFromCheatCart(${i})" style="background:none;border:none;color:var(--red);font-size:16px;cursor:pointer;padding:2px 6px;flex-shrink:0;">✕</button>
+          </div>`).join('')}
+          <button class="btn" style="width:100%;margin-top:8px;padding:12px;background:var(--ora);color:#fff;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;border:none;border-radius:10px;" onclick="confirmCheatCart()">✓ CONFERMA SGARRO (${cartTotalKcal} kcal)</button>
+        </div>
+      ` : '';
       return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div>
         <div class="bebas" style="font-size:22px;margin-bottom:4px;">🔍 SCEGLI DAL DB</div>
-        <div style="font-size:12px;color:var(--mut);margin-bottom:12px;line-height:1.5;">Cerca tra ${(window.FOOD_DB||[]).length} cibi italiani con valori nutrizionali precisi.</div>
-        <input id="cheatDbSearch" type="text" maxlength="50" value="${escapeHtml(d.foodQuery||'')}" placeholder="🔍 Cerca cibo (es. fritto misto, pizza, gelato...)" oninput="updateCheatFoodQuery(this.value)" style="margin-bottom:8px;font-size:14px;padding:10px;">
+        <div style="font-size:12px;color:var(--mut);margin-bottom:12px;line-height:1.5;">${cart.length ? 'Aggiungi altri cibi al carrello o conferma lo sgarro completo.' : 'Cerca tra '+(window.FOOD_DB||[]).length+' cibi italiani. Puoi aggiungerne più di uno e contarli come UN solo sgarro.'}</div>
+        ${cartHtml}
+        <input id="cheatDbSearch" type="text" maxlength="50" value="${escapeHtml(d.foodQuery||'')}" placeholder="🔍 Cerca cibo (es. fritto misto, pizza, birra...)" oninput="updateCheatFoodQuery(this.value)" style="margin-bottom:8px;font-size:14px;padding:10px;">
         <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;">
           ${(window.FOOD_CATS||[]).map(c=>`<button class="btn-s" style="font-size:10px;padding:4px 8px;background:${d.foodCat===c.id?'var(--purp)':'var(--surf)'};color:${d.foodCat===c.id?'#fff':'var(--mut)'};border:1px solid ${d.foodCat===c.id?'var(--purp)':'var(--bord)'};" onclick="setCheatFoodCat('${c.id}')">${c.emo} ${c.short||c.lbl}</button>`).join('')}
         </div>
-        <div id="cheatDbList" style="height:50vh;overflow-y:auto;">${_buildCheatDbListHtml()}</div>
-        <button class="btn btn-action" style="margin-top:12px;width:100%;padding:12px;" onclick="closeSheet()">ANNULLA</button>
+        <div id="cheatDbList" style="height:${cart.length?'40vh':'50vh'};overflow-y:auto;">${_buildCheatDbListHtml()}</div>
+        <button class="btn btn-action" style="margin-top:12px;width:100%;padding:12px;" onclick="closeSheet()">${cart.length?'ANNULLA E SVUOTA CARRELLO':'ANNULLA'}</button>
       </div></div>`;
     }
     // Schermata 2: imposta grammi/quantità
@@ -9018,8 +9501,8 @@ window.render = function() {
         </div>
       `}
       <div style="display:flex;gap:6px;">
-        <button class="btn btn-action" style="flex:1;padding:12px;" onclick="ST.sheetData.selectedFood=null;render()">← Cambia cibo</button>
-        <button class="btn" style="flex:2;padding:12px;background:var(--ora);color:#fff;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;" onclick="confirmCheatFromDb()">✓ AGGIUNGI</button>
+        <button class="btn btn-action" style="flex:1;padding:12px;" onclick="ST.sheetData.selectedFood=null;ST.sheetData.mode='select';render()">← Cambia cibo</button>
+        <button class="btn" style="flex:2;padding:12px;background:var(--ora);color:#fff;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;" onclick="addToCheatCart()">+ AGGIUNGI AL CARRELLO</button>
       </div>
     </div></div>`;
   })():
