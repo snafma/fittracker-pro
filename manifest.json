@@ -1,0 +1,25 @@
+{
+  "name": "FitTracker PRO",
+  "short_name": "FitTracker",
+  "description": "App fitness personale: allenamenti, alimentazione, progressi",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d0d0f",
+  "theme_color": "#0d0d0f",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' fill='%230d0d0f' rx='28'/><text x='96' y='120' font-family='Arial Black' font-size='84' fill='%23c5f135' text-anchor='middle'>FT</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%230d0d0f' rx='74'/><text x='256' y='320' font-family='Arial Black' font-size='224' fill='%23c5f135' text-anchor='middle'>FT</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
