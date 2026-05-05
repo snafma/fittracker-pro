@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION10-NO-STORAGE-CUSTOM-FOOD">
+<meta name="ft-version" content="build-SESSION11-SHOPPING-REAL">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -9488,109 +9488,249 @@ window.renderShopping = function(mac) {
 
 // ── GENERA LISTA da programma alimentare ──
 window._generateShoppingList = function(mac) {
-  // Aggrega ingredienti per cibo dato il piano alimentare settimanale
-  // Calcola quantità totali per 7 giorni (5 pasti x 7 = 35 pasti)
-  // Strategy: usiamo i preferiti del piano alimentare standard
+  // ── LISTA SPESA REALE (sessione 11) ──
+  // Estrae gli ingredienti reali dai 7 giorni × 5 pasti del programma alimentare,
+  // parsando le stringhe items di buildMeals (es. "120g Riso integrale", "200g Yogurt Greco 0%")
+  // e aggregando le quantità totali per cibo.
 
   const items = [];
   const sx = ST.profile?.sx || 'm';
   const intol = ST.p?.intol || [];
   const diet = ST.p?.diet || 'omnivore';
 
-  // Generiamo 7 giorni di pasti per estrarre ingredienti
-  const allMeals = [];
-  for (let day = 0; day < 7; day++) {
-    const isRest = day === 0 || day === 6; // weekend = rest semplificato
-    try {
-      const meals = buildMeals(mac, intol, sx, isRest, diet, ST.p?.times, ST.p?.usesSupplements||false, ST.p?.favs||null, ST.p?.workoutTime||null);
-      Object.values(meals||{}).forEach(opts => {
-        if (Array.isArray(opts)) opts.slice(0,1).forEach(opt => allMeals.push(opt)); // prima opzione di ogni pasto
-        else if (opts) allMeals.push(opts);
-      });
-    } catch(_) {}
-  }
-
-  // Estraggo testi pasti e parsing semplificato
-  // Mappa cibo → quantità accumulate
+  // Aggregatore: mappa cibo → { totalG, count, originalNames[] }
   const acc = {};
-  allMeals.forEach(meal => {
-    const ingredients = meal?.ing || meal?.ingredients || meal?.items || [];
-    if (Array.isArray(ingredients)) {
-      ingredients.forEach(ing => {
-        const name = ing.name || ing.label || ing;
-        const qty = ing.qty || ing.grams || 100;
-        if (typeof name === 'string') {
-          const key = name.toLowerCase().trim().replace(/[^a-z0-9]/g, '_');
-          if (!acc[key]) acc[key] = { name, totalG: 0, count: 0 };
-          acc[key].totalG += qty;
-          acc[key].count++;
+
+  // Genero pasti per 7 giorni (3 giorni allenamento + 2 rest + 2 cardio = approssimazione realistica)
+  const trainingDays = ST.p?.sessions >= 5 ? 5 : ST.p?.sessions >= 3 ? 3 : 2;
+  for (let day = 0; day < 7; day++) {
+    const isRest = day >= trainingDays; // primi N giorni = training, resto rest
+    let meals;
+    try {
+      meals = buildMeals(mac, intol, sx, isRest, diet, ST.p?.times, ST.p?.usesSupplements||false, ST.p?.favs||null, ST.p?.workoutTime||null);
+    } catch(e) { continue; }
+    if (!meals) continue;
+
+    // Per ogni pasto (col, sp1, pra, sp2, cen) prendo SOLO la prima opzione
+    // (assumiamo che l'utente segua principalmente quella; la lista è una guida)
+    if (!Array.isArray(meals)) return;
+    meals.forEach(meal => {
+      if (!meal?.opts || !Array.isArray(meal.opts) || !meal.opts[0]) return;
+      const firstOpt = meal.opts[0];
+      if (!firstOpt.items || !Array.isArray(firstOpt.items)) return;
+
+      firstOpt.items.forEach(itemStr => {
+        if (typeof itemStr !== 'string') return;
+        const parsed = window._parseIngredient(itemStr);
+        if (!parsed || !parsed.cleanName) return;
+        const key = parsed.normalizedName;
+        if (!key || key.length < 2) return;
+        if (!acc[key]) {
+          acc[key] = {
+            displayName: parsed.cleanName,
+            totalG: 0,
+            countNoQty: 0,
+            unit: parsed.unit
+          };
+        }
+        if (parsed.grams) {
+          acc[key].totalG += parsed.grams;
+        } else {
+          acc[key].countNoQty++;
         }
       });
+    });
+  }
+
+  // Trasforma aggregato in lista items
+  Object.entries(acc).forEach(([key, val]) => {
+    let qtyText;
+    if (val.totalG > 0) {
+      // Aggiungo +20% margine sicurezza per non finire prima del tempo
+      const totalWithMargin = Math.round(val.totalG * 1.2);
+      qtyText = totalWithMargin >= 1000
+        ? `${(totalWithMargin/1000).toFixed(1)} kg`
+        : `${totalWithMargin} g`;
+    } else if (val.countNoQty > 0) {
+      // Cibi senza quantità (caffè, cioccolato a piacere, ecc.)
+      qtyText = val.countNoQty >= 5 ? '1 conf. settimanale' : 'a piacere';
+    } else {
+      qtyText = 'a piacere';
     }
+
+    items.push({
+      key,
+      name: val.displayName,
+      qty: qtyText,
+      cat: window._categorizeFood(val.displayName)
+    });
   });
 
-  // Se acc vuoto (struttura buildMeals diversa), faccio fallback con cibi comuni
-  const hasIngredients = Object.keys(acc).length > 0;
-
-  if (hasIngredients) {
-    Object.entries(acc).forEach(([key, val]) => {
-      items.push({
-        key,
-        name: val.name,
-        qty: val.totalG > 1000 ? `${(val.totalG/1000).toFixed(1)}kg` : `${Math.round(val.totalG)}g`,
-        cat: window._categorizeFood(val.name)
-      });
-    });
-  } else {
-    // Fallback: lista standard settimanale per omnivoro/vegetariano
-    const proteinKcal = mac.prot * 7; // settimana proteine totali in g
-    const baseList = [
+  // Se per qualche motivo non c'è nulla (es. profilo non completo), fallback
+  if (items.length === 0) {
+    return [
       { key: 'pollo', name: 'Petto di pollo', qty: '1.4 kg', cat: '🥩 Carne & Pesce' },
-      { key: 'pesce', name: 'Filetto di pesce (salmone/merluzzo)', qty: '600 g', cat: '🥩 Carne & Pesce' },
-      { key: 'manzo', name: 'Manzo magro (es. fesa)', qty: '500 g', cat: '🥩 Carne & Pesce' },
-      { key: 'tonno', name: 'Tonno al naturale', qty: '4 scatolette', cat: '🥩 Carne & Pesce' },
       { key: 'uova', name: 'Uova', qty: '12 (1 conf.)', cat: '🥚 Latticini & Uova' },
       { key: 'yogurt_greco', name: 'Yogurt greco 0%', qty: '1 kg', cat: '🥚 Latticini & Uova' },
-      { key: 'ricotta', name: 'Ricotta light', qty: '500 g', cat: '🥚 Latticini & Uova' },
-      { key: 'parmigiano', name: 'Parmigiano (grattugiato)', qty: '200 g', cat: '🥚 Latticini & Uova' },
-      { key: 'latte', name: 'Latte parzialmente scremato', qty: '1.5 L', cat: '🥚 Latticini & Uova' },
-      { key: 'mele', name: 'Mele', qty: '7 (1 a giorno)', cat: '🥬 Frutta & Verdura' },
-      { key: 'banane', name: 'Banane', qty: '5', cat: '🥬 Frutta & Verdura' },
-      { key: 'frutti_bosco', name: 'Frutti di bosco (mirtilli/lamponi)', qty: '500 g', cat: '🥬 Frutta & Verdura' },
-      { key: 'spinaci', name: 'Spinaci freschi/surgelati', qty: '500 g', cat: '🥬 Frutta & Verdura' },
-      { key: 'broccoli', name: 'Broccoli', qty: '500 g', cat: '🥬 Frutta & Verdura' },
-      { key: 'zucchine', name: 'Zucchine', qty: '4', cat: '🥬 Frutta & Verdura' },
-      { key: 'pomodori', name: 'Pomodori', qty: '500 g', cat: '🥬 Frutta & Verdura' },
-      { key: 'insalata_mista', name: 'Insalata mista', qty: '2 buste', cat: '🥬 Frutta & Verdura' },
-      { key: 'avocado', name: 'Avocado', qty: '2', cat: '🥬 Frutta & Verdura' },
-      { key: 'patate', name: 'Patate', qty: '1 kg', cat: '🥬 Frutta & Verdura' },
       { key: 'avena', name: 'Fiocchi avena', qty: '500 g', cat: '🌾 Cereali & Pane' },
       { key: 'riso_int', name: 'Riso integrale', qty: '500 g', cat: '🌾 Cereali & Pane' },
-      { key: 'pasta_int', name: 'Pasta integrale', qty: '500 g', cat: '🌾 Cereali & Pane' },
-      { key: 'pane_int', name: 'Pane integrale (a fette)', qty: '500 g', cat: '🌾 Cereali & Pane' },
-      { key: 'gallette', name: 'Gallette di riso/mais', qty: '1 conf.', cat: '🌾 Cereali & Pane' },
-      { key: 'legumi', name: 'Legumi (ceci/lenticchie/fagioli)', qty: '2 barattoli', cat: '🥫 Legumi & Conserve' },
-      { key: 'mandorle', name: 'Mandorle naturali', qty: '200 g', cat: '🥜 Snack & Frutta secca' },
-      { key: 'noci', name: 'Noci', qty: '150 g', cat: '🥜 Snack & Frutta secca' },
-      { key: 'olio_evo', name: 'Olio extravergine d\'oliva', qty: '1 bottiglia', cat: '🧂 Condimenti & Vari' },
-      { key: 'sale', name: 'Sale', qty: '1 conf.', cat: '🧂 Condimenti & Vari' },
-      { key: 'spezie', name: 'Spezie miste', qty: 'a piacere', cat: '🧂 Condimenti & Vari' },
+      { key: 'verdure', name: 'Verdure miste di stagione', qty: '2 kg', cat: '🥬 Frutta & Verdura' },
+      { key: 'olio_evo', name: 'Olio extravergine d\'oliva', qty: '1 bottiglia', cat: '🧂 Condimenti & Vari' }
     ];
-    items.push(...baseList);
   }
+
+  // Ordina per categoria poi alfabetico
+  items.sort((a,b) => {
+    if (a.cat !== b.cat) return a.cat.localeCompare(b.cat);
+    return a.name.localeCompare(b.name);
+  });
 
   return items;
 };
 
+// ── PARSER INGREDIENTE (sessione 11) ──
+// Estrae quantità, unità e nome cibo da stringhe tipo:
+//   "120g Riso integrale"
+//   "200g Yogurt Greco 0%"
+//   "1 cucchiaio EVO (~10g)"
+//   "Caffè amaro"
+//   "Shaker 30g Whey/Isolate (~120 kcal)"
+//   "30g Mandorle (1 pugno)"
+//   "1 fetta pane integrale tostato"
+//   "1 frutto"
+window._parseIngredient = function(str) {
+  if (!str || typeof str !== 'string') return null;
+  let s = str.trim();
+
+  // Rimuovo annotazioni in parentesi tipo "(~120 kcal)" o "(1 pugno)"
+  s = s.replace(/\s*\([^)]*\)/g, '').trim();
+
+  // Pattern 1: "Xg Nome cibo" o "X g Nome cibo"
+  let m = s.match(/^(\d+(?:[.,]\d+)?)\s*(g|gr|grammi|ml|kg)\b\s+(.+)$/i);
+  if (m) {
+    const qty = parseFloat(m[1].replace(',', '.'));
+    let unit = m[2].toLowerCase();
+    let grams = qty;
+    if (unit === 'kg') grams = qty * 1000;
+    if (unit === 'ml') grams = qty; // approssimazione 1ml ≈ 1g per la maggior parte dei liquidi
+    return {
+      cleanName: m[3].trim(),
+      normalizedName: window._normalizeIngredientName(m[3]),
+      grams: Math.round(grams),
+      unit: 'g'
+    };
+  }
+
+  // Pattern 2: "Shaker 30g Whey..." (cibo + quantità in mezzo)
+  m = s.match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s*(g|gr|ml)\b\s*(.*)$/i);
+  if (m) {
+    const qty = parseFloat(m[2].replace(',', '.'));
+    const fullName = (m[1] + ' ' + m[4]).trim();
+    return {
+      cleanName: fullName,
+      normalizedName: window._normalizeIngredientName(fullName),
+      grams: Math.round(qty),
+      unit: 'g'
+    };
+  }
+
+  // Pattern 3: "1 fetta pane integrale", "1 frutto", "2 uova strapazzate"
+  m = s.match(/^(\d+)(?:-\d+)?\s+(fetta|fette|frutto|frutti|uovo|uova|pezzo|pezzi|cucchiaio|cucchiai|cucchiaino|cucchiaini|tazza|bicchiere|porzione|porzioni|fettina|fettine)\s*(.*)$/i);
+  if (m) {
+    const qty = parseInt(m[1]);
+    const unitWord = m[2].toLowerCase();
+    let name = (m[3] || '').trim();
+    // Stima grammature comuni e nome canonico
+    let estG = 0;
+    let canonicalName = name;
+    if (/fetta|fettina/.test(unitWord)) {
+      estG = qty * 30;
+      if (!name) canonicalName = 'fetta'; // genericho
+      else canonicalName = name; // mantieni "pane integrale" senza l'unità
+    }
+    else if (/frutto|frutti/.test(unitWord)) { estG = qty * 150; canonicalName = name || 'frutto'; }
+    else if (/uovo|uova/.test(unitWord)) {
+      estG = qty * 55;
+      // "2 uova strapazzate" → cibo principale è "uova", "strapazzate" è preparazione
+      canonicalName = 'uova';
+    }
+    else if (/cucchiaio/.test(unitWord)) { estG = qty * 10; canonicalName = name || 'olio'; }
+    else if (/cucchiaino/.test(unitWord)) { estG = qty * 5; canonicalName = name; }
+    else if (/tazza|bicchiere/.test(unitWord)) { estG = qty * 200; canonicalName = name; }
+    else { estG = qty * 50; canonicalName = name; }
+
+    return {
+      cleanName: canonicalName.charAt(0).toUpperCase() + canonicalName.slice(1),
+      normalizedName: window._normalizeIngredientName(canonicalName),
+      grams: estG,
+      unit: 'unit'
+    };
+  }
+
+  // Pattern 4: solo nome (es. "Caffè amaro", "Sale")
+  return {
+    cleanName: s,
+    normalizedName: window._normalizeIngredientName(s),
+    grams: null,
+    unit: null
+  };
+};
+
+// Normalizza il nome ingrediente per aggregare varianti
+// Es: "Pane integrale tostato" → "pane_integrale"
+//     "Yogurt Greco 0%" → "yogurt_greco"
+//     "Avena integrale" → "avena"
+window._normalizeIngredientName = function(name) {
+  if (!name) return '';
+  let s = name.toLowerCase();
+  // Rimuovi qualifiers che non differenziano gli acquisti
+  s = s.replace(/\b(0%|light|magr[oa]|integrale|integrali|integrali?|fresc[oa]|tostato|tostat[oa]|cotto|cotti|crud[oa]|cruda|amar[oa]|dolc[ei]|salat[oa]|biolog\w*|bio|naturale|al naturale)\b/g, '');
+  s = s.replace(/[^a-z0-9àèéìòù\s]/g, '');
+  s = s.replace(/\s+/g, '_').trim();
+  s = s.replace(/^_|_$/g, '');
+  // Aggrega varianti comuni
+  if (/yogurt_greco|yogurt_greca/.test(s)) s = 'yogurt_greco';
+  if (/^pane/.test(s)) s = 'pane_integrale';
+  if (/^riso/.test(s)) s = 'riso';
+  if (/^pasta/.test(s)) s = 'pasta';
+  if (/^pollo|petto.*poll/.test(s)) s = 'pollo';
+  if (/^manzo|fesa|tagliata/.test(s)) s = 'manzo';
+  if (/^tonno/.test(s)) s = 'tonno';
+  if (/^salmone/.test(s)) s = 'salmone';
+  if (/^merluzzo/.test(s)) s = 'merluzzo';
+  if (/avena/.test(s)) s = 'avena';
+  if (/parmigian|grana/.test(s)) s = 'parmigiano';
+  if (/^caff[eè]/.test(s)) s = 'caffe';
+  if (/^uova|^uovo/.test(s)) s = 'uova';
+  if (/mandorl/.test(s)) s = 'mandorle';
+  if (/cioccolato/.test(s)) s = 'cioccolato_fondente';
+  if (/^t[eè]\b/.test(s)) s = 'te';
+  if (/^evo|olio_extra/.test(s)) s = 'olio_evo';
+  if (/^banan/.test(s)) s = 'banana';
+  if (/^mel[ae]/.test(s)) s = 'mela';
+  return s;
+};
+
+
 // Categorizza un cibo in base al nome
 window._categorizeFood = function(name) {
   const n = (name||'').toLowerCase();
-  if (/poll|tacchin|manz|maial|salam|prosciutt|brešaol|tonn|pesc|salmon|merluzz|orat|gambr|polp|seppi|sgombro|trota/.test(n)) return '🥩 Carne & Pesce';
-  if (/uov|yogurt|latte|formag|ricott|parmigian|mozzarella|grana|burr|panna/.test(n)) return '🥚 Latticini & Uova';
-  if (/mela|banana|arancia|fragola|frutti|mirtill|lampon|kiwi|ananas|pera|uva|pesca|albicocc|spinac|broccol|zucchin|pomodor|insalat|carot|cipolla|aglio|patat|peperon|melanzan|cetriol|funghi|finocchi|porri|sedan/.test(n)) return '🥬 Frutta & Verdura';
-  if (/pasta|riso|pane|farro|orzo|avena|cereal|gallett|cous|quinoa|cracker/.test(n)) return '🌾 Cereali & Pane';
-  if (/legum|cec|lenticchi|fagiol|fav|piselli|hummus|tofu|seitan|tonno_n_sc|conserv/.test(n)) return '🥫 Legumi & Conserve';
-  if (/mandorl|noc|nocciol|pistacch|anacard|arachid|pinol|frutta_secc|barrett|protein/.test(n)) return '🥜 Snack & Frutta secca';
+  // Uova vanno in latticini & uova
+  if (/^uova|^uovo|alla coque|strapazzate|sode/.test(n)) return '🥚 Latticini & Uova';
+  // Latticini
+  if (/yogurt|latte\b|formag|ricott|parmigian|mozzarella|grana|burr|panna|fiocchi.*latte|stracchino|caciotta/.test(n)) return '🥚 Latticini & Uova';
+  // Carne & pesce (anche bresaola, prosciutto)
+  if (/poll|tacchin|manz|maial|bresaol|prosciutt|salam|tonn|pesc|salmon|merluzz|orat|gambr|polp|seppi|sgombro|trota|alici|sardin|cernia|dentice|spigola|fettin|filetto|carpaccio|hamburger.*manzo/.test(n)) return '🥩 Carne & Pesce';
+  // Frutta & verdura
+  if (/mela|banana|arancia|fragola|frutti|mirtill|lampon|kiwi|ananas|pera|uva|pesca|albicocc|spinac|broccol|zucchin|pomodor|insalat|carot|cipolla|aglio|patat|peperon|melanzan|cetriol|funghi|finocchi|porri|sedan|verdure|frutto/.test(n)) return '🥬 Frutta & Verdura';
+  // Cereali & pane
+  if (/pasta|riso|pane|farro|orzo|avena|cereal|gallett|cous|quinoa|cracker|biscott/.test(n)) return '🌾 Cereali & Pane';
+  // Legumi
+  if (/legum|cec|lenticchi|fagiol|fav|piselli|hummus|tofu|seitan|tempeh/.test(n)) return '🥫 Legumi & Conserve';
+  // Snack & frutta secca
+  if (/mandorl|noc|nocciol|pistacch|anacard|arachid|pinol|frutta secc|barrett|protein|whey|isolate|cioccolato/.test(n)) return '🥜 Snack & Frutta secca';
+  // Olio EVO va in condimenti
+  if (/^evo|olio|aceto|sale|spezie|peperoncino|caffè|caffe|tè|the|tisana/.test(n)) return '🧂 Condimenti & Vari';
   return '🧂 Condimenti & Vari';
 };
 
