@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION11-SHOPPING-REAL">
+<meta name="ft-version" content="build-SESSION12-UX-REFACTOR">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -380,9 +380,9 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
   </div>
 </div>
 
-<!-- ── FOOTER privacy globale ── -->
-<div id="gdprFooter" style="position:fixed;bottom:8px;right:8px;z-index:9998;display:none;">
-  <a href="#" onclick="event.preventDefault();if(typeof openDisclaimerView==='function')openDisclaimerView();return false;" style="font-size:10px;color:var(--mut);text-decoration:none;background:rgba(26,26,31,.9);padding:4px 10px;border-radius:6px;border:1px solid var(--bord);backdrop-filter:blur(8px);">🔒 Privacy</a>
+<!-- ── FOOTER privacy globale (rimosso in sessione 12 — accessibile solo da Configurazione) ── -->
+<div id="gdprFooter" style="display:none;">
+  <a href="#" onclick="event.preventDefault();if(typeof openDisclaimerView==='function')openDisclaimerView();return false;" style="font-size:10px;color:var(--mut);text-decoration:none;">🔒 Privacy</a>
 </div>
 
 <script>
@@ -396,21 +396,15 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
         const b = document.getElementById('gdprBanner');
         if (b) b.style.display = 'block';
       }, 1500);
-    } else {
-      // Mostra footer privacy sempre
-      setTimeout(() => {
-        const f = document.getElementById('gdprFooter');
-        if (f) f.style.display = 'block';
-      }, 2000);
     }
+    // Sessione 12: niente più footer privacy floating, accessibile solo da Configurazione → Privacy
   } catch(_) {}
 
   window.acceptGdprConsent = function() {
     try { localStorage.setItem('ft_gdpr_consent_v1', 'accepted'); } catch(_) {}
     const b = document.getElementById('gdprBanner');
     if (b) b.style.display = 'none';
-    const f = document.getElementById('gdprFooter');
-    if (f) f.style.display = 'block';
+    // Niente più footer floating: utente accede a privacy da Configurazione
   };
 
   // Reset consenso (utilizzabile dalle impostazioni)
@@ -4411,7 +4405,7 @@ window.defST=function(){
     // ── Campi sessione 6 ──
     shareLeaderboardConsent:false, // opt-in per classifica amici (privacy by default)
     // ── Campi sessione 7 ──
-    notifPrefs:{workout:true, meals:true, weighIn:true}, // preferenze notifiche
+    notifPrefs:{master:true, workout:true, meals:true, weighIn:true}, // preferenze notifiche
     travelMode:null,             // {active:true, startD:'2026-05-04', endD:'2026-05-08', hasGym:false, sessions:3, dur:30}
     // ── Campi sessione 9 ──
     customFoods:[],              // cibi personalizzati creati dall'utente per gli sgarri
@@ -5566,6 +5560,14 @@ window.toggleNotifPref = async function(key, enabled) {
   rescheduleAllNotifications();
 };
 
+// Master toggle: attiva/disattiva TUTTE le notifiche (sessione 12)
+window.toggleNotifMaster = async function(enabled) {
+  if (!ST.notifPrefs) ST.notifPrefs = {};
+  ST.notifPrefs.master = enabled;
+  await save();
+  rescheduleAllNotifications();
+};
+
 window.testNotification = function() {
   if (!('Notification' in window)) return alert('Browser non supporta notifiche.');
   if (Notification.permission !== 'granted') return alert('Prima attiva le notifiche.');
@@ -5631,6 +5633,8 @@ window.rescheduleAllNotifications = function() {
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
   if (!ST.p) return;
   const prefs = ST.notifPrefs || {};
+  // Master toggle: se OFF, nessuna notifica viene schedulata (sessione 12)
+  if (prefs.master === false) return;
   const today = new Date();
   const todayStr = today.toISOString().slice(0, 10);
 
@@ -9922,14 +9926,45 @@ window.renderCoach = function(){
     </div>
   </div>`;
 }
+
 window.renderSettings = function(mac){
   const sx=AU.profile?.sx||'m';
   const wStart=ST.h && ST.h.length>0 ? ST.h[0].w : 70;
+
+  // Menu scorciatoie sezioni (sessione 12)
+  const sectionsMenu = `
+    <div class="card" style="background:linear-gradient(135deg,rgba(96,165,250,.06),rgba(167,139,250,.04));border:1.5px solid var(--blu);padding:12px;margin-bottom:14px;">
+      <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:8px;">🧭 NAVIGA RAPIDAMENTE</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
+        <button onclick="document.getElementById('sec-profile')?.scrollIntoView({behavior:'smooth',block:'start'})" style="padding:10px 4px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;cursor:pointer;font-size:10px;color:var(--text);font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;"><span style="font-size:18px;">👤</span><span>Profilo</span></button>
+        <button onclick="document.getElementById('sec-program')?.scrollIntoView({behavior:'smooth',block:'start'})" style="padding:10px 4px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;cursor:pointer;font-size:10px;color:var(--text);font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;"><span style="font-size:18px;">🎯</span><span>Programma</span></button>
+        <button onclick="document.getElementById('sec-training')?.scrollIntoView({behavior:'smooth',block:'start'})" style="padding:10px 4px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;cursor:pointer;font-size:10px;color:var(--text);font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;"><span style="font-size:18px;">💪</span><span>Allenam.</span></button>
+        <button onclick="document.getElementById('sec-nutrition')?.scrollIntoView({behavior:'smooth',block:'start'})" style="padding:10px 4px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;cursor:pointer;font-size:10px;color:var(--text);font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;"><span style="font-size:18px;">🥗</span><span>Aliment.</span></button>
+        <button onclick="document.getElementById('sec-coaching')?.scrollIntoView({behavior:'smooth',block:'start'})" style="padding:10px 4px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;cursor:pointer;font-size:10px;color:var(--text);font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;"><span style="font-size:18px;">🤖</span><span>Coaching</span></button>
+        <button onclick="document.getElementById('sec-account')?.scrollIntoView({behavior:'smooth',block:'start'})" style="padding:10px 4px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;cursor:pointer;font-size:10px;color:var(--text);font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;"><span style="font-size:18px;">⚙️</span><span>Account</span></button>
+      </div>
+    </div>
+  `;
+
+  // Helper: separatore sezione (titolo grande con ancora)
+  const sectionTitle = (anchorId, emoji, title, color) => `
+    <div id="${anchorId}" style="margin:24px 0 12px;padding:0 4px;scroll-margin-top:80px;">
+      <div style="height:2px;background:linear-gradient(90deg,${color},transparent);margin-bottom:10px;"></div>
+      <div class="bebas" style="font-size:24px;color:${color};letter-spacing:2px;display:flex;align-items:center;gap:10px;">
+        <span style="font-size:28px;">${emoji}</span>${title}
+      </div>
+    </div>
+  `;
+
   return`
   <div class="card" style="background:linear-gradient(135deg,#0c1a00,#0a1000);border-color:#1e2d00;padding:18px;margin-bottom:14px;">
     <div class="rc"><div style="width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--acc),#7ab300);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:28px;color:#000;">${AU.user.charAt(0).toUpperCase()}</div>
     <div><div class="bebas" style="font-size:22px;">${AU.user}</div><div style="font-size:11px;color:var(--mut);">${sx==='f'?'👩 Donna':'👨 Uomo'} · ${AU.profile?.ag||'?'} anni · ${AU.profile?.ht||'?'}cm</div><div style="font-size:11px;color:var(--mut);margin-top:2px;">${ST.wLog.filter(w=>!w.isRest).length} allenamenti · ${streak(ST.wLog)} streak 🔥</div></div></div>
   </div>
+
+  ${sectionsMenu}
+
+  ${sectionTitle('sec-profile', '👤', 'IL MIO PROFILO', 'var(--blu)')}
 
   <!-- NUOVO: IL MIO PROFILO — modifica sesso, altezza, età, peso iniziale -->
   <div class="card" style="border-color:var(--blu);">
@@ -9953,6 +9988,8 @@ window.renderSettings = function(mac){
 
     <button class="btn" style="width:100%;padding:12px;background:var(--blu);color:#fff;" onclick="updateProfile()">SALVA DATI PROFILO</button>
   </div>
+
+  ${sectionTitle('sec-program', '🎯', 'PROGRAMMA & OBIETTIVI', 'var(--acc)')}
 
   <!-- ════ 1. PROGRAMMA (obiettivo, strategia, sessioni) ════ -->
   <div class="card">
@@ -9987,6 +10024,8 @@ window.renderSettings = function(mac){
     <button class="btn" style="width:100%;padding:14px;background:var(--blu);color:#fff;font-size:15px;font-weight:700;letter-spacing:1px;border-radius:12px;border:none;cursor:pointer;margin-top:8px;" onclick="updateTimes()">SALVA ORARI</button>
   </div>
 
+  ${sectionTitle('sec-nutrition', '🥗', 'ALIMENTAZIONE', 'var(--gre)')}
+
   <!-- ════ 3. INTOLLERANZE ════ -->
   <div class="card">
     <div class="bebas" style="font-size:20px;margin-bottom:6px;">⚠️ INTOLLERANZE ALIMENTARI</div>
@@ -9994,6 +10033,8 @@ window.renderSettings = function(mac){
     <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px;">${INTOL_LIST.map(i=>`<span class="intol-chip2 ${(ST.p.intol||[]).includes(i.id)?'on':''}" data-id="${i.id}" onclick="toggleIntolChip(this)">${i.icon} ${i.label}</span>`).join('')}</div>
     <button class="btn" style="width:100%;padding:14px;background:var(--blu);color:#fff;font-size:15px;font-weight:700;letter-spacing:1px;border-radius:12px;border:none;cursor:pointer;margin-top:6px;" onclick="updateIntolerances()">SALVA INTOLLERANZE</button>
   </div>
+
+  ${sectionTitle('sec-training', '💪', 'ALLENAMENTO', 'var(--ora)')}
 
   <!-- ════ 4. FOCUS ALLENAMENTO ════ -->
   <div id="wrapEFocus"><div class="card">
@@ -10127,6 +10168,8 @@ window.renderSettings = function(mac){
     <button class="btn-s btn-action" style="width:100%;padding:11px;font-size:13px;" onclick="startTour();render();">▶ RIVEDI TOUR</button>
   </div>
 
+  ${sectionTitle('sec-coaching', '🤖', 'COACHING & NOTIFICHE', 'var(--purp)')}
+
   <!-- ── MODALITÀ TRASFERTA (sessione 7) ── -->
   ${(() => {
     const tm = ST.travelMode || {};
@@ -10160,39 +10203,83 @@ window.renderSettings = function(mac){
     </div>`;
   })()}
 
-  <!-- ── NOTIFICHE PUSH (sessione 7) ── -->
+  <!-- ── NOTIFICHE PUSH (sessione 12 - master toggle + UX migliorata) ── -->
   <div class="card" style="border-color:var(--ora);">
     <div class="bebas" style="font-size:18px;color:var(--ora);margin-bottom:6px;">🔔 NOTIFICHE</div>
     <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:12px;">
-      Promemoria locali per allenamenti, pesata e pasti. Funzionano anche senza internet, basta che l'app sia in background.
+      Promemoria locali per allenamenti, pesata e pasti. Attivale solo se le vuoi davvero.
     </div>
     ${(() => {
-      // Inline: stato permessi notifiche
       if (!('Notification' in window)) {
         return '<div style="margin-bottom:10px;padding:8px 12px;background:rgba(239,68,68,.08);border:1px solid var(--red);border-radius:8px;font-size:11px;color:var(--red);">⚠️ Browser non supporta notifiche.</div>';
       }
       const p = Notification.permission;
-      if (p === 'granted') return '<div style="margin-bottom:10px;padding:8px 12px;background:rgba(34,197,94,.08);border:1px solid var(--gre);border-radius:8px;font-size:11px;color:var(--gre);">✓ Notifiche abilitate</div>';
+      if (p === 'granted') return '<div style="margin-bottom:10px;padding:8px 12px;background:rgba(34,197,94,.08);border:1px solid var(--gre);border-radius:8px;font-size:11px;color:var(--gre);">✓ Notifiche abilitate dal browser</div>';
       if (p === 'denied') return '<div style="margin-bottom:10px;padding:8px 12px;background:rgba(239,68,68,.08);border:1px solid var(--red);border-radius:8px;font-size:11px;color:var(--red);">✗ Notifiche bloccate. Riabilita dalle impostazioni del browser.</div>';
       return '<div style="margin-bottom:10px;padding:8px 12px;background:rgba(251,191,36,.08);border:1px solid #fbbf24;border-radius:8px;font-size:11px;color:#fbbf24;">⏳ Notifiche non ancora attivate.</div>';
     })()}
-    <div style="display:flex;flex-direction:column;gap:8px;">
-      <button class="btn-s" style="width:100%;padding:11px;font-size:13px;background:rgba(255,104,53,.1);border:1px solid var(--ora);color:var(--ora);font-weight:600;border-radius:8px;cursor:pointer;" onclick="enableNotifications()">🔔 ATTIVA NOTIFICHE</button>
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--surf);border-radius:8px;font-size:12px;">
-        <div style="color:var(--text);">💪 Promemoria allenamento</div>
-        <input type="checkbox" id="notifWorkoutOn" onchange="toggleNotifPref('workout',this.checked)" ${ST.notifPrefs?.workout===false?'':'checked'} style="width:18px;height:18px;cursor:pointer;">
+    ${(() => {
+      const allOff = ST.notifPrefs?.master === false;
+      const noPerm = !('Notification' in window) || Notification.permission !== 'granted';
+      return `
+      ${noPerm ? `<button class="btn-s" style="width:100%;padding:11px;font-size:13px;background:rgba(255,104,53,.1);border:1px solid var(--ora);color:var(--ora);font-weight:600;border-radius:8px;cursor:pointer;margin-bottom:10px;" onclick="enableNotifications()">🔔 ATTIVA NOTIFICHE</button>` : ''}
+
+      <!-- Master toggle: ATTIVA / DISATTIVA TUTTE -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:${allOff?'rgba(239,68,68,.08)':'rgba(34,197,94,.08)'};border:1.5px solid ${allOff?'var(--red)':'var(--gre)'};border-radius:10px;margin-bottom:10px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:700;color:${allOff?'var(--red)':'var(--gre)'};">${allOff?'NOTIFICHE DISATTIVATE':'NOTIFICHE ATTIVE'}</div>
+          <div style="font-size:10px;color:var(--mut);margin-top:2px;">${allOff?'Nessun promemoria verrà inviato':'Riceverai i promemoria selezionati sotto'}</div>
+        </div>
+        <label style="position:relative;display:inline-block;width:50px;height:28px;cursor:pointer;flex-shrink:0;">
+          <input type="checkbox" ${allOff?'':'checked'} onchange="toggleNotifMaster(this.checked)" style="opacity:0;width:0;height:0;">
+          <span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${allOff?'var(--red)':'var(--gre)'};border-radius:28px;transition:.3s;display:block;">
+            <span style="position:absolute;height:22px;width:22px;left:${allOff?'3px':'25px'};bottom:3px;background:#fff;border-radius:50%;transition:.3s;display:block;"></span>
+          </span>
+        </label>
       </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--surf);border-radius:8px;font-size:12px;">
-        <div style="color:var(--text);">🍽️ Promemoria pasti</div>
-        <input type="checkbox" id="notifMealsOn" onchange="toggleNotifPref('meals',this.checked)" ${ST.notifPrefs?.meals===false?'':'checked'} style="width:18px;height:18px;cursor:pointer;">
-      </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--surf);border-radius:8px;font-size:12px;">
-        <div style="color:var(--text);">⚖️ Pesata settimanale (venerdì 8:00)</div>
-        <input type="checkbox" id="notifWeighOn" onchange="toggleNotifPref('weighIn',this.checked)" ${ST.notifPrefs?.weighIn===false?'':'checked'} style="width:18px;height:18px;cursor:pointer;">
-      </div>
-      <button class="btn-s" style="width:100%;padding:8px;font-size:11px;background:var(--surf);border:1px solid var(--bord);color:var(--mut);font-weight:600;border-radius:8px;cursor:pointer;" onclick="testNotification()">🧪 INVIA NOTIFICA DI TEST</button>
-    </div>
+
+      ${!allOff ? `
+      <!-- Toggle individuali (visibili solo se master ON) -->
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">
+        <div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:2px;">QUALI VUOI RICEVERE</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surf);border-radius:8px;font-size:12px;">
+          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+            <span style="font-size:16px;flex-shrink:0;">💪</span>
+            <div style="min-width:0;">
+              <div style="color:var(--text);font-weight:600;">Promemoria allenamento</div>
+              <div style="font-size:10px;color:var(--mut);">15 min prima nei giorni di training</div>
+            </div>
+          </div>
+          <input type="checkbox" onchange="toggleNotifPref('workout',this.checked)" ${ST.notifPrefs?.workout===false?'':'checked'} style="width:20px;height:20px;cursor:pointer;flex-shrink:0;accent-color:var(--ora);">
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surf);border-radius:8px;font-size:12px;">
+          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+            <span style="font-size:16px;flex-shrink:0;">🍽️</span>
+            <div style="min-width:0;">
+              <div style="color:var(--text);font-weight:600;">Promemoria pasti</div>
+              <div style="font-size:10px;color:var(--mut);">Colazione, pranzo, cena</div>
+            </div>
+          </div>
+          <input type="checkbox" onchange="toggleNotifPref('meals',this.checked)" ${ST.notifPrefs?.meals===false?'':'checked'} style="width:20px;height:20px;cursor:pointer;flex-shrink:0;accent-color:var(--ora);">
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surf);border-radius:8px;font-size:12px;">
+          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+            <span style="font-size:16px;flex-shrink:0;">⚖️</span>
+            <div style="min-width:0;">
+              <div style="color:var(--text);font-weight:600;">Pesata settimanale</div>
+              <div style="font-size:10px;color:var(--mut);">Venerdì alle 8:00</div>
+            </div>
+          </div>
+          <input type="checkbox" onchange="toggleNotifPref('weighIn',this.checked)" ${ST.notifPrefs?.weighIn===false?'':'checked'} style="width:20px;height:20px;cursor:pointer;flex-shrink:0;accent-color:var(--ora);">
+        </div>
+      </div>` : ''}
+
+      ${!noPerm && !allOff ? `<button class="btn-s" style="width:100%;padding:8px;font-size:11px;background:var(--surf);border:1px solid var(--bord);color:var(--mut);font-weight:600;border-radius:8px;cursor:pointer;" onclick="testNotification()">🧪 INVIA NOTIFICA DI TEST</button>` : ''}
+      `;
+    })()}
   </div>
+
+  ${sectionTitle('sec-account', '⚙️', 'ACCOUNT & AVANZATE', 'var(--mut)')}
 
   <!-- ── INTEGRAZIONI BILANCE / APPS SALUTE (sessione 6) ── -->
   <div class="card" style="border-color:var(--blu);">
@@ -10836,35 +10923,61 @@ window.render = function() {
   ST.sheet==='cheatDb'&&ST.sheetData?(()=>{
     const d=ST.sheetData;
     if(!d.selectedFood){
-      // Schermata 1: ricerca cibo + carrello composito
+      // ── SCHERMATA 1: ricerca cibo + carrello (sessione 12 - UX MIGLIORATA) ──
       const cart = d.cart || [];
       const cartTotalKcal = cart.reduce((s,it) => s + (it.kcal||0), 0);
+
+      // Carrello sticky in alto (visibile sempre se ha contenuto)
       const cartHtml = cart.length ? `
-        <div style="background:rgba(255,104,53,.08);border:1.5px solid var(--ora);border-radius:12px;padding:10px 12px;margin-bottom:10px;">
+        <div style="position:sticky;top:0;z-index:10;background:linear-gradient(135deg,rgba(255,104,53,.18),rgba(255,104,53,.10));backdrop-filter:blur(8px);border:2px solid var(--ora);border-radius:12px;padding:10px 12px;margin-bottom:10px;box-shadow:0 4px 12px rgba(255,104,53,.15);">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-            <div style="font-size:11px;color:var(--ora);font-weight:800;letter-spacing:1px;">🛒 SGARRO IN COSTRUZIONE</div>
-            <div class="bebas" style="font-size:16px;color:var(--ora);">${cartTotalKcal} kcal</div>
+            <div style="font-size:11px;color:var(--ora);font-weight:800;letter-spacing:1px;">🛒 SGARRO IN COSTRUZIONE (${cart.length} ${cart.length===1?'cibo':'cibi'})</div>
+            <div class="bebas" style="font-size:18px;color:var(--ora);">${cartTotalKcal} kcal</div>
           </div>
-          ${cart.map((it,i) => `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;${i<cart.length-1?'border-bottom:1px dashed var(--bord);':''}">
-            <div style="font-size:12px;color:var(--text);flex:1;min-width:0;line-height:1.3;">${escapeHtml(it.label)}</div>
-            <div style="font-size:11px;color:var(--mut);margin:0 8px;flex-shrink:0;">${it.kcal} kcal</div>
-            <button onclick="removeFromCheatCart(${i})" style="background:none;border:none;color:var(--red);font-size:16px;cursor:pointer;padding:2px 6px;flex-shrink:0;">✕</button>
-          </div>`).join('')}
-          <button class="btn" style="width:100%;margin-top:8px;padding:12px;background:var(--ora);color:#fff;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;border:none;border-radius:10px;" onclick="confirmCheatCart()">✓ CONFERMA SGARRO (${cartTotalKcal} kcal)</button>
+          <div style="max-height:90px;overflow-y:auto;margin-bottom:8px;">
+            ${cart.map((it,i) => `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;${i<cart.length-1?'border-bottom:1px dashed var(--bord);':''}">
+              <div style="font-size:11px;color:var(--text);flex:1;min-width:0;line-height:1.3;">${escapeHtml(it.label)}</div>
+              <div style="font-size:10px;color:var(--mut);margin:0 6px;flex-shrink:0;">${it.kcal} kcal</div>
+              <button onclick="removeFromCheatCart(${i})" style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;padding:2px 4px;flex-shrink:0;">✕</button>
+            </div>`).join('')}
+          </div>
+          <button class="btn" style="width:100%;padding:14px;background:var(--ora);color:#fff;font-family:'Bebas Neue';font-size:20px;letter-spacing:1.5px;border:none;border-radius:10px;font-weight:bold;box-shadow:0 4px 12px rgba(255,104,53,.4);cursor:pointer;" onclick="confirmCheatCart()">✓ CONFERMA SGARRO · ${cartTotalKcal} kcal</button>
         </div>
       ` : '';
-      return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div>
-        <div class="bebas" style="font-size:22px;margin-bottom:4px;">🔍 SCEGLI DAL DB</div>
-        <div style="font-size:12px;color:var(--mut);margin-bottom:12px;line-height:1.5;">${cart.length ? 'Aggiungi altri cibi al carrello o conferma lo sgarro completo.' : 'Cerca tra '+(window.FOOD_DB||[]).length+' cibi italiani. Puoi aggiungerne più di uno e contarli come UN solo sgarro.'}</div>
-        ${cartHtml}
-        <input id="cheatDbSearch" type="text" maxlength="50" value="${escapeHtml(d.foodQuery||'')}" placeholder="🔍 Cerca cibo (es. fritto misto, pizza, birra...)" oninput="updateCheatFoodQuery(this.value)" style="margin-bottom:8px;font-size:14px;padding:10px;">
-        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;">
-          ${(window.FOOD_CATS||[]).map(c=>`<button class="btn-s" style="font-size:10px;padding:4px 8px;background:${d.foodCat===c.id?'var(--purp)':'var(--surf)'};color:${d.foodCat===c.id?'#fff':'var(--mut)'};border:1px solid ${d.foodCat===c.id?'var(--purp)':'var(--bord)'};" onclick="setCheatFoodCat('${c.id}')">${c.emo} ${c.short||c.lbl}</button>`).join('')}
+
+      return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh" style="padding:0;display:flex;flex-direction:column;max-height:90vh;">
+        <!-- Maniglia sheet -->
+        <div style="padding:14px 16px 0;flex-shrink:0;"><div class="sh-h"></div></div>
+
+        <!-- Header titolo (sticky in alto) -->
+        <div style="padding:0 16px 8px;flex-shrink:0;">
+          <div class="bebas" style="font-size:22px;margin-bottom:4px;">🔍 SCEGLI DAL DB</div>
+          <div style="font-size:12px;color:var(--mut);line-height:1.4;">${cart.length ? 'Aggiungi altri cibi al carrello o conferma lo sgarro completo qui sopra.' : 'Cerca tra '+(window.FOOD_DB||[]).length+' cibi italiani. Puoi aggiungerne più di uno e contarli come UN solo sgarro.'}</div>
         </div>
-        <div id="cheatDbList" style="height:${cart.length?'35vh':'45vh'};overflow-y:auto;">${_buildCheatDbListHtml()}</div>
-        <!-- Bottone "Non lo trovo? Creane uno" (sessione 10) -->
-        <button class="btn-s" style="margin-top:10px;width:100%;padding:11px;background:rgba(167,139,250,.1);border:1px dashed var(--purp);color:var(--purp);font-weight:600;font-size:12px;border-radius:8px;cursor:pointer;" onclick="openCustomFoodSheet()">➕ NON LO TROVI? CREA UN NUOVO CIBO</button>
-        <button class="btn btn-action" style="margin-top:8px;width:100%;padding:12px;" onclick="closeSheet()">${cart.length?'ANNULLA E SVUOTA CARRELLO':'ANNULLA'}</button>
+
+        <!-- Area scrollabile principale -->
+        <div style="flex:1;overflow-y:auto;padding:0 16px;min-height:0;">
+          ${cartHtml}
+
+          <!-- Search bar -->
+          <input id="cheatDbSearch" type="text" maxlength="50" value="${escapeHtml(d.foodQuery||'')}" placeholder="🔍 Cerca cibo (es. fritto misto, pizza, birra...)" oninput="updateCheatFoodQuery(this.value)" style="margin-bottom:8px;font-size:14px;padding:10px;width:100%;box-sizing:border-box;">
+
+          <!-- Bottone CREA NUOVO CIBO subito sotto search (più visibile, sessione 12) -->
+          <button class="btn-s" style="width:100%;padding:11px;background:rgba(167,139,250,.15);border:1.5px dashed var(--purp);color:var(--purp);font-weight:700;font-size:12px;border-radius:8px;cursor:pointer;margin-bottom:10px;" onclick="openCustomFoodSheet()">➕ NON TROVI QUELLO CHE CERCHI? CREA UN NUOVO CIBO</button>
+
+          <!-- Filtri categoria -->
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;">
+            ${(window.FOOD_CATS||[]).map(c=>`<button class="btn-s" style="font-size:10px;padding:4px 8px;background:${d.foodCat===c.id?'var(--purp)':'var(--surf)'};color:${d.foodCat===c.id?'#fff':'var(--mut)'};border:1px solid ${d.foodCat===c.id?'var(--purp)':'var(--bord)'};" onclick="setCheatFoodCat('${c.id}')">${c.emo} ${c.short||c.lbl}</button>`).join('')}
+          </div>
+
+          <!-- Lista cibi -->
+          <div id="cheatDbList">${_buildCheatDbListHtml()}</div>
+        </div>
+
+        <!-- Footer sticky in basso -->
+        <div style="padding:10px 16px 14px;flex-shrink:0;border-top:1px solid var(--bord);background:var(--bg);">
+          <button class="btn btn-action" style="width:100%;padding:12px;font-size:13px;" onclick="closeSheet()">${cart.length?'✕ ANNULLA E SVUOTA CARRELLO':'✕ ANNULLA'}</button>
+        </div>
       </div></div>`;
     }
     // Schermata 2: imposta grammi/quantità
