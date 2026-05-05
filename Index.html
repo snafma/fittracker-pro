@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION8-PHOTOS-SW">
+<meta name="ft-version" content="build-SESSION10-NO-STORAGE-CUSTOM-FOOD">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -17,9 +17,8 @@
 <meta name="theme-color" content="#0d0d0f">
 <meta name="mobile-web-app-capable" content="yes">
 
-<!-- ── PWA MANIFEST INLINE (sessione 7) ──
-     Data URL evita problemi 404 da path/case-sensitive. Funziona su tutti i browser. -->
-<link rel="manifest" href='data:application/manifest+json;charset=utf-8,{"name":"FitTracker PRO","short_name":"FitTracker","description":"App fitness personale: allenamenti, alimentazione, progressi","start_url":".","scope":".","display":"standalone","orientation":"portrait","background_color":"%230d0d0f","theme_color":"%230d0d0f","icons":[{"src":"data:image/svg%2Bxml,%3Csvg xmlns%3D%22http%3A//www.w3.org/2000/svg%22 viewBox%3D%220 0 192 192%22%3E%3Crect width%3D%22192%22 height%3D%22192%22 fill%3D%22%230d0d0f%22 rx%3D%2228%22/%3E%3Ctext x%3D%2296%22 y%3D%22120%22 font-family%3D%22Arial Black%22 font-size%3D%2284%22 fill%3D%22%23c5f135%22 text-anchor%3D%22middle%22%3EFT%3C/text%3E%3C/svg%3E","sizes":"192x192","type":"image/svg+xml","purpose":"any"},{"src":"data:image/svg%2Bxml,%3Csvg xmlns%3D%22http%3A//www.w3.org/2000/svg%22 viewBox%3D%220 0 512 512%22%3E%3Crect width%3D%22512%22 height%3D%22512%22 fill%3D%22%230d0d0f%22 rx%3D%2274%22/%3E%3Ctext x%3D%22256%22 y%3D%22320%22 font-family%3D%22Arial Black%22 font-size%3D%22224%22 fill%3D%22%23c5f135%22 text-anchor%3D%22middle%22%3EFT%3C/text%3E%3C/svg%3E","sizes":"512x512","type":"image/svg+xml","purpose":"any maskable"}]}'>
+<!-- ── PWA MANIFEST (sessione 8: file separato per evitare parsing issues data URL) ── -->
+<link rel="manifest" href="manifest.json">
 
 <!-- Apple touch icon SVG inline -->
 <link rel="apple-touch-icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180"><rect width="180" height="180" fill="%230d0d0f" rx="40"/><text x="90" y="115" font-family="Arial Black" font-size="80" fill="%23c5f135" text-anchor="middle">FT</text></svg>'>
@@ -152,7 +151,6 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
   import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-  import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject, listAll } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
   import {
     getAuth, onAuthStateChanged,
     createUserWithEmailAndPassword, signInWithEmailAndPassword,
@@ -170,15 +168,13 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
     appId: "1:645700555123:web:995606f200eb37d6a8b506"
   };
 
-  let firestore, auth, storage;
+  let firestore, auth;
   try {
     console.log("[FB-INIT] Avvio inizializzazione Firebase...");
     const app = initializeApp(firebaseConfig);
     console.log("[FB-INIT] App OK, getFirestore...");
     firestore = getFirestore(app);
-    console.log("[FB-INIT] Firestore OK, getStorage...");
-    storage = getStorage(app);
-    console.log("[FB-INIT] Storage OK, getAuth...");
+    console.log("[FB-INIT] Firestore OK, getAuth...");
     auth = getAuth(app);
     console.log("[FB-INIT] Auth OK, setPersistence...");
     await setPersistence(auth, browserLocalPersistence);
@@ -275,88 +271,6 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
     }
   };
   console.log("[FB-INIT] window.LeaderboardDB esposto");
-
-  // ── PHOTO DB (sessione 8) ────────────────────────────────────────────
-  // Gestisce upload/download/delete delle foto progresso su Firebase Storage
-  // Path: photos/{uid}/{timestamp}_{view}.jpg  (view = 'front'/'side'/'back')
-  // Limite: 12 foto/utente (rolling). Compressione lato client a ~600px JPEG q=0.75
-  window.PhotoDB = {
-    async upload(uid, view, file) {
-      if (!storage || !uid || !file) throw new Error('Storage non disponibile');
-      // Compressione lato client per restare sotto i 5GB free di Firebase
-      const compressed = await window._compressImage(file, 600, 0.75);
-      const ts = Date.now();
-      const filename = `${ts}_${view}.jpg`;
-      const path = `photos/${uid}/${filename}`;
-      const r = storageRef(storage, path);
-      await uploadBytes(r, compressed, { contentType: 'image/jpeg' });
-      const url = await getDownloadURL(r);
-      return { ts, view, filename, path, url, size: compressed.size };
-    },
-    async list(uid) {
-      if (!storage || !uid) return [];
-      try {
-        const r = storageRef(storage, `photos/${uid}`);
-        const res = await listAll(r);
-        const items = await Promise.all(res.items.map(async item => {
-          try {
-            const url = await getDownloadURL(item);
-            // Estrae ts e view dal nome (formato: {ts}_{view}.jpg)
-            const m = item.name.match(/^(\d+)_(\w+)\.jpg$/);
-            return {
-              filename: item.name,
-              path: item.fullPath,
-              url,
-              ts: m ? parseInt(m[1]) : 0,
-              view: m ? m[2] : 'front'
-            };
-          } catch(e) { return null; }
-        }));
-        return items.filter(x => x).sort((a,b) => b.ts - a.ts); // newest first
-      } catch(e) {
-        console.warn('PhotoDB.list fail:', e?.code||e);
-        return [];
-      }
-    },
-    async remove(path) {
-      if (!storage || !path) return false;
-      try {
-        await deleteObject(storageRef(storage, path));
-        return true;
-      } catch(e) {
-        console.warn('PhotoDB.remove fail:', e?.code||e);
-        return false;
-      }
-    }
-  };
-  console.log("[FB-INIT] window.PhotoDB esposto");
-
-  // Helper compressione immagine (canvas-based, no librerie esterne)
-  window._compressImage = function(file, maxDim, quality) {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          let w = img.width, h = img.height;
-          if (w > h && w > maxDim) { h = h * (maxDim/w); w = maxDim; }
-          else if (h >= w && h > maxDim) { w = w * (maxDim/h); h = maxDim; }
-          canvas.width = w; canvas.height = h;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, w, h);
-          canvas.toBlob(blob => {
-            if (blob) resolve(blob);
-            else reject(new Error('Compressione fallita'));
-          }, 'image/jpeg', quality || 0.75);
-        };
-        img.onerror = reject;
-        img.src = e.target.result;
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  };
 
   // ── LEGACY DB: accesso SENZA Auth alle vecchie chiavi (ft_reg, ft_u_<username>)
   //    Serve SOLO per l'auto-migrazione. Le Rules devono permetterlo finché la
@@ -508,74 +422,28 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
 })();
 
 // ── SERVICE WORKER PER NOTIFICHE PERSISTENTI (sessione 8) ──
-// Il SW intercetta gli eventi 'notificationclick' anche quando il tab è chiuso,
-// e permette al browser di tenere in memoria un timer per notifiche schedulate.
-// Su iOS richiede PWA installata (Aggiungi a Home) da iOS 16.4+.
-//
-// Strategia: usiamo un Blob URL per il SW, NO file esterno (no path/case issues).
+// Il SW richiede un file separato sw.js (i browser NON accettano Blob URL per SW
+// per motivi di sicurezza). Se sw.js non è presente, l'app continua a funzionare
+// usando setTimeout fallback (notifiche valide finché tab aperta).
 (function() {
   if (!('serviceWorker' in navigator)) return;
 
-  const swCode = `
-    // ── FitTracker SW v1 ──
-    self.addEventListener('install', (e) => { self.skipWaiting(); });
-    self.addEventListener('activate', (e) => { e.waitUntil(self.clients.claim()); });
-
-    // Click su notifica → apre/focus l'app
-    self.addEventListener('notificationclick', (e) => {
-      e.notification.close();
-      e.waitUntil(
-        self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
-          for (const client of clients) {
-            if ('focus' in client) return client.focus();
-          }
-          if (self.clients.openWindow) return self.clients.openWindow('/');
-        })
-      );
-    });
-
-    // Messaggi dal main thread (per schedulare notifiche)
-    self.addEventListener('message', (e) => {
-      if (e.data?.type === 'schedule-notification') {
-        const { title, body, when, tag } = e.data;
-        const ms = when - Date.now();
-        if (ms > 0 && ms < 86400000 * 7) { // max 7gg in futuro
-          setTimeout(() => {
-            self.registration.showNotification(title, {
-              body, tag: tag || ('ft-' + Date.now()),
-              badge: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><rect width="96" height="96" fill="%23c5f135"/><text x="48" y="60" font-family="Arial Black" font-size="40" fill="%23000" text-anchor="middle">FT</text></svg>',
-              requireInteraction: false
-            });
-          }, ms);
-        }
-      }
-    });
-
-    // Push event (per future Firebase Cloud Messaging integrations)
-    self.addEventListener('push', (e) => {
-      const data = e.data ? e.data.json() : { title: 'FitTracker', body: 'Ricorda di allenarti!' };
-      e.waitUntil(
-        self.registration.showNotification(data.title || 'FitTracker', {
-          body: data.body || '',
-          tag: data.tag || 'ft-push',
-          requireInteraction: false
-        })
-      );
-    });
-  `;
-
-  const blob = new Blob([swCode], { type: 'application/javascript' });
-  const swUrl = URL.createObjectURL(blob);
-
-  navigator.serviceWorker.register(swUrl).then(reg => {
-    console.log('[SW] Registrato:', reg.scope);
-    window.__swReady = true;
-    window.__swReg = reg;
-  }).catch(e => {
-    console.warn('[SW] Registrazione fallita:', e?.message || e);
+  // Aspetta load per non rallentare il primo paint
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(reg => {
+        console.log('[SW] Registrato:', reg.scope);
+        window.__swReady = true;
+        window.__swReg = reg;
+      })
+      .catch(err => {
+        // Fallback: nessun SW, usiamo setTimeout (sessione 7 già ha questo fallback)
+        console.warn('[SW] Non disponibile (fallback in-page setTimeout):', err?.message || err);
+      });
   });
 
   // Helper: schedula notifica via SW (sopravvive a chiusura tab su Android/PWA installata)
+  // Se SW non disponibile, ritorna false → caller usa setTimeout fallback
   window.scheduleNotificationViaSW = function(title, body, when, tag) {
     if (window.__swReg && navigator.serviceWorker.controller) {
       navigator.serviceWorker.controller.postMessage({
@@ -2776,7 +2644,17 @@ window.FOOD_CATS=[
 // ─────────────────────────────────────────────────────────────────
 
 // Lookup veloce: id → cibo
-window.foodById=function(id){return window.FOOD_DB.find(f=>f.id===id);};
+window.foodById=function(id){
+  // Cerca prima nei cibi standard
+  const std = window.FOOD_DB.find(f=>f.id===id);
+  if (std) return std;
+  // Poi nei cibi personali dell'utente
+  if (window.ST?.customFoods) {
+    const custom = window.ST.customFoods.find(f=>f.id===id);
+    if (custom) return {...custom, isCustom: true};
+  }
+  return null;
+};
 
 // ── DRINK_PORTIONS: bevande/cocktail con porzione standard (ml)
 // Per questi cibi, lo sgarro chiede "QUANTI?" non "GRAMMI?"
@@ -2841,8 +2719,19 @@ window.getFoodPortionInfo = function(foodId, foodCat) {
 };
 
 
-// Filtra per categoria
-window.foodsByCat=function(cat){return window.FOOD_DB.filter(f=>f.cat===cat);};
+// Filtra per categoria (include cibi personali utente)
+window.foodsByCat=function(cat){
+  const std = window.FOOD_DB.filter(f=>f.cat===cat);
+  const custom = (window.ST?.customFoods || []).filter(f=>f.cat===cat).map(f=>({...f, isCustom:true}));
+  return [...custom, ...std]; // custom prima, sono più rilevanti per l'utente
+};
+
+// Helper: ottieni TUTTI i cibi (standard + custom utente)
+window.getAllFoods = function() {
+  const std = window.FOOD_DB || [];
+  const custom = (window.ST?.customFoods || []).map(f=>({...f, isCustom:true}));
+  return [...custom, ...std];
+};
 
 // Ricerca testuale fuzzy: case-insensitive, accenti-insensitive, parole multiple in qualsiasi ordine
 window.foodSearch=function(query, maxResults){
@@ -2853,7 +2742,7 @@ window.foodSearch=function(query, maxResults){
   const terms = norm(query).split(/\s+/).filter(t=>t.length>=2);
   if(terms.length===0) return [];
   const results = [];
-  for(const f of window.FOOD_DB){
+  for(const f of window.getAllFoods()){
     const nm = norm(f.name);
     // Tutti i termini devono comparire nel nome
     const allMatch = terms.every(t => nm.includes(t));
@@ -4524,6 +4413,9 @@ window.defST=function(){
     // ── Campi sessione 7 ──
     notifPrefs:{workout:true, meals:true, weighIn:true}, // preferenze notifiche
     travelMode:null,             // {active:true, startD:'2026-05-04', endD:'2026-05-08', hasGym:false, sessions:3, dur:30}
+    // ── Campi sessione 9 ──
+    customFoods:[],              // cibi personalizzati creati dall'utente per gli sgarri
+    shoppingState:{removed:[], extras:[], checked:[], lastGenWeek:null}, // stato lista spesa
   };
 }
 window.ST=defST();
@@ -4893,128 +4785,6 @@ window.doChangePassword=async function(){
 
 // ── EXPORT DATI UTENTE (GDPR Art. 20 - Portabilità) ──
 // Genera un file JSON scaricabile con TUTTI i dati dell'utente
-// ── FOTO PROGRESSO (sessione 8) ──
-// Gestisce upload/visualizzazione/cancellazione foto. Limite 12 foto totali.
-window.PROGRESS_PHOTO_LIMIT = 12;
-
-// Cache lista foto (evita ricaricare ogni volta)
-window.__photosCache = null;
-window.__photosLoading = false;
-
-window.loadProgressPhotos = async function(forceReload) {
-  if (window.__photosLoading) return;
-  if (!forceReload && window.__photosCache) return window.__photosCache;
-  window.__photosLoading = true;
-  render();
-  try {
-    if (!window.PhotoDB || !window.FBAuth?.auth?.currentUser) {
-      window.__photosCache = [];
-    } else {
-      const uid = window.FBAuth.auth.currentUser.uid;
-      window.__photosCache = await window.PhotoDB.list(uid);
-    }
-  } catch(e) {
-    console.warn('loadProgressPhotos fail:', e);
-    window.__photosCache = [];
-  }
-  window.__photosLoading = false;
-  render();
-};
-
-window.openPhotoUploadSheet = function(view) {
-  ST.sheet = 'photoUpload';
-  ST.sheetData = { view: view || 'front', file: null };
-  render();
-};
-
-window.uploadProgressPhoto = async function() {
-  if (!ST.sheetData?.file) return alert('Seleziona prima una foto.');
-  if (!window.FBAuth?.auth?.currentUser) return alert('Devi essere loggato.');
-
-  // Verifica limite
-  await loadProgressPhotos(true);
-  const photos = window.__photosCache || [];
-  if (photos.length >= window.PROGRESS_PHOTO_LIMIT) {
-    const oldest = photos[photos.length - 1]; // last in array = oldest (sorted desc)
-    const oldestDate = new Date(oldest.ts).toLocaleDateString('it-IT');
-    if (!confirm(`Hai già ${window.PROGRESS_PHOTO_LIMIT} foto (limite massimo).\n\nVuoi cancellare la più vecchia (${oldestDate} - ${oldest.view}) per fare spazio?`)) return;
-    await window.PhotoDB.remove(oldest.path);
-  }
-
-  const view = ST.sheetData.view;
-  const file = ST.sheetData.file;
-  const uid = window.FBAuth.auth.currentUser.uid;
-
-  try {
-    // Spinner
-    ST.sheetData.uploading = true;
-    render();
-    await window.PhotoDB.upload(uid, view, file);
-    // Ricarica cache
-    await loadProgressPhotos(true);
-    ST.sheet = null;
-    ST.sheetData = null;
-    // Toast
-    const t = document.createElement('div');
-    t.style.cssText = 'position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:99999;background:rgba(34,197,94,.95);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.3);';
-    t.textContent = '✓ Foto caricata!';
-    document.body.appendChild(t);
-    setTimeout(() => t.remove(), 2500);
-  } catch(e) {
-    alert('Errore upload: ' + (e?.message || e));
-    ST.sheetData.uploading = false;
-    render();
-  }
-};
-
-window.deleteProgressPhoto = async function(path, idx) {
-  if (!confirm('Cancellare questa foto progresso?\n\nL\'azione è irreversibile.')) return;
-  try {
-    await window.PhotoDB.remove(path);
-    if (window.__photosCache) {
-      window.__photosCache.splice(idx, 1);
-    }
-    render();
-  } catch(e) {
-    alert('Errore cancellazione: ' + (e?.message || e));
-  }
-};
-
-window.openPhotoCompareSheet = function(idxNew, idxOld) {
-  if (!window.__photosCache || !window.__photosCache[idxNew] || !window.__photosCache[idxOld]) return;
-  ST.sheet = 'photoCompare';
-  ST.sheetData = {
-    photoNew: window.__photosCache[idxNew],
-    photoOld: window.__photosCache[idxOld],
-    sliderPos: 50
-  };
-  render();
-};
-
-window.openPhotoFullView = function(idx) {
-  if (!window.__photosCache || !window.__photosCache[idx]) return;
-  ST.sheet = 'photoFull';
-  ST.sheetData = { photo: window.__photosCache[idx], idx };
-  render();
-};
-
-// Helper file picker: salva il file e genera preview
-window._handlePhotoSelect = function(file) {
-  if (!file || !ST.sheetData) return;
-  if (!file.type.startsWith('image/')) return alert('Seleziona un file immagine.');
-  if (file.size > 10 * 1024 * 1024) return alert('Foto troppo grande (max 10MB).');
-  ST.sheetData.file = file;
-  // Preview
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    if (ST.sheetData) {
-      ST.sheetData.preview = e.target.result;
-      render();
-    }
-  };
-  reader.readAsDataURL(file);
-};
-
 window.exportMyData = function() {
   try {
     if (!AU.user) return alert('Devi essere loggato per esportare i dati.');
@@ -5152,10 +4922,32 @@ window.__initAuthListener=function(){
         const un = user.displayName || user.email?.split("@")[0] || "user";
         AU.user = un;
         let data = null;
+        let permissionDenied = false;
         try {
           data = await window.DB.g("ft_u_"+un);
         } catch(e){
           console.warn("DB.g error:", e?.message||e);
+        }
+        // ── RETRY su permission-denied (sessione 8) ──
+        // Se DB.g ritorna null E il log indica permission-denied, riproviamo
+        // dopo attesa per evitare di mostrare il "setup iniziale" a un utente esistente.
+        // Spesso il problema è timing: l'auth è ancora in fase di propagazione token.
+        if (data === null && window.FBAuth?.auth?.currentUser) {
+          // Aspetto 1.5s e ritento
+          console.log("[AUTH] Primo tentativo lettura dati fallito, ritento...");
+          await new Promise(r => setTimeout(r, 1500));
+          try {
+            data = await window.DB.g("ft_u_"+un);
+            if (data) console.log("[AUTH] Recovery riuscito al secondo tentativo");
+          } catch(_) {}
+          // Se ancora null dopo retry, terzo tentativo dopo 2s
+          if (data === null) {
+            await new Promise(r => setTimeout(r, 2000));
+            try {
+              data = await window.DB.g("ft_u_"+un);
+              if (data) console.log("[AUTH] Recovery riuscito al terzo tentativo");
+            } catch(_) {}
+          }
         }
         if(data){
           // Merge sicuro: defST() prima per assicurare che TUTTI i campi base ci siano
@@ -6191,6 +5983,97 @@ window.hideDietGuide=function(){
   save();
 };
 
+// ── CIBO PERSONALIZZATO (sessione 10) ──
+// Permette all'utente di creare un cibo che non è nel database, indicando
+// nome, kcal/100g (o per porzione), proteine/carbo/grassi (opzionali).
+// Il cibo viene salvato in ST.customFoods e diventa disponibile in tutte
+// le ricerche future (etichetta "(custom)").
+
+window.openCustomFoodSheet = function() {
+  ST.sheet = 'customFood';
+  ST.sheetData = {
+    name: '',
+    cat: 'piatti_pronti',
+    kcal: 250,
+    p: 10,
+    c: 30,
+    f: 8,
+    refGrams: 100,
+    isPortion: false,
+    portionLabel: '1 porzione'
+  };
+  render();
+};
+
+window.confirmCustomFood = function() {
+  const d = ST.sheetData;
+  if (!d) return;
+  if (!d.name || d.name.trim().length < 2) return alert('Inserisci un nome (minimo 2 caratteri).');
+  if (d.name.length > 60) return alert('Nome troppo lungo (max 60 caratteri).');
+  if (!d.kcal || d.kcal < 1 || d.kcal > 1000) return alert('Kcal non valide (1-1000).');
+  if (!d.refGrams || d.refGrams < 1 || d.refGrams > 5000) return alert('Grammi di riferimento non validi (1-5000).');
+
+  // Genera ID univoco
+  const id = 'custom_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+
+  // Calcola kcal/100g se utente ha inserito kcal totali per refGrams
+  // FOOD_DB usa convenzione kcal per 100g, quindi normalizziamo
+  let kcalPer100, pPer100, cPer100, fPer100;
+  if (d.isPortion) {
+    // Cibo a porzione: salviamo come "porzione standard" (con il nome che lo dice)
+    // Strategia: salvo i kcal/p/c/f totali della porzione, e refGrams come gramsLabel
+    kcalPer100 = d.kcal;
+    pPer100 = d.p;
+    cPer100 = d.c;
+    fPer100 = d.f;
+  } else {
+    // Cibo a peso: normalizzo a 100g
+    const factor = 100 / d.refGrams;
+    kcalPer100 = Math.round(d.kcal * factor);
+    pPer100 = Math.round(d.p * factor * 10) / 10;
+    cPer100 = Math.round(d.c * factor * 10) / 10;
+    fPer100 = Math.round(d.f * factor * 10) / 10;
+  }
+
+  const cleanName = d.name.trim();
+  const displayName = d.isPortion
+    ? `${cleanName} (${d.portionLabel || 'porzione'})`
+    : cleanName;
+
+  // Aggiungi a customFoods
+  if (!ST.customFoods) ST.customFoods = [];
+  ST.customFoods.push({
+    id,
+    name: displayName,
+    cat: d.cat,
+    kcal: kcalPer100,
+    p: pPer100,
+    c: cPer100,
+    f: fPer100,
+    refGrams: d.refGrams,
+    isPortion: !!d.isPortion,
+    createdAt: Date.now()
+  });
+
+  // Salva e seleziona subito il nuovo cibo per inserimento sgarro
+  save().then(() => {
+    // Apre direttamente la schermata di inserimento quantità con il cibo appena creato
+    if (!ST.sheetData) ST.sheetData = { mode:'select', cart:[], selectedFood:null, foodQuery:'', foodCat:null, grams:100, meal: window.cheatMealSlot || 'altro' };
+    ST.sheet = 'cheatDb';
+    ST.sheetData.selectedFood = ST.customFoods[ST.customFoods.length - 1];
+    ST.sheetData.grams = d.refGrams; // pre-popola con grammi di riferimento
+    ST.sheetData.mode = 'configure';
+    render();
+  });
+};
+
+window.deleteCustomFood = async function(id) {
+  if (!confirm('Eliminare questo cibo personalizzato?\n\nNon influisce su sgarri già registrati.')) return;
+  if (!ST.customFoods) return;
+  ST.customFoods = ST.customFoods.filter(f => f.id !== id);
+  await save();
+};
+
 window.openCheatDbPicker=function(){
   // Usa il pasto selezionato dalle chip (cheatMealSlot) o l'ultimo usato
   const mealSlot = window.cheatMealSlot || ST.lastCheatMealSlot || 'altro';
@@ -6337,11 +6220,13 @@ window._buildCheatDbListHtml=function(){
   }
   return results.map(f=>{
     const c=window.FOOD_CATS?.find(x=>x.id===f.cat);
-    return `<div onclick="selectCheatFoodFromDb('${f.id}')" style="padding:10px 12px;background:var(--surf);border:1px solid var(--bord);border-radius:10px;margin-bottom:5px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;">
+    const isCustom = !!f.isCustom;
+    return `<div onclick="selectCheatFoodFromDb('${f.id}')" style="padding:10px 12px;background:${isCustom?'rgba(167,139,250,.06)':'var(--surf)'};border:1px solid ${isCustom?'var(--purp)':'var(--bord)'};border-radius:10px;margin-bottom:5px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;">
       <div style="flex:1;min-width:0;">
-        <div style="font-size:13px;font-weight:600;color:var(--text);line-height:1.3;">${escapeHtml(f.name)}</div>
+        <div style="font-size:13px;font-weight:600;color:var(--text);line-height:1.3;">${escapeHtml(f.name)} ${isCustom?'<span style="font-size:9px;background:var(--purp);color:#fff;padding:1px 6px;border-radius:8px;margin-left:4px;font-weight:700;letter-spacing:.5px;">CUSTOM</span>':''}</div>
         <div style="font-size:10px;color:var(--mut);">${c?c.emo:''} ${c?c.lbl:f.cat} · ${f.kcal} kcal/100g</div>
       </div>
+      ${isCustom ? `<button onclick="event.stopPropagation();deleteCustomFood('${f.id}')" style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;padding:4px 8px;flex-shrink:0;" title="Elimina cibo personalizzato">🗑️</button>` : ''}
       <div style="color:var(--purp);font-size:18px;flex-shrink:0;">›</div>
     </div>`;
   }).join('');
@@ -8643,55 +8528,8 @@ window.renderMeasures = function(cW,mac,theme,pWeek,sx){
     + mField('bodyfat','% Grasso Corporeo','Stima con plicometro o bilancia impedenziometrica (opzionale)','%')
     + '<button onclick="saveMeasures()" style="width:100%;background:var(--acc);color:#000;border:none;border-radius:12px;padding:14px;font-family:\"Bebas Neue\";font-size:20px;cursor:pointer;margin-top:6px;">SALVA MISURE</button>'
     +'</div>'
-    + renderProgressPhotosCard()
     +(chartsHtml?'<div class="bebas" style="font-size:18px;color:var(--mut);margin:14px 0 10px;letter-spacing:1px;">GRAFICI PROGRESSIONE</div>'+chartsHtml:'');
 }
-
-// ── CARD FOTO PROGRESSO (sessione 8) ──
-window.renderProgressPhotosCard = function() {
-  if (!window.__photosCache && !window.__photosLoading && !window.__photosAttempted) {
-    window.__photosAttempted = true;
-    setTimeout(() => loadProgressPhotos(), 100);
-  }
-  const photos = window.__photosCache || [];
-  const isLoading = window.__photosLoading;
-  const limit = window.PROGRESS_PHOTO_LIMIT || 12;
-  const remaining = limit - photos.length;
-  const front = photos.filter(p => p.view === 'front');
-  const canCompare = front.length >= 2;
-
-  return `<div class="card" style="border-color:var(--purp);margin-top:16px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-      <div class="bebas" style="font-size:18px;color:var(--purp);">📸 FOTO PROGRESSO</div>
-      <div style="font-size:10px;color:var(--mut);">${photos.length}/${limit}</div>
-    </div>
-    <div style="font-size:11px;color:var(--mut);line-height:1.5;margin-bottom:12px;">
-      Foto private salvate sul tuo account cloud. Compressione automatica per risparmiare spazio.
-      ${remaining <= 3 ? `<br><strong style="color:var(--ora);">⚠️ ${remaining===0?'Limite raggiunto: la prossima cancellerà la più vecchia.':'Restano '+remaining+' slot prima di superare il limite.'}</strong>` : ''}
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px;">
-      <button class="btn-s" style="padding:10px 4px;font-size:11px;background:rgba(167,139,250,.1);border:1px solid var(--purp);color:var(--purp);font-weight:700;border-radius:8px;cursor:pointer;" onclick="openPhotoUploadSheet('front')">🧍 FRONTALE</button>
-      <button class="btn-s" style="padding:10px 4px;font-size:11px;background:rgba(167,139,250,.1);border:1px solid var(--purp);color:var(--purp);font-weight:700;border-radius:8px;cursor:pointer;" onclick="openPhotoUploadSheet('side')">👤 LATERALE</button>
-      <button class="btn-s" style="padding:10px 4px;font-size:11px;background:rgba(167,139,250,.1);border:1px solid var(--purp);color:var(--purp);font-weight:700;border-radius:8px;cursor:pointer;" onclick="openPhotoUploadSheet('back')">🔙 SCHIENA</button>
-    </div>
-    ${canCompare ? `<button class="btn" style="width:100%;padding:11px;background:linear-gradient(135deg,var(--acc),#9bcc28);color:#000;font-family:'Bebas Neue';font-size:15px;letter-spacing:1px;border:none;border-radius:10px;margin-bottom:12px;cursor:pointer;" onclick="openPhotoCompareSheet(${photos.indexOf(front[0])}, ${photos.indexOf(front[front.length-1])})">⇄ CONFRONTA BEFORE/AFTER (FRONTALE)</button>` : ''}
-    ${isLoading ? `<div style="text-align:center;padding:20px;color:var(--mut);font-size:12px;">⏳ Caricamento foto...</div>` :
-      photos.length === 0 ? `<div style="text-align:center;padding:20px;color:var(--mut);font-size:12px;line-height:1.5;">Nessuna foto ancora caricata.<br>Suggerimento: scattane una ogni 1-2 settimane per vedere i progressi nel tempo!</div>` :
-      `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
-        ${photos.slice(0, 12).map((p, idx) => {
-          const dt = new Date(p.ts);
-          const dateLabel = dt.toLocaleDateString('it-IT', {day:'2-digit', month:'short'});
-          return `<div style="position:relative;cursor:pointer;border-radius:8px;overflow:hidden;border:1px solid var(--bord);aspect-ratio:1;background:var(--surf);" onclick="openPhotoFullView(${idx})">
-            <img src="${p.url}" style="width:100%;height:100%;object-fit:cover;display:block;">
-            <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.85));padding:14px 6px 4px;">
-              <div style="font-size:9px;color:#fff;font-weight:700;">${p.view==='front'?'🧍':p.view==='side'?'👤':'🔙'} ${dateLabel}</div>
-            </div>
-          </div>`;
-        }).join('')}
-      </div>`}
-  </div>`;
-};
-
 window.renderBody = function(cW,mac,theme,pWeek,sx){
   if(!ST.chartFilter) ST.chartFilter=30;
   const wArr=ST.h.slice(-ST.chartFilter);
@@ -9515,6 +9353,351 @@ window.renderSocial = function() {
   </div>`;
 };
 
+// ── LISTA SPESA (sessione 9) ──────────────────────────────────────────
+// Genera automaticamente la lista degli ingredienti necessari per la settimana
+// dato il programma alimentare. L'utente può rimuovere voci (es. mangia fuori X
+// sere) e aggiungerne di personali. Spuntare = "comprato".
+//
+// Stato persistente in ST.shoppingState:
+//   - removed: array di chiavi cibo da non includere questa settimana
+//   - extras: array di {label, qty, checked} aggiunte personali
+//   - checked: array di chiavi cibo già spuntate
+//   - lastGenWeek: ISO settimana ultima generazione (per reset auto)
+
+window.renderShopping = function(mac) {
+  // Inizializza stato se mancante
+  if (!ST.shoppingState) {
+    ST.shoppingState = { removed: [], extras: [], checked: [], lastGenWeek: null };
+  }
+
+  // Calcola settimana corrente (formato YYYY-Www)
+  const now = new Date();
+  const yearStart = new Date(now.getFullYear(), 0, 1);
+  const weekNum = Math.ceil(((now - yearStart) / 86400000 + yearStart.getDay() + 1) / 7);
+  const currentWeekKey = now.getFullYear() + '-W' + String(weekNum).padStart(2, '0');
+
+  // Reset auto se nuova settimana
+  if (ST.shoppingState.lastGenWeek !== currentWeekKey) {
+    ST.shoppingState.lastGenWeek = currentWeekKey;
+    ST.shoppingState.checked = []; // reset spunte ogni settimana
+    // NON resetto extras (persistono) e removed (resetta a inizio settimana)
+    ST.shoppingState.removed = [];
+  }
+
+  // Genera lista da programma alimentare
+  const items = window._generateShoppingList(mac);
+
+  // Filtra rimossi
+  const visibleItems = items.filter(it => !ST.shoppingState.removed.includes(it.key));
+
+  // Raggruppa per categoria supermercato
+  const grouped = {};
+  visibleItems.forEach(it => {
+    if (!grouped[it.cat]) grouped[it.cat] = [];
+    grouped[it.cat].push(it);
+  });
+
+  const CAT_ORDER = ['🥩 Carne & Pesce', '🥚 Latticini & Uova', '🥬 Frutta & Verdura', '🌾 Cereali & Pane', '🥫 Legumi & Conserve', '🥜 Snack & Frutta secca', '🧂 Condimenti & Vari'];
+  const CAT_COLORS = {
+    '🥩 Carne & Pesce': 'var(--red)',
+    '🥚 Latticini & Uova': 'var(--yel)',
+    '🥬 Frutta & Verdura': 'var(--gre)',
+    '🌾 Cereali & Pane': 'var(--ora)',
+    '🥫 Legumi & Conserve': 'var(--blu)',
+    '🥜 Snack & Frutta secca': 'var(--purp)',
+    '🧂 Condimenti & Vari': 'var(--mut)'
+  };
+
+  const totalItems = visibleItems.length + (ST.shoppingState.extras||[]).length;
+  const checkedItems = visibleItems.filter(it => ST.shoppingState.checked.includes(it.key)).length
+                     + (ST.shoppingState.extras||[]).filter(e => e.checked).length;
+  const progressPct = totalItems > 0 ? Math.round(checkedItems / totalItems * 100) : 0;
+
+  let html = `
+  <div class="r" style="margin-bottom:14px;">
+    <div class="bebas" style="font-size:26px;">🛒 LISTA SPESA</div>
+    <div style="font-size:11px;color:var(--mut);">Sett. ${weekNum} · ${checkedItems}/${totalItems}</div>
+  </div>
+
+  <!-- Banner intro -->
+  <div class="card" style="background:linear-gradient(135deg,rgba(34,197,94,.08),rgba(96,165,250,.04));border:1px solid var(--gre);padding:12px 14px;margin-bottom:12px;">
+    <div style="font-size:13px;color:var(--text);line-height:1.5;">
+      Lista calcolata automaticamente dal tuo programma alimentare per i prossimi 7 giorni.
+      Spunta gli articoli mentre fai la spesa, rimuovi quelli che hai già o non vuoi questa settimana.
+    </div>
+    <div style="background:var(--surf);border-radius:8px;padding:8px;margin-top:8px;">
+      <div style="height:6px;background:var(--bg);border-radius:3px;overflow:hidden;">
+        <div style="width:${progressPct}%;height:100%;background:var(--gre);transition:width .3s;"></div>
+      </div>
+      <div style="font-size:10px;color:var(--mut);margin-top:4px;text-align:center;">${progressPct}% completata</div>
+    </div>
+  </div>
+
+  <!-- Bottoni azione -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px;">
+    <button class="btn-s" style="padding:10px;background:rgba(96,165,250,.1);border:1px solid var(--blu);color:var(--blu);font-weight:600;border-radius:8px;cursor:pointer;font-size:12px;" onclick="window.regenerateShoppingList()">🔄 RIGENERA</button>
+    <button class="btn-s" style="padding:10px;background:rgba(34,197,94,.1);border:1px solid var(--gre);color:var(--gre);font-weight:600;border-radius:8px;cursor:pointer;font-size:12px;" onclick="window.shareShoppingList()">📤 CONDIVIDI</button>
+  </div>`;
+
+  // Sezione cibi del programma per categoria
+  CAT_ORDER.forEach(cat => {
+    if (!grouped[cat] || !grouped[cat].length) return;
+    html += `<div class="card" style="border-left:4px solid ${CAT_COLORS[cat]||'var(--bord)'};padding:12px 14px;margin-bottom:10px;">
+      <div class="bebas" style="font-size:15px;color:${CAT_COLORS[cat]||'var(--text)'};margin-bottom:8px;letter-spacing:1px;">${cat}</div>
+      ${grouped[cat].map(it => {
+        const isChecked = ST.shoppingState.checked.includes(it.key);
+        return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;${isChecked?'opacity:.5;':''}border-bottom:1px solid var(--bord);">
+          <input type="checkbox" ${isChecked?'checked':''} onchange="window.toggleShoppingItem('${it.key}', this.checked)" style="width:18px;height:18px;cursor:pointer;flex-shrink:0;accent-color:var(--gre);">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;color:var(--text);${isChecked?'text-decoration:line-through;':''}">${escapeHtml(it.name)}</div>
+            <div style="font-size:11px;color:var(--mut);">${it.qty}</div>
+          </div>
+          <button onclick="window.removeShoppingItem('${it.key}')" style="background:none;border:none;color:var(--mut);font-size:14px;cursor:pointer;padding:4px 8px;flex-shrink:0;" title="Rimuovi questa settimana">✕</button>
+        </div>`;
+      }).join('')}
+    </div>`;
+  });
+
+  // Sezione "Aggiunte personali"
+  const extras = ST.shoppingState.extras || [];
+  html += `<div class="card" style="border-left:4px solid var(--purp);padding:12px 14px;margin-bottom:10px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div class="bebas" style="font-size:15px;color:var(--purp);letter-spacing:1px;">➕ AGGIUNTE PERSONALI</div>
+      <button onclick="window.openAddShoppingItem()" style="background:rgba(167,139,250,.15);color:var(--purp);border:1px solid var(--purp);padding:6px 12px;font-size:12px;font-weight:600;border-radius:8px;cursor:pointer;">+ AGGIUNGI</button>
+    </div>
+    ${extras.length === 0 ? `<div style="font-size:11px;color:var(--mut);font-style:italic;text-align:center;padding:14px;">Nessun articolo personale. Aggiungi cose extra come ospiti, viaggi, prodotti casa.</div>` : extras.map((e,i) => `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;${e.checked?'opacity:.5;':''}border-bottom:1px solid var(--bord);">
+      <input type="checkbox" ${e.checked?'checked':''} onchange="window.toggleShoppingExtra(${i}, this.checked)" style="width:18px;height:18px;cursor:pointer;flex-shrink:0;accent-color:var(--gre);">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;color:var(--text);${e.checked?'text-decoration:line-through;':''}">${escapeHtml(e.label)}</div>
+        ${e.qty ? `<div style="font-size:11px;color:var(--mut);">${escapeHtml(e.qty)}</div>` : ''}
+      </div>
+      <button onclick="window.removeShoppingExtra(${i})" style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;padding:4px 8px;flex-shrink:0;">🗑️</button>
+    </div>`).join('')}
+  </div>`;
+
+  // Articoli rimossi (se ci sono, mostra pulsante per ripristinare)
+  if (ST.shoppingState.removed.length > 0) {
+    html += `<div class="card" style="border:1px dashed var(--bord);padding:10px 12px;margin-bottom:10px;background:transparent;">
+      <div style="font-size:11px;color:var(--mut);margin-bottom:6px;">${ST.shoppingState.removed.length} articoli rimossi questa settimana</div>
+      <button onclick="window.restoreShoppingItems()" style="font-size:11px;padding:6px 12px;background:var(--surf);border:1px solid var(--bord);color:var(--text);border-radius:6px;cursor:pointer;font-weight:600;">↶ Ripristina tutti</button>
+    </div>`;
+  }
+
+  return html;
+};
+
+// ── GENERA LISTA da programma alimentare ──
+window._generateShoppingList = function(mac) {
+  // Aggrega ingredienti per cibo dato il piano alimentare settimanale
+  // Calcola quantità totali per 7 giorni (5 pasti x 7 = 35 pasti)
+  // Strategy: usiamo i preferiti del piano alimentare standard
+
+  const items = [];
+  const sx = ST.profile?.sx || 'm';
+  const intol = ST.p?.intol || [];
+  const diet = ST.p?.diet || 'omnivore';
+
+  // Generiamo 7 giorni di pasti per estrarre ingredienti
+  const allMeals = [];
+  for (let day = 0; day < 7; day++) {
+    const isRest = day === 0 || day === 6; // weekend = rest semplificato
+    try {
+      const meals = buildMeals(mac, intol, sx, isRest, diet, ST.p?.times, ST.p?.usesSupplements||false, ST.p?.favs||null, ST.p?.workoutTime||null);
+      Object.values(meals||{}).forEach(opts => {
+        if (Array.isArray(opts)) opts.slice(0,1).forEach(opt => allMeals.push(opt)); // prima opzione di ogni pasto
+        else if (opts) allMeals.push(opts);
+      });
+    } catch(_) {}
+  }
+
+  // Estraggo testi pasti e parsing semplificato
+  // Mappa cibo → quantità accumulate
+  const acc = {};
+  allMeals.forEach(meal => {
+    const ingredients = meal?.ing || meal?.ingredients || meal?.items || [];
+    if (Array.isArray(ingredients)) {
+      ingredients.forEach(ing => {
+        const name = ing.name || ing.label || ing;
+        const qty = ing.qty || ing.grams || 100;
+        if (typeof name === 'string') {
+          const key = name.toLowerCase().trim().replace(/[^a-z0-9]/g, '_');
+          if (!acc[key]) acc[key] = { name, totalG: 0, count: 0 };
+          acc[key].totalG += qty;
+          acc[key].count++;
+        }
+      });
+    }
+  });
+
+  // Se acc vuoto (struttura buildMeals diversa), faccio fallback con cibi comuni
+  const hasIngredients = Object.keys(acc).length > 0;
+
+  if (hasIngredients) {
+    Object.entries(acc).forEach(([key, val]) => {
+      items.push({
+        key,
+        name: val.name,
+        qty: val.totalG > 1000 ? `${(val.totalG/1000).toFixed(1)}kg` : `${Math.round(val.totalG)}g`,
+        cat: window._categorizeFood(val.name)
+      });
+    });
+  } else {
+    // Fallback: lista standard settimanale per omnivoro/vegetariano
+    const proteinKcal = mac.prot * 7; // settimana proteine totali in g
+    const baseList = [
+      { key: 'pollo', name: 'Petto di pollo', qty: '1.4 kg', cat: '🥩 Carne & Pesce' },
+      { key: 'pesce', name: 'Filetto di pesce (salmone/merluzzo)', qty: '600 g', cat: '🥩 Carne & Pesce' },
+      { key: 'manzo', name: 'Manzo magro (es. fesa)', qty: '500 g', cat: '🥩 Carne & Pesce' },
+      { key: 'tonno', name: 'Tonno al naturale', qty: '4 scatolette', cat: '🥩 Carne & Pesce' },
+      { key: 'uova', name: 'Uova', qty: '12 (1 conf.)', cat: '🥚 Latticini & Uova' },
+      { key: 'yogurt_greco', name: 'Yogurt greco 0%', qty: '1 kg', cat: '🥚 Latticini & Uova' },
+      { key: 'ricotta', name: 'Ricotta light', qty: '500 g', cat: '🥚 Latticini & Uova' },
+      { key: 'parmigiano', name: 'Parmigiano (grattugiato)', qty: '200 g', cat: '🥚 Latticini & Uova' },
+      { key: 'latte', name: 'Latte parzialmente scremato', qty: '1.5 L', cat: '🥚 Latticini & Uova' },
+      { key: 'mele', name: 'Mele', qty: '7 (1 a giorno)', cat: '🥬 Frutta & Verdura' },
+      { key: 'banane', name: 'Banane', qty: '5', cat: '🥬 Frutta & Verdura' },
+      { key: 'frutti_bosco', name: 'Frutti di bosco (mirtilli/lamponi)', qty: '500 g', cat: '🥬 Frutta & Verdura' },
+      { key: 'spinaci', name: 'Spinaci freschi/surgelati', qty: '500 g', cat: '🥬 Frutta & Verdura' },
+      { key: 'broccoli', name: 'Broccoli', qty: '500 g', cat: '🥬 Frutta & Verdura' },
+      { key: 'zucchine', name: 'Zucchine', qty: '4', cat: '🥬 Frutta & Verdura' },
+      { key: 'pomodori', name: 'Pomodori', qty: '500 g', cat: '🥬 Frutta & Verdura' },
+      { key: 'insalata_mista', name: 'Insalata mista', qty: '2 buste', cat: '🥬 Frutta & Verdura' },
+      { key: 'avocado', name: 'Avocado', qty: '2', cat: '🥬 Frutta & Verdura' },
+      { key: 'patate', name: 'Patate', qty: '1 kg', cat: '🥬 Frutta & Verdura' },
+      { key: 'avena', name: 'Fiocchi avena', qty: '500 g', cat: '🌾 Cereali & Pane' },
+      { key: 'riso_int', name: 'Riso integrale', qty: '500 g', cat: '🌾 Cereali & Pane' },
+      { key: 'pasta_int', name: 'Pasta integrale', qty: '500 g', cat: '🌾 Cereali & Pane' },
+      { key: 'pane_int', name: 'Pane integrale (a fette)', qty: '500 g', cat: '🌾 Cereali & Pane' },
+      { key: 'gallette', name: 'Gallette di riso/mais', qty: '1 conf.', cat: '🌾 Cereali & Pane' },
+      { key: 'legumi', name: 'Legumi (ceci/lenticchie/fagioli)', qty: '2 barattoli', cat: '🥫 Legumi & Conserve' },
+      { key: 'mandorle', name: 'Mandorle naturali', qty: '200 g', cat: '🥜 Snack & Frutta secca' },
+      { key: 'noci', name: 'Noci', qty: '150 g', cat: '🥜 Snack & Frutta secca' },
+      { key: 'olio_evo', name: 'Olio extravergine d\'oliva', qty: '1 bottiglia', cat: '🧂 Condimenti & Vari' },
+      { key: 'sale', name: 'Sale', qty: '1 conf.', cat: '🧂 Condimenti & Vari' },
+      { key: 'spezie', name: 'Spezie miste', qty: 'a piacere', cat: '🧂 Condimenti & Vari' },
+    ];
+    items.push(...baseList);
+  }
+
+  return items;
+};
+
+// Categorizza un cibo in base al nome
+window._categorizeFood = function(name) {
+  const n = (name||'').toLowerCase();
+  if (/poll|tacchin|manz|maial|salam|prosciutt|brešaol|tonn|pesc|salmon|merluzz|orat|gambr|polp|seppi|sgombro|trota/.test(n)) return '🥩 Carne & Pesce';
+  if (/uov|yogurt|latte|formag|ricott|parmigian|mozzarella|grana|burr|panna/.test(n)) return '🥚 Latticini & Uova';
+  if (/mela|banana|arancia|fragola|frutti|mirtill|lampon|kiwi|ananas|pera|uva|pesca|albicocc|spinac|broccol|zucchin|pomodor|insalat|carot|cipolla|aglio|patat|peperon|melanzan|cetriol|funghi|finocchi|porri|sedan/.test(n)) return '🥬 Frutta & Verdura';
+  if (/pasta|riso|pane|farro|orzo|avena|cereal|gallett|cous|quinoa|cracker/.test(n)) return '🌾 Cereali & Pane';
+  if (/legum|cec|lenticchi|fagiol|fav|piselli|hummus|tofu|seitan|tonno_n_sc|conserv/.test(n)) return '🥫 Legumi & Conserve';
+  if (/mandorl|noc|nocciol|pistacch|anacard|arachid|pinol|frutta_secc|barrett|protein/.test(n)) return '🥜 Snack & Frutta secca';
+  return '🧂 Condimenti & Vari';
+};
+
+window.toggleShoppingItem = async function(key, checked) {
+  if (!ST.shoppingState) ST.shoppingState = { removed: [], extras: [], checked: [], lastGenWeek: null };
+  if (checked) {
+    if (!ST.shoppingState.checked.includes(key)) ST.shoppingState.checked.push(key);
+  } else {
+    ST.shoppingState.checked = ST.shoppingState.checked.filter(k => k !== key);
+  }
+  await save();
+};
+
+window.removeShoppingItem = async function(key) {
+  if (!ST.shoppingState) ST.shoppingState = { removed: [], extras: [], checked: [], lastGenWeek: null };
+  if (!ST.shoppingState.removed.includes(key)) ST.shoppingState.removed.push(key);
+  // Tolgo anche dai checked se presente
+  ST.shoppingState.checked = ST.shoppingState.checked.filter(k => k !== key);
+  await save();
+};
+
+window.restoreShoppingItems = async function() {
+  if (!ST.shoppingState) return;
+  ST.shoppingState.removed = [];
+  await save();
+};
+
+window.regenerateShoppingList = async function() {
+  if (!confirm('Ripristinare la lista al programma settimanale standard?\n\nLe spunte e gli articoli rimossi verranno azzerati. Le tue aggiunte personali rimarranno.')) return;
+  if (!ST.shoppingState) ST.shoppingState = {};
+  ST.shoppingState.removed = [];
+  ST.shoppingState.checked = [];
+  await save();
+};
+
+window.openAddShoppingItem = function() {
+  const label = prompt('Cosa vuoi aggiungere alla lista spesa?\n\nEs: Detersivo piatti, Vino per ospiti, Pannolini...');
+  if (!label || label.trim().length === 0) return;
+  if (label.length > 60) return alert('Massimo 60 caratteri.');
+  if (!ST.shoppingState) ST.shoppingState = { removed: [], extras: [], checked: [], lastGenWeek: null };
+  if (!ST.shoppingState.extras) ST.shoppingState.extras = [];
+  const qty = prompt('Quantità (opzionale):\n\nEs: 1 conf., 2 bottiglie, 500g...') || '';
+  ST.shoppingState.extras.push({ label: label.trim(), qty: qty.trim(), checked: false });
+  save();
+};
+
+window.toggleShoppingExtra = async function(idx, checked) {
+  if (!ST.shoppingState?.extras?.[idx]) return;
+  ST.shoppingState.extras[idx].checked = checked;
+  await save();
+};
+
+window.removeShoppingExtra = async function(idx) {
+  if (!ST.shoppingState?.extras) return;
+  if (!confirm('Rimuovere questo articolo personale?')) return;
+  ST.shoppingState.extras.splice(idx, 1);
+  await save();
+};
+
+window.shareShoppingList = function() {
+  // Genera testo formattato condivisibile
+  if (!ST.shoppingState) ST.shoppingState = { removed: [], extras: [], checked: [], lastGenWeek: null };
+  const mac = (typeof window.computeMac === 'function') ? window.computeMac(ST.p, ST.profile, ST.h) : { kcal: 2000, prot: 120, carb: 200, fat: 60 };
+  const items = window._generateShoppingList(mac);
+  const visible = items.filter(it => !ST.shoppingState.removed.includes(it.key));
+  const grouped = {};
+  visible.forEach(it => {
+    if (!grouped[it.cat]) grouped[it.cat] = [];
+    grouped[it.cat].push(it);
+  });
+
+  let text = '🛒 LISTA SPESA — FitTracker PRO\n';
+  text += new Date().toLocaleDateString('it-IT', {weekday:'long', day:'2-digit', month:'long'}) + '\n\n';
+  Object.keys(grouped).sort().forEach(cat => {
+    text += cat + '\n';
+    grouped[cat].forEach(it => {
+      const checked = ST.shoppingState.checked.includes(it.key) ? '✓' : '☐';
+      text += `${checked} ${it.name} — ${it.qty}\n`;
+    });
+    text += '\n';
+  });
+
+  if (ST.shoppingState.extras?.length) {
+    text += '➕ AGGIUNTE PERSONALI\n';
+    ST.shoppingState.extras.forEach(e => {
+      const checked = e.checked ? '✓' : '☐';
+      text += `${checked} ${e.label}${e.qty ? ' — ' + e.qty : ''}\n`;
+    });
+  }
+
+  // Usa Web Share API se disponibile
+  if (navigator.share) {
+    navigator.share({
+      title: 'Lista Spesa',
+      text
+    }).catch(() => {
+      // Fallback: copy to clipboard
+      navigator.clipboard?.writeText(text).then(() => alert('✓ Lista copiata negli appunti'));
+    });
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => alert('✓ Lista copiata negli appunti'))
+      .catch(() => alert('Impossibile copiare. Lista:\n\n' + text.slice(0, 500)));
+  } else {
+    alert(text);
+  }
+};
+
 window.renderShare = function(){
   return `
   <div class="bebas" style="font-size:30px;color:var(--blu);margin:8px 0 4px;">📤 CONDIVIDI L'APP</div>
@@ -10328,84 +10511,6 @@ window.render = function() {
       <button class="btn btn-action" style="width:100%;padding:12px;" onclick="closeSheet()">CHIUDI</button>
     </div></div>`;
   })():
-  // ── SHEET FOTO PROGRESSO (sessione 8) ──
-  ST.sheet==='photoUpload'&&ST.sheetData?(()=>{
-    const d = ST.sheetData;
-    const viewLabels = { front: '🧍 Frontale', side: '👤 Laterale', back: '🔙 Schiena' };
-    return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div>
-      <div class="bebas" style="font-size:24px;margin-bottom:6px;">📸 NUOVA FOTO PROGRESSO</div>
-      <div style="font-size:12px;color:var(--mut);margin-bottom:14px;line-height:1.5;">Scegli la posa e carica la foto. Compressa automaticamente per occupare poco spazio.</div>
-
-      <!-- Selettore vista -->
-      <div style="margin-bottom:12px;">
-        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:8px;">POSA</div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
-          ${['front','side','back'].map(v => `<button class="btn-s" style="padding:12px 6px;font-size:12px;background:${d.view===v?'var(--purp)':'var(--surf)'};color:${d.view===v?'#fff':'var(--mut)'};border:1px solid ${d.view===v?'var(--purp)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;" onclick="ST.sheetData.view='${v}';render()">${viewLabels[v]}</button>`).join('')}
-        </div>
-      </div>
-
-      <!-- File picker -->
-      <div style="margin-bottom:12px;">
-        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:8px;">FILE FOTO</div>
-        <input type="file" id="photoFileInput" accept="image/*" capture="environment" onchange="window._handlePhotoSelect(this.files[0])" style="width:100%;font-size:13px;padding:10px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;color:var(--text);">
-        ${d.preview ? `<div style="margin-top:10px;text-align:center;"><img src="${d.preview}" style="max-width:100%;max-height:300px;border-radius:10px;border:1px solid var(--bord);"></div>` : ''}
-        ${d.file ? `<div style="margin-top:8px;font-size:11px;color:var(--gre);text-align:center;">✓ File pronto (${Math.round(d.file.size/1024)}KB)</div>` : ''}
-      </div>
-
-      <!-- Disclaimer privacy -->
-      <div style="background:rgba(96,165,250,.06);border:1px solid var(--blu);border-radius:8px;padding:10px;font-size:11px;color:var(--text);line-height:1.5;margin-bottom:14px;">
-        🔒 La foto viene salvata sul TUO account privato Firebase Storage. Solo tu puoi vederla. Nessuno (nemmeno il titolare dell'app) ha accesso alle tue foto.
-      </div>
-
-      <div style="display:flex;gap:6px;">
-        <button class="btn btn-action" style="flex:1;padding:12px;" onclick="closeSheet()">ANNULLA</button>
-        <button class="btn" style="flex:2;padding:12px;background:${d.file&&!d.uploading?'var(--purp)':'var(--surf)'};color:${d.file&&!d.uploading?'#fff':'var(--mut)'};font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;${!d.file||d.uploading?'pointer-events:none;':''}" onclick="uploadProgressPhoto()">${d.uploading?'⏳ CARICAMENTO...':'✓ CARICA FOTO'}</button>
-      </div>
-    </div></div>`;
-  })():
-  ST.sheet==='photoFull'&&ST.sheetData?(()=>{
-    const p = ST.sheetData.photo;
-    const date = new Date(p.ts).toLocaleDateString('it-IT', {day:'2-digit', month:'long', year:'numeric'});
-    return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh" style="max-width:600px;"><div class="sh-h"></div>
-      <div style="text-align:center;margin-bottom:10px;">
-        <div class="bebas" style="font-size:20px;">${p.view==='front'?'🧍 FRONTALE':p.view==='side'?'👤 LATERALE':'🔙 SCHIENA'}</div>
-        <div style="font-size:11px;color:var(--mut);">${date}</div>
-      </div>
-      <img src="${p.url}" style="width:100%;border-radius:10px;border:1px solid var(--bord);">
-      <div style="display:flex;gap:6px;margin-top:14px;">
-        <button class="btn btn-action" style="flex:1;padding:12px;" onclick="closeSheet()">CHIUDI</button>
-        <button class="btn-s" style="flex:1;padding:12px;background:rgba(239,68,68,.1);border:1px solid var(--red);color:var(--red);font-weight:700;border-radius:10px;" onclick="deleteProgressPhoto('${p.path}', ${ST.sheetData.idx});closeSheet()">🗑️ ELIMINA</button>
-      </div>
-    </div></div>`;
-  })():
-  ST.sheet==='photoCompare'&&ST.sheetData?(()=>{
-    const newP = ST.sheetData.photoNew;
-    const oldP = ST.sheetData.photoOld;
-    const dateNew = new Date(newP.ts).toLocaleDateString('it-IT', {day:'2-digit', month:'short'});
-    const dateOld = new Date(oldP.ts).toLocaleDateString('it-IT', {day:'2-digit', month:'short'});
-    const daysDiff = Math.round((newP.ts - oldP.ts) / 86400000);
-    const pos = ST.sheetData.sliderPos || 50;
-    return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh" style="max-width:600px;"><div class="sh-h"></div>
-      <div style="text-align:center;margin-bottom:10px;">
-        <div class="bebas" style="font-size:20px;">📊 BEFORE / AFTER</div>
-        <div style="font-size:11px;color:var(--mut);">${daysDiff} giorni di differenza</div>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px;">
-        <div style="color:var(--mut);">PRIMA · ${dateOld}</div>
-        <div style="color:var(--gre);">DOPO · ${dateNew}</div>
-      </div>
-      <!-- Slider before/after -->
-      <div style="position:relative;width:100%;border-radius:10px;overflow:hidden;border:1px solid var(--bord);">
-        <img src="${oldP.url}" style="width:100%;display:block;">
-        <div style="position:absolute;top:0;left:0;width:${pos}%;height:100%;overflow:hidden;border-right:2px solid var(--acc);">
-          <img src="${newP.url}" style="width:${100/(pos/100)}%;height:100%;display:block;object-fit:cover;">
-        </div>
-        <div style="position:absolute;top:50%;left:${pos}%;transform:translate(-50%,-50%);background:var(--acc);color:#000;font-weight:800;font-size:11px;padding:4px 8px;border-radius:6px;pointer-events:none;">⇄</div>
-      </div>
-      <input type="range" min="0" max="100" value="${pos}" oninput="ST.sheetData.sliderPos=parseInt(this.value);render()" style="width:100%;margin-top:14px;accent-color:var(--acc);">
-      <button class="btn btn-action" style="width:100%;padding:12px;margin-top:14px;" onclick="closeSheet()">CHIUDI</button>
-    </div></div>`;
-  })():
   ST.sheet==='travelEx'?(()=>{
     const exs = window.TRAVEL_BODYWEIGHT_EX || [];
     return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div>
@@ -10490,6 +10595,104 @@ window.render = function() {
     </div></div>`;
   })():
   // FIX SGARRI: sheet inserimento cibo da DB (alternativa al testo libero)
+  // ── SHEET CIBO PERSONALIZZATO (sessione 10) ──
+  ST.sheet==='customFood'&&ST.sheetData?(()=>{
+    const d = ST.sheetData;
+    const cats = window.FOOD_CATS || [];
+    return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div>
+      <div class="bebas" style="font-size:24px;margin-bottom:6px;">➕ NUOVO CIBO</div>
+      <div style="font-size:12px;color:var(--mut);margin-bottom:14px;line-height:1.5;">Crea un cibo che non è nel database. Una volta creato lo trovi sempre nelle tue ricerche.</div>
+
+      <!-- Nome -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:6px;">NOME CIBO *</div>
+        <input id="customFoodName" type="text" maxlength="60" value="${escapeHtml(d.name||'')}" placeholder="Es: Hamburger del bar di Marco" oninput="ST.sheetData.name=this.value" style="width:100%;font-size:14px;padding:10px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;color:var(--text);">
+      </div>
+
+      <!-- Categoria -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:6px;">CATEGORIA</div>
+        <select onchange="ST.sheetData.cat=this.value" style="width:100%;font-size:13px;padding:10px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;color:var(--text);">
+          ${cats.map(c => `<option value="${c.id}" ${d.cat===c.id?'selected':''}>${c.emo} ${c.lbl}</option>`).join('')}
+        </select>
+      </div>
+
+      <!-- Modalità: porzione vs grammi -->
+      <div style="margin-bottom:12px;background:var(--surf);border-radius:10px;padding:12px;border:1px solid var(--bord);">
+        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:8px;">COME LO MISURI?</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+          <button class="btn-s" style="padding:10px;font-size:12px;background:${!d.isPortion?'var(--purp)':'var(--bg)'};color:${!d.isPortion?'#fff':'var(--mut)'};border:1px solid ${!d.isPortion?'var(--purp)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;" onclick="ST.sheetData.isPortion=false;render()">⚖️ A PESO (g)</button>
+          <button class="btn-s" style="padding:10px;font-size:12px;background:${d.isPortion?'var(--ora)':'var(--bg)'};color:${d.isPortion?'#fff':'var(--mut)'};border:1px solid ${d.isPortion?'var(--ora)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;" onclick="ST.sheetData.isPortion=true;render()">📦 A PORZIONE</button>
+        </div>
+        <div style="font-size:10px;color:var(--mut);margin-top:6px;font-style:italic;">${d.isPortion ? 'Es: birra media, fetta torta, panino al bar' : 'Es: pollo, pasta, pane (cibi a peso variabile)'}</div>
+      </div>
+
+      <!-- Riferimenti nutrizionali -->
+      <div style="margin-bottom:12px;background:rgba(167,139,250,.06);border:1.5px solid var(--purp);border-radius:10px;padding:12px;">
+        <div style="font-size:11px;color:var(--purp);font-weight:700;letter-spacing:1px;margin-bottom:8px;">📊 VALORI DI RIFERIMENTO</div>
+
+        ${d.isPortion ? `
+        <!-- Modalità porzione: kcal e macro per 1 porzione -->
+        <div style="margin-bottom:10px;">
+          <div style="font-size:10px;color:var(--mut);margin-bottom:4px;">Descrizione porzione (es. "media 40cl", "pezzo")</div>
+          <input type="text" maxlength="40" value="${escapeHtml(d.portionLabel||'')}" oninput="ST.sheetData.portionLabel=this.value" placeholder="1 porzione" style="width:100%;font-size:13px;padding:8px;background:var(--surf);border:1px solid var(--bord);border-radius:6px;color:var(--text);">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;">
+          <div>
+            <div style="font-size:10px;color:var(--mut);margin-bottom:3px;">Kcal per porzione *</div>
+            <input type="number" min="1" max="1000" step="1" value="${d.kcal||250}" oninput="ST.sheetData.kcal=parseInt(this.value)||0" style="width:100%;font-size:13px;padding:8px;text-align:center;">
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--mut);margin-bottom:3px;">Grammi tipici (~) </div>
+            <input type="number" min="1" max="5000" step="10" value="${d.refGrams||100}" oninput="ST.sheetData.refGrams=parseInt(this.value)||100" style="width:100%;font-size:13px;padding:8px;text-align:center;">
+          </div>
+        </div>
+        ` : `
+        <!-- Modalità peso: kcal e macro per X grammi -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;">
+          <div>
+            <div style="font-size:10px;color:var(--mut);margin-bottom:3px;">Kcal totali *</div>
+            <input type="number" min="1" max="5000" step="1" value="${d.kcal||250}" oninput="ST.sheetData.kcal=parseInt(this.value)||0" style="width:100%;font-size:13px;padding:8px;text-align:center;">
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--mut);margin-bottom:3px;">in quanti grammi *</div>
+            <input type="number" min="1" max="5000" step="10" value="${d.refGrams||100}" oninput="ST.sheetData.refGrams=parseInt(this.value)||100" style="width:100%;font-size:13px;padding:8px;text-align:center;">
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--mut);margin-top:4px;font-style:italic;">Esempio: "300 kcal in 100g" = 300 kcal/100g</div>
+        `}
+
+        <!-- Macro opzionali -->
+        <div style="margin-top:10px;padding-top:8px;border-top:1px dashed var(--bord);">
+          <div style="font-size:10px;color:var(--mut);margin-bottom:6px;">Macro (opzionali, in grammi):</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
+            <div>
+              <div style="font-size:9px;color:var(--mut);">Proteine</div>
+              <input type="number" min="0" max="200" step="0.1" value="${d.p||0}" oninput="ST.sheetData.p=parseFloat(this.value)||0" style="width:100%;font-size:12px;padding:6px;text-align:center;">
+            </div>
+            <div>
+              <div style="font-size:9px;color:var(--mut);">Carbo</div>
+              <input type="number" min="0" max="200" step="0.1" value="${d.c||0}" oninput="ST.sheetData.c=parseFloat(this.value)||0" style="width:100%;font-size:12px;padding:6px;text-align:center;">
+            </div>
+            <div>
+              <div style="font-size:9px;color:var(--mut);">Grassi</div>
+              <input type="number" min="0" max="200" step="0.1" value="${d.f||0}" oninput="ST.sheetData.f=parseFloat(this.value)||0" style="width:100%;font-size:12px;padding:6px;text-align:center;">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hint -->
+      <div style="background:var(--surf);border-radius:8px;padding:10px;font-size:11px;color:var(--text);line-height:1.5;margin-bottom:14px;">
+        💡 Inserisci i valori che vedi sull'etichetta nutrizionale. Se non li hai, prova a stimare dal cibo simile più vicino oppure cerca su Google "kcal [nome cibo] 100g".
+      </div>
+
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-action" style="flex:1;padding:12px;" onclick="ST.sheet='cheatDb';render()">← INDIETRO</button>
+        <button class="btn" style="flex:2;padding:12px;background:var(--purp);color:#fff;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;" onclick="confirmCustomFood()">✓ CREA E USA</button>
+      </div>
+    </div></div>`;
+  })():
   ST.sheet==='cheatDb'&&ST.sheetData?(()=>{
     const d=ST.sheetData;
     if(!d.selectedFood){
@@ -10518,8 +10721,10 @@ window.render = function() {
         <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;">
           ${(window.FOOD_CATS||[]).map(c=>`<button class="btn-s" style="font-size:10px;padding:4px 8px;background:${d.foodCat===c.id?'var(--purp)':'var(--surf)'};color:${d.foodCat===c.id?'#fff':'var(--mut)'};border:1px solid ${d.foodCat===c.id?'var(--purp)':'var(--bord)'};" onclick="setCheatFoodCat('${c.id}')">${c.emo} ${c.short||c.lbl}</button>`).join('')}
         </div>
-        <div id="cheatDbList" style="height:${cart.length?'40vh':'50vh'};overflow-y:auto;">${_buildCheatDbListHtml()}</div>
-        <button class="btn btn-action" style="margin-top:12px;width:100%;padding:12px;" onclick="closeSheet()">${cart.length?'ANNULLA E SVUOTA CARRELLO':'ANNULLA'}</button>
+        <div id="cheatDbList" style="height:${cart.length?'35vh':'45vh'};overflow-y:auto;">${_buildCheatDbListHtml()}</div>
+        <!-- Bottone "Non lo trovo? Creane uno" (sessione 10) -->
+        <button class="btn-s" style="margin-top:10px;width:100%;padding:11px;background:rgba(167,139,250,.1);border:1px dashed var(--purp);color:var(--purp);font-weight:600;font-size:12px;border-radius:8px;cursor:pointer;" onclick="openCustomFoodSheet()">➕ NON LO TROVI? CREA UN NUOVO CIBO</button>
+        <button class="btn btn-action" style="margin-top:8px;width:100%;padding:12px;" onclick="closeSheet()">${cart.length?'ANNULLA E SVUOTA CARRELLO':'ANNULLA'}</button>
       </div></div>`;
     }
     // Schermata 2: imposta grammi/quantità
@@ -10751,6 +10956,7 @@ window.render = function() {
     {id:'home',ic:'🏠',lbl:'Home'},
     {id:'work',ic:'🏋️',lbl:'Allenamento'},
     {id:'diet',ic:'🥗',lbl:'Alimentazione'},
+    {id:'shopping',ic:'🛒',lbl:'Lista Spesa'},
     {id:'body',ic:'📊',lbl:'Analisi & Progressi'},
     {id:'measures',ic:'📐',lbl:'Misure Corporee'},
     {id:'social',ic:'🏆',lbl:'Classifica Amici'},
@@ -10817,6 +11023,7 @@ window.render = function() {
   if(ST.tab==='home') H+=renderHome(currentDateStr,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,todayLog);
   else if(ST.tab==='work') H+=renderWork(currentDateStr,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,todayLog);
   else if(ST.tab==='diet') H+=renderDiet(currentDateStr,mac,an,sx,todayWoId);
+  else if(ST.tab==='shopping') H+=renderShopping(mac);
   else if(ST.tab==='body') H+=renderBody(cW,mac,theme,pWeek,sx);
   else if(ST.tab==='measures') H+=renderMeasures(cW,mac,theme,pWeek,sx);
   else if(ST.tab==='social') H+=renderSocial();
