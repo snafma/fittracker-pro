@@ -7,12 +7,23 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION6-GDPR-INTEGRATIONS">
+<meta name="ft-version" content="build-SESSION8-PHOTOS-SW">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FitTracker">
+<meta name="theme-color" content="#0d0d0f">
+<meta name="mobile-web-app-capable" content="yes">
+
+<!-- ── PWA MANIFEST INLINE (sessione 7) ──
+     Data URL evita problemi 404 da path/case-sensitive. Funziona su tutti i browser. -->
+<link rel="manifest" href='data:application/manifest+json;charset=utf-8,{"name":"FitTracker PRO","short_name":"FitTracker","description":"App fitness personale: allenamenti, alimentazione, progressi","start_url":".","scope":".","display":"standalone","orientation":"portrait","background_color":"%230d0d0f","theme_color":"%230d0d0f","icons":[{"src":"data:image/svg%2Bxml,%3Csvg xmlns%3D%22http%3A//www.w3.org/2000/svg%22 viewBox%3D%220 0 192 192%22%3E%3Crect width%3D%22192%22 height%3D%22192%22 fill%3D%22%230d0d0f%22 rx%3D%2228%22/%3E%3Ctext x%3D%2296%22 y%3D%22120%22 font-family%3D%22Arial Black%22 font-size%3D%2284%22 fill%3D%22%23c5f135%22 text-anchor%3D%22middle%22%3EFT%3C/text%3E%3C/svg%3E","sizes":"192x192","type":"image/svg+xml","purpose":"any"},{"src":"data:image/svg%2Bxml,%3Csvg xmlns%3D%22http%3A//www.w3.org/2000/svg%22 viewBox%3D%220 0 512 512%22%3E%3Crect width%3D%22512%22 height%3D%22512%22 fill%3D%22%230d0d0f%22 rx%3D%2274%22/%3E%3Ctext x%3D%22256%22 y%3D%22320%22 font-family%3D%22Arial Black%22 font-size%3D%22224%22 fill%3D%22%23c5f135%22 text-anchor%3D%22middle%22%3EFT%3C/text%3E%3C/svg%3E","sizes":"512x512","type":"image/svg+xml","purpose":"any maskable"}]}'>
+
+<!-- Apple touch icon SVG inline -->
+<link rel="apple-touch-icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180"><rect width="180" height="180" fill="%230d0d0f" rx="40"/><text x="90" y="115" font-family="Arial Black" font-size="80" fill="%23c5f135" text-anchor="middle">FT</text></svg>'>
+<link rel="icon" type="image/svg+xml" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="%230d0d0f" rx="6"/><text x="16" y="22" font-family="Arial Black" font-size="14" fill="%23c5f135" text-anchor="middle">FT</text></svg>'>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -141,6 +152,7 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
   import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+  import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject, listAll } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
   import {
     getAuth, onAuthStateChanged,
     createUserWithEmailAndPassword, signInWithEmailAndPassword,
@@ -158,13 +170,15 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
     appId: "1:645700555123:web:995606f200eb37d6a8b506"
   };
 
-  let firestore, auth;
+  let firestore, auth, storage;
   try {
     console.log("[FB-INIT] Avvio inizializzazione Firebase...");
     const app = initializeApp(firebaseConfig);
     console.log("[FB-INIT] App OK, getFirestore...");
     firestore = getFirestore(app);
-    console.log("[FB-INIT] Firestore OK, getAuth...");
+    console.log("[FB-INIT] Firestore OK, getStorage...");
+    storage = getStorage(app);
+    console.log("[FB-INIT] Storage OK, getAuth...");
     auth = getAuth(app);
     console.log("[FB-INIT] Auth OK, setPersistence...");
     await setPersistence(auth, browserLocalPersistence);
@@ -262,6 +276,88 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
   };
   console.log("[FB-INIT] window.LeaderboardDB esposto");
 
+  // ── PHOTO DB (sessione 8) ────────────────────────────────────────────
+  // Gestisce upload/download/delete delle foto progresso su Firebase Storage
+  // Path: photos/{uid}/{timestamp}_{view}.jpg  (view = 'front'/'side'/'back')
+  // Limite: 12 foto/utente (rolling). Compressione lato client a ~600px JPEG q=0.75
+  window.PhotoDB = {
+    async upload(uid, view, file) {
+      if (!storage || !uid || !file) throw new Error('Storage non disponibile');
+      // Compressione lato client per restare sotto i 5GB free di Firebase
+      const compressed = await window._compressImage(file, 600, 0.75);
+      const ts = Date.now();
+      const filename = `${ts}_${view}.jpg`;
+      const path = `photos/${uid}/${filename}`;
+      const r = storageRef(storage, path);
+      await uploadBytes(r, compressed, { contentType: 'image/jpeg' });
+      const url = await getDownloadURL(r);
+      return { ts, view, filename, path, url, size: compressed.size };
+    },
+    async list(uid) {
+      if (!storage || !uid) return [];
+      try {
+        const r = storageRef(storage, `photos/${uid}`);
+        const res = await listAll(r);
+        const items = await Promise.all(res.items.map(async item => {
+          try {
+            const url = await getDownloadURL(item);
+            // Estrae ts e view dal nome (formato: {ts}_{view}.jpg)
+            const m = item.name.match(/^(\d+)_(\w+)\.jpg$/);
+            return {
+              filename: item.name,
+              path: item.fullPath,
+              url,
+              ts: m ? parseInt(m[1]) : 0,
+              view: m ? m[2] : 'front'
+            };
+          } catch(e) { return null; }
+        }));
+        return items.filter(x => x).sort((a,b) => b.ts - a.ts); // newest first
+      } catch(e) {
+        console.warn('PhotoDB.list fail:', e?.code||e);
+        return [];
+      }
+    },
+    async remove(path) {
+      if (!storage || !path) return false;
+      try {
+        await deleteObject(storageRef(storage, path));
+        return true;
+      } catch(e) {
+        console.warn('PhotoDB.remove fail:', e?.code||e);
+        return false;
+      }
+    }
+  };
+  console.log("[FB-INIT] window.PhotoDB esposto");
+
+  // Helper compressione immagine (canvas-based, no librerie esterne)
+  window._compressImage = function(file, maxDim, quality) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let w = img.width, h = img.height;
+          if (w > h && w > maxDim) { h = h * (maxDim/w); w = maxDim; }
+          else if (h >= w && h > maxDim) { w = w * (maxDim/h); h = maxDim; }
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          canvas.toBlob(blob => {
+            if (blob) resolve(blob);
+            else reject(new Error('Compressione fallita'));
+          }, 'image/jpeg', quality || 0.75);
+        };
+        img.onerror = reject;
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
   // ── LEGACY DB: accesso SENZA Auth alle vecchie chiavi (ft_reg, ft_u_<username>)
   //    Serve SOLO per l'auto-migrazione. Le Rules devono permetterlo finché la
   //    migrazione non è finita per tutti i 4 utenti. Dopo, disattiveremo.
@@ -338,6 +434,20 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
   </div>
 </div>
 
+<!-- ── BANNER INSTALL PWA (sessione 7) ──
+     Mostrato in alto se: app non in standalone + utente non ha già rifiutato/installato -->
+<div id="pwaInstallBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:99998;background:linear-gradient(135deg,#1a1a1f 0%,#252530 100%);border-bottom:2px solid var(--acc);padding:12px 16px;box-shadow:0 4px 16px rgba(0,0,0,.5);">
+  <div style="max-width:720px;margin:0 auto;display:flex;align-items:center;gap:12px;">
+    <div style="font-size:30px;line-height:1;flex-shrink:0;">📲</div>
+    <div style="flex:1;font-size:12px;line-height:1.5;color:#e4e4e7;">
+      <div style="font-weight:700;color:#c5f135;font-size:13px;">Installa FitTracker sul telefono</div>
+      <div id="pwaInstallHint" style="color:#a1a1aa;font-size:11px;">Vedila come app nativa, senza barre browser.</div>
+    </div>
+    <button id="pwaInstallBtn" onclick="window.triggerPwaInstall()" style="padding:8px 14px;background:#c5f135;color:#000;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;flex-shrink:0;display:none;">INSTALLA</button>
+    <button onclick="window.dismissPwaBanner()" style="background:transparent;border:none;color:#a1a1aa;font-size:22px;cursor:pointer;padding:0 8px;line-height:1;flex-shrink:0;">✕</button>
+  </div>
+</div>
+
 <!-- ── BANNER GDPR / COOKIE-STORAGE (sessione 6) ── -->
 <!-- Mostrato solo al primo accesso. NON blocca Firebase (servizio essenziale). -->
 <div id="gdprBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:99999;background:rgba(13,13,15,.97);backdrop-filter:blur(10px);border-top:2px solid var(--acc);padding:18px 20px;box-shadow:0 -4px 20px rgba(0,0,0,.5);">
@@ -347,7 +457,7 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
       <div style="flex:1;font-size:13px;line-height:1.6;color:var(--text);">
         <div style="font-weight:700;margin-bottom:6px;">Privacy &amp; cookie tecnici</div>
         FitTracker PRO usa <strong>Firebase di Google</strong> per login e database (servizio essenziale) e <strong>localStorage</strong> del tuo browser per mantenere la sessione attiva e migliorare le prestazioni. Non usiamo cookie pubblicitari né di profilazione.
-        <a href="privacy.html" target="_blank" style="color:var(--acc);">Leggi la privacy policy completa</a>
+        <a href="#" onclick="event.preventDefault();window.acceptGdprConsent();setTimeout(()=>{if(typeof openDisclaimerView==='function')openDisclaimerView();},300);return false;" style="color:var(--acc);">Leggi la privacy policy completa</a>
       </div>
     </div>
     <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;">
@@ -358,7 +468,7 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
 
 <!-- ── FOOTER privacy globale ── -->
 <div id="gdprFooter" style="position:fixed;bottom:8px;right:8px;z-index:9998;display:none;">
-  <a href="privacy.html" target="_blank" style="font-size:10px;color:var(--mut);text-decoration:none;background:rgba(26,26,31,.9);padding:4px 10px;border-radius:6px;border:1px solid var(--bord);backdrop-filter:blur(8px);">🔒 Privacy</a>
+  <a href="#" onclick="event.preventDefault();if(typeof openDisclaimerView==='function')openDisclaimerView();return false;" style="font-size:10px;color:var(--mut);text-decoration:none;background:rgba(26,26,31,.9);padding:4px 10px;border-radius:6px;border:1px solid var(--bord);backdrop-filter:blur(8px);">🔒 Privacy</a>
 </div>
 
 <script>
@@ -395,6 +505,165 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
     try { localStorage.removeItem('ft_gdpr_consent_v1'); } catch(_) {}
     alert('Consenso resettato. Ricarica la pagina per rivedere il banner.');
   };
+})();
+
+// ── SERVICE WORKER PER NOTIFICHE PERSISTENTI (sessione 8) ──
+// Il SW intercetta gli eventi 'notificationclick' anche quando il tab è chiuso,
+// e permette al browser di tenere in memoria un timer per notifiche schedulate.
+// Su iOS richiede PWA installata (Aggiungi a Home) da iOS 16.4+.
+//
+// Strategia: usiamo un Blob URL per il SW, NO file esterno (no path/case issues).
+(function() {
+  if (!('serviceWorker' in navigator)) return;
+
+  const swCode = `
+    // ── FitTracker SW v1 ──
+    self.addEventListener('install', (e) => { self.skipWaiting(); });
+    self.addEventListener('activate', (e) => { e.waitUntil(self.clients.claim()); });
+
+    // Click su notifica → apre/focus l'app
+    self.addEventListener('notificationclick', (e) => {
+      e.notification.close();
+      e.waitUntil(
+        self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
+          for (const client of clients) {
+            if ('focus' in client) return client.focus();
+          }
+          if (self.clients.openWindow) return self.clients.openWindow('/');
+        })
+      );
+    });
+
+    // Messaggi dal main thread (per schedulare notifiche)
+    self.addEventListener('message', (e) => {
+      if (e.data?.type === 'schedule-notification') {
+        const { title, body, when, tag } = e.data;
+        const ms = when - Date.now();
+        if (ms > 0 && ms < 86400000 * 7) { // max 7gg in futuro
+          setTimeout(() => {
+            self.registration.showNotification(title, {
+              body, tag: tag || ('ft-' + Date.now()),
+              badge: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><rect width="96" height="96" fill="%23c5f135"/><text x="48" y="60" font-family="Arial Black" font-size="40" fill="%23000" text-anchor="middle">FT</text></svg>',
+              requireInteraction: false
+            });
+          }, ms);
+        }
+      }
+    });
+
+    // Push event (per future Firebase Cloud Messaging integrations)
+    self.addEventListener('push', (e) => {
+      const data = e.data ? e.data.json() : { title: 'FitTracker', body: 'Ricorda di allenarti!' };
+      e.waitUntil(
+        self.registration.showNotification(data.title || 'FitTracker', {
+          body: data.body || '',
+          tag: data.tag || 'ft-push',
+          requireInteraction: false
+        })
+      );
+    });
+  `;
+
+  const blob = new Blob([swCode], { type: 'application/javascript' });
+  const swUrl = URL.createObjectURL(blob);
+
+  navigator.serviceWorker.register(swUrl).then(reg => {
+    console.log('[SW] Registrato:', reg.scope);
+    window.__swReady = true;
+    window.__swReg = reg;
+  }).catch(e => {
+    console.warn('[SW] Registrazione fallita:', e?.message || e);
+  });
+
+  // Helper: schedula notifica via SW (sopravvive a chiusura tab su Android/PWA installata)
+  window.scheduleNotificationViaSW = function(title, body, when, tag) {
+    if (window.__swReg && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'schedule-notification',
+        title, body, when, tag
+      });
+      return true;
+    }
+    return false;
+  };
+})();
+
+// ── PWA INSTALL (sessione 7) ──
+// Cattura l'evento beforeinstallprompt (Chrome/Edge/Android) e mostra banner.
+// Su iOS Safari mostra istruzioni manuali (Apple non espone API install).
+(function() {
+  let deferredPrompt = null;
+  const isStandalone = (typeof window.matchMedia === 'function' && window.matchMedia('(display-mode: standalone)').matches) ||
+                       window.navigator.standalone === true;
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+  function getDismissed() {
+    try { return localStorage.getItem('ft_pwa_install_dismissed_v1'); } catch(_) { return null; }
+  }
+  function setDismissed(val) {
+    try { localStorage.setItem('ft_pwa_install_dismissed_v1', val); } catch(_) {}
+  }
+
+  // Capture install prompt (Chrome/Android/Edge)
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    // Mostra banner se non già rifiutato/installato
+    if (!isStandalone && getDismissed() !== 'yes') {
+      setTimeout(() => {
+        const b = document.getElementById('pwaInstallBanner');
+        const btn = document.getElementById('pwaInstallBtn');
+        if (b) b.style.display = 'block';
+        if (btn) btn.style.display = 'inline-block';
+      }, 2500);
+    }
+  });
+
+  // iOS Safari: banner con istruzioni manuali
+  if (isIOS && isSafari && !isStandalone && getDismissed() !== 'yes') {
+    setTimeout(() => {
+      const b = document.getElementById('pwaInstallBanner');
+      const hint = document.getElementById('pwaInstallHint');
+      if (b) b.style.display = 'block';
+      if (hint) hint.innerHTML = 'Tap <strong>Condividi</strong> ⬆️ → <strong>Aggiungi a Home</strong>';
+    }, 2500);
+  }
+
+  window.triggerPwaInstall = async function() {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDismissed('installed');
+      } else {
+        setDismissed('yes');
+      }
+      deferredPrompt = null;
+      const b = document.getElementById('pwaInstallBanner');
+      if (b) b.style.display = 'none';
+    } else if (isIOS) {
+      // Su iOS non c'è API: mostro alert con istruzioni dettagliate
+      alert('Per installare l\'app su iPhone:\n\n1. Tocca l\'icona Condividi (⬆️) in basso\n2. Scorri e tocca "Aggiungi alla schermata Home"\n3. Tocca "Aggiungi" in alto a destra\n\nL\'app apparirà sul tuo Home screen come una app nativa.');
+    }
+  };
+
+  window.dismissPwaBanner = function() {
+    setDismissed('yes');
+    const b = document.getElementById('pwaInstallBanner');
+    if (b) b.style.display = 'none';
+  };
+
+  // Reset (chiamabile da Configurazione)
+  window.resetPwaInstallBanner = function() {
+    if (!confirm('Rimostrare il banner di installazione app al prossimo refresh?')) return;
+    setDismissed(null);
+    try { localStorage.removeItem('ft_pwa_install_dismissed_v1'); } catch(_) {}
+    alert('Banner installazione resettato. Ricarica la pagina per rivederlo (se il browser supporta PWA).');
+  };
+
+  // Helper per Configurazione: dice se app è già installata
+  window.isPwaInstalled = function() { return isStandalone; };
 })();
 </script>
 
@@ -4252,6 +4521,9 @@ window.defST=function(){
     draftReps:{},                // reps pre-serie persistente (sessione 1)
     // ── Campi sessione 6 ──
     shareLeaderboardConsent:false, // opt-in per classifica amici (privacy by default)
+    // ── Campi sessione 7 ──
+    notifPrefs:{workout:true, meals:true, weighIn:true}, // preferenze notifiche
+    travelMode:null,             // {active:true, startD:'2026-05-04', endD:'2026-05-08', hasGym:false, sessions:3, dur:30}
   };
 }
 window.ST=defST();
@@ -4621,6 +4893,128 @@ window.doChangePassword=async function(){
 
 // ── EXPORT DATI UTENTE (GDPR Art. 20 - Portabilità) ──
 // Genera un file JSON scaricabile con TUTTI i dati dell'utente
+// ── FOTO PROGRESSO (sessione 8) ──
+// Gestisce upload/visualizzazione/cancellazione foto. Limite 12 foto totali.
+window.PROGRESS_PHOTO_LIMIT = 12;
+
+// Cache lista foto (evita ricaricare ogni volta)
+window.__photosCache = null;
+window.__photosLoading = false;
+
+window.loadProgressPhotos = async function(forceReload) {
+  if (window.__photosLoading) return;
+  if (!forceReload && window.__photosCache) return window.__photosCache;
+  window.__photosLoading = true;
+  render();
+  try {
+    if (!window.PhotoDB || !window.FBAuth?.auth?.currentUser) {
+      window.__photosCache = [];
+    } else {
+      const uid = window.FBAuth.auth.currentUser.uid;
+      window.__photosCache = await window.PhotoDB.list(uid);
+    }
+  } catch(e) {
+    console.warn('loadProgressPhotos fail:', e);
+    window.__photosCache = [];
+  }
+  window.__photosLoading = false;
+  render();
+};
+
+window.openPhotoUploadSheet = function(view) {
+  ST.sheet = 'photoUpload';
+  ST.sheetData = { view: view || 'front', file: null };
+  render();
+};
+
+window.uploadProgressPhoto = async function() {
+  if (!ST.sheetData?.file) return alert('Seleziona prima una foto.');
+  if (!window.FBAuth?.auth?.currentUser) return alert('Devi essere loggato.');
+
+  // Verifica limite
+  await loadProgressPhotos(true);
+  const photos = window.__photosCache || [];
+  if (photos.length >= window.PROGRESS_PHOTO_LIMIT) {
+    const oldest = photos[photos.length - 1]; // last in array = oldest (sorted desc)
+    const oldestDate = new Date(oldest.ts).toLocaleDateString('it-IT');
+    if (!confirm(`Hai già ${window.PROGRESS_PHOTO_LIMIT} foto (limite massimo).\n\nVuoi cancellare la più vecchia (${oldestDate} - ${oldest.view}) per fare spazio?`)) return;
+    await window.PhotoDB.remove(oldest.path);
+  }
+
+  const view = ST.sheetData.view;
+  const file = ST.sheetData.file;
+  const uid = window.FBAuth.auth.currentUser.uid;
+
+  try {
+    // Spinner
+    ST.sheetData.uploading = true;
+    render();
+    await window.PhotoDB.upload(uid, view, file);
+    // Ricarica cache
+    await loadProgressPhotos(true);
+    ST.sheet = null;
+    ST.sheetData = null;
+    // Toast
+    const t = document.createElement('div');
+    t.style.cssText = 'position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:99999;background:rgba(34,197,94,.95);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.3);';
+    t.textContent = '✓ Foto caricata!';
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2500);
+  } catch(e) {
+    alert('Errore upload: ' + (e?.message || e));
+    ST.sheetData.uploading = false;
+    render();
+  }
+};
+
+window.deleteProgressPhoto = async function(path, idx) {
+  if (!confirm('Cancellare questa foto progresso?\n\nL\'azione è irreversibile.')) return;
+  try {
+    await window.PhotoDB.remove(path);
+    if (window.__photosCache) {
+      window.__photosCache.splice(idx, 1);
+    }
+    render();
+  } catch(e) {
+    alert('Errore cancellazione: ' + (e?.message || e));
+  }
+};
+
+window.openPhotoCompareSheet = function(idxNew, idxOld) {
+  if (!window.__photosCache || !window.__photosCache[idxNew] || !window.__photosCache[idxOld]) return;
+  ST.sheet = 'photoCompare';
+  ST.sheetData = {
+    photoNew: window.__photosCache[idxNew],
+    photoOld: window.__photosCache[idxOld],
+    sliderPos: 50
+  };
+  render();
+};
+
+window.openPhotoFullView = function(idx) {
+  if (!window.__photosCache || !window.__photosCache[idx]) return;
+  ST.sheet = 'photoFull';
+  ST.sheetData = { photo: window.__photosCache[idx], idx };
+  render();
+};
+
+// Helper file picker: salva il file e genera preview
+window._handlePhotoSelect = function(file) {
+  if (!file || !ST.sheetData) return;
+  if (!file.type.startsWith('image/')) return alert('Seleziona un file immagine.');
+  if (file.size > 10 * 1024 * 1024) return alert('Foto troppo grande (max 10MB).');
+  ST.sheetData.file = file;
+  // Preview
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    if (ST.sheetData) {
+      ST.sheetData.preview = e.target.result;
+      render();
+    }
+  };
+  reader.readAsDataURL(file);
+};
+
 window.exportMyData = function() {
   try {
     if (!AU.user) return alert('Devi essere loggato per esportare i dati.');
@@ -5264,6 +5658,245 @@ window.importAppleHealth = function() {
 
 // ── EXPORT MYFITNESSPAL-COMPATIBLE (CSV) ──
 // Crea CSV con peso e nutrizione importabile in MFP/Cronometer/etc.
+// ── MODALITÀ TRASFERTA (sessione 7) ──
+// Quando attiva, override il programma temporaneamente con esercizi/dieta semplificati.
+window.openTravelMode = function() {
+  const tm = ST.travelMode || {};
+  const today = new Date().toISOString().slice(0, 10);
+  const in7 = new Date(Date.now() + 7*86400000).toISOString().slice(0, 10);
+  ST.sheet = 'travelMode';
+  ST.sheetData = {
+    startD: tm.startD || today,
+    endD: tm.endD || in7,
+    hasGym: tm.hasGym !== undefined ? tm.hasGym : false,
+    sessions: tm.sessions || 3,
+    dur: tm.dur || 30
+  };
+  render();
+};
+
+window.confirmTravelMode = function() {
+  const d = ST.sheetData;
+  if (!d) return;
+  if (!d.startD || !d.endD) return alert('Inserisci date inizio e fine.');
+  if (new Date(d.endD) < new Date(d.startD)) return alert('Data fine non può essere precedente all\'inizio.');
+  ST.travelMode = {
+    active: true,
+    startD: d.startD,
+    endD: d.endD,
+    hasGym: !!d.hasGym,
+    sessions: d.sessions,
+    dur: d.dur
+  };
+  ST.sheet = null;
+  ST.sheetData = null;
+  save();
+  alert('✓ Modalità trasferta attivata!\n\nL\'app adatterà automaticamente i tuoi allenamenti e suggerimenti pasto fino al ' + new Date(d.endD+'T12:00:00').toLocaleDateString('it-IT'));
+};
+
+window.endTravelMode = function() {
+  if (!confirm('Sei tornato a casa? Il programma originale sarà ripristinato.')) return;
+  ST.travelMode = { active: false };
+  save();
+};
+
+// Helper: app è in modalità trasferta?
+window.isInTravelMode = function() {
+  const tm = ST.travelMode;
+  if (!tm || !tm.active) return false;
+  const now = Date.now();
+  const start = new Date(tm.startD).getTime();
+  const end = new Date(tm.endD).getTime() + 86400000;
+  return now >= start && now <= end;
+};
+
+// Esercizi bodyweight (senza attrezzi) per modalità trasferta
+window.TRAVEL_BODYWEIGHT_EX = [
+  {id:'tr_pushup', name:'Push-up', cat:'chest', t:'reps', sets:3, reps:'10-15'},
+  {id:'tr_squat', name:'Squat a corpo libero', cat:'quads', t:'reps', sets:3, reps:'15-20'},
+  {id:'tr_lunge', name:'Affondi alternati', cat:'quads', t:'reps', sets:3, reps:'12 per gamba'},
+  {id:'tr_plank', name:'Plank', cat:'core', t:'sec', sets:3, reps:'30-60s'},
+  {id:'tr_burpees', name:'Burpees', cat:'cardio', t:'reps', sets:3, reps:'8-12'},
+  {id:'tr_mountain', name:'Mountain climbers', cat:'core', t:'sec', sets:3, reps:'30s'},
+  {id:'tr_jjacks', name:'Jumping jacks', cat:'cardio', t:'sec', sets:3, reps:'45s'},
+  {id:'tr_glute_bridge', name:'Ponte glutei', cat:'glutes', t:'reps', sets:3, reps:'15-20'},
+  {id:'tr_dips_chair', name:'Dips su sedia', cat:'triceps', t:'reps', sets:3, reps:'10-12'},
+  {id:'tr_superman', name:'Superman', cat:'back', t:'reps', sets:3, reps:'12-15'},
+  {id:'tr_wall_sit', name:'Wall sit', cat:'quads', t:'sec', sets:3, reps:'45-60s'},
+  {id:'tr_calf_raise', name:'Calf raise in piedi', cat:'calves', t:'reps', sets:3, reps:'20-25'},
+  {id:'tr_pike_pushup', name:'Pike push-up', cat:'shoulders', t:'reps', sets:3, reps:'8-12'},
+  {id:'tr_russian_twist', name:'Russian twist', cat:'core', t:'reps', sets:3, reps:'20'},
+  {id:'tr_high_knees', name:'High knees corsa sul posto', cat:'cardio', t:'sec', sets:3, reps:'45s'}
+];
+
+// Usa Notification API + setTimeout per pianificare promemoria locali.
+// NB: setTimeout non sopravvive a chiusura tab/browser. Per push reali serve SW.
+// Implementazione "best-effort": funziona finché l'app è aperta o in background browser.
+
+window.enableNotifications = async function() {
+  if (!('Notification' in window)) {
+    return alert('⚠️ Browser non supporta notifiche.');
+  }
+  if (Notification.permission === 'granted') {
+    alert('✓ Notifiche già attive!');
+    rescheduleAllNotifications();
+    return;
+  }
+  if (Notification.permission === 'denied') {
+    return alert('✗ Notifiche bloccate dal browser.\n\nPer riabilitarle:\n1. Tocca l\'icona del lucchetto nella barra indirizzo\n2. Cambia "Notifiche" da Bloccate ad Attive\n3. Ricarica la pagina');
+  }
+  try {
+    const result = await Notification.requestPermission();
+    if (result === 'granted') {
+      // Notifica di benvenuto
+      try {
+        new Notification('🎉 Notifiche attive!', {
+          body: 'Ti ricorderò allenamenti, pasti e pesata settimanale.',
+          icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" fill="%230d0d0f" rx="28"/><text x="96" y="120" font-family="Arial Black" font-size="84" fill="%23c5f135" text-anchor="middle">FT</text></svg>',
+          badge: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><rect width="96" height="96" fill="%23c5f135"/><text x="48" y="60" font-family="Arial Black" font-size="40" fill="%23000" text-anchor="middle">FT</text></svg>',
+          tag: 'ft-welcome'
+        });
+      } catch(e) {}
+      rescheduleAllNotifications();
+      render();
+    } else {
+      alert('Permesso notifiche non concesso.');
+    }
+  } catch (e) {
+    alert('Errore: ' + (e?.message || e));
+  }
+};
+
+window.toggleNotifPref = async function(key, enabled) {
+  if (!ST.notifPrefs) ST.notifPrefs = {};
+  ST.notifPrefs[key] = enabled;
+  await save();
+  rescheduleAllNotifications();
+};
+
+window.testNotification = function() {
+  if (!('Notification' in window)) return alert('Browser non supporta notifiche.');
+  if (Notification.permission !== 'granted') return alert('Prima attiva le notifiche.');
+  try {
+    new Notification('🧪 Notifica di test', {
+      body: 'Le notifiche funzionano correttamente! 💪',
+      icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" fill="%230d0d0f" rx="28"/><text x="96" y="120" font-family="Arial Black" font-size="84" fill="%23c5f135" text-anchor="middle">FT</text></svg>',
+      tag: 'ft-test'
+    });
+  } catch(e) { alert('Errore: ' + e.message); }
+};
+
+// ── SCHEDULER NOTIFICHE ──
+// Pianifica notifiche basate sulle preferenze utente per la giornata corrente
+// + il primo evento del giorno successivo (se siamo a fine giornata).
+window._notifTimers = window._notifTimers || [];
+
+window.cancelAllScheduledNotifs = function() {
+  // Cancella timer in-page (legacy)
+  (window._notifTimers || []).forEach(t => clearTimeout(t));
+  window._notifTimers = [];
+  // Cancella anche quelli del Service Worker (persistenti)
+  if (navigator.serviceWorker?.controller) {
+    navigator.serviceWorker.controller.postMessage({ type: 'cancelAll' });
+  }
+};
+
+window.scheduleNotification = function(when, title, body, tag) {
+  const ms = when - Date.now();
+  if (ms <= 0 || ms > 86400000 * 7) return; // max 7 giorni
+  const safeTag = tag || ('ft-' + Date.now());
+
+  // ── PERSISTENTE via Service Worker (sessione 8) ──
+  // Se il SW è attivo, deleghiamo a lui: la notifica viene programmata anche
+  // se l'utente chiude la tab/browser (su Android/Chrome funziona bene; su iOS
+  // funziona solo se app installata come PWA).
+  if (navigator.serviceWorker?.controller) {
+    navigator.serviceWorker.controller.postMessage({
+      type: 'schedule-notification',
+      when, title, body, tag: safeTag
+    });
+    return;
+  }
+
+  // ── FALLBACK in-page (se SW non disponibile) ──
+  if (ms > 86400000 * 2) return; // limit fallback a 48h
+  const id = setTimeout(() => {
+    if (Notification.permission !== 'granted') return;
+    try {
+      new Notification(title, {
+        body,
+        icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" fill="%230d0d0f" rx="28"/><text x="96" y="120" font-family="Arial Black" font-size="84" fill="%23c5f135" text-anchor="middle">FT</text></svg>',
+        tag: safeTag,
+        requireInteraction: false
+      });
+    } catch(e) {}
+  }, ms);
+  window._notifTimers.push(id);
+};
+
+window.rescheduleAllNotifications = function() {
+  cancelAllScheduledNotifs();
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  if (!ST.p) return;
+  const prefs = ST.notifPrefs || {};
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+
+  // 1. Promemoria allenamento (15 min prima)
+  if (prefs.workout !== false) {
+    const t = ST.p.workoutTime || '18:00';
+    const [h, m] = t.split(':').map(Number);
+    const wo = new Date(today);
+    wo.setHours(h, m - 15, 0, 0); // 15 min prima
+    if (wo.getTime() > Date.now()) {
+      // Solo se oggi è giorno di allenamento (semplificato: usa ST.p.sessions e weekday)
+      const dayOfWeek = wo.getDay(); // 0=dom, 6=sab
+      const sess = ST.p.sessions || 3;
+      const trainingDays = sess >= 6 ? [1,2,3,4,5,6] : sess === 5 ? [1,2,3,4,5] : sess === 4 ? [1,2,4,5] : sess === 3 ? [1,3,5] : [2,4];
+      if (trainingDays.includes(dayOfWeek)) {
+        scheduleNotification(wo.getTime(), '💪 Allenamento tra 15 minuti!', `Pronto per la sessione delle ${t}? Apri l'app e via.`, 'ft-workout-' + todayStr);
+      }
+    }
+  }
+
+  // 2. Promemoria pasti
+  if (prefs.meals !== false) {
+    const meals = [
+      { id: 'col', time: ST.p.breakfastTime || '08:00', label: '🍳 Colazione' },
+      { id: 'pra', time: ST.p.lunchTime || '13:00', label: '🍽️ Pranzo' },
+      { id: 'cen', time: ST.p.dinnerTime || '20:00', label: '🍽️ Cena' }
+    ];
+    meals.forEach(meal => {
+      const [h, m] = meal.time.split(':').map(Number);
+      const mt = new Date(today);
+      mt.setHours(h, m, 0, 0);
+      if (mt.getTime() > Date.now()) {
+        scheduleNotification(mt.getTime(), meal.label + ' tra poco!', 'Apri l\'app per vedere cosa mangiare oggi.', 'ft-meal-' + meal.id + '-' + todayStr);
+      }
+    });
+  }
+
+  // 3. Pesata settimanale (venerdì 8:00)
+  if (prefs.weighIn !== false) {
+    const friday = new Date(today);
+    const dayDiff = (5 - today.getDay() + 7) % 7;
+    friday.setDate(today.getDate() + dayDiff);
+    friday.setHours(8, 0, 0, 0);
+    if (friday.getTime() > Date.now() && friday.getTime() < Date.now() + 86400000 * 2) {
+      scheduleNotification(friday.getTime(), '⚖️ È venerdì! Pesata settimanale', 'Sali sulla bilancia e registra il peso per tracciare i progressi.', 'ft-weigh-' + friday.toISOString().slice(0,10));
+    }
+  }
+};
+
+// Auto-schedulazione quando l'app si carica (se permessi attivi)
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      try { rescheduleAllNotifications(); } catch(_) {}
+    }
+  }, 3000);
+});
+
 window.exportToMyFitnessPal = function() {
   try {
     const lines = ['date,weight_kg,kcal_in,protein_g,carbs_g,fat_g,water_ml'];
@@ -5577,20 +6210,23 @@ window.addToCheatCart=function(){
   const portInfo = foodUsesPortion(f);
   let kcal,label,qty,grams;
   if(portInfo.byPortion){
-    qty=parseInt(document.getElementById('cheatQty')?.value||1);
-    if(isNaN(qty)||qty<1||qty>20) return alert('Quantità non valida (1-20)');
+    qty=parseFloat(document.getElementById('cheatQty')?.value||1);
+    if(isNaN(qty)||qty<0.25||qty>20) return alert('Quantità non valida (0.25 - 20)');
     kcal=Math.round(f.kcal * portInfo.mult * qty);
+    // Formattazione "umana" della quantità (1, ½, 1½, 2, ecc.)
+    const qtyDisplay = qty === 0.5 ? '½' : qty === 1.5 ? '1½' : qty === 2.5 ? '2½' : qty.toString();
     if (portInfo.isDrink) {
-      label = qty > 1 ? `${qty}× ${f.name} (${portInfo.portionLabel})` : `${f.name} (${portInfo.portionLabel})`;
+      label = qty === 1 ? `${f.name} (${portInfo.portionLabel})` : `${qtyDisplay}× ${f.name} (${portInfo.portionLabel})`;
     } else if (portInfo.mult === 1) {
-      label = qty > 1 ? `${qty}× ${f.name}` : f.name;
+      label = qty === 1 ? f.name : `${qtyDisplay}× ${f.name}`;
     } else {
-      label = qty > 1 ? `${qty}× ${f.name} (~${portInfo.gramsLabel}g cad.)` : `${f.name} (~${portInfo.gramsLabel}g)`;
+      label = qty === 1 ? `${f.name} (~${portInfo.gramsLabel}g)` : `${qtyDisplay}× ${f.name} (~${portInfo.gramsLabel}g cad.)`;
     }
     grams=null;
   } else {
-    grams=parseInt(document.getElementById('cheatGrams')?.value||0);
+    grams=parseFloat(document.getElementById('cheatGrams')?.value||0);
     if(isNaN(grams)||grams<1||grams>5000) return alert('Grammi non validi (1-5000)');
+    grams = Math.round(grams);
     kcal=Math.round((f.kcal*grams)/100);
     label=`${f.name} (${grams}g)`;
     qty=1;
@@ -6295,7 +6931,7 @@ window.TOUR_STEPS=[
   {
     icon:'👋',
     title:'Benvenuto in FitTracker PRO!',
-    body:'Il tuo programma personalizzato è pronto. Ti accompagniamo in 9 passi rapidi tra tutte le funzionalità chiave dell\'app.',
+    body:'Il tuo programma personalizzato è pronto. Ti accompagniamo in 10 passi rapidi tra tutte le funzionalità chiave dell\'app.',
     color:'var(--acc)'
   },
   {
@@ -6336,14 +6972,20 @@ window.TOUR_STEPS=[
   },
   {
     icon:'🏆',
-    title:'Tab "Classifica Amici"',
-    body:'Confronto pubblico fra utenti FitTracker: podio 🥇🥈🥉 e classifica completa. Visualizzi solo metriche aggregate (sessioni 7 giorni, volume, streak) — nessun dato personale (peso, foto, misure) viene mai condiviso. Il tuo ranking si aggiorna automaticamente ad ogni salvataggio.',
+    title:'Tab "Classifica Amici" (opzionale)',
+    body:'Confronto opzionale fra utenti: podio 🥇🥈🥉. Privacy by default: i tuoi dati NON vengono condivisi finché non dai consenso esplicito dalla tab. Si condividono solo metriche aggregate (sessioni, volume, streak) — mai peso assoluto, foto o misure. Disattivabile in qualsiasi momento.',
+    color:'var(--ora)'
+  },
+  {
+    icon:'✈️',
+    title:'Modalità Trasferta + Notifiche',
+    body:'Configurazione → "✈️ MODALITÀ TRASFERTA" se sei in viaggio: ti chiede se hai una palestra, quanti giorni, quanto tempo, e adatta esercizi (anche bodyweight per stanza/hotel) e dieta. La sezione "🔔 NOTIFICHE" attiva promemoria locali per allenamento, pasti e pesata settimanale.',
     color:'var(--ora)'
   },
   {
     icon:'⚙️',
     title:'Tab "Configurazione"',
-    body:'Tutte le impostazioni in card separate: profilo, programma, orari pasti/allenamento, intolleranze, focus muscolare, dieta, integratori, piatti preferiti. Ogni card ha il suo SALVA. "🤖 RICALCOLO COACHING" genera consigli mirati basati sui tuoi progressi reali — funziona sempre, anche offline. Sezione Account & Sicurezza per logout (i dati restano nel cloud) e cancellazione (tripla conferma). Buon allenamento! 💪',
+    body:'Tutte le impostazioni in card separate: profilo, programma, orari, intolleranze, focus, dieta, integratori, preferiti. Ricalcolo coaching AI. Sezione Account & Sicurezza (logout/cancellazione tripla conferma). Sezione "🛡️ Privacy & I Miei Dati" per export JSON GDPR. Sezione "🔌 Integrazioni" per Bluetooth bilance, Apple Health, MyFitnessPal CSV. Buon allenamento! 💪',
     color:'var(--purp)'
   }
 ];
@@ -6426,13 +7068,64 @@ window.renderDisclaimer=function(){
         </div>
       </div>
 
-      <!-- Privacy -->
+      <!-- Privacy GDPR completa (sessione 7: unificata, no file separato) -->
       <div style="background:rgba(96,165,250,.06);border:1.5px solid var(--blu);border-radius:14px;padding:14px;margin-bottom:14px;">
-        <div class="bebas" style="font-size:17px;color:var(--blu);margin-bottom:8px;">🔒 INFORMATIVA PRIVACY</div>
-        <div style="font-size:13px;color:var(--text);line-height:1.6;">
-          I tuoi dati (peso, misure, allenamenti, pasti) sono salvati nel tuo <strong>account privato sul Cloud</strong> (Firebase Auth + Firestore di Google). Nessuno tranne te può leggerli, neanche gli sviluppatori dell'app.<br><br>
-          <strong>Non condividiamo dati con terzi e non mostriamo pubblicità</strong>. Puoi cancellare il tuo account in qualsiasi momento dalla Configurazione (sezione "Zona pericolosa") — l'eliminazione è immediata e irreversibile.
+        <div class="bebas" style="font-size:17px;color:var(--blu);margin-bottom:8px;">🔒 INFORMATIVA PRIVACY (GDPR)</div>
+
+        <!-- Riepilogo breve sempre visibile -->
+        <div style="font-size:13px;color:var(--text);line-height:1.6;margin-bottom:10px;">
+          I tuoi dati (peso, misure, allenamenti, pasti) sono salvati nel tuo <strong>account privato sul Cloud</strong> (Firebase Auth + Firestore di Google). Solo tu puoi leggerli. <strong>Non condividiamo dati con terzi, nessuna pubblicità, nessuna profilazione.</strong> Puoi cancellare il tuo account o esportare i dati in qualsiasi momento dalla Configurazione.
         </div>
+
+        <!-- Toggle versione completa -->
+        <details style="font-size:12px;line-height:1.6;color:var(--text);">
+          <summary style="cursor:pointer;color:var(--blu);font-weight:600;padding:8px 0;border-top:1px solid var(--bord);margin-top:6px;">📜 Leggi l'informativa completa GDPR</summary>
+          <div style="margin-top:10px;padding-top:6px;">
+
+            <div style="font-weight:700;color:var(--blu);margin-top:10px;margin-bottom:4px;">1. Titolare del trattamento</div>
+            Marcello (titolare progetto FitTracker PRO) — email: <strong>snafma@gmail.com</strong>. App personale, non commerciale.
+
+            <div style="font-weight:700;color:var(--blu);margin-top:10px;margin-bottom:4px;">2. Dati raccolti</div>
+            <strong>Account</strong>: email, password (cifrata da Firebase, mai accessibile in chiaro), username derivato dall'email.<br>
+            <strong>Fitness</strong> (inseriti volontariamente da te): età, sesso biologico, altezza, peso nel tempo, misure corporee, allenamenti, pasti consumati, sgarri, kcal/macro, sport outdoor, passi, sonno, note libere, preferenze.<br>
+            <strong>Classifica amici (opzionale)</strong>: solo se attivata espressamente, condividi username, sessioni allenamento, volume liftato, kcal bruciate (ultimi 7gg), streak, variazione peso percentuale (mai valore assoluto), strategia (cut/bulk). Disattivabile in qualsiasi momento.
+
+            <div style="font-weight:700;color:var(--blu);margin-top:10px;margin-bottom:4px;">3. Servizi terzi (Data Processor)</div>
+            <strong>Google Firebase</strong> (Google Ireland Limited): authentication + Cloud Firestore. I dati possono essere trasferiti su server fuori UE (USA) tramite Standard Contractual Clauses (SCC) e EU-US Data Privacy Framework. Privacy: firebase.google.com/support/privacy<br>
+            <strong>Anthropic</strong> (USA, opzionale): se usi "Ricalcolo coaching AI", una richiesta anonimizzata con dati aggregati va ad Anthropic. NON include nome o email. Privacy: anthropic.com/legal/privacy
+
+            <div style="font-weight:700;color:var(--blu);margin-top:10px;margin-bottom:4px;">4. Finalità e base giuridica</div>
+            <strong>Esecuzione del servizio</strong> (art. 6.1.b GDPR): autenticazione, salvataggio dati, generazione programma personalizzato.<br>
+            <strong>Consenso</strong> (art. 6.1.a GDPR): classifica amici, AI coaching. Opzionali e disattivabili.
+
+            <div style="font-weight:700;color:var(--blu);margin-top:10px;margin-bottom:4px;">5. Conservazione dei dati</div>
+            I dati vengono conservati finché mantieni l'account attivo. Dopo eliminazione account, cancellazione completa entro 30 giorni dai server Firebase. Classifica: rimozione entro 24 ore dalla disattivazione.
+
+            <div style="font-weight:700;color:var(--blu);margin-top:10px;margin-bottom:4px;">6. I tuoi diritti GDPR (Art. 15-22)</div>
+            <strong>Accesso e portabilità</strong>: scarica i tuoi dati JSON dalla Configurazione → "Esporta i miei dati".<br>
+            <strong>Rettifica</strong>: modifica dati direttamente nell'app.<br>
+            <strong>Cancellazione (oblio)</strong>: Configurazione → "Cancella il mio account" (irreversibile, tripla conferma).<br>
+            <strong>Limitazione</strong>: disattiva condivisioni opzionali (classifica) dalle relative tab.<br>
+            <strong>Opposizione</strong>: scrivi a snafma@gmail.com.<br>
+            <strong>Reclamo</strong>: Garante Privacy italiano — garanteprivacy.it
+
+            <div style="font-weight:700;color:var(--blu);margin-top:10px;margin-bottom:4px;">7. Sicurezza</div>
+            Password cifrate con scrypt (Firebase Auth). Firestore Security Rules permettono ad ogni utente di accedere SOLO ai propri dati. HTTPS/TLS in tutte le comunicazioni.
+
+            <div style="font-weight:700;color:var(--blu);margin-top:10px;margin-bottom:4px;">8. Cookie e localStorage</div>
+            Usiamo localStorage del browser per: sessione Firebase Auth, consenso privacy, cache prestazioni. <strong>Nessun cookie pubblicitario, profilazione o tracker di terzi.</strong>
+
+            <div style="font-weight:700;color:var(--blu);margin-top:10px;margin-bottom:4px;">9. Minori</div>
+            App non destinata a minori di 16 anni. Devi avere almeno 16 anni per registrarti.
+
+            <div style="font-weight:700;color:var(--blu);margin-top:10px;margin-bottom:4px;">10. Modifiche e contatti</div>
+            Modifiche significative comunicate al successivo accesso. Contatti privacy: <strong>snafma@gmail.com</strong>
+
+            <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--bord);font-size:11px;color:var(--mut);font-style:italic;">
+              Ultimo aggiornamento: 4 maggio 2026 · Conforme Reg. UE 2016/679 (GDPR) e D.Lgs. 196/2003.
+            </div>
+          </div>
+        </details>
       </div>
 
       <!-- Bottoni -->
@@ -7219,6 +7912,16 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
   ${motivMessageHome(an,ST,cW,mac,pWeek)}
 
   <!-- DELOAD WEEK BANNER (ogni 5 settimane) -->
+  ${(typeof isInTravelMode === 'function' && isInTravelMode()) ? `
+    <div style="background:linear-gradient(135deg,rgba(255,104,53,.18),rgba(255,104,53,.05));border:2px solid var(--ora);border-radius:18px;padding:14px 16px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+        <div style="font-size:24px;">✈️</div>
+        <div style="flex:1;">
+          <div style="font-size:11px;font-weight:800;color:var(--ora);letter-spacing:2px;">MODALITÀ TRASFERTA ATTIVA</div>
+          <div style="font-size:11px;color:var(--text);">Fino al ${new Date(ST.travelMode.endD+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'long'})} · ${ST.travelMode.hasGym?'palestra':'bodyweight'} · ${ST.travelMode.sessions||3}× ${ST.travelMode.dur||30}min</div>
+        </div>
+      </div>
+    </div>` : ''}
   ${(ST.programStart && isDeloadWeek(ST.programStart) && !ST.deloadDismissed) ? `
     <div style="background:linear-gradient(135deg,rgba(167,139,250,.18),rgba(139,92,246,.08));border:2px solid var(--purp);border-radius:18px;padding:16px 18px;margin-bottom:12px;position:relative;">
       <button onclick="ST.deloadDismissed=true;save();render();" style="position:absolute;top:10px;right:10px;background:none;border:none;color:var(--mut);font-size:18px;cursor:pointer;line-height:1;padding:4px 8px;">✕</button>
@@ -7286,6 +7989,31 @@ window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,to
   const p=pwk(ST.programStart);
   const sr=getSetsReps('compound',ST.p.t,p);
   const DAY_NAMES=['LUN','MAR','MER','GIO','VEN','SAB','DOM'];
+
+  // ── BANNER TRASFERTA (sessione 7+8) ──
+  // Se in trasferta + bodyweight, lo segnaliamo in cima alla tab. Gli esercizi
+  // del programma normale rimangono visibili ma con suggerimento alternative.
+  const travelBanner = (typeof isInTravelMode === 'function' && isInTravelMode()) ? `
+    <div style="background:linear-gradient(135deg,rgba(255,104,53,.15),rgba(255,104,53,.04));border:2px solid var(--ora);border-radius:14px;padding:12px 14px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <div style="font-size:22px;">✈️</div>
+        <div style="flex:1;">
+          <div style="font-size:11px;font-weight:800;color:var(--ora);letter-spacing:1.5px;">${ST.travelMode.hasGym?'TRASFERTA · PALESTRA':'TRASFERTA · BODYWEIGHT'}</div>
+          <div style="font-size:11px;color:var(--text);">Sessioni ridotte: ${ST.travelMode.sessions||3}× ${ST.travelMode.dur||30}min</div>
+        </div>
+      </div>
+      ${!ST.travelMode.hasGym ? `
+        <div style="background:var(--surf);border-radius:8px;padding:8px 10px;font-size:11px;color:var(--text);line-height:1.5;margin-bottom:8px;">
+          💡 <strong>Suggerimento</strong>: oggi sostituisci la scheda con una sessione a corpo libero. I 15 esercizi qui sotto coprono tutto il corpo e stanno in ${ST.travelMode.dur||30} minuti.
+        </div>
+        <button class="btn-s" style="width:100%;padding:10px;font-size:12px;background:var(--ora);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;" onclick="ST.sheet='travelEx';ST.sheetData={};render()">📋 VEDI ${(window.TRAVEL_BODYWEIGHT_EX||[]).length} ESERCIZI BODYWEIGHT</button>
+      ` : `
+        <div style="background:var(--surf);border-radius:8px;padding:8px 10px;font-size:11px;color:var(--text);line-height:1.5;">
+          💡 <strong>Adattamento palestra in trasferta</strong>: mantieni il programma normale ma riduci serie/peso del 20-30% se la palestra è meno attrezzata. Privilegia esercizi multi-articolari (squat, panca, stacchi, lat machine) e salta gli isolamenti.
+        </div>
+      `}
+    </div>` : '';
+
   // PUNTO 14: rendering specifico per "solo passi" (sessions===0)
   if(ST.p.sessions===0){
     const stepsGoal=getStepsGoal(ST.p);
@@ -7313,6 +8041,7 @@ window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,to
     else if(stepsToday>0){ motivMsg=`Hai fatto ${stepsToday.toLocaleString('it-IT')} passi. Oggi puntiamo a ${stepsGoal.toLocaleString('it-IT')}: fai una bella camminata di almeno 30 minuti.`; motivCol='var(--blu)'; }
     else { motivMsg=`🚶 Oggi obiettivo: ${stepsGoal.toLocaleString('it-IT')} passi. Bastano 2 camminate da 20-30 minuti per raggiungerlo.`; motivCol='var(--blu)'; }
     return `
+    ${travelBanner}
     <div class="r" style="margin-bottom:14px;"><div class="bebas" style="font-size:26px;">ALLENAMENTO</div><div style="font-size:11px;color:var(--mut);">Sett.${pWeek}${isD?' · DELOAD':''}</div></div>
 
     <!-- OBIETTIVO PASSI OGGI -->
@@ -7377,6 +8106,7 @@ window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,to
     const weekStatus2=getWeekStatus(currentDateStr,ST.wLog,(ST.p.sessions!=null?ST.p.sessions:3),ST.programStart,ST.p.cardioLevel||1,an,ST.p.focus||'total');
     const legendGrid2=buildLegendGrid(weekStatus2,DAY_NAMES,dOfW);
     return`
+    ${travelBanner}
     <div class="r" style="margin-bottom:14px;"><div class="bebas" style="font-size:26px;">ALLENAMENTO</div><div style="font-size:11px;color:var(--mut);">Sett.${pWeek}${isD?' · DELOAD':''}</div></div>
     <div class="card" style="background:linear-gradient(135deg,#12001a,#0a0010);border-color:var(--purp);padding:20px;text-align:center;">
       <div style="font-size:48px;margin-bottom:12px;">💤</div>
@@ -7426,6 +8156,7 @@ window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,to
     <div style="font-size:12px;color:var(--mut);margin-top:4px;line-height:1.5;">L'AI ha adattato calorie e cardio tenendo conto degli allenamenti saltati. Cerca di rispettare il piano questa settimana.</div>
   </div>`:'';
   return`
+  ${travelBanner}
   <div class="r" style="margin-bottom:14px;"><div class="bebas" style="font-size:26px;">ALLENAMENTO</div><div style="font-size:11px;color:var(--mut);">Sett.${pWeek}${isD?' · DELOAD':''} · ${ST.p.sessions}gg pesi + ${mac.cardioLevel}gg cardio</div></div>
 
   <!-- PUNTO 14: riepilogo settimana -->
@@ -7546,6 +8277,21 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
   const showGuide = !ST.p?.dietGuideHidden;
 
   return`
+  ${(typeof isInTravelMode === 'function' && isInTravelMode()) ? `
+    <div style="background:linear-gradient(135deg,rgba(255,104,53,.12),rgba(255,104,53,.04));border:2px solid var(--ora);border-radius:14px;padding:14px 16px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <div style="font-size:24px;">✈️</div>
+        <div style="flex:1;">
+          <div style="font-size:11px;font-weight:800;color:var(--ora);letter-spacing:1.5px;">DIETA IN TRASFERTA</div>
+          <div style="font-size:11px;color:var(--text);">Suggerimenti pratici per hotel/ristorante</div>
+        </div>
+        <button class="btn-s" style="padding:6px 10px;font-size:11px;background:var(--ora);color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;flex-shrink:0;" onclick="ST.sheet='travelDiet';ST.sheetData={};render()">📖 CONSIGLI</button>
+      </div>
+      <div style="font-size:11px;color:var(--text);line-height:1.5;background:var(--surf);border-radius:8px;padding:8px 10px;">
+        🎯 Mantieni <strong style="color:var(--acc);">${Math.round(mac.kcal)} kcal</strong> e <strong style="color:var(--blu);">${Math.round(mac.prot)}g</strong> proteine. Privilegia: griglia, vapore, insalate. Evita: fritti, salse pesanti, alcol.
+      </div>
+    </div>
+  ` : ''}
   ${showGuide?`<div style="background:linear-gradient(135deg,rgba(197,241,53,.08),rgba(167,139,250,.04));border:1.5px solid var(--acc);border-radius:14px;padding:14px 16px;margin-bottom:12px;position:relative;">
     <button onclick="hideDietGuide()" style="position:absolute;top:8px;right:8px;background:transparent;border:none;color:var(--mut);font-size:18px;cursor:pointer;width:28px;height:28px;line-height:1;border-radius:50%;" title="Non mostrare più">✕</button>
     <div style="font-size:11px;font-weight:700;color:var(--acc);letter-spacing:1.5px;margin-bottom:10px;padding-right:24px;">📖 COME USARE QUESTO MENÙ</div>
@@ -7897,8 +8643,55 @@ window.renderMeasures = function(cW,mac,theme,pWeek,sx){
     + mField('bodyfat','% Grasso Corporeo','Stima con plicometro o bilancia impedenziometrica (opzionale)','%')
     + '<button onclick="saveMeasures()" style="width:100%;background:var(--acc);color:#000;border:none;border-radius:12px;padding:14px;font-family:\"Bebas Neue\";font-size:20px;cursor:pointer;margin-top:6px;">SALVA MISURE</button>'
     +'</div>'
+    + renderProgressPhotosCard()
     +(chartsHtml?'<div class="bebas" style="font-size:18px;color:var(--mut);margin:14px 0 10px;letter-spacing:1px;">GRAFICI PROGRESSIONE</div>'+chartsHtml:'');
 }
+
+// ── CARD FOTO PROGRESSO (sessione 8) ──
+window.renderProgressPhotosCard = function() {
+  if (!window.__photosCache && !window.__photosLoading && !window.__photosAttempted) {
+    window.__photosAttempted = true;
+    setTimeout(() => loadProgressPhotos(), 100);
+  }
+  const photos = window.__photosCache || [];
+  const isLoading = window.__photosLoading;
+  const limit = window.PROGRESS_PHOTO_LIMIT || 12;
+  const remaining = limit - photos.length;
+  const front = photos.filter(p => p.view === 'front');
+  const canCompare = front.length >= 2;
+
+  return `<div class="card" style="border-color:var(--purp);margin-top:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div class="bebas" style="font-size:18px;color:var(--purp);">📸 FOTO PROGRESSO</div>
+      <div style="font-size:10px;color:var(--mut);">${photos.length}/${limit}</div>
+    </div>
+    <div style="font-size:11px;color:var(--mut);line-height:1.5;margin-bottom:12px;">
+      Foto private salvate sul tuo account cloud. Compressione automatica per risparmiare spazio.
+      ${remaining <= 3 ? `<br><strong style="color:var(--ora);">⚠️ ${remaining===0?'Limite raggiunto: la prossima cancellerà la più vecchia.':'Restano '+remaining+' slot prima di superare il limite.'}</strong>` : ''}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px;">
+      <button class="btn-s" style="padding:10px 4px;font-size:11px;background:rgba(167,139,250,.1);border:1px solid var(--purp);color:var(--purp);font-weight:700;border-radius:8px;cursor:pointer;" onclick="openPhotoUploadSheet('front')">🧍 FRONTALE</button>
+      <button class="btn-s" style="padding:10px 4px;font-size:11px;background:rgba(167,139,250,.1);border:1px solid var(--purp);color:var(--purp);font-weight:700;border-radius:8px;cursor:pointer;" onclick="openPhotoUploadSheet('side')">👤 LATERALE</button>
+      <button class="btn-s" style="padding:10px 4px;font-size:11px;background:rgba(167,139,250,.1);border:1px solid var(--purp);color:var(--purp);font-weight:700;border-radius:8px;cursor:pointer;" onclick="openPhotoUploadSheet('back')">🔙 SCHIENA</button>
+    </div>
+    ${canCompare ? `<button class="btn" style="width:100%;padding:11px;background:linear-gradient(135deg,var(--acc),#9bcc28);color:#000;font-family:'Bebas Neue';font-size:15px;letter-spacing:1px;border:none;border-radius:10px;margin-bottom:12px;cursor:pointer;" onclick="openPhotoCompareSheet(${photos.indexOf(front[0])}, ${photos.indexOf(front[front.length-1])})">⇄ CONFRONTA BEFORE/AFTER (FRONTALE)</button>` : ''}
+    ${isLoading ? `<div style="text-align:center;padding:20px;color:var(--mut);font-size:12px;">⏳ Caricamento foto...</div>` :
+      photos.length === 0 ? `<div style="text-align:center;padding:20px;color:var(--mut);font-size:12px;line-height:1.5;">Nessuna foto ancora caricata.<br>Suggerimento: scattane una ogni 1-2 settimane per vedere i progressi nel tempo!</div>` :
+      `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
+        ${photos.slice(0, 12).map((p, idx) => {
+          const dt = new Date(p.ts);
+          const dateLabel = dt.toLocaleDateString('it-IT', {day:'2-digit', month:'short'});
+          return `<div style="position:relative;cursor:pointer;border-radius:8px;overflow:hidden;border:1px solid var(--bord);aspect-ratio:1;background:var(--surf);" onclick="openPhotoFullView(${idx})">
+            <img src="${p.url}" style="width:100%;height:100%;object-fit:cover;display:block;">
+            <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.85));padding:14px 6px 4px;">
+              <div style="font-size:9px;color:#fff;font-weight:700;">${p.view==='front'?'🧍':p.view==='side'?'👤':'🔙'} ${dateLabel}</div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`}
+  </div>`;
+};
+
 window.renderBody = function(cW,mac,theme,pWeek,sx){
   if(!ST.chartFilter) ST.chartFilter=30;
   const wArr=ST.h.slice(-ST.chartFilter);
@@ -9010,11 +9803,72 @@ window.renderSettings = function(mac){
     <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:10px;">Rivedi il tour guidato di benvenuto in 5 passi.</div>
     <button class="btn-s btn-action" style="width:100%;padding:11px;font-size:13px;" onclick="startTour();render();">▶ RIVEDI TOUR</button>
   </div>
-  <!-- PUNTO 24: rivedi disclaimer + privacy -->
+
+  <!-- ── MODALITÀ TRASFERTA (sessione 7) ── -->
+  ${(() => {
+    const tm = ST.travelMode || {};
+    const isActive = tm.active && tm.endD && new Date(tm.endD).getTime() >= Date.now() - 86400000;
+    return `<div class="card" style="border-color:${isActive?'var(--ora)':'var(--bord)'};${isActive?'background:linear-gradient(135deg,rgba(255,104,53,.06),transparent);':''}">
+      <div class="bebas" style="font-size:18px;color:${isActive?'var(--ora)':'var(--text)'};margin-bottom:6px;">✈️ MODALITÀ TRASFERTA ${isActive?'(ATTIVA)':''}</div>
+      ${isActive ? `
+        <div style="background:rgba(255,104,53,.08);border:1px solid var(--ora);border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;line-height:1.6;">
+          <div style="font-weight:700;color:var(--ora);margin-bottom:4px;">🌴 Sei in trasferta fino al ${new Date(tm.endD+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'long'})}</div>
+          <div style="color:var(--text);">
+            ${tm.hasGym ? '🏋️ Hai accesso a una <strong>palestra</strong>' : '🏠 Allenamento <strong>senza attrezzi</strong> (bodyweight)'}<br>
+            📅 ${tm.sessions || 3} sessioni/settimana × ${tm.dur || 30} minuti<br>
+            🍽️ Dieta semplificata: pasti adatti a hotel/ristorante
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-s" style="flex:1;padding:10px;font-size:12px;background:var(--surf);border:1px solid var(--bord);color:var(--text);font-weight:600;border-radius:8px;cursor:pointer;" onclick="openTravelMode()">✏️ MODIFICA</button>
+          <button class="btn-s" style="flex:1;padding:10px;font-size:12px;background:var(--surf);border:1px solid var(--red);color:var(--red);font-weight:600;border-radius:8px;cursor:pointer;" onclick="endTravelMode()">✓ TORNATO A CASA</button>
+        </div>
+      ` : `
+        <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:12px;">
+          Stai per partire? Attiva la modalità trasferta. L'app adatta automaticamente esercizi e dieta in base a:
+          <ul style="margin-top:8px;margin-left:20px;font-size:12px;">
+            <li>Disponibilità di una palestra (sì/no)</li>
+            <li>Tempo che hai a disposizione</li>
+            <li>Numero di sessioni possibili</li>
+          </ul>
+        </div>
+        <button class="btn-s" style="width:100%;padding:11px;font-size:13px;background:rgba(255,104,53,.1);border:1px solid var(--ora);color:var(--ora);font-weight:600;border-radius:8px;cursor:pointer;" onclick="openTravelMode()">✈️ ATTIVA MODALITÀ TRASFERTA</button>
+      `}
+    </div>`;
+  })()}
+
+  <!-- ── NOTIFICHE PUSH (sessione 7) ── -->
   <div class="card" style="border-color:var(--ora);">
-    <div class="bebas" style="font-size:18px;color:var(--ora);margin-bottom:6px;">📋 DISCLAIMER & PRIVACY</div>
-    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:10px;">Rileggi il disclaimer medico e l'informativa privacy che hai accettato alla registrazione.</div>
-    <button class="btn-s btn-action" style="width:100%;padding:11px;font-size:13px;" onclick="openDisclaimerView()">📖 LEGGI</button>
+    <div class="bebas" style="font-size:18px;color:var(--ora);margin-bottom:6px;">🔔 NOTIFICHE</div>
+    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:12px;">
+      Promemoria locali per allenamenti, pesata e pasti. Funzionano anche senza internet, basta che l'app sia in background.
+    </div>
+    ${(() => {
+      // Inline: stato permessi notifiche
+      if (!('Notification' in window)) {
+        return '<div style="margin-bottom:10px;padding:8px 12px;background:rgba(239,68,68,.08);border:1px solid var(--red);border-radius:8px;font-size:11px;color:var(--red);">⚠️ Browser non supporta notifiche.</div>';
+      }
+      const p = Notification.permission;
+      if (p === 'granted') return '<div style="margin-bottom:10px;padding:8px 12px;background:rgba(34,197,94,.08);border:1px solid var(--gre);border-radius:8px;font-size:11px;color:var(--gre);">✓ Notifiche abilitate</div>';
+      if (p === 'denied') return '<div style="margin-bottom:10px;padding:8px 12px;background:rgba(239,68,68,.08);border:1px solid var(--red);border-radius:8px;font-size:11px;color:var(--red);">✗ Notifiche bloccate. Riabilita dalle impostazioni del browser.</div>';
+      return '<div style="margin-bottom:10px;padding:8px 12px;background:rgba(251,191,36,.08);border:1px solid #fbbf24;border-radius:8px;font-size:11px;color:#fbbf24;">⏳ Notifiche non ancora attivate.</div>';
+    })()}
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <button class="btn-s" style="width:100%;padding:11px;font-size:13px;background:rgba(255,104,53,.1);border:1px solid var(--ora);color:var(--ora);font-weight:600;border-radius:8px;cursor:pointer;" onclick="enableNotifications()">🔔 ATTIVA NOTIFICHE</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--surf);border-radius:8px;font-size:12px;">
+        <div style="color:var(--text);">💪 Promemoria allenamento</div>
+        <input type="checkbox" id="notifWorkoutOn" onchange="toggleNotifPref('workout',this.checked)" ${ST.notifPrefs?.workout===false?'':'checked'} style="width:18px;height:18px;cursor:pointer;">
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--surf);border-radius:8px;font-size:12px;">
+        <div style="color:var(--text);">🍽️ Promemoria pasti</div>
+        <input type="checkbox" id="notifMealsOn" onchange="toggleNotifPref('meals',this.checked)" ${ST.notifPrefs?.meals===false?'':'checked'} style="width:18px;height:18px;cursor:pointer;">
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--surf);border-radius:8px;font-size:12px;">
+        <div style="color:var(--text);">⚖️ Pesata settimanale (venerdì 8:00)</div>
+        <input type="checkbox" id="notifWeighOn" onchange="toggleNotifPref('weighIn',this.checked)" ${ST.notifPrefs?.weighIn===false?'':'checked'} style="width:18px;height:18px;cursor:pointer;">
+      </div>
+      <button class="btn-s" style="width:100%;padding:8px;font-size:11px;background:var(--surf);border:1px solid var(--bord);color:var(--mut);font-weight:600;border-radius:8px;cursor:pointer;" onclick="testNotification()">🧪 INVIA NOTIFICA DI TEST</button>
+    </div>
   </div>
 
   <!-- ── INTEGRAZIONI BILANCE / APPS SALUTE (sessione 6) ── -->
@@ -9085,8 +9939,13 @@ window.renderSettings = function(mac){
     </div>
     <div style="display:flex;flex-direction:column;gap:8px;">
       <button class="btn-s" style="width:100%;padding:11px;font-size:13px;background:rgba(34,197,94,.1);border:1px solid var(--gre);color:var(--gre);font-weight:600;border-radius:8px;cursor:pointer;" onclick="exportMyData()">📥 ESPORTA I MIEI DATI (JSON)</button>
-      <a href="privacy.html" target="_blank" style="display:block;text-align:center;padding:11px;font-size:13px;background:var(--surf);border:1px solid var(--bord);color:var(--text);font-weight:600;border-radius:8px;text-decoration:none;">📋 INFORMATIVA PRIVACY</a>
+      <button class="btn-s" style="width:100%;padding:11px;font-size:13px;background:var(--surf);border:1px solid var(--bord);color:var(--text);font-weight:600;border-radius:8px;cursor:pointer;" onclick="openDisclaimerView()">📋 INFORMATIVA PRIVACY</button>
       <button class="btn-s" style="width:100%;padding:11px;font-size:13px;background:var(--surf);border:1px solid var(--bord);color:var(--mut);font-weight:600;border-radius:8px;cursor:pointer;" onclick="resetGdprConsent()">🔄 RIVEDI BANNER PRIVACY</button>
+      ${(typeof isPwaInstalled === 'function' && isPwaInstalled()) ? `
+        <div style="text-align:center;padding:10px;background:rgba(34,197,94,.08);border:1px solid var(--gre);border-radius:8px;font-size:11px;color:var(--gre);font-weight:600;">✓ App installata sul dispositivo</div>
+      ` : `
+        <button class="btn-s" style="width:100%;padding:11px;font-size:13px;background:var(--surf);border:1px solid var(--bord);color:var(--mut);font-weight:600;border-radius:8px;cursor:pointer;" onclick="resetPwaInstallBanner()">📲 INSTALLA APP SUL DISPOSITIVO</button>
+      `}
     </div>
   </div>
 
@@ -9417,6 +10276,219 @@ window.render = function() {
       <button class="btn btn-action" style="width:100%;padding:12px;margin-top:14px;" onclick="closeSheet()">CHIUDI</button>
     </div></div>`;
   })():
+  // ── SHEET ESERCIZI BODYWEIGHT TRASFERTA (sessione 7) ──
+  // ── SHEET CONSIGLI DIETA TRASFERTA (sessione 8) ──
+  ST.sheet==='travelDiet'?(()=>{
+    return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh" style="max-height:90vh;"><div class="sh-h"></div>
+      <div class="bebas" style="font-size:24px;margin-bottom:6px;">✈️ DIETA IN TRASFERTA</div>
+      <div style="font-size:12px;color:var(--mut);margin-bottom:14px;line-height:1.5;">Mangi fuori casa? Ecco come mantenere la rotta senza stress.</div>
+
+      <div style="background:rgba(96,165,250,.08);border:1px solid var(--blu);border-radius:10px;padding:12px;margin-bottom:10px;">
+        <div class="bebas" style="font-size:15px;color:var(--blu);margin-bottom:6px;">🍳 COLAZIONE HOTEL/BAR</div>
+        <div style="font-size:12px;line-height:1.6;color:var(--text);">
+          <strong style="color:var(--gre);">✓ SCEGLI:</strong> uova strapazzate o sode, yogurt greco, frutta fresca, pane integrale, prosciutto magro, fiocchi d'avena, latte/caffè senza zucchero<br>
+          <strong style="color:var(--red);">✗ EVITA:</strong> cornetti, pancake con sciroppi, cereali zuccherati, succhi di frutta industriali, marmellate ricche
+        </div>
+      </div>
+
+      <div style="background:rgba(167,139,250,.08);border:1px solid var(--purp);border-radius:10px;padding:12px;margin-bottom:10px;">
+        <div class="bebas" style="font-size:15px;color:var(--purp);margin-bottom:6px;">🍽️ PRANZO/CENA RISTORANTE</div>
+        <div style="font-size:12px;line-height:1.6;color:var(--text);">
+          <strong style="color:var(--gre);">✓ PRIMI:</strong> pasta al pomodoro/pesto leggero, riso bianco, insalate di farro/orzo, minestre di verdure<br>
+          <strong style="color:var(--gre);">✓ SECONDI:</strong> pollo/tacchino alla griglia, pesce ai ferri/al cartoccio, bistecca magra, frittata, bresaola/affettati magri<br>
+          <strong style="color:var(--gre);">✓ CONTORNI:</strong> verdure grigliate/al vapore, insalata mista (olio a parte), purè senza burro<br>
+          <strong style="color:var(--red);">✗ EVITA:</strong> fritti misti, lasagne, carbonara/amatriciana ogni giorno, salse alla panna, dolci, alcolici quotidiani
+        </div>
+      </div>
+
+      <div style="background:rgba(34,197,94,.08);border:1px solid var(--gre);border-radius:10px;padding:12px;margin-bottom:10px;">
+        <div class="bebas" style="font-size:15px;color:var(--gre);margin-bottom:6px;">🥜 SNACK DA VIAGGIO</div>
+        <div style="font-size:12px;line-height:1.6;color:var(--text);">
+          Tieni in valigia: barrette proteiche, frutta secca (mandorle/noci), tonno in scatola al naturale, gallette di riso, mele/banane, acqua sempre con te (almeno 2L/giorno).
+        </div>
+      </div>
+
+      <div style="background:rgba(239,68,68,.06);border:1px solid var(--red);border-radius:10px;padding:12px;margin-bottom:10px;">
+        <div class="bebas" style="font-size:15px;color:var(--red);margin-bottom:6px;">⚠️ TRAPPOLE TIPICHE</div>
+        <div style="font-size:12px;line-height:1.6;color:var(--text);">
+          • <strong>Aperitivi infiniti</strong>: 4 tartine + 2 spritz = 800 kcal in 1 ora<br>
+          • <strong>Colazione hotel "all you can"</strong>: facile arrivare a 1500 kcal solo a colazione<br>
+          • <strong>Carenza acqua</strong>: in viaggio si beve meno, fame finta. Bevi 500ml prima dei pasti<br>
+          • <strong>Sale eccessivo</strong>: aumenta ritenzione, scala finta. Non pesarti i primi 2-3gg al ritorno
+        </div>
+      </div>
+
+      <div style="background:linear-gradient(135deg,rgba(197,241,53,.1),rgba(197,241,53,.02));border:1.5px solid var(--acc);border-radius:10px;padding:12px;margin-bottom:14px;">
+        <div class="bebas" style="font-size:15px;color:var(--acc);margin-bottom:6px;">💡 REGOLA 80/20 IN TRASFERTA</div>
+        <div style="font-size:12px;line-height:1.6;color:var(--text);">
+          Se sei via 5 giorni, accetta che 1 cena (es. uscita con clienti/amici) sarà uno sgarro. Goditela. Negli altri 14 pasti rimani sui binari giusti. È sufficiente per non perdere progressi.
+        </div>
+      </div>
+
+      <button class="btn btn-action" style="width:100%;padding:12px;" onclick="closeSheet()">CHIUDI</button>
+    </div></div>`;
+  })():
+  // ── SHEET FOTO PROGRESSO (sessione 8) ──
+  ST.sheet==='photoUpload'&&ST.sheetData?(()=>{
+    const d = ST.sheetData;
+    const viewLabels = { front: '🧍 Frontale', side: '👤 Laterale', back: '🔙 Schiena' };
+    return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div>
+      <div class="bebas" style="font-size:24px;margin-bottom:6px;">📸 NUOVA FOTO PROGRESSO</div>
+      <div style="font-size:12px;color:var(--mut);margin-bottom:14px;line-height:1.5;">Scegli la posa e carica la foto. Compressa automaticamente per occupare poco spazio.</div>
+
+      <!-- Selettore vista -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:8px;">POSA</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
+          ${['front','side','back'].map(v => `<button class="btn-s" style="padding:12px 6px;font-size:12px;background:${d.view===v?'var(--purp)':'var(--surf)'};color:${d.view===v?'#fff':'var(--mut)'};border:1px solid ${d.view===v?'var(--purp)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;" onclick="ST.sheetData.view='${v}';render()">${viewLabels[v]}</button>`).join('')}
+        </div>
+      </div>
+
+      <!-- File picker -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:8px;">FILE FOTO</div>
+        <input type="file" id="photoFileInput" accept="image/*" capture="environment" onchange="window._handlePhotoSelect(this.files[0])" style="width:100%;font-size:13px;padding:10px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;color:var(--text);">
+        ${d.preview ? `<div style="margin-top:10px;text-align:center;"><img src="${d.preview}" style="max-width:100%;max-height:300px;border-radius:10px;border:1px solid var(--bord);"></div>` : ''}
+        ${d.file ? `<div style="margin-top:8px;font-size:11px;color:var(--gre);text-align:center;">✓ File pronto (${Math.round(d.file.size/1024)}KB)</div>` : ''}
+      </div>
+
+      <!-- Disclaimer privacy -->
+      <div style="background:rgba(96,165,250,.06);border:1px solid var(--blu);border-radius:8px;padding:10px;font-size:11px;color:var(--text);line-height:1.5;margin-bottom:14px;">
+        🔒 La foto viene salvata sul TUO account privato Firebase Storage. Solo tu puoi vederla. Nessuno (nemmeno il titolare dell'app) ha accesso alle tue foto.
+      </div>
+
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-action" style="flex:1;padding:12px;" onclick="closeSheet()">ANNULLA</button>
+        <button class="btn" style="flex:2;padding:12px;background:${d.file&&!d.uploading?'var(--purp)':'var(--surf)'};color:${d.file&&!d.uploading?'#fff':'var(--mut)'};font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;${!d.file||d.uploading?'pointer-events:none;':''}" onclick="uploadProgressPhoto()">${d.uploading?'⏳ CARICAMENTO...':'✓ CARICA FOTO'}</button>
+      </div>
+    </div></div>`;
+  })():
+  ST.sheet==='photoFull'&&ST.sheetData?(()=>{
+    const p = ST.sheetData.photo;
+    const date = new Date(p.ts).toLocaleDateString('it-IT', {day:'2-digit', month:'long', year:'numeric'});
+    return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh" style="max-width:600px;"><div class="sh-h"></div>
+      <div style="text-align:center;margin-bottom:10px;">
+        <div class="bebas" style="font-size:20px;">${p.view==='front'?'🧍 FRONTALE':p.view==='side'?'👤 LATERALE':'🔙 SCHIENA'}</div>
+        <div style="font-size:11px;color:var(--mut);">${date}</div>
+      </div>
+      <img src="${p.url}" style="width:100%;border-radius:10px;border:1px solid var(--bord);">
+      <div style="display:flex;gap:6px;margin-top:14px;">
+        <button class="btn btn-action" style="flex:1;padding:12px;" onclick="closeSheet()">CHIUDI</button>
+        <button class="btn-s" style="flex:1;padding:12px;background:rgba(239,68,68,.1);border:1px solid var(--red);color:var(--red);font-weight:700;border-radius:10px;" onclick="deleteProgressPhoto('${p.path}', ${ST.sheetData.idx});closeSheet()">🗑️ ELIMINA</button>
+      </div>
+    </div></div>`;
+  })():
+  ST.sheet==='photoCompare'&&ST.sheetData?(()=>{
+    const newP = ST.sheetData.photoNew;
+    const oldP = ST.sheetData.photoOld;
+    const dateNew = new Date(newP.ts).toLocaleDateString('it-IT', {day:'2-digit', month:'short'});
+    const dateOld = new Date(oldP.ts).toLocaleDateString('it-IT', {day:'2-digit', month:'short'});
+    const daysDiff = Math.round((newP.ts - oldP.ts) / 86400000);
+    const pos = ST.sheetData.sliderPos || 50;
+    return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh" style="max-width:600px;"><div class="sh-h"></div>
+      <div style="text-align:center;margin-bottom:10px;">
+        <div class="bebas" style="font-size:20px;">📊 BEFORE / AFTER</div>
+        <div style="font-size:11px;color:var(--mut);">${daysDiff} giorni di differenza</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px;">
+        <div style="color:var(--mut);">PRIMA · ${dateOld}</div>
+        <div style="color:var(--gre);">DOPO · ${dateNew}</div>
+      </div>
+      <!-- Slider before/after -->
+      <div style="position:relative;width:100%;border-radius:10px;overflow:hidden;border:1px solid var(--bord);">
+        <img src="${oldP.url}" style="width:100%;display:block;">
+        <div style="position:absolute;top:0;left:0;width:${pos}%;height:100%;overflow:hidden;border-right:2px solid var(--acc);">
+          <img src="${newP.url}" style="width:${100/(pos/100)}%;height:100%;display:block;object-fit:cover;">
+        </div>
+        <div style="position:absolute;top:50%;left:${pos}%;transform:translate(-50%,-50%);background:var(--acc);color:#000;font-weight:800;font-size:11px;padding:4px 8px;border-radius:6px;pointer-events:none;">⇄</div>
+      </div>
+      <input type="range" min="0" max="100" value="${pos}" oninput="ST.sheetData.sliderPos=parseInt(this.value);render()" style="width:100%;margin-top:14px;accent-color:var(--acc);">
+      <button class="btn btn-action" style="width:100%;padding:12px;margin-top:14px;" onclick="closeSheet()">CHIUDI</button>
+    </div></div>`;
+  })():
+  ST.sheet==='travelEx'?(()=>{
+    const exs = window.TRAVEL_BODYWEIGHT_EX || [];
+    return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div>
+      <div class="bebas" style="font-size:24px;margin-bottom:6px;">🏠 ESERCIZI BODYWEIGHT</div>
+      <div style="font-size:12px;color:var(--mut);margin-bottom:14px;line-height:1.5;">Allenamento completo a corpo libero da fare in stanza/hotel. Combina 6-8 esercizi per sessione, 3 round.</div>
+      <div style="max-height:55vh;overflow-y:auto;">
+        ${exs.map(ex => {
+          const catEmoji = {chest:'💪',back:'🔙',shoulders:'🏋️',biceps:'💪',triceps:'💪',quads:'🦵',glutes:'🍑',calves:'🦵',core:'🎯',cardio:'❤️'};
+          return `<div style="background:var(--surf);border:1px solid var(--bord);border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;">
+            <div style="font-size:24px;flex-shrink:0;">${catEmoji[ex.cat]||'💪'}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:14px;font-weight:700;color:var(--text);">${ex.name}</div>
+              <div style="font-size:11px;color:var(--mut);">${ex.sets} serie × ${ex.reps}</div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div style="background:rgba(255,104,53,.06);border:1px solid var(--ora);border-radius:10px;padding:10px 12px;margin-top:14px;font-size:11px;color:var(--text);line-height:1.5;">
+        <strong style="color:var(--ora);">💡 Esempio sessione 30':</strong><br>
+        Riscaldamento 3' (jumping jacks + mobilità) → 4 round AMRAP da 5':<br>
+        • 10 push-up<br>
+        • 15 squat<br>
+        • 30s plank<br>
+        • 10 burpees<br>
+        Defaticamento 2' (stretching).
+      </div>
+      <button class="btn btn-action" style="width:100%;padding:12px;margin-top:14px;" onclick="closeSheet()">CHIUDI</button>
+    </div></div>`;
+  })():
+  // ── SHEET MODALITÀ TRASFERTA (sessione 7) ──
+  ST.sheet==='travelMode'&&ST.sheetData?(()=>{
+    const d=ST.sheetData;
+    return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div>
+      <div class="bebas" style="font-size:24px;margin-bottom:6px;">✈️ MODALITÀ TRASFERTA</div>
+      <div style="font-size:12px;color:var(--mut);margin-bottom:14px;line-height:1.5;">Adatto allenamenti e dieta in base alle tue condizioni in trasferta.</div>
+
+      <!-- Date inizio/fine -->
+      <div style="background:var(--surf);border-radius:10px;padding:12px;margin-bottom:10px;">
+        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:8px;">📅 DURATA TRASFERTA</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div>
+            <div style="font-size:10px;color:var(--mut);margin-bottom:3px;">Inizio</div>
+            <input type="date" value="${d.startD}" onchange="ST.sheetData.startD=this.value" style="width:100%;font-size:13px;padding:8px;">
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--mut);margin-bottom:3px;">Fine</div>
+            <input type="date" value="${d.endD}" onchange="ST.sheetData.endD=this.value" style="width:100%;font-size:13px;padding:8px;">
+          </div>
+        </div>
+      </div>
+
+      <!-- Hai palestra? -->
+      <div style="background:var(--surf);border-radius:10px;padding:12px;margin-bottom:10px;">
+        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:8px;">🏋️ HAI ACCESSO A UNA PALESTRA?</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+          <button class="btn-s" style="padding:12px;font-size:13px;background:${d.hasGym?'var(--acc)':'var(--surf)'};color:${d.hasGym?'#000':'var(--mut)'};border:1px solid ${d.hasGym?'var(--acc)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;" onclick="ST.sheetData.hasGym=true;render()">✓ SÌ, PALESTRA</button>
+          <button class="btn-s" style="padding:12px;font-size:13px;background:${!d.hasGym?'var(--ora)':'var(--surf)'};color:${!d.hasGym?'#fff':'var(--mut)'};border:1px solid ${!d.hasGym?'var(--ora)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;" onclick="ST.sheetData.hasGym=false;render()">🏠 NO, BODYWEIGHT</button>
+        </div>
+        <div style="font-size:10px;color:var(--mut);margin-top:8px;font-style:italic;">${d.hasGym?'Programma normale ridotto.':'Esercizi a corpo libero in stanza/hotel: push-up, squat, plank, burpees, ecc.'}</div>
+      </div>
+
+      <!-- Sessioni / settimana -->
+      <div style="background:var(--surf);border-radius:10px;padding:12px;margin-bottom:10px;">
+        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:8px;">📅 SESSIONI A SETTIMANA</div>
+        <div style="display:flex;gap:6px;">
+          ${[2,3,4,5].map(n => `<button class="btn-s" style="flex:1;padding:10px;font-size:13px;background:${d.sessions===n?'var(--blu)':'var(--surf)'};color:${d.sessions===n?'#fff':'var(--mut)'};border:1px solid ${d.sessions===n?'var(--blu)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;" onclick="ST.sheetData.sessions=${n};render()">${n}</button>`).join('')}
+        </div>
+      </div>
+
+      <!-- Durata sessione -->
+      <div style="background:var(--surf);border-radius:10px;padding:12px;margin-bottom:14px;">
+        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:8px;">⏱️ DURATA SESSIONE (min)</div>
+        <div style="display:flex;gap:6px;">
+          ${[15,30,45,60].map(n => `<button class="btn-s" style="flex:1;padding:10px;font-size:13px;background:${d.dur===n?'var(--purp)':'var(--surf)'};color:${d.dur===n?'#fff':'var(--mut)'};border:1px solid ${d.dur===n?'var(--purp)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;" onclick="ST.sheetData.dur=${n};render()">${n}'</button>`).join('')}
+        </div>
+      </div>
+
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-action" style="flex:1;padding:12px;" onclick="closeSheet()">ANNULLA</button>
+        <button class="btn" style="flex:2;padding:12px;background:var(--ora);color:#fff;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;" onclick="confirmTravelMode()">✓ ATTIVA</button>
+      </div>
+    </div></div>`;
+  })():
   // FIX SGARRI: sheet inserimento cibo da DB (alternativa al testo libero)
   ST.sheet==='cheatDb'&&ST.sheetData?(()=>{
     const d=ST.sheetData;
@@ -9463,38 +10535,57 @@ window.render = function() {
     // Etichetta header diversa se è già porzione fissa (mult=1) vs categoria
     const headerKcalText = isPortionFood
       ? (isDrink
-          ? `${f.kcal} kcal/100ml · ${portionLabel}`
-          : (portionMult === 1 ? `${f.kcal} kcal a porzione` : `${f.kcal} kcal/100g · ${portionLabel}`))
+          ? `${f.kcal} kcal/100ml · 1 porz. ≈ ${portionLabel}`
+          : (portionMult === 1 ? `${f.kcal} kcal a porzione` : `${f.kcal} kcal/100g · 1 porz. ≈ ${portionLabel}`))
       : `${f.kcal} kcal/100g`;
     // Etichetta della domanda (drink vs cibo)
     const qtyLabel = isDrink
-      ? `QUANTI? (1 = ${portionLabel})`
-      : (portionMult === 1 ? 'QUANTE PORZIONI?' : `QUANTE PORZIONI? (1 ≈ ${portionGrams}g)`);
+      ? `QUANTE PORZIONI? (puoi inserire 0.5 = mezza)`
+      : (portionMult === 1 ? 'QUANTE PORZIONI? (es. 0.5 = mezza)' : `QUANTE PORZIONI? (puoi inserire decimali)`);
+    // Riepilogo unità in basso input
+    const unitDescription = isDrink
+      ? `1 porzione = ${portionLabel}` // es. "1 porzione = media (40cl)"
+      : (portionMult === 1 ? `valore standard per porzione` : `1 porzione ≈ ${portionGrams}g`);
     return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div>
+
+      <!-- ── HEADER PERSISTENTE: "Stai aggiungendo: ..." (sessione 7) ── -->
+      <div style="background:linear-gradient(135deg,rgba(255,104,53,.12),rgba(255,104,53,.04));border:1px solid var(--ora);border-radius:10px;padding:8px 12px;margin-bottom:10px;">
+        <div style="font-size:10px;color:var(--mut);letter-spacing:1px;font-weight:700;">STAI AGGIUNGENDO ALLO SGARRO:</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text);line-height:1.3;">${escapeHtml(f.name)}</div>
+        <div style="font-size:10px;color:var(--ora);margin-top:2px;">${isPortionFood ? `📦 Misurato in: ${isDrink?'porzioni (volume fisso)':portionMult===1?'porzioni standard':`porzioni (~${portionGrams}g cad.)`}` : '⚖️ Misurato in: GRAMMI'}</div>
+      </div>
+
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
         <div style="font-size:36px;">${(window.FOOD_CATS||[]).find(c=>c.id===f.cat)?.emo||'🍴'}</div>
         <div style="flex:1;min-width:0;">
-          <div class="bebas" style="font-size:20px;line-height:1.1;">${escapeHtml(f.name)}</div>
-          <div style="font-size:11px;color:var(--mut);">${headerKcalText} · P:${f.p||0}g · C:${f.c||0}g · F:${f.f||0}g</div>
+          <div style="font-size:11px;color:var(--mut);line-height:1.4;">${headerKcalText}<br>P:${f.p||0}g · C:${f.c||0}g · F:${f.f||0}g</div>
         </div>
       </div>
       ${isPortionFood ? `
-        <!-- Cibi/drink per porzione: chiedi quanti -->
+        <!-- Cibi/drink per porzione: chiedi quanti (con decimali) -->
         <div style="background:rgba(255,104,53,.06);border:1.5px solid var(--ora);border-radius:12px;padding:14px;margin-bottom:10px;">
           <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:10px;">${qtyLabel}</div>
-          <div style="display:grid;grid-template-columns:1fr 100px;gap:8px;margin-bottom:8px;">
-            <input id="cheatQty" type="number" min="1" max="20" value="1" style="margin:0;font-size:14px;padding:10px;text-align:center;" oninput="document.getElementById('cheatPreviewK').textContent=Math.round(${f.kcal}*${portionMult}*(parseInt(this.value)||1))+' kcal'">
+          <div style="display:grid;grid-template-columns:1fr 110px;gap:8px;margin-bottom:8px;">
+            <input id="cheatQty" type="number" inputmode="decimal" min="0.25" max="20" step="0.25" value="1" style="margin:0;font-size:16px;padding:12px;text-align:center;font-weight:700;" oninput="document.getElementById('cheatPreviewK').textContent=Math.round(${f.kcal}*${portionMult}*(parseFloat(this.value)||1))+' kcal'">
             <div style="display:flex;align-items:center;justify-content:center;background:var(--bg);border-radius:8px;padding:8px;font-size:13px;color:var(--ora);font-weight:700;"><span id="cheatPreviewK">${previewKcal} kcal</span></div>
+          </div>
+          <!-- ── Label unità di misura PERSISTENTE ── -->
+          <div style="font-size:10px;color:var(--mut);text-align:center;margin-bottom:10px;font-style:italic;">📌 ${unitDescription}</div>
+          <!-- Quick buttons quantità comuni -->
+          <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:center;">
+            ${[0.5, 1, 1.5, 2, 3].map(q=>`<button class="btn-s" style="font-size:11px;padding:5px 10px;background:var(--surf);border:1px solid var(--bord);color:var(--text);" onclick="document.getElementById('cheatQty').value=${q};document.getElementById('cheatPreviewK').textContent=Math.round(${f.kcal}*${portionMult}*${q})+' kcal'">${q===0.5?'½':q===1.5?'1½':q}× </button>`).join('')}
           </div>
         </div>
       ` : `
-        <!-- Cibi a peso: chiedi grammi -->
+        <!-- Cibi a peso: chiedi grammi (con decimali per peso preciso da bilancia) -->
         <div style="background:rgba(167,139,250,.06);border:1.5px solid var(--purp);border-radius:12px;padding:14px;margin-bottom:10px;">
           <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:10px;">GRAMMI MANGIATI</div>
-          <div style="display:grid;grid-template-columns:1fr 100px;gap:8px;margin-bottom:8px;">
-            <input id="cheatGrams" type="number" min="1" max="5000" value="${grams}" style="margin:0;font-size:14px;padding:10px;text-align:center;" oninput="document.getElementById('cheatPreviewK').textContent=Math.round(${f.kcal}*(parseInt(this.value)||0)/100)+' kcal'">
+          <div style="display:grid;grid-template-columns:1fr 110px;gap:8px;margin-bottom:8px;">
+            <input id="cheatGrams" type="number" inputmode="decimal" min="1" max="5000" step="5" value="${grams}" style="margin:0;font-size:16px;padding:12px;text-align:center;font-weight:700;" oninput="document.getElementById('cheatPreviewK').textContent=Math.round(${f.kcal}*(parseFloat(this.value)||0)/100)+' kcal'">
             <div style="display:flex;align-items:center;justify-content:center;background:var(--bg);border-radius:8px;padding:8px;font-size:13px;color:var(--purp);font-weight:700;"><span id="cheatPreviewK">${previewKcal} kcal</span></div>
           </div>
+          <!-- Label unità di misura PERSISTENTE -->
+          <div style="font-size:10px;color:var(--mut);text-align:center;margin-bottom:10px;font-style:italic;">📌 Inserisci il peso reale del cibo (anche da bilancia)</div>
           <div style="display:flex;gap:5px;flex-wrap:wrap;">
             ${[50,100,150,200,250,300].map(g=>`<button class="btn-s" style="font-size:11px;padding:5px 10px;background:var(--surf);border:1px solid var(--bord);color:var(--text);" onclick="document.getElementById('cheatGrams').value=${g};document.getElementById('cheatPreviewK').textContent=Math.round(${f.kcal}*${g}/100)+' kcal'">${g}g</button>`).join('')}
           </div>
