@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION13-PRO-FIXES">
+<meta name="ft-version" content="build-SESSION14-UX-FOUNDATION">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -77,7 +77,7 @@ input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 8px; cur
 ::placeholder { color: var(--mut); }
 select option { background: var(--card); }
 .bnav { display: none; }
-.content { padding-top: 60px; padding-bottom: 24px; }
+.content { padding-top: 60px; padding-bottom: 90px; }
 .topbar { position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; background: rgba(9,9,11,0.95); backdrop-filter: blur(16px); border-bottom: 1px solid var(--bord); z-index: 900; display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; height: 52px; }
 .hamb { background: var(--surf); border: 1.5px solid var(--bord); border-radius: 10px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; -webkit-tap-highlight-color: transparent; }
 .hamb-bars { display: flex; flex-direction: column; gap: 4px; }
@@ -103,6 +103,18 @@ select option { background: var(--card); }
 .drawer-footer { padding: 14px 18px 22px; border-top: 1px solid var(--bord); }
 .drawer-footer .uname { font-size: 12px; color: var(--mut); margin-bottom: 8px; }
 .drawer-footer .uname strong { color: var(--text); }
+
+/* ── BOTTOM NAVIGATION (sessione 14): tab bar fissa per accesso rapido ── */
+.bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; background: rgba(9,9,11,0.95); backdrop-filter: blur(16px); border-top: 1px solid var(--bord); z-index: 900; display: flex; align-items: stretch; padding: 6px 0 max(6px, env(safe-area-inset-bottom, 0px)); height: auto; }
+.bn-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 8px 4px; background: transparent; border: none; cursor: pointer; color: var(--mut); transition: color 0.2s, transform 0.1s; -webkit-tap-highlight-color: transparent; }
+.bn-item:active { transform: scale(0.92); }
+.bn-item.on { color: var(--acc); }
+.bn-item .bn-ic { font-size: 20px; line-height: 1; filter: grayscale(0.5); transition: filter 0.2s; }
+.bn-item.on .bn-ic { filter: none; }
+.bn-item .bn-lbl { font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
+/* Lascio spazio extra in fondo a tutti i contenitori scrollabili per non nascondere contenuto sotto bottom-nav */
+.app-content, .scroll-container { padding-bottom: 80px; }
+
 .bw { background: var(--bg); border-radius: 99px; overflow: hidden; border: 1px solid var(--bord); }
 .bf { border-radius: 99px; transition: width 0.8s cubic-bezier(0.4,0,0.2,1); }
 .wo { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 2000; overflow-y: auto; display: flex; flex-direction: column; }
@@ -8071,6 +8083,48 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
   return `
   ${headerHtml}
 
+  ${(()=>{
+    // ── QUICK STATS DASHBOARD (sessione 14): metriche chiave + accesso rapido ──
+    // 4 card cliccabili che portano alle viste dettaglio. Riduce scroll e dà overview immediato.
+    const last7Days = ST.wLog.filter(w => !w.isRest && new Date(w.d) >= new Date(Date.now() - 7*86400000));
+    const woThisWeek = last7Days.length;
+    const sessionsTarget = ST.p?.sessions || 3;
+    const woProgressPct = sessionsTarget > 0 ? Math.min(100, (woThisWeek/sessionsTarget)*100) : 0;
+    const todayCal = dLog.k || 0;
+    const calProgressPct = mac.kcal > 0 ? Math.min(100, (todayCal/mac.kcal)*100) : 0;
+    const wTrend = ST.h.length >= 2 ? (ST.h[ST.h.length-1].w - ST.h[0].w) : 0;
+    const wTrendIcon = wTrend > 0 ? '↗' : wTrend < 0 ? '↘' : '→';
+    const wTrendCol = (ST.p?.t === 'cut' && wTrend < 0) || (ST.p?.t === 'bulk' && wTrend > 0) ? 'var(--gre)' : (wTrend === 0 ? 'var(--mut)' : 'var(--ora)');
+
+    return `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+      <!-- Card peso -->
+      <div onclick="ST.tab='measures';render()" style="background:linear-gradient(135deg,rgba(96,165,250,.08),rgba(96,165,250,.02));border:1px solid var(--blu);border-radius:14px;padding:12px;cursor:pointer;transition:.15s;">
+        <div style="font-size:9px;color:var(--blu);font-weight:800;letter-spacing:1.2px;">⚖️ PESO</div>
+        <div class="bebas" style="font-size:24px;color:var(--text);line-height:1.1;margin-top:2px;">${cW.toFixed(1)}<span style="font-size:11px;color:var(--mut);"> kg</span></div>
+        <div style="font-size:10px;color:${wTrendCol};margin-top:2px;font-weight:700;">${wTrendIcon} ${wTrend === 0 ? 'stabile' : (wTrend > 0 ? '+' : '') + wTrend.toFixed(1) + 'kg'}</div>
+      </div>
+      <!-- Card streak -->
+      <div onclick="ST.tab='body';render()" style="background:linear-gradient(135deg,rgba(251,191,36,.08),rgba(251,191,36,.02));border:1px solid #fbbf24;border-radius:14px;padding:12px;cursor:pointer;transition:.15s;">
+        <div style="font-size:9px;color:#fbbf24;font-weight:800;letter-spacing:1.2px;">🔥 STREAK</div>
+        <div class="bebas" style="font-size:24px;color:var(--text);line-height:1.1;margin-top:2px;">${stk}<span style="font-size:11px;color:var(--mut);"> ${stk===1?'giorno':'giorni'}</span></div>
+        <div style="font-size:10px;color:var(--mut);margin-top:2px;">consecutivi</div>
+      </div>
+      <!-- Card kcal oggi -->
+      <div onclick="ST.tab='diet';render()" style="background:linear-gradient(135deg,rgba(74,222,128,.08),rgba(74,222,128,.02));border:1px solid var(--gre);border-radius:14px;padding:12px;cursor:pointer;transition:.15s;">
+        <div style="font-size:9px;color:var(--gre);font-weight:800;letter-spacing:1.2px;">🍽️ KCAL OGGI</div>
+        <div class="bebas" style="font-size:24px;color:var(--text);line-height:1.1;margin-top:2px;">${todayCal}<span style="font-size:11px;color:var(--mut);"> / ${mac.kcal}</span></div>
+        <div style="height:3px;background:var(--bg);border-radius:3px;margin-top:4px;overflow:hidden;"><div style="height:100%;width:${calProgressPct}%;background:var(--gre);border-radius:3px;"></div></div>
+      </div>
+      <!-- Card workout settimana -->
+      <div onclick="ST.tab='work';render()" style="background:linear-gradient(135deg,rgba(255,104,53,.08),rgba(255,104,53,.02));border:1px solid var(--ora);border-radius:14px;padding:12px;cursor:pointer;transition:.15s;">
+        <div style="font-size:9px;color:var(--ora);font-weight:800;letter-spacing:1.2px;">💪 WORKOUT 7G</div>
+        <div class="bebas" style="font-size:24px;color:var(--text);line-height:1.1;margin-top:2px;">${woThisWeek}<span style="font-size:11px;color:var(--mut);"> / ${sessionsTarget}</span></div>
+        <div style="height:3px;background:var(--bg);border-radius:3px;margin-top:4px;overflow:hidden;"><div style="height:100%;width:${woProgressPct}%;background:var(--ora);border-radius:3px;"></div></div>
+      </div>
+    </div>`;
+  })()}
+
   <!-- DOPPIO PILASTRO: PASTO + ALLENAMENTO -->
   <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;">
     ${mealIsPrimary ? mealCardHtml+woCardHtml : woCardHtml+mealCardHtml}
@@ -9705,16 +9759,13 @@ window.renderShopping = function(mac) {
   </div>
 
   <!-- Banner intro -->
-  <div class="card" style="background:linear-gradient(135deg,rgba(34,197,94,.08),rgba(96,165,250,.04));border:1px solid var(--gre);padding:12px 14px;margin-bottom:12px;">
-    <div style="font-size:13px;color:var(--text);line-height:1.5;">
-      Lista calcolata automaticamente dal tuo programma alimentare per i prossimi 7 giorni.
-      Spunta gli articoli mentre fai la spesa, rimuovi quelli che hai già o non vuoi questa settimana.
-    </div>
-    <div style="background:var(--surf);border-radius:8px;padding:8px;margin-top:8px;">
-      <div style="height:6px;background:var(--bg);border-radius:3px;overflow:hidden;">
+  <div class="card" style="background:linear-gradient(135deg,rgba(34,197,94,.08),rgba(96,165,250,.04));border:1px solid var(--gre);padding:10px 12px;margin-bottom:12px;">
+    <div style="font-size:12px;color:var(--text);line-height:1.4;">📋 Lista per i prossimi 7 giorni dal tuo programma. Spunta, rimuovi o aggiungi.</div>
+    <div style="background:var(--surf);border-radius:8px;padding:6px;margin-top:8px;">
+      <div style="height:5px;background:var(--bg);border-radius:3px;overflow:hidden;">
         <div style="width:${progressPct}%;height:100%;background:var(--gre);transition:width .3s;"></div>
       </div>
-      <div style="font-size:10px;color:var(--mut);margin-top:4px;text-align:center;">${progressPct}% completata</div>
+      <div style="font-size:10px;color:var(--mut);margin-top:3px;text-align:center;">${progressPct}%</div>
     </div>
   </div>
 
@@ -9750,7 +9801,7 @@ window.renderShopping = function(mac) {
       <div class="bebas" style="font-size:15px;color:var(--purp);letter-spacing:1px;">➕ AGGIUNTE PERSONALI</div>
       <button onclick="window.openAddShoppingItem()" style="background:rgba(167,139,250,.15);color:var(--purp);border:1px solid var(--purp);padding:6px 12px;font-size:12px;font-weight:600;border-radius:8px;cursor:pointer;">+ AGGIUNGI</button>
     </div>
-    ${extras.length === 0 ? `<div style="font-size:11px;color:var(--mut);font-style:italic;text-align:center;padding:14px;">Nessun articolo personale. Aggiungi cose extra come ospiti, viaggi, prodotti casa.</div>` : extras.map((e,i) => `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;${e.checked?'opacity:.5;':''}border-bottom:1px solid var(--bord);">
+    ${extras.length === 0 ? `<div style="font-size:11px;color:var(--mut);font-style:italic;text-align:center;padding:10px;">Detersivi, ospiti, viaggi... aggiungi extra qui</div>` : extras.map((e,i) => `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;${e.checked?'opacity:.5;':''}border-bottom:1px solid var(--bord);">
       <input type="checkbox" ${e.checked?'checked':''} onchange="window.toggleShoppingExtra(${i}, this.checked)" style="width:18px;height:18px;cursor:pointer;flex-shrink:0;accent-color:var(--gre);">
       <div style="flex:1;min-width:0;">
         <div style="font-size:13px;color:var(--text);${e.checked?'text-decoration:line-through;':''}">${escapeHtml(e.label)}</div>
@@ -10487,8 +10538,8 @@ window.renderSettings = function(mac){
   <!-- ── NOTIFICHE PUSH (sessione 12 - master toggle + UX migliorata) ── -->
   <div class="card" style="border-color:var(--ora);">
     <div class="bebas" style="font-size:18px;color:var(--ora);margin-bottom:6px;">🔔 NOTIFICHE</div>
-    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:12px;">
-      Promemoria locali per allenamenti, pesata e pasti. Attivale solo se le vuoi davvero.
+    <div style="font-size:12px;color:var(--mut);line-height:1.4;margin-bottom:12px;">
+      Promemoria allenamenti, pesata e pasti.
     </div>
     ${(() => {
       if (!('Notification' in window)) {
@@ -10880,9 +10931,8 @@ window.render = function() {
   // ── FIX 5: Swap sheet con spiegazione chiara (sostituzione, NON salto) — sessione 13: + custom ──
   const sheetH=ST.sheet==='swap'&&ST.sheetData?`<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div>
     <div class="bebas" style="font-size:22px;margin-bottom:4px;">🔄 SOSTITUISCI ESERCIZIO</div>
-    <div style="background:rgba(197,241,53,.07);border:1.5px solid var(--acc);border-radius:12px;padding:14px;margin-bottom:14px;">
-      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px;">ℹ️ Come funziona</div>
-      <div style="font-size:12px;color:var(--mut);line-height:1.6;">Tutti gli esercizi qui sotto lavorano lo <strong style="color:var(--text);">stesso gruppo muscolare</strong>. Scegli quello che preferisci o che si adatta al tuo equipaggiamento — ma <strong style="color:var(--acc);">devi eseguirlo comunque</strong>, non lo stai saltando!</div>
+    <div style="background:rgba(197,241,53,.07);border:1.5px solid var(--acc);border-radius:12px;padding:10px 12px;margin-bottom:14px;">
+      <div style="font-size:12px;color:var(--text);line-height:1.5;">💡 Stesso muscolo, diverso esercizio. <strong style="color:var(--acc);">Devi farlo</strong>, non saltarlo.</div>
     </div>
     <div style="font-size:11px;color:var(--mut);margin-bottom:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Muscolo: ${muscleCatLabel(EX[ST.sheetData.curId]?.cat || ST.customExercises?.[ST.sheetData.curId]?.cat)} · ${EX[ST.sheetData.curId]?.mus || ST.customExercises?.[ST.sheetData.curId]?.mus || '—'}</div>
     ${EX[ST.sheetData.curId]?.cat ? `<div style="display:flex;justify-content:center;background:var(--bg);border-radius:12px;padding:8px;margin-bottom:14px;border:1px solid var(--bord);">${muscleSvg(EX[ST.sheetData.curId].cat)}</div>` : ''}
@@ -11242,8 +11292,8 @@ window.render = function() {
           <div style="font-size:10px;color:var(--mut);">PR oggi</div>
         </div>
       </div>
-      <div style="background:var(--surf);border-radius:10px;padding:12px;font-size:12px;color:var(--text);line-height:1.5;margin-bottom:14px;text-align:center;">
-        ${d.prCount>0?`🎉 <strong>Hai battuto ${d.prCount} record personale ${d.prCount>1?'i':''}!</strong> Eccellente.`:'Bel lavoro! Ricordati di mangiare proteine entro 1-2 ore e idratarti.'}
+      <div style="background:var(--surf);border-radius:10px;padding:10px;font-size:12px;color:var(--text);line-height:1.5;margin-bottom:14px;text-align:center;">
+        ${d.prCount>0?`🎉 <strong>${d.prCount} record battuto${d.prCount>1?'i':''}!</strong>`:'💧 Idratati e fai il pasto post-workout entro 1-2h.'}
       </div>
       <div style="display:flex;gap:6px;">
         <button class="btn btn-action" style="flex:1;padding:14px;" onclick="closeSheet();ST.tab='body';render()">📊 VEDI ANALISI</button>
@@ -11266,7 +11316,7 @@ window.render = function() {
     ];
     return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div>
       <div class="bebas" style="font-size:24px;margin-bottom:6px;">➕ NUOVO ESERCIZIO</div>
-      <div style="font-size:12px;color:var(--mut);margin-bottom:14px;line-height:1.5;">Crea un esercizio personalizzato (es. uno specifico del tuo coach o di una macchina della tua palestra).${d.slot?' Verrà inserito nella scheda al posto di quello attuale.':''}</div>
+      <div style="font-size:12px;color:var(--mut);margin-bottom:14px;">${d.slot?'Sostituisce quello attuale nella scheda.':'Lo userai negli allenamenti.'}</div>
 
       <!-- Nome -->
       <div style="margin-bottom:12px;">
@@ -11340,7 +11390,7 @@ window.render = function() {
     const cats = window.FOOD_CATS || [];
     return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div>
       <div class="bebas" style="font-size:24px;margin-bottom:6px;">➕ NUOVO CIBO</div>
-      <div style="font-size:12px;color:var(--mut);margin-bottom:14px;line-height:1.5;">Crea un cibo che non è nel database. Una volta creato lo trovi sempre nelle tue ricerche.</div>
+      <div style="font-size:12px;color:var(--mut);margin-bottom:14px;">Disponibile nelle ricerche future.</div>
 
       <!-- Nome -->
       <div style="margin-bottom:12px;">
@@ -11716,18 +11766,28 @@ window.render = function() {
   // Sheets extra (legacy rimossi: ora c'è il drawer laterale)
   const moreSheetH='';
   const shortPickH='';
-  // ── NUOVA NAVIGAZIONE: Drawer laterale + topbar con titolo sezione ──
+  // ── NAVIGAZIONE: Drawer organizzato in macro-sezioni (sessione 14) ──
   const NAV_ITEMS=[
-    {id:'home',ic:'🏠',lbl:'Home'},
-    {id:'work',ic:'🏋️',lbl:'Allenamento'},
-    {id:'diet',ic:'🥗',lbl:'Alimentazione'},
-    {id:'shopping',ic:'🛒',lbl:'Lista Spesa'},
-    {id:'body',ic:'📊',lbl:'Analisi & Progressi'},
-    {id:'measures',ic:'📐',lbl:'Misure Corporee'},
-    {id:'social',ic:'🏆',lbl:'Classifica Amici'},
-    {id:'coach',ic:'🤖',lbl:'AI Coach'},
-    {id:'share',ic:'📤',lbl:'Condividi App'},
-    {id:'set',ic:'⚙️',lbl:'Configurazione'},
+    // QUOTIDIANO
+    {id:'home',ic:'🏠',lbl:'Home',group:'daily'},
+    {id:'work',ic:'🏋️',lbl:'Allenamento',group:'daily'},
+    {id:'diet',ic:'🥗',lbl:'Alimentazione',group:'daily'},
+    // STRUMENTI
+    {id:'shopping',ic:'🛒',lbl:'Lista Spesa',group:'tools'},
+    {id:'measures',ic:'📐',lbl:'Misure',group:'tools'},
+    // ANALISI
+    {id:'body',ic:'📊',lbl:'Progressi',group:'insights'},
+    {id:'coach',ic:'🤖',lbl:'AI Coach',group:'insights'},
+    {id:'social',ic:'🏆',lbl:'Classifica',group:'insights'},
+    // ALTRO
+    {id:'share',ic:'📤',lbl:'Condividi App',group:'other'},
+    {id:'set',ic:'⚙️',lbl:'Configurazione',group:'other'},
+  ];
+  const NAV_GROUPS = [
+    {id:'daily', lbl:'QUOTIDIANO'},
+    {id:'tools', lbl:'STRUMENTI'},
+    {id:'insights', lbl:'ANALISI'},
+    {id:'other', lbl:'ALTRO'}
   ];
   const curNav=NAV_ITEMS.find(n=>n.id===ST.tab)||NAV_ITEMS[0];
   const drawerH=`<div class="drawer-ov ${window.drawerOpen?'on':''}" onclick="closeDrawer()"></div>
@@ -11737,11 +11797,17 @@ window.render = function() {
       <div class="sub">ADAPTIVE AI COACH</div>
     </div>
     <nav class="drawer-list">
-      ${NAV_ITEMS.map(n=>`<div class="dni ${ST.tab===n.id?'on':''}" onclick="gotoTab('${n.id}')">
-        <span class="dni-ic">${n.ic}</span>
-        <span class="dni-lbl">${n.lbl}</span>
-        <span class="dni-arr">▸</span>
-      </div>`).join('')}
+      ${NAV_GROUPS.map(g => {
+        const itemsInGroup = NAV_ITEMS.filter(n => n.group === g.id);
+        if (itemsInGroup.length === 0) return '';
+        return `
+        <div style="font-size:9px;color:var(--mut);font-weight:800;letter-spacing:1.5px;padding:14px 16px 6px;opacity:.6;">${g.lbl}</div>
+        ${itemsInGroup.map(n=>`<div class="dni ${ST.tab===n.id?'on':''}" onclick="gotoTab('${n.id}')">
+          <span class="dni-ic">${n.ic}</span>
+          <span class="dni-lbl">${n.lbl}</span>
+          <span class="dni-arr">▸</span>
+        </div>`).join('')}`;
+      }).join('')}
     </nav>
     <div class="drawer-footer">
       <div class="uname">Connesso come <strong>${AU.user||'—'}</strong></div>
@@ -11795,7 +11861,20 @@ window.render = function() {
   else if(ST.tab==='coach') H+=renderCoach();
   else if(ST.tab==='share') H+=renderShare();
   else if(ST.tab==='set') H+=renderSettings(mac);
-  H+=`</div></div>`;root.innerHTML=H+sheetH+moreSheetH+shortPickH+renderTour()+renderDisclaimer();
+  H+=`</div></div>`;
+  // ── BOTTOM NAVIGATION (sessione 14): 4 azioni frequenti sempre raggiungibili ──
+  const bottomNav = `<nav class="bottom-nav" aria-label="Navigazione rapida">
+    ${[
+      {id:'home', ic:'🏠', lbl:'Home'},
+      {id:'work', ic:'🏋️', lbl:'Workout'},
+      {id:'diet', ic:'🥗', lbl:'Dieta'},
+      {id:'body', ic:'📊', lbl:'Stats'}
+    ].map(n => `<button class="bn-item ${ST.tab===n.id?'on':''}" onclick="gotoTab('${n.id}')" aria-label="${n.lbl}">
+      <span class="bn-ic">${n.ic}</span>
+      <span class="bn-lbl">${n.lbl}</span>
+    </button>`).join('')}
+  </nav>`;
+  root.innerHTML=H+bottomNav+sheetH+moreSheetH+shortPickH+renderTour()+renderDisclaimer();
   if(ST.tab==='coach') setTimeout(()=>{const c=el('chatArea');if(c)c.scrollTop=c.scrollHeight;},50);
   // PUNTO 11: inizializza visibilità campi in Configurazione
   if(ST.tab==='set') setTimeout(()=>{if(window.toggleSessVisibilitySettings) toggleSessVisibilitySettings();},0);
