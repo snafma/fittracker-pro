@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION12-UX-REFACTOR">
+<meta name="ft-version" content="build-SESSION13-PRO-FIXES">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -792,6 +792,27 @@ window.BeepPlayer = {
     setTimeout(() => this.buzz(587, 0.25, 1.0), 110);
   }
 };
+
+// ── FIX SUONI dopo background/foreground (sessione 13) ──
+// Su mobile, quando il tab perde focus l'AudioContext viene sospeso.
+// Quando torna in primo piano va resumato manualmente, altrimenti
+// i beep/buzz non suonano più. Listener globale.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && window.BeepPlayer?._ctx) {
+    try {
+      if (window.BeepPlayer._ctx.state === 'suspended') {
+        window.BeepPlayer._ctx.resume().catch(_ => {});
+        console.log('[AUDIO] Context riattivato dopo background');
+      }
+    } catch(_) {}
+  }
+});
+// Anche su pageshow (back/forward navigation)
+window.addEventListener('pageshow', () => {
+  if (window.BeepPlayer?._ctx?.state === 'suspended') {
+    try { window.BeepPlayer._ctx.resume().catch(_ => {}); } catch(_) {}
+  }
+});
 
 // ═════════════════════════════════════════════════════════════
 // PUNTO 7 — Determina l'unità di misura di un esercizio
@@ -3284,7 +3305,8 @@ window.buildWorkout=function(woId,goal,pw2,exPrefs,sex,analysis){
   const defs=getDefs(sex,goal.loc);
   const exercises=sch.slots.map(sl=>{
     const exId=(exPrefs&&exPrefs[sl.k])||defs[sl.k];
-    const ex=EX[exId]||EX[defs[sl.k]];
+    // Lookup esteso: supporta esercizi custom utente (sessione 13)
+    const ex=(window.getExDef ? window.getExDef(exId) : EX[exId])||EX[defs[sl.k]];
     const sr=getSetsReps(ex.t,goal.t,pw2,goal.focus);
     return{...ex,id:exId,slot:sl.k,cat:sl.cat,...sr};
   });
@@ -3299,6 +3321,22 @@ window.buildWorkout=function(woId,goal,pw2,exPrefs,sex,analysis){
   exercises.push({...EX['cd_stretch'], id:'cd_stretch', slot:'cooldown', cat:'cooldown'});
   return{...sch,exercises};
 }
+
+// ── Helper: ULTIMO valore inserito davvero dall'utente per quell'esercizio (sessione 13) ──
+// A differenza di getSuggest che propone un nuovo target (+5%), questo restituisce
+// l'ultimo valore EFFETTIVO. Usato per pre-popolare l'input con quello che hai fatto l'ultima volta.
+window.getLastUserValue = function(exId, wHist, unit) {
+  const sortedDates = Object.keys(wHist||{}).sort().reverse();
+  for (const d of sortedDates) {
+    const e = wHist[d]?.[exId];
+    if (e && e.ok) {
+      const val = unit === 'kg' ? e.kg : (unit === 'sec' ? e.sec : e.reps);
+      return { val: val ?? null, reps: e.actualReps ?? null, date: d };
+    }
+  }
+  return { val: null, reps: null, date: null };
+};
+
 window.getSuggest=function(exId,wHist,unitOverride){
   const entries=Object.keys(wHist||{}).sort().reverse().slice(0,6).map(d=>wHist[d]).filter(s=>s&&s[exId]);
   if(!entries.length) return{kg:null,val:null,unit:unitOverride||'kg',hint:'Prima volta — inizia leggero e calibra'};
@@ -4410,6 +4448,9 @@ window.defST=function(){
     // ── Campi sessione 9 ──
     customFoods:[],              // cibi personalizzati creati dall'utente per gli sgarri
     shoppingState:{removed:[], extras:[], checked:[], lastGenWeek:null}, // stato lista spesa
+    // ── Campi sessione 13 ──
+    workoutSecOpen:{steps:false, tips:false, muscle:false, mistakes:false, breath:false}, // sezioni espandibili runtime workout
+    customExercises:{},          // esercizi personalizzati creati dall'utente {id: {name,cat,sets,reps,...}}
   };
 }
 window.ST=defST();
@@ -4947,7 +4988,15 @@ window.__initAuthListener=function(){
           // Merge sicuro: defST() prima per assicurare che TUTTI i campi base ci siano
           // (anti-bug: se data è incompleto/corrotto, ST mantiene struttura corretta)
           try {
-            Object.assign(ST, {...defST(), ...data});
+            const base = defST();
+            // Deep merge per oggetti annidati che potrebbero avere chiavi nuove
+            // (anti-bug: notifPrefs.master potrebbe non esistere in data vecchi)
+            const mergedNotifPrefs = {...base.notifPrefs, ...(data.notifPrefs||{})};
+            const mergedShoppingState = {...base.shoppingState, ...(data.shoppingState||{})};
+            const mergedSettingsGroupOpen = {...(base.settingsGroupOpen||{}), ...(data.settingsGroupOpen||{})};
+            const mergedWorkoutSecOpen = {...(base.workoutSecOpen||{}), ...(data.workoutSecOpen||{})};
+            const mergedCustomExercises = {...(base.customExercises||{}), ...(data.customExercises||{})};
+            Object.assign(ST, {...base, ...data, notifPrefs: mergedNotifPrefs, shoppingState: mergedShoppingState, settingsGroupOpen: mergedSettingsGroupOpen, workoutSecOpen: mergedWorkoutSecOpen, customExercises: mergedCustomExercises});
             if(!ST.chartFilter) ST.chartFilter = 30;
             AU.profile = data.profile || null;
           } catch(mergeErr) {
@@ -5044,6 +5093,78 @@ window.getStepsGoal=function(p){
   return 8000;
 };
 
+// ── VALIDATORE OBIETTIVO PESO (sessione 13) ──
+// Verifica che il goal sia realistico in base a:
+// - Sesso, altezza (calcolo BMI fascia normale)
+// - Strategia: cut (perdita) richiede goal < attuale; bulk (massa) richiede goal ≥ attuale
+//   Eccezione: se cut + goal > attuale di poco (≤5%), ammesso (recomposition con muscolo che pesa di più)
+// - Range BMI fisiologico (sottopeso pericoloso < BMI 16, obesità grave > BMI 35)
+window._validateGoalWeight = function(currentW, goalW, strategy, heightCm, sex, age) {
+  const ht_m = heightCm / 100;
+  const goalBMI = goalW / (ht_m * ht_m);
+  const diff = goalW - currentW;
+  const diffPct = (diff / currentW) * 100;
+
+  // 1. Goal pericolosamente basso (BMI < 16)
+  if (goalBMI < 16) {
+    return {
+      ok: false,
+      error: '❌ Obiettivo non sicuro!\n\nIl peso obiettivo (' + goalW + 'kg per ' + heightCm + 'cm) corrisponde a un BMI di ' + goalBMI.toFixed(1) + ', sotto la soglia di sicurezza (16).\n\nUn peso così basso comporta rischi seri per la salute (osteoporosi, problemi cardiaci, alterazioni ormonali).\n\nConsiglio: imposta un obiettivo con BMI almeno 18.5 (= ' + (18.5 * ht_m * ht_m).toFixed(0) + 'kg per la tua altezza).'
+    };
+  }
+
+  // 2. Goal pericolosamente alto (BMI > 35)
+  if (goalBMI > 35) {
+    return {
+      ok: false,
+      error: '❌ Obiettivo non sicuro!\n\nIl peso obiettivo (' + goalW + 'kg per ' + heightCm + 'cm) corrisponde a un BMI di ' + goalBMI.toFixed(1) + ', oltre la soglia di obesità grave (35).\n\nQuesto livello comporta rischi seri (diabete, ipertensione, problemi articolari).\n\nConsiglio: imposta un obiettivo con BMI massimo 30 (= ' + (30 * ht_m * ht_m).toFixed(0) + 'kg per la tua altezza).'
+    };
+  }
+
+  // 3. Strategia BULK (massa) ma goal MOLTO inferiore al peso attuale
+  if (strategy === 'bulk' && diffPct < -3) {
+    return {
+      ok: false,
+      error: '❌ Strategia incoerente!\n\nHai scelto "MASSA" ma il peso obiettivo (' + goalW + 'kg) è inferiore al tuo attuale (' + currentW + 'kg).\n\nLa strategia "MASSA" serve per AUMENTARE il peso (muscoli + un po\' di grasso).\n\nSe vuoi DIMAGRIRE: cambia la strategia in "DEFINIZIONE".\nSe vuoi rimanere stabile e migliorare la composizione: imposta un goal pari o leggermente superiore al peso attuale.'
+    };
+  }
+
+  // 4. Strategia CUT (definizione) ma goal MOLTO superiore al peso attuale
+  if (strategy === 'cut' && diffPct > 5) {
+    return {
+      ok: false,
+      error: '❌ Strategia incoerente!\n\nHai scelto "DEFINIZIONE" ma il peso obiettivo (' + goalW + 'kg) è MOLTO superiore al tuo attuale (' + currentW + 'kg, +' + diffPct.toFixed(1) + '%).\n\nLa strategia "DEFINIZIONE" serve per DIMAGRIRE.\n\nSe vuoi AUMENTARE peso (muscoli): cambia la strategia in "MASSA".\nSe vuoi un piccolo aumento per ricomposizione corporea (muscolo che pesa più del grasso perso), va bene fino a +5% del peso attuale.'
+    };
+  }
+
+  // 5. Cambio di peso eccessivo (>30%)
+  if (Math.abs(diffPct) > 30) {
+    return {
+      ok: false,
+      error: '❌ Obiettivo troppo estremo!\n\nVuoi passare da ' + currentW + 'kg a ' + goalW + 'kg (' + (diffPct > 0 ? '+' : '') + diffPct.toFixed(1) + '%).\n\nQuesto è un cambiamento eccessivo che può essere dannoso o irrealistico.\n\nSuggerimento: imposta un obiettivo intermedio raggiungibile in 6-12 mesi (max ±20% dal peso attuale). Una volta raggiunto, ne imposterai un altro.'
+    };
+  }
+
+  // ── WARNING (non bloccanti, l'utente conferma) ──
+  let warning = null;
+
+  if (goalBMI < 18.5 && goalBMI >= 16) {
+    warning = '⚠️ Il peso obiettivo (' + goalW + 'kg, BMI ' + goalBMI.toFixed(1) + ') è in zona sottopeso.\n\nPotrebbe causare debolezza, problemi ormonali e perdita di massa muscolare. Per la tua altezza (' + heightCm + 'cm) il range normopeso va da ' + (18.5 * ht_m * ht_m).toFixed(0) + 'kg a ' + (25 * ht_m * ht_m).toFixed(0) + 'kg.';
+  }
+  else if (goalBMI >= 30 && goalBMI <= 35) {
+    warning = '⚠️ Il peso obiettivo (' + goalW + 'kg, BMI ' + goalBMI.toFixed(1) + ') è in zona obesità.\n\nPer la tua altezza (' + heightCm + 'cm) il range normopeso va da ' + (18.5 * ht_m * ht_m).toFixed(0) + 'kg a ' + (25 * ht_m * ht_m).toFixed(0) + 'kg.';
+  }
+  else if (Math.abs(diffPct) > 15) {
+    const direction = diffPct > 0 ? 'aumentare' : 'perdere';
+    warning = '⚠️ Vuoi ' + direction + ' ' + Math.abs(diff).toFixed(1) + 'kg (' + Math.abs(diffPct).toFixed(1) + '% del peso attuale). È un obiettivo importante che richiederà costanza per molti mesi.';
+  }
+  else if (strategy === 'cut' && diffPct > 0 && diffPct <= 5) {
+    warning = 'ℹ️ Hai scelto definizione con un goal leggermente superiore (+' + diff.toFixed(1) + 'kg). Funziona per "recomposition" (muscolo che pesa più del grasso perso). Confermi?';
+  }
+
+  return { ok: true, warning };
+};
+
 // ─── § 11. initProgram / updateProgram ─────────────────────────────────────
 window.initProgram=function(){
   const w=parseFloat(vv('iW')),g=parseFloat(vv('gW')),t=vv('iT'),dur=parseInt(vv('iDur')),tRaw=vv('iDate'),loc=vv('iLoc');
@@ -5056,6 +5177,20 @@ window.initProgram=function(){
   const focus=document.querySelector('.focus-chip.on')?.dataset?.focus||'total';
   const diet=document.querySelector('.diet-chip.on')?.dataset?.diet||'omnivore';
   if(!w||!g||!tRaw) return alert('Compila tutto!');
+
+  // ── VALIDAZIONE OBIETTIVO REALISTICO (sessione 13) ──
+  // Calcola BMI e fasce di peso normale per altezza/sesso (formula peso ideale Lorenz/Devine adattata)
+  const ht = AU.profile?.ht || 170;
+  const sx = AU.profile?.sx || 'm';
+  const ag = AU.profile?.ag || 30;
+  const validation = window._validateGoalWeight(w, g, t, ht, sx, ag);
+  if (!validation.ok) {
+    alert(validation.error);
+    return;
+  }
+  if (validation.warning) {
+    if (!confirm(validation.warning + '\n\nVuoi procedere comunque?')) return;
+  }
   // FIX: warning non bloccanti — l'utente decide, noi adattiamo il piano
   if(sess===0&&t==='bulk'){
     if(!confirm('⚠️ Aumentare massa muscolare richiede allenamento con resistenze. Senza palestra, l\'aumento di peso sarà principalmente grasso. Vuoi procedere comunque?')) return;
@@ -5239,6 +5374,21 @@ window.updateProgramOnly=function(){
   const clRaw=parseInt(vv('eCardio'));
   const cl=Number.isNaN(clRaw)?(ST.p.cardioLevel||1):clRaw;
   if(!g||!tRaw) return alert('Compila peso obiettivo e data!');
+
+  // ── VALIDAZIONE OBIETTIVO REALISTICO (sessione 13) ──
+  const currW=ST.h[ST.h.length-1]?.w||70;
+  const ht = AU.profile?.ht || 170;
+  const sx = AU.profile?.sx || 'm';
+  const ag = AU.profile?.ag || 30;
+  const validation = window._validateGoalWeight(currW, g, t, ht, sx, ag);
+  if (!validation.ok) {
+    alert(validation.error);
+    return;
+  }
+  if (validation.warning) {
+    if (!confirm(validation.warning + '\n\nVuoi procedere comunque?')) return;
+  }
+
   // Warning non bloccanti
   if(sess===0&&t==='bulk'){
     if(!confirm('⚠️ Aumentare massa muscolare richiede allenamento. Senza palestra l\'aumento sarà prevalentemente grasso. Procedo?')) return;
@@ -5248,7 +5398,6 @@ window.updateProgramOnly=function(){
   }
   // Aggiorna data se troppo ravvicinata per sessioni
   let tDate=new Date(tRaw);
-  const currW=ST.h[ST.h.length-1]?.w||70;
   const maxRate=t==='cut'?(sess===0?0.4:sess<3?0.6:0.8):(sess===0?0.15:sess<3?0.2:0.3);
   const minWk=Math.abs(currW-g)/maxRate;
   if((tDate-new Date())/(7*864e5)<minWk){
@@ -5551,6 +5700,13 @@ window.enableNotifications = async function() {
   } catch (e) {
     alert('Errore: ' + (e?.message || e));
   }
+};
+
+// Toggle sezione espandibile runtime workout (sessione 13)
+window.toggleWorkoutSec = function(key) {
+  if (!ST.workoutSecOpen) ST.workoutSecOpen = {};
+  ST.workoutSecOpen[key] = !ST.workoutSecOpen[key];
+  render();
 };
 
 window.toggleNotifPref = async function(key, enabled) {
@@ -6617,6 +6773,16 @@ window.getWo=function(){
   return buildWorkout(ST.aWo,ST.p,p,ST.exPrefs,sx,an);
 }
 window.getEx=function(){return getWo().exercises[ST.step];}
+
+// ── Helper: lookup esercizio supportando anche custom utente (sessione 13) ──
+window.getExDef = function(exId) {
+  if (!exId) return null;
+  if (window.EX && window.EX[exId]) return window.EX[exId];
+  if (window.ST?.customExercises && window.ST.customExercises[exId]) {
+    return {...window.ST.customExercises[exId], isCustom: true};
+  }
+  return null;
+};
 // ─── § 16. RUNTIME WORKOUT: startWo, runWo, logSeries ──────────────────────
 window.startWo=function(id){
   clearInterval(ST.tmrId);clearInterval(ST.setTmrId);
@@ -6654,6 +6820,9 @@ window.completeSet=function(){
     const inputEl = el('wkW');
     // FIX peso pre-serie persistente: leggo prima dall'input, poi da draftValues, poi 0
     let value = parseFloat(inputEl?.value || (ST.draftValues && ST.draftValues[ex.id]) || 0);
+    // Flag: l'utente ha inserito un valore esplicitamente?
+    // (sessione 13: serve per evitare falsi PR su esercizi a tempo dove il valore viene dal timer)
+    const userEnteredValue = !!(inputEl?.value && parseFloat(inputEl.value) > 0);
     // Se l'esercizio è a tempo e l'utente non ha inserito nulla, usa il timer della serie
     if (unit === 'sec' && (!value || value <= 0) && ST.setElapsed > 0) {
       value = ST.setElapsed;
@@ -6667,11 +6836,19 @@ window.completeSet=function(){
     }
     if(!ST.wHistory[currentDateStr]) ST.wHistory[currentDateStr]={};
 
-    // ── PR DETECTION (sessione 4) ──
+    // ── PR DETECTION (sessione 4, fix sessione 13) ──
     // Confronta il valore con il record storico per questo esercizio
     let isPR = false;
     let prMsg = '';
-    if (value > 0 && !ex.isWarmup && !ex.isCooldown) {
+    // ── FIX FALSO PR (sessione 13) ──
+    // Per esercizi a tempo (sec), il PR scatta SOLO se l'utente ha inserito un valore manualmente.
+    // Altrimenti il timer automatico potrebbe sempre superare il record precedente solo
+    // perché il default è il target (es. 30s di plank target sempre raggiunti).
+    // Per esercizi a peso/reps, se l'utente non ha messo NULLA non c'è PR.
+    const skipPR = (unit === 'sec' && !userEnteredValue) || // tempo senza input manuale
+                   (unit === 'kg' && !userEnteredValue && !actualReps) || // peso senza nulla
+                   (unit === 'reps' && !userEnteredValue); // reps senza input
+    if (value > 0 && !ex.isWarmup && !ex.isCooldown && !skipPR) {
       let bestPrev = 0;
       const histDates = Object.keys(ST.wHistory).sort();
       histDates.forEach(d => {
@@ -6767,11 +6944,35 @@ window.advanceExercise=function(){
     const _durRealMin = ST.workoutStartTs ? Math.max(1, Math.round((Date.now() - ST.workoutStartTs) / 60000)) : (ST.p.dur || 60);
     const _kcalBurned = estimateWorkoutKcal(_durRealMin, currentWeightKg(), ST.currVol);
     ST.wLog.push({d:currentDateStr,t:wo.name,vol:ST.currVol,dur:_durRealMin,kcal:_kcalBurned,isRest:false,woId:ST.aWo});
-    ST.wLog.sort((a,b)=>new Date(a.d)-new Date(b.d));ST.cheatDebt=0;ST.aWo=null;ST.workoutStartTs=null;save();
-    WakeLockMgr.disable();  // PUNTO 2: rilascia wake lock a fine workout
+    ST.wLog.sort((a,b)=>new Date(a.d)-new Date(b.d));ST.cheatDebt=0;ST.aWo=null;ST.workoutStartTs=null;
+    // ── Conta PR fatti oggi (sessione 13) ──
+    let prCountToday = 0;
+    if (ST.wHistory[currentDateStr]) {
+      Object.values(ST.wHistory[currentDateStr]).forEach(e => { if (e?.isPR) prCountToday++; });
+    }
+    save();
+    WakeLockMgr.disable();
     BeepPlayer.exerciseDone();
     setTimeout(() => BeepPlayer.chord(784, 988, 0.4, 0.85), 400);
-    alert(`🏆 ALLENAMENTO COMPLETATO!\n\n📊 Volume: ${ST.currVol} kg\n🔥 Kcal bruciate: ~${_kcalBurned}\n⏱ Durata: ${_durRealMin} min`);
+    // ── FIX SESSIONE 13: chiude schermata workout e torna a home ──
+    // Reset stato workout attivo (esce dalla view runtime)
+    ST.step = 0;
+    ST.currentSet = 0;
+    ST.woPhase = null;
+    ST.setElapsed = 0;
+    // Mostra riepilogo bellissimo come sheet (non alert sistema)
+    ST.sheet = 'workoutDone';
+    ST.sheetData = {
+      vol: ST.currVol,
+      kcal: _kcalBurned,
+      dur: _durRealMin,
+      exCount: wo.exercises.length,
+      prCount: prCountToday,
+      woName: wo.name
+    };
+    // Torna al tab home
+    ST.tab = 'home';
+    render();
   }
 }
 // ── openSwap: funziona sia da fuori scheda che da dentro l'allenamento ──
@@ -6800,6 +7001,86 @@ window.openSwap=function(slot, exId){
   ST.sheetData={slot:slotKey, curId, alts, fromActive: !slot};
   render();
 }
+
+// ── ESERCIZI PERSONALIZZATI (sessione 13) ──
+// Permette all'utente di creare un esercizio custom da usare al posto di uno standard.
+window.openCustomExerciseSheet = function(slot, replacingId) {
+  ST.sheet = 'customExercise';
+  ST.sheetData = {
+    slot: slot || '',
+    replacingId: replacingId || '',
+    name: '',
+    cat: 'chest',
+    t: 'compound',
+    sets: 3,
+    reps: '8-10',
+    rest: 60,
+    mus: '',
+    cues0: '',
+    steps0: '',
+    steps1: '',
+    steps2: ''
+  };
+  render();
+};
+
+window.confirmCustomExercise = function() {
+  const d = ST.sheetData;
+  if (!d) return;
+  if (!d.name || d.name.trim().length < 3) return alert('Inserisci un nome (minimo 3 caratteri).');
+  if (d.name.length > 60) return alert('Nome troppo lungo (max 60 caratteri).');
+  const sets = parseInt(d.sets) || 3;
+  if (sets < 1 || sets > 10) return alert('Numero serie non valido (1-10).');
+
+  const id = 'custom_ex_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+  const steps = [d.steps0, d.steps1, d.steps2].map(s => (s||'').trim()).filter(s => s.length > 0);
+  const cues = (d.cues0||'').trim() ? [(d.cues0).trim()] : [];
+
+  if (!ST.customExercises) ST.customExercises = {};
+  ST.customExercises[id] = {
+    id,
+    name: d.name.trim(),
+    cat: d.cat,
+    t: d.t,
+    sets: sets,
+    reps: d.reps || '8-10',
+    rest: parseInt(d.rest) || 60,
+    mus: (d.mus||'').trim() || 'Muscolo target',
+    steps: steps.length > 0 ? steps : ['Esegui il movimento mantenendo controllo della tecnica'],
+    cues: cues,
+    customCreatedAt: Date.now()
+  };
+
+  // Se viene da uno swap di un esercizio della scheda, sostituisci automaticamente
+  if (d.slot) {
+    if (!ST.exPrefs) ST.exPrefs = {};
+    ST.exPrefs[d.slot] = id;
+  }
+
+  save().then(() => {
+    ST.sheet = null;
+    ST.sheetData = null;
+    render();
+    const t = document.createElement('div');
+    t.style.cssText = 'position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:99999;background:rgba(34,197,94,.95);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.3);';
+    t.textContent = '✓ Esercizio creato' + (d.slot ? ' e applicato!' : '!');
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2500);
+  });
+};
+
+window.deleteCustomExercise = async function(id) {
+  if (!confirm('Eliminare questo esercizio personalizzato?\n\nNon influisce sulla cronologia degli allenamenti già fatti.')) return;
+  if (!ST.customExercises) return;
+  delete ST.customExercises[id];
+  if (ST.exPrefs) {
+    Object.keys(ST.exPrefs).forEach(slot => {
+      if (ST.exPrefs[slot] === id) delete ST.exPrefs[slot];
+    });
+  }
+  await save();
+};
+
 window.swapEx=function(slot,newId){
   if(!slot){
     // Caso edge: chiamato senza slot valido. Avviso utente.
@@ -10465,6 +10746,7 @@ window.render = function() {
       <div style="flex:1;text-align:center;"><div style="font-size:9px;color:var(--mut);font-weight:700;letter-spacing:1px;">🔥 KCAL</div><div class="bebas" style="font-size:18px;color:var(--ora);line-height:1.1;">${__kcalLive}</div></div>
     </div>
     <div style="padding:16px;flex:1;overflow-y:auto;padding-bottom:100px;">
+      <!-- Card serie corrente -->
       <div style="background:${isActive?'rgba(74,222,128,.07)':'rgba(197,241,53,.05)'};border:1.5px solid ${isActive?'var(--gre)':wo.col||'var(--acc)'};border-radius:14px;padding:18px;margin-bottom:14px;text-align:center;box-shadow:${isActive?'0 0 20px rgba(74,222,128,0.2)':'none'};transition:0.3s;">
         <div style="font-size:12px;color:var(--mut);font-weight:700;letter-spacing:2px;margin-bottom:6px;">${isActive?'🟢 IN CORSO':'PROSSIMA SERIE'}</div>
         <div class="bebas" style="font-size:52px;line-height:1;color:${isActive?'var(--gre)':wo.col||'var(--acc)'};">${ST.currentSet+1}<span style="font-size:20px;color:var(--mut);"> / ${totalSets}</span></div>
@@ -10472,61 +10754,164 @@ window.render = function() {
         ${ex.rest?`<div style="font-size:12px;color:var(--blu);margin-top:6px;">⏱ Riposo dopo: ${ex.rest}s (automatico)</div>`:''}
         ${isActive?`<div style="margin-top:10px;padding:8px 16px;background:rgba(74,222,128,.1);border-radius:8px;display:inline-block;"><span style="font-size:11px;color:var(--gre);font-weight:700;">TEMPO: </span><span id="setTmrUI" style="font-family:monospace;font-size:18px;font-weight:700;color:var(--gre);">00:00</span></div>`:''}
       </div>
-      <div style="display:flex;gap:8px;justify-content:center;margin-bottom:16px;">${Array(totalSets).fill(0).map((_,i)=>`<div class="set-dot ${i<ST.currentSet?'done':i===ST.currentSet?'current':''}"></div>`).join('')}</div>
-      <div class="card" style="padding:16px;margin-bottom:10px;"><div class="lbl" style="margin-bottom:10px;">📋 ESECUZIONE:</div>${(ex.steps||[]).map((s,i)=>`<div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;"><div class="step-n">${i+1}</div><div style="font-size:13px;line-height:1.5;color:var(--text);padding-top:2px;">${s}</div></div>`).join('')}</div>
-      ${(ex.cues||[]).length?`<div style="margin-bottom:12px;"><div class="lbl">💡 TIPS:</div>${ex.cues.map(c=>`<div class="cue-box">${c}</div>`).join('')}</div>`:''}
+      <div style="display:flex;gap:8px;justify-content:center;margin-bottom:14px;">${Array(totalSets).fill(0).map((_,i)=>`<div class="set-dot ${i<ST.currentSet?'done':i===ST.currentSet?'current':''}"></div>`).join('')}</div>
 
-      ${ex.cat && !ex.isWarmup && !ex.isCooldown ? `
-      <!-- SVG anatomico muscolo -->
-      <div class="card" style="padding:10px;margin-bottom:10px;text-align:center;">
-        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:6px;">🎯 MUSCOLO LAVORATO</div>
-        ${muscleSvg(ex.cat)}
-        <div style="font-size:11px;color:var(--mut);margin-top:4px;">${muscleCatLabel(ex.cat)}</div>
-      </div>` : ''}
-
-      ${(getCommonMistakes(ex)||[]).length ? `
-      <!-- Errori comuni -->
-      <div class="card" style="padding:14px;margin-bottom:10px;background:rgba(239,68,68,.04);border-color:rgba(239,68,68,.3);">
-        <div class="lbl" style="color:#ef4444;margin-bottom:8px;">⚠️ ERRORI COMUNI DA EVITARE:</div>
-        ${getCommonMistakes(ex).map(m=>`<div style="font-size:12px;color:var(--text);line-height:1.5;padding:6px 10px;background:var(--bg);border-radius:6px;margin-bottom:5px;">⛔ ${m}</div>`).join('')}
-      </div>` : ''}
-
-      ${getBreathingPattern(ex) ? `
-      <!-- Respirazione -->
-      <div class="card" style="padding:12px 14px;margin-bottom:10px;background:rgba(96,165,250,.05);border-color:rgba(96,165,250,.3);">
-        <div class="lbl" style="color:var(--blu);margin-bottom:6px;">💨 RESPIRAZIONE</div>
-        <div style="font-size:12px;color:var(--text);line-height:1.55;">${getBreathingPattern(ex)}</div>
-      </div>` : ''}
-
-      ${!ex.isWarmup && !ex.isCooldown ? `
-      <!-- Note libere persistenti -->
-      <div class="card" style="padding:14px;margin-bottom:10px;border-color:var(--purp);">
-        <div class="lbl" style="color:var(--purp);margin-bottom:8px;">📝 LE TUE NOTE PER QUESTO ESERCIZIO</div>
-        <textarea id="exNote_${ex.id}" maxlength="500" rows="2" placeholder="Es. peso massimo raggiunto, sensazioni, problemi tecnici da ricordare..." style="margin:0;font-size:13px;width:100%;background:var(--bg);border:1px solid var(--bord);color:var(--text);padding:8px;border-radius:8px;">${escapeHtml(getExerciseNote(ex.id))}</textarea>
-        <button class="btn-s" style="width:100%;margin-top:8px;padding:8px;background:var(--purp);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;" onclick="saveExerciseNote('${ex.id}', document.getElementById('exNote_${ex.id}').value)">💾 SALVA NOTA</button>
-        <div style="font-size:10px;color:var(--mut);margin-top:6px;line-height:1.4;">La nota viene mostrata ogni volta che fai questo esercizio. Max 500 caratteri.</div>
-      </div>` : ''}
       ${(ex.isWarmup||ex.isCooldown)?`
       <div class="card" style="padding:14px;background:${ex.isWarmup?'rgba(197,241,53,.04)':'rgba(167,139,250,.04)'};border-color:${ex.isWarmup?'var(--acc)':'var(--purp)'};">
         <div style="font-size:12px;color:${ex.isWarmup?'var(--acc)':'var(--purp)'};font-weight:700;letter-spacing:1px;margin-bottom:4px;">${ex.isWarmup?'⏱ TEMPO STIMATO: '+ex.reps:'⏱ TEMPO STIMATO: '+ex.reps}</div>
         <div style="font-size:12px;color:var(--mut);line-height:1.5;">${ex.isWarmup?'Nessun peso — esegui a corpo libero rispettando i tempi indicati':'Nessun peso — allungamento statico. Non forzare mai oltre la soglia del dolore.'}</div>
       </div>`:`
-      <div class="card" style="padding:14px;margin-bottom:10px;"><div class="r" style="margin-bottom:8px;"><div><div class="lbl" style="margin-bottom:2px;">${exUnit==='sec'?'DURATA (SECONDI)':exUnit==='reps'?'RIPETIZIONI EFFETTUATE':'PESO USATO (KG)'}</div><div style="font-size:11px;color:var(--mut);">${sug.hint}</div></div>${sug.val?`<div class="bebas" style="font-size:26px;color:${theme};">${sug.val}${exUnit==='sec'?'s':exUnit==='reps'?' reps':'kg'}</div>`:''}</div><input type="number" id="wkW" placeholder="${sug.val||(exUnit==='sec'?'Es. 30':exUnit==='reps'?'Es. 10':'Es. 12')}" step="${exUnit==='kg'?'.5':'1'}" value="${(ST.draftValues&&ST.draftValues[ex.id]!=null)?ST.draftValues[ex.id]:(sug.val||'')}" oninput="if(!ST.draftValues)ST.draftValues={};ST.draftValues['${ex.id}']=this.value;" style="margin:0;font-size:24px;font-weight:700;text-align:center;">${exUnit==='kg'?`<div style="display:flex;align-items:center;gap:10px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--bord);"><div style="flex:1;"><div class="lbl" style="margin-bottom:2px;">RIPETIZIONI EFFETTUATE</div><div style="font-size:11px;color:var(--mut);">Suggerite: ${ex.reps||'8-10'} — inserisci quelle che hai fatto davvero</div></div><input type="number" id="wkReps" placeholder="${parseMeanReps(ex.reps)}" step="1" min="1" max="50" value="${(ST.draftReps&&ST.draftReps[ex.id]!=null)?ST.draftReps[ex.id]:''}" oninput="if(!ST.draftReps)ST.draftReps={};ST.draftReps['${ex.id}']=this.value;" style="margin:0;font-size:20px;font-weight:700;text-align:center;width:90px;flex-shrink:0;"></div>`:''}${exUnit==='sec'&&ST.setElapsed>0?`<div style="font-size:11px;color:var(--blu);text-align:center;margin-top:6px;">⏱ Timer corrente: ${ST.setElapsed}s — premi "Serie completata" per registrare</div>`:''}</div>
-      <button class="btn btn-action" style="font-size:14px;width:100%;" onclick="openSwap('${ex.slot||''}','${ex.id||''}')">🔄 SOSTITUISCI QUESTO ESERCIZIO</button>`}
+      <!-- ── INPUT PESI/REPS IN ALTO (sessione 13) ── -->
+      ${(()=>{
+        const lastUser = window.getLastUserValue ? window.getLastUserValue(ex.id, ST.wHistory||{}, exUnit) : {val:null,reps:null,date:null};
+        const unitLabel = exUnit==='sec'?'DURATA (SEC)':exUnit==='reps'?'RIPETIZIONI':'PESO USATO (KG)';
+        const placeholder = exUnit==='sec'?'es. 30':exUnit==='reps'?'es. 10':'es. 12';
+        // Pre-popola con il valore PRECEDENTE inserito (sessione 13: NO suggerito), o vuoto se prima volta
+        const prefillValue = (ST.draftValues && ST.draftValues[ex.id] != null) ? ST.draftValues[ex.id] : (lastUser.val || '');
+        const prefillReps = (ST.draftReps && ST.draftReps[ex.id] != null) ? ST.draftReps[ex.id] : (lastUser.reps || '');
+        const lastDateLabel = lastUser.date ? new Date(lastUser.date).toLocaleDateString('it-IT', {day:'2-digit', month:'short'}) : '';
+        return `
+        <div class="card" style="padding:14px;margin-bottom:10px;border:2px solid ${theme};background:linear-gradient(135deg,rgba(255,255,255,.03),rgba(255,255,255,.005));">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+            <div>
+              <div style="font-size:11px;color:var(--mut);font-weight:800;letter-spacing:1.5px;">${unitLabel}</div>
+              ${lastUser.val ? `<div style="font-size:11px;color:var(--blu);margin-top:2px;">📊 Ultima volta (${lastDateLabel}): <strong style="color:var(--text);">${lastUser.val}${exUnit==='sec'?'s':exUnit==='reps'?' reps':'kg'}${lastUser.reps?' × '+lastUser.reps+' reps':''}</strong></div>` : `<div style="font-size:11px;color:var(--mut);margin-top:2px;font-style:italic;">Prima volta — inserisci il valore reale</div>`}
+              ${sug.val && sug.val !== lastUser.val ? `<div style="font-size:11px;color:var(--ora);margin-top:2px;">💡 ${sug.hint}</div>` : ''}
+            </div>
+          </div>
+          <input type="number" id="wkW" placeholder="${placeholder}" step="${exUnit==='kg'?'.5':'1'}" value="${prefillValue}" oninput="if(!ST.draftValues)ST.draftValues={};ST.draftValues['${ex.id}']=this.value;" style="margin:0;font-size:28px;font-weight:700;text-align:center;height:56px;">
+          ${exUnit==='kg'?`
+          <div style="display:flex;align-items:center;gap:10px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--bord);">
+            <div style="flex:1;">
+              <div style="font-size:11px;color:var(--mut);font-weight:800;letter-spacing:1.5px;">REPS FATTE</div>
+              <div style="font-size:10px;color:var(--mut);">Suggerite: ${ex.reps||'8-10'}</div>
+            </div>
+            <input type="number" id="wkReps" placeholder="${parseMeanReps(ex.reps)}" step="1" min="1" max="50" value="${prefillReps}" oninput="if(!ST.draftReps)ST.draftReps={};ST.draftReps['${ex.id}']=this.value;" style="margin:0;font-size:22px;font-weight:700;text-align:center;width:90px;flex-shrink:0;height:48px;">
+          </div>` : ''}
+          ${exUnit==='sec'&&ST.setElapsed>0?`<div style="font-size:11px;color:var(--blu);text-align:center;margin-top:8px;padding:6px;background:rgba(96,165,250,.06);border-radius:6px;">⏱ Timer corrente: ${ST.setElapsed}s</div>`:''}
+        </div>
+
+        <!-- Bottone sostituisci esercizio (sempre visibile) -->
+        <button class="btn-s btn-action" style="width:100%;padding:11px;font-size:13px;margin-bottom:14px;" onclick="openSwap('${ex.slot||''}','${ex.id||''}')">🔄 SOSTITUISCI QUESTO ESERCIZIO</button>
+        `;
+      })()}
+
+      <!-- ── NOTE personali (sessione 13: già aperte se ci sono) ── -->
+      ${!ex.isWarmup && !ex.isCooldown ? (()=>{
+        const exNote = getExerciseNote(ex.id);
+        const hasNote = exNote && exNote.trim().length > 0;
+        return `
+        <div class="card" style="padding:14px;margin-bottom:10px;border-color:${hasNote?'var(--purp)':'var(--bord)'};${hasNote?'background:rgba(167,139,250,.04);':''}">
+          ${hasNote ? `
+            <div class="lbl" style="color:var(--purp);margin-bottom:8px;">📝 LE TUE NOTE</div>
+            <div style="font-size:13px;color:var(--text);line-height:1.5;background:var(--bg);border-radius:8px;padding:10px;margin-bottom:8px;white-space:pre-wrap;">${escapeHtml(exNote)}</div>
+            <details>
+              <summary style="font-size:11px;color:var(--mut);cursor:pointer;">✏️ Modifica nota</summary>
+              <textarea id="exNote_${ex.id}" maxlength="500" rows="3" style="margin-top:6px;font-size:13px;width:100%;background:var(--bg);border:1px solid var(--bord);color:var(--text);padding:8px;border-radius:8px;">${escapeHtml(exNote)}</textarea>
+              <button class="btn-s" style="width:100%;margin-top:6px;padding:8px;background:var(--purp);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;" onclick="saveExerciseNote('${ex.id}', document.getElementById('exNote_${ex.id}').value)">💾 SALVA NOTA</button>
+            </details>
+          ` : `
+            <details>
+              <summary style="cursor:pointer;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mut);font-weight:600;">
+                <span style="font-size:14px;">📝</span><span>Aggiungi nota personale (opzionale)</span>
+              </summary>
+              <textarea id="exNote_${ex.id}" maxlength="500" rows="2" placeholder="Es. peso massimo raggiunto, sensazioni, problemi tecnici da ricordare..." style="margin-top:8px;font-size:13px;width:100%;background:var(--bg);border:1px solid var(--bord);color:var(--text);padding:8px;border-radius:8px;"></textarea>
+              <button class="btn-s" style="width:100%;margin-top:6px;padding:8px;background:var(--purp);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;" onclick="saveExerciseNote('${ex.id}', document.getElementById('exNote_${ex.id}').value)">💾 SALVA NOTA</button>
+            </details>
+          `}
+        </div>`;
+      })() : ''}
+
+      <!-- ── SEZIONI ESPANDIBILI (sessione 13: chiuse di default per ridurre rumore) ── -->
+      ${(()=>{
+        const SEC_OPEN = ST.workoutSecOpen || {};
+        const sec = (key, icon, title, color, content) => {
+          const isOpen = !!SEC_OPEN[key];
+          return `
+          <div class="card" style="padding:0;margin-bottom:8px;overflow:hidden;border-color:${isOpen?color:'var(--bord)'};">
+            <div onclick="toggleWorkoutSec('${key}')" style="padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;${isOpen?'border-bottom:1px solid var(--bord);background:'+color+'10;':''}">
+              <span style="font-size:18px;">${icon}</span>
+              <span style="flex:1;font-size:13px;font-weight:700;color:${isOpen?color:'var(--text)'};letter-spacing:.3px;">${title}</span>
+              <span style="font-size:14px;color:var(--mut);transform:rotate(${isOpen?'90':'0'}deg);transition:.2s;">›</span>
+            </div>
+            ${isOpen ? `<div style="padding:12px 14px;">${content}</div>` : ''}
+          </div>`;
+        };
+
+        let html = '';
+        // Esecuzione step-by-step
+        if ((ex.steps||[]).length) {
+          html += sec('steps', '📋', `ESECUZIONE (${ex.steps.length} passi)`, 'var(--text)',
+            (ex.steps||[]).map((s,i)=>`<div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:8px;"><div class="step-n">${i+1}</div><div style="font-size:13px;line-height:1.5;color:var(--text);padding-top:2px;">${s}</div></div>`).join('')
+          );
+        }
+        // Tips
+        if ((ex.cues||[]).length) {
+          html += sec('tips', '💡', `TIPS PROFESSIONALI (${ex.cues.length})`, 'var(--acc)',
+            ex.cues.map(c=>`<div class="cue-box">${c}</div>`).join('')
+          );
+        }
+        // Errori
+        const mistakes = getCommonMistakes(ex)||[];
+        if (mistakes.length && !ex.isWarmup && !ex.isCooldown) {
+          html += sec('mistakes', '⚠️', `ERRORI COMUNI (${mistakes.length})`, '#ef4444',
+            mistakes.map(m=>`<div style="font-size:12px;color:var(--text);line-height:1.5;padding:6px 10px;background:var(--bg);border-radius:6px;margin-bottom:5px;">⛔ ${m}</div>`).join('')
+          );
+        }
+        // Muscolo
+        if (ex.cat && !ex.isWarmup && !ex.isCooldown) {
+          html += sec('muscle', '🎯', `MUSCOLO LAVORATO`, 'var(--blu)',
+            `<div style="text-align:center;">${muscleSvg(ex.cat)}<div style="font-size:11px;color:var(--mut);margin-top:4px;">${muscleCatLabel(ex.cat)}</div></div>`
+          );
+        }
+        // Respirazione
+        const breath = getBreathingPattern(ex);
+        if (breath) {
+          html += sec('breath', '💨', `RESPIRAZIONE`, 'var(--blu)',
+            `<div style="font-size:12px;color:var(--text);line-height:1.55;">${breath}</div>`
+          );
+        }
+        return html;
+      })()}
+      `}
     </div>
     <div style="position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--bord);padding:14px;">${!isActive?`<button class="btn btn-gre" style="height:72px;font-size:24px;" onclick="startSet()">▶ INIZIA SERIE ${ST.currentSet+1}/${totalSets}</button>`:`<button class="btn" style="height:72px;font-size:22px;" onclick="completeSet()">✅ SERIE COMPLETATA</button>`}</div></div>`;return;
   }
-  // ── FIX 5: Swap sheet con spiegazione chiara (sostituzione, NON salto) ──
+  // ── FIX 5: Swap sheet con spiegazione chiara (sostituzione, NON salto) — sessione 13: + custom ──
   const sheetH=ST.sheet==='swap'&&ST.sheetData?`<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div>
     <div class="bebas" style="font-size:22px;margin-bottom:4px;">🔄 SOSTITUISCI ESERCIZIO</div>
     <div style="background:rgba(197,241,53,.07);border:1.5px solid var(--acc);border-radius:12px;padding:14px;margin-bottom:14px;">
       <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px;">ℹ️ Come funziona</div>
       <div style="font-size:12px;color:var(--mut);line-height:1.6;">Tutti gli esercizi qui sotto lavorano lo <strong style="color:var(--text);">stesso gruppo muscolare</strong>. Scegli quello che preferisci o che si adatta al tuo equipaggiamento — ma <strong style="color:var(--acc);">devi eseguirlo comunque</strong>, non lo stai saltando!</div>
     </div>
-    <div style="font-size:11px;color:var(--mut);margin-bottom:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Muscolo: ${muscleCatLabel(EX[ST.sheetData.curId]?.cat)} · ${EX[ST.sheetData.curId]?.mus||'—'}</div>
+    <div style="font-size:11px;color:var(--mut);margin-bottom:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Muscolo: ${muscleCatLabel(EX[ST.sheetData.curId]?.cat || ST.customExercises?.[ST.sheetData.curId]?.cat)} · ${EX[ST.sheetData.curId]?.mus || ST.customExercises?.[ST.sheetData.curId]?.mus || '—'}</div>
     ${EX[ST.sheetData.curId]?.cat ? `<div style="display:flex;justify-content:center;background:var(--bg);border-radius:12px;padding:8px;margin-bottom:14px;border:1px solid var(--bord);">${muscleSvg(EX[ST.sheetData.curId].cat)}</div>` : ''}
     ${ST.sheetData.alts.map(alt=>{const cur=alt.id===ST.sheetData.curId;return`<div onclick="swapEx('${ST.sheetData.slot}','${alt.id}')" style="cursor:pointer;padding:14px;border-radius:12px;border:1.5px solid ${cur?'var(--acc)':'var(--bord)'};background:${cur?'rgba(197,241,53,.08)':'var(--surf)'};margin-bottom:7px;transition:.15s;"><div class="r"><div><div style="font-weight:700;font-size:14px;color:${cur?'var(--acc)':'var(--text)'};">${alt.name||alt.id}</div><div style="font-size:11px;color:var(--mut);margin-top:2px;">${alt.mus||''} · ${alt.t==='compound'?'Multi-articolare':alt.t==='isometric'?'Isometrico':'Isolamento'}</div></div>${cur?`<span style="background:var(--acc);color:#000;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;">✓ ATTUALE</span>`:''}</div>${alt.cues?.[0]?`<div style="font-size:11px;color:var(--mut);margin-top:8px;padding:6px 10px;background:var(--bg);border-radius:6px;">💡 ${alt.cues[0]}</div>`:''}</div>`;}).join('')}
-    <button class="btn btn-action" style="margin-top:12px;width:100%;padding:12px;" onclick="closeSheet()">ANNULLA</button>
+
+    ${(()=>{
+      // ── ESERCIZI CUSTOM UTENTE per stesso muscolo (sessione 13) ──
+      const curEx = EX[ST.sheetData.curId] || ST.customExercises?.[ST.sheetData.curId];
+      const curCat = curEx?.cat;
+      const customForCat = Object.values(ST.customExercises||{}).filter(ce => ce.cat === curCat && ce.id !== ST.sheetData.curId);
+      if (customForCat.length === 0) return '';
+      return `
+      <div style="margin:14px 0 8px;padding:10px;background:rgba(167,139,250,.06);border:1px dashed var(--purp);border-radius:10px;">
+        <div style="font-size:11px;color:var(--purp);font-weight:800;letter-spacing:1px;margin-bottom:8px;">🛠️ I TUOI ESERCIZI PERSONALIZZATI</div>
+        ${customForCat.map(ce => `
+          <div style="display:flex;align-items:center;gap:8px;padding:12px;border-radius:10px;border:1.5px solid var(--purp);background:rgba(167,139,250,.05);margin-bottom:6px;">
+            <div onclick="swapEx('${ST.sheetData.slot}','${ce.id}')" style="flex:1;cursor:pointer;">
+              <div style="font-weight:700;font-size:14px;color:var(--purp);">${escapeHtml(ce.name)} <span style="font-size:9px;background:var(--purp);color:#fff;padding:1px 6px;border-radius:6px;margin-left:4px;">CUSTOM</span></div>
+              <div style="font-size:11px;color:var(--mut);margin-top:2px;">${escapeHtml(ce.mus||'')} · ${ce.t==='compound'?'Multi-articolare':ce.t==='isometric'?'Isometrico':'Isolamento'}</div>
+            </div>
+            <button onclick="event.stopPropagation();deleteCustomExercise('${ce.id}')" style="background:none;border:none;color:var(--red);font-size:16px;cursor:pointer;padding:4px 8px;flex-shrink:0;">🗑️</button>
+          </div>
+        `).join('')}
+      </div>`;
+    })()}
+
+    <!-- Bottone CREA NUOVO ESERCIZIO PERSONALIZZATO (sessione 13) -->
+    <button class="btn-s" style="width:100%;padding:13px;background:rgba(167,139,250,.15);border:1.5px dashed var(--purp);color:var(--purp);font-weight:700;font-size:13px;border-radius:10px;cursor:pointer;margin-top:10px;" onclick="openCustomExerciseSheet('${ST.sheetData.slot}','${ST.sheetData.curId}')">➕ NON TROVI QUELLO CHE VUOI? CREA NUOVO ESERCIZIO</button>
+    <button class="btn btn-action" style="margin-top:8px;width:100%;padding:12px;" onclick="closeSheet()">ANNULLA</button>
   </div></div>`:
   // PUNTO 17: editor pasto personalizzato
   ST.sheet==='customMeal'&&ST.sheetData?(()=>{
@@ -10823,6 +11208,133 @@ window.render = function() {
   })():
   // FIX SGARRI: sheet inserimento cibo da DB (alternativa al testo libero)
   // ── SHEET CIBO PERSONALIZZATO (sessione 10) ──
+  // ── SHEET FINE ALLENAMENTO (sessione 13) ──
+  ST.sheet==='workoutDone'&&ST.sheetData?(()=>{
+    const d = ST.sheetData;
+    return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh">
+      <div class="sh-h"></div>
+      <div style="text-align:center;padding:10px 0 14px;">
+        <div style="font-size:54px;margin-bottom:6px;">🏆</div>
+        <div class="bebas" style="font-size:30px;color:var(--gre);letter-spacing:2px;">ALLENAMENTO COMPLETATO!</div>
+        <div style="font-size:13px;color:var(--mut);margin-top:2px;">${escapeHtml(d.woName||'')}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        <div style="background:linear-gradient(135deg,rgba(197,241,53,.12),rgba(197,241,53,.04));border:1.5px solid var(--acc);border-radius:12px;padding:14px;text-align:center;">
+          <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;">VOLUME</div>
+          <div class="bebas" style="font-size:30px;color:var(--acc);">${d.vol}</div>
+          <div style="font-size:11px;color:var(--mut);">kg totali</div>
+        </div>
+        <div style="background:linear-gradient(135deg,rgba(255,104,53,.12),rgba(255,104,53,.04));border:1.5px solid var(--ora);border-radius:12px;padding:14px;text-align:center;">
+          <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;">KCAL BRUCIATE</div>
+          <div class="bebas" style="font-size:30px;color:var(--ora);">~${d.kcal}</div>
+          <div style="font-size:11px;color:var(--mut);">in ${d.dur} min</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+        <div style="background:var(--surf);border:1px solid var(--bord);border-radius:10px;padding:10px;text-align:center;">
+          <div style="font-size:18px;">💪</div>
+          <div style="font-size:13px;font-weight:700;color:var(--text);">${d.exCount}</div>
+          <div style="font-size:10px;color:var(--mut);">esercizi</div>
+        </div>
+        <div style="background:${d.prCount>0?'rgba(251,191,36,.1)':'var(--surf)'};border:1px solid ${d.prCount>0?'#fbbf24':'var(--bord)'};border-radius:10px;padding:10px;text-align:center;">
+          <div style="font-size:18px;">${d.prCount>0?'🥇':'⭐'}</div>
+          <div style="font-size:13px;font-weight:700;color:${d.prCount>0?'#fbbf24':'var(--text)'};">${d.prCount}</div>
+          <div style="font-size:10px;color:var(--mut);">PR oggi</div>
+        </div>
+      </div>
+      <div style="background:var(--surf);border-radius:10px;padding:12px;font-size:12px;color:var(--text);line-height:1.5;margin-bottom:14px;text-align:center;">
+        ${d.prCount>0?`🎉 <strong>Hai battuto ${d.prCount} record personale ${d.prCount>1?'i':''}!</strong> Eccellente.`:'Bel lavoro! Ricordati di mangiare proteine entro 1-2 ore e idratarti.'}
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-action" style="flex:1;padding:14px;" onclick="closeSheet();ST.tab='body';render()">📊 VEDI ANALISI</button>
+        <button class="btn" style="flex:2;padding:14px;background:var(--gre);color:#fff;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;" onclick="closeSheet()">✓ CONTINUA</button>
+      </div>
+    </div></div>`;
+  })():
+  // ── SHEET CREA ESERCIZIO PERSONALIZZATO (sessione 13) ──
+  ST.sheet==='customExercise'&&ST.sheetData?(()=>{
+    const d = ST.sheetData;
+    const cats = [
+      {id:'chest', emo:'💪', lbl:'Petto'},
+      {id:'back', emo:'🏋️', lbl:'Schiena'},
+      {id:'legs', emo:'🦵', lbl:'Gambe'},
+      {id:'shoulders', emo:'💢', lbl:'Spalle'},
+      {id:'arms', emo:'💪', lbl:'Braccia'},
+      {id:'core', emo:'🎯', lbl:'Addome/Core'},
+      {id:'cardio', emo:'🏃', lbl:'Cardio'},
+      {id:'fullbody', emo:'⚡', lbl:'Total Body'}
+    ];
+    return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div>
+      <div class="bebas" style="font-size:24px;margin-bottom:6px;">➕ NUOVO ESERCIZIO</div>
+      <div style="font-size:12px;color:var(--mut);margin-bottom:14px;line-height:1.5;">Crea un esercizio personalizzato (es. uno specifico del tuo coach o di una macchina della tua palestra).${d.slot?' Verrà inserito nella scheda al posto di quello attuale.':''}</div>
+
+      <!-- Nome -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:6px;">NOME ESERCIZIO *</div>
+        <input type="text" maxlength="60" value="${escapeHtml(d.name||'')}" placeholder="Es: Croci ai cavi alti" oninput="ST.sheetData.name=this.value" style="width:100%;font-size:14px;padding:10px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;color:var(--text);">
+      </div>
+
+      <!-- Categoria -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:6px;">GRUPPO MUSCOLARE</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;">
+          ${cats.map(c => `<button class="btn-s" style="padding:9px 4px;font-size:10px;background:${d.cat===c.id?'var(--purp)':'var(--surf)'};color:${d.cat===c.id?'#fff':'var(--mut)'};border:1px solid ${d.cat===c.id?'var(--purp)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;display:flex;flex-direction:column;gap:2px;align-items:center;" onclick="ST.sheetData.cat='${c.id}';render()"><span style="font-size:14px;">${c.emo}</span><span>${c.lbl}</span></button>`).join('')}
+        </div>
+      </div>
+
+      <!-- Tipo -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:6px;">TIPO</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;">
+          <button class="btn-s" style="padding:9px 4px;font-size:11px;background:${d.t==='compound'?'var(--blu)':'var(--surf)'};color:${d.t==='compound'?'#fff':'var(--mut)'};border:1px solid ${d.t==='compound'?'var(--blu)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;" onclick="ST.sheetData.t='compound';render()">Multi-articolare</button>
+          <button class="btn-s" style="padding:9px 4px;font-size:11px;background:${d.t==='isolation'?'var(--ora)':'var(--surf)'};color:${d.t==='isolation'?'#fff':'var(--mut)'};border:1px solid ${d.t==='isolation'?'var(--ora)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;" onclick="ST.sheetData.t='isolation';render()">Isolamento</button>
+          <button class="btn-s" style="padding:9px 4px;font-size:11px;background:${d.t==='isometric'?'var(--purp)':'var(--surf)'};color:${d.t==='isometric'?'#fff':'var(--mut)'};border:1px solid ${d.t==='isometric'?'var(--purp)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;" onclick="ST.sheetData.t='isometric';render()">Isometrico</button>
+        </div>
+      </div>
+
+      <!-- Set/reps/rest -->
+      <div style="background:rgba(197,241,53,.05);border:1.5px solid var(--acc);border-radius:10px;padding:12px;margin-bottom:12px;">
+        <div style="font-size:11px;color:var(--acc);font-weight:700;letter-spacing:1px;margin-bottom:8px;">PARAMETRI</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+          <div>
+            <div style="font-size:10px;color:var(--mut);margin-bottom:3px;">Serie</div>
+            <input type="number" min="1" max="10" step="1" value="${d.sets||3}" oninput="ST.sheetData.sets=parseInt(this.value)||3" style="width:100%;font-size:14px;padding:8px;text-align:center;font-weight:700;">
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--mut);margin-bottom:3px;">Ripetizioni</div>
+            <input type="text" maxlength="20" value="${escapeHtml(d.reps||'8-10')}" placeholder="8-10 o 30s" oninput="ST.sheetData.reps=this.value" style="width:100%;font-size:14px;padding:8px;text-align:center;font-weight:700;">
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--mut);margin-bottom:3px;">Riposo (s)</div>
+            <input type="number" min="0" max="300" step="15" value="${d.rest||60}" oninput="ST.sheetData.rest=parseInt(this.value)||60" style="width:100%;font-size:14px;padding:8px;text-align:center;font-weight:700;">
+          </div>
+        </div>
+      </div>
+
+      <!-- Muscolo target (testo libero) -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:6px;">MUSCOLO/I LAVORATI (descrizione)</div>
+        <input type="text" maxlength="80" value="${escapeHtml(d.mus||'')}" placeholder="Es: Pettorali alti + tricipiti" oninput="ST.sheetData.mus=this.value" style="width:100%;font-size:13px;padding:10px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;color:var(--text);">
+      </div>
+
+      <!-- Steps esecuzione (max 3) -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:6px;">ESECUZIONE (opzionale, max 3 passi)</div>
+        ${[0,1,2].map(i => `<input type="text" maxlength="120" value="${escapeHtml(d['steps'+i]||'')}" placeholder="${i===0?'1) Posizione iniziale...':i===1?'2) Esecuzione...':'3) Ritorno...'}" oninput="ST.sheetData.steps${i}=this.value" style="width:100%;font-size:12px;padding:8px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;color:var(--text);margin-bottom:5px;">`).join('')}
+      </div>
+
+      <!-- Tip principale -->
+      <div style="margin-bottom:14px;">
+        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:6px;">CONSIGLIO TECNICO (opzionale)</div>
+        <input type="text" maxlength="150" value="${escapeHtml(d.cues0||'')}" placeholder="Es: Mantieni i gomiti alti, non inarcare la schiena" oninput="ST.sheetData.cues0=this.value" style="width:100%;font-size:12px;padding:10px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;color:var(--text);">
+      </div>
+
+      <div style="display:flex;gap:6px;">
+        ${d.slot ? `<button class="btn btn-action" style="flex:1;padding:12px;" onclick="ST.sheet='swap';render()">← INDIETRO</button>` : `<button class="btn btn-action" style="flex:1;padding:12px;" onclick="closeSheet()">ANNULLA</button>`}
+        <button class="btn" style="flex:2;padding:12px;background:var(--purp);color:#fff;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;" onclick="confirmCustomExercise()">✓ ${d.slot?'CREA E APPLICA':'CREA'}</button>
+      </div>
+    </div></div>`;
+  })():
   ST.sheet==='customFood'&&ST.sheetData?(()=>{
     const d = ST.sheetData;
     const cats = window.FOOD_CATS || [];
