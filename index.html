@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION14-UX-FOUNDATION">
+<meta name="ft-version" content="build-SESSION15-PASSIVE-FEATURES">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -30,6 +30,36 @@
   --acc: #c5f135; --acc-glow: rgba(197, 241, 53, 0.2); --ora: #ff6835;
   --blu: #60a5fa; --red: #ff4757; --purp: #a78bfa; --gre: #4ade80;
   --yel: #fbbf24; --text: #f4f4f5; --mut: #a1a1aa; --dim: #27272a;
+}
+
+/* ── MODALITÀ CHIARA (sessione 15) ── */
+/* Si attiva con [data-theme="light"] sul body. Mantiene gli accent colors. */
+body[data-theme="light"] {
+  --bg: #f5f5f7; --surf: #ffffff; --card: #ffffff; --bord: #d4d4d8;
+  --acc: #84cc16; --acc-glow: rgba(132, 204, 22, 0.18); --ora: #ea580c;
+  --blu: #2563eb; --red: #dc2626; --purp: #7c3aed; --gre: #16a34a;
+  --yel: #ca8a04; --text: #18181b; --mut: #71717a; --dim: #e4e4e7;
+}
+body[data-theme="light"] .card { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+body[data-theme="light"] .topbar { background: rgba(245,245,247,0.95) !important; }
+body[data-theme="light"] .drawer { background: var(--card); }
+body[data-theme="light"] input, body[data-theme="light"] select, body[data-theme="light"] textarea {
+  background: var(--surf) !important; color: var(--text) !important; border-color: var(--bord) !important;
+}
+
+/* Sistema: usa preferenza OS quando data-theme="auto" */
+@media (prefers-color-scheme: light) {
+  body[data-theme="auto"] {
+    --bg: #f5f5f7; --surf: #ffffff; --card: #ffffff; --bord: #d4d4d8;
+    --acc: #84cc16; --acc-glow: rgba(132, 204, 22, 0.18); --ora: #ea580c;
+    --blu: #2563eb; --red: #dc2626; --purp: #7c3aed; --gre: #16a34a;
+    --yel: #ca8a04; --text: #18181b; --mut: #71717a; --dim: #e4e4e7;
+  }
+  body[data-theme="auto"] .card { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  body[data-theme="auto"] .topbar { background: rgba(245,245,247,0.95) !important; }
+  body[data-theme="auto"] input, body[data-theme="auto"] select, body[data-theme="auto"] textarea {
+    background: var(--surf) !important; color: var(--text) !important; border-color: var(--bord) !important;
+  }
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
 html, body { height: 100%; overscroll-behavior: none; }
@@ -77,7 +107,7 @@ input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 8px; cur
 ::placeholder { color: var(--mut); }
 select option { background: var(--card); }
 .bnav { display: none; }
-.content { padding-top: 60px; padding-bottom: 90px; }
+.content { padding-top: 60px; padding-bottom: 24px; }
 .topbar { position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; background: rgba(9,9,11,0.95); backdrop-filter: blur(16px); border-bottom: 1px solid var(--bord); z-index: 900; display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; height: 52px; }
 .hamb { background: var(--surf); border: 1.5px solid var(--bord); border-radius: 10px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; -webkit-tap-highlight-color: transparent; }
 .hamb-bars { display: flex; flex-direction: column; gap: 4px; }
@@ -104,18 +134,15 @@ select option { background: var(--card); }
 .drawer-footer .uname { font-size: 12px; color: var(--mut); margin-bottom: 8px; }
 .drawer-footer .uname strong { color: var(--text); }
 
-/* ── BOTTOM NAVIGATION (sessione 14): tab bar fissa per accesso rapido ── */
-.bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; background: rgba(9,9,11,0.95); backdrop-filter: blur(16px); border-top: 1px solid var(--bord); z-index: 900; display: flex; align-items: stretch; padding: 6px 0 max(6px, env(safe-area-inset-bottom, 0px)); height: auto; }
-.bn-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 8px 4px; background: transparent; border: none; cursor: pointer; color: var(--mut); transition: color 0.2s, transform 0.1s; -webkit-tap-highlight-color: transparent; }
-.bn-item:active { transform: scale(0.92); }
-.bn-item.on { color: var(--acc); }
-.bn-item .bn-ic { font-size: 20px; line-height: 1; filter: grayscale(0.5); transition: filter 0.2s; }
-.bn-item.on .bn-ic { filter: none; }
-.bn-item .bn-lbl { font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
-/* Lascio spazio extra in fondo a tutti i contenitori scrollabili per non nascondere contenuto sotto bottom-nav */
-.app-content, .scroll-container { padding-bottom: 80px; }
-
 .bw { background: var(--bg); border-radius: 99px; overflow: hidden; border: 1px solid var(--bord); }
+
+/* ── SKELETON LOADING (sessione 15) ── */
+.skel-card { background: var(--card); border: 1px solid var(--bord); border-radius: 14px; padding: 16px; margin-bottom: 10px; }
+.skel-bar { background: linear-gradient(90deg, var(--surf) 0%, var(--bord) 50%, var(--surf) 100%); background-size: 200% 100%; border-radius: 6px; animation: skelShimmer 1.4s ease-in-out infinite; }
+@keyframes skelShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+@keyframes undoSlideUp { from { opacity: 0; transform: translate(-50%, 100%); } to { opacity: 1; transform: translate(-50%, 0); } }
+@keyframes undoSlideDown { from { opacity: 1; transform: translate(-50%, 0); } to { opacity: 0; transform: translate(-50%, 100%); } }
+@keyframes undoBar { from { transform: scaleX(1); } to { transform: scaleX(0); } }
 .bf { border-radius: 99px; transition: width 0.8s cubic-bezier(0.4,0,0.2,1); }
 .wo { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 2000; overflow-y: auto; display: flex; flex-direction: column; }
 .wo-head { position: sticky; top: 0; background: rgba(9,9,11,0.9); backdrop-filter: blur(16px); border-bottom: 1px solid var(--bord); padding: 16px 20px; z-index: 10; display: flex; justify-content: space-between; align-items: center; }
@@ -4463,6 +4490,8 @@ window.defST=function(){
     // ── Campi sessione 13 ──
     workoutSecOpen:{steps:false, tips:false, muscle:false, mistakes:false, breath:false}, // sezioni espandibili runtime workout
     customExercises:{},          // esercizi personalizzati creati dall'utente {id: {name,cat,sets,reps,...}}
+    // ── Campi sessione 15 ──
+    theme:'dark',                // 'dark' | 'light' | 'auto' (segue OS)
   };
 }
 window.ST=defST();
@@ -5721,6 +5750,101 @@ window.toggleWorkoutSec = function(key) {
   render();
 };
 
+// ── TEMA: chiaro/scuro/sistema (sessione 15) ──
+window.applyTheme = function(themeName) {
+  const t = themeName || ST?.theme || 'dark';
+  document.body.setAttribute('data-theme', t);
+};
+
+window.setTheme = async function(themeName) {
+  if (!['dark','light','auto'].includes(themeName)) return;
+  if (!ST) return;
+  ST.theme = themeName;
+  applyTheme(themeName);
+  await save();
+};
+
+// ── SKELETON LOADING (sessione 15) ──
+// Helper per mostrare placeholder grigi animati invece di spinner generici.
+window.skeleton = function(type = 'card') {
+  // type: 'card', 'list', 'text', 'stat'
+  const shimmer = `<div class="skel-shimmer"></div>`;
+  if (type === 'card') {
+    return `<div class="skel-card">
+      <div class="skel-bar" style="width:60%;height:14px;margin-bottom:8px;"></div>
+      <div class="skel-bar" style="width:90%;height:10px;margin-bottom:6px;"></div>
+      <div class="skel-bar" style="width:75%;height:10px;"></div>
+    </div>`;
+  }
+  if (type === 'stat') {
+    return `<div class="skel-card" style="padding:12px;">
+      <div class="skel-bar" style="width:40%;height:9px;margin-bottom:6px;"></div>
+      <div class="skel-bar" style="width:55%;height:22px;margin-bottom:4px;"></div>
+      <div class="skel-bar" style="width:30%;height:8px;"></div>
+    </div>`;
+  }
+  if (type === 'list') {
+    return `<div class="skel-list">
+      ${[0,1,2].map(()=>`<div class="skel-card" style="margin-bottom:8px;padding:12px;display:flex;gap:10px;align-items:center;">
+        <div class="skel-bar" style="width:40px;height:40px;border-radius:8px;flex-shrink:0;"></div>
+        <div style="flex:1;">
+          <div class="skel-bar" style="width:70%;height:13px;margin-bottom:6px;"></div>
+          <div class="skel-bar" style="width:45%;height:10px;"></div>
+        </div>
+      </div>`).join('')}
+    </div>`;
+  }
+  // text
+  return `<div class="skel-bar" style="width:100%;height:12px;margin-bottom:6px;"></div>`;
+};
+
+// ── SISTEMA UNDO PER AZIONI DISTRUTTIVE (sessione 15) ──
+// Mostra un toast con bottone "ANNULLA" per X secondi. Se l'utente lo tocca,
+// esegue la callback di undo. Altrimenti scompare e l'azione è confermata.
+window.__undoTimers = {};
+window.showUndoToast = function(message, undoCallback, durationMs = 5000) {
+  // Rimuovi eventuali toast esistenti
+  document.querySelectorAll('.undo-toast').forEach(t => t.remove());
+
+  const id = 'undo_' + Date.now();
+  const toast = document.createElement('div');
+  toast.className = 'undo-toast';
+  toast.id = id;
+  toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:99998;background:var(--card);border:1.5px solid var(--ora);border-radius:12px;padding:12px 14px;box-shadow:0 8px 24px rgba(0,0,0,.5);display:flex;align-items:center;gap:12px;max-width:90%;width:380px;animation:undoSlideUp .25s ease-out;';
+  toast.innerHTML = `
+    <div style="font-size:18px;flex-shrink:0;">↩️</div>
+    <div style="flex:1;font-size:13px;color:var(--text);min-width:0;">${message}</div>
+    <button onclick="window.executeUndo('${id}')" style="background:var(--ora);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:800;cursor:pointer;letter-spacing:.5px;flex-shrink:0;">ANNULLA</button>
+  `;
+  // Barra progresso temporale
+  const bar = document.createElement('div');
+  bar.style.cssText = `position:absolute;bottom:0;left:0;height:3px;background:var(--ora);border-radius:0 0 12px 12px;width:100%;transform-origin:left;animation:undoBar ${durationMs}ms linear;`;
+  toast.appendChild(bar);
+  document.body.appendChild(toast);
+
+  window.__undoTimers[id] = {
+    callback: undoCallback,
+    timer: setTimeout(() => {
+      toast.style.animation = 'undoSlideDown .2s ease-in';
+      setTimeout(() => toast.remove(), 200);
+      delete window.__undoTimers[id];
+    }, durationMs)
+  };
+};
+
+window.executeUndo = function(id) {
+  const item = window.__undoTimers[id];
+  if (!item) return;
+  clearTimeout(item.timer);
+  try { item.callback(); } catch(e) { console.warn('Undo callback error', e); }
+  delete window.__undoTimers[id];
+  const toast = document.getElementById(id);
+  if (toast) {
+    toast.style.animation = 'undoSlideDown .2s ease-in';
+    setTimeout(() => toast.remove(), 200);
+  }
+};
+
 window.toggleNotifPref = async function(key, enabled) {
   if (!ST.notifPrefs) ST.notifPrefs = {};
   ST.notifPrefs[key] = enabled;
@@ -6298,8 +6422,20 @@ window.addToCheatCart=function(){
 
 window.removeFromCheatCart=function(idx){
   if(!ST.sheetData?.cart) return;
+  // Salva backup per undo
+  const removed = ST.sheetData.cart[idx];
+  const removedIdx = idx;
   ST.sheetData.cart.splice(idx, 1);
   render();
+  // Toast undo (sessione 15)
+  if (removed && window.showUndoToast) {
+    window.showUndoToast(`Rimosso "${removed.label.slice(0,30)}${removed.label.length>30?'…':''}"`, () => {
+      if (ST.sheetData?.cart) {
+        ST.sheetData.cart.splice(removedIdx, 0, removed);
+        render();
+      }
+    });
+  }
 };
 
 // Conferma TUTTI gli item del carrello come UN UNICO sgarro composito
@@ -8098,8 +8234,8 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
 
     return `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
-      <!-- Card peso -->
-      <div onclick="ST.tab='measures';render()" style="background:linear-gradient(135deg,rgba(96,165,250,.08),rgba(96,165,250,.02));border:1px solid var(--blu);border-radius:14px;padding:12px;cursor:pointer;transition:.15s;">
+      <!-- Card peso (sessione 14: non cliccabile per evitare jump indesiderato) -->
+      <div onclick="ST.tab='body';render()" style="background:linear-gradient(135deg,rgba(96,165,250,.08),rgba(96,165,250,.02));border:1px solid var(--blu);border-radius:14px;padding:12px;cursor:pointer;transition:.15s;">
         <div style="font-size:9px;color:var(--blu);font-weight:800;letter-spacing:1.2px;">⚖️ PESO</div>
         <div class="bebas" style="font-size:24px;color:var(--text);line-height:1.1;margin-top:2px;">${cW.toFixed(1)}<span style="font-size:11px;color:var(--mut);"> kg</span></div>
         <div style="font-size:10px;color:${wTrendCol};margin-top:2px;font-weight:700;">${wTrendIcon} ${wTrend === 0 ? 'stabile' : (wTrend > 0 ? '+' : '') + wTrend.toFixed(1) + 'kg'}</div>
@@ -8123,6 +8259,41 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
         <div style="height:3px;background:var(--bg);border-radius:3px;margin-top:4px;overflow:hidden;"><div style="height:100%;width:${woProgressPct}%;background:var(--ora);border-radius:3px;"></div></div>
       </div>
     </div>`;
+  })()}
+
+  ${(()=>{
+    // ── SLEEP-AWARE TRAINING ALERT (sessione 15) ──
+    // Suggerisce workout ridotto se sonno <5h, motivazione se >7.5h.
+    // Valuta sonno di IERI (perché il workout di oggi dipende dal sonno notturno).
+    const yesterdayKey = (()=>{
+      const d = new Date(t2); d.setDate(d.getDate()-1);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    })();
+    const yesterdaySleep = ST.life[yesterdayKey]?.sleep;
+    const isWorkoutDay = todayWoId && todayWoId !== 'rest' && todayWoId !== 'cardio';
+    if (!yesterdaySleep || !isWorkoutDay || todayLog) return '';
+    if (yesterdaySleep < 5) {
+      return `
+      <div style="background:linear-gradient(135deg,rgba(239,68,68,.12),rgba(239,68,68,.04));border:2px solid var(--red);border-radius:14px;padding:12px 14px;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="font-size:22px;">😴</div>
+          <div style="flex:1;">
+            <div style="font-size:11px;color:var(--red);font-weight:800;letter-spacing:1px;">SONNO INSUFFICIENTE</div>
+            <div style="font-size:12px;color:var(--text);margin-top:2px;line-height:1.4;">Hai dormito solo ${yesterdaySleep}h. Riduci pesi del 20-30% oggi o opta per riposo attivo.</div>
+          </div>
+        </div>
+      </div>`;
+    }
+    if (yesterdaySleep >= 7.5) {
+      return `
+      <div style="background:linear-gradient(135deg,rgba(34,197,94,.10),rgba(34,197,94,.03));border:1.5px solid var(--gre);border-radius:14px;padding:10px 14px;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="font-size:20px;">💪</div>
+          <div style="flex:1;font-size:12px;color:var(--text);">Hai dormito ${yesterdaySleep}h: <strong style="color:var(--gre);">condizioni ottimali</strong> per spingere.</div>
+        </div>
+      </div>`;
+    }
+    return '';
   })()}
 
   <!-- DOPPIO PILASTRO: PASTO + ALLENAMENTO -->
@@ -10121,9 +10292,20 @@ window.toggleShoppingExtra = async function(idx, checked) {
 
 window.removeShoppingExtra = async function(idx) {
   if (!ST.shoppingState?.extras) return;
-  if (!confirm('Rimuovere questo articolo personale?')) return;
+  // Sessione 15: niente più confirm() — abbiamo l'undo toast
+  const removed = ST.shoppingState.extras[idx];
+  const removedIdx = idx;
   ST.shoppingState.extras.splice(idx, 1);
   await save();
+  if (removed && window.showUndoToast) {
+    window.showUndoToast(`Rimosso "${(removed.label||'').slice(0,30)}"`, async () => {
+      if (ST.shoppingState?.extras) {
+        ST.shoppingState.extras.splice(removedIdx, 0, removed);
+        await save();
+        render();
+      }
+    });
+  }
 };
 
 window.shareShoppingList = function() {
@@ -10613,6 +10795,25 @@ window.renderSettings = function(mac){
 
   ${sectionTitle('sec-account', '⚙️', 'ACCOUNT & AVANZATE', 'var(--mut)')}
 
+  <!-- ── TEMA APP (sessione 15) ── -->
+  <div class="card" style="border-color:var(--blu);">
+    <div class="bebas" style="font-size:18px;color:var(--blu);margin-bottom:6px;">🎨 ASPETTO</div>
+    <div style="font-size:11px;color:var(--mut);margin-bottom:10px;">Scegli il tema dell'app.</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
+      ${[
+        {id:'dark', emo:'🌙', lbl:'Scuro'},
+        {id:'light', emo:'☀️', lbl:'Chiaro'},
+        {id:'auto', emo:'🌓', lbl:'Sistema'}
+      ].map(t => {
+        const active = (ST.theme||'dark') === t.id;
+        return `<button class="btn-s" style="padding:14px 4px;background:${active?'var(--blu)':'var(--surf)'};color:${active?'#fff':'var(--text)'};border:1.5px solid ${active?'var(--blu)':'var(--bord)'};font-weight:700;border-radius:10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;" onclick="setTheme('${t.id}')">
+          <span style="font-size:20px;">${t.emo}</span>
+          <span style="font-size:11px;">${t.lbl}</span>
+        </button>`;
+      }).join('')}
+    </div>
+  </div>
+
   <!-- ── INTEGRAZIONI BILANCE / APPS SALUTE (sessione 6) ── -->
   <div class="card" style="border-color:var(--blu);">
     <div class="bebas" style="font-size:18px;color:var(--blu);margin-bottom:6px;">🔌 INTEGRAZIONI</div>
@@ -10716,6 +10917,22 @@ window.renderSettings = function(mac){
 window.render = function() {
   const root=document.getElementById('app');
   if(!AU.user){renderAuth(root);return;}
+
+  // ── PRESERVA SCROLL POSITION (sessione 15) ──
+  // Quando render() viene chiamato dopo cambi di stato (toggle, save, espandi),
+  // il browser perde la posizione di scroll perché root.innerHTML distrugge il DOM.
+  // Salvo prima del render, ripristino dopo.
+  // NON preserva tra cambi di TAB (lì voglio scroll a 0) e quando si apre/chiude SHEET.
+  const _prevTab = window.__lastRenderedTab;
+  const _prevSheet = window.__lastRenderedSheet;
+  const _curTab = ST.tab;
+  const _curSheet = ST.sheet || null;
+  const _isTabChange = _prevTab && _prevTab !== _curTab;
+  const _isSheetChange = _prevSheet !== _curSheet;
+  const _shouldPreserveScroll = !_isTabChange && !_isSheetChange;
+  const _savedScrollY = _shouldPreserveScroll ? (window.scrollY || window.pageYOffset || 0) : 0;
+  window.__lastRenderedTab = _curTab;
+  window.__lastRenderedSheet = _curSheet;
 
   // Auto-ricalcolo coaching settimanale: se sono passati >= 7 giorni dall'ultimo
   // consiglio, rigenera automaticamente in background al primo render utile.
@@ -11862,19 +12079,18 @@ window.render = function() {
   else if(ST.tab==='share') H+=renderShare();
   else if(ST.tab==='set') H+=renderSettings(mac);
   H+=`</div></div>`;
-  // ── BOTTOM NAVIGATION (sessione 14): 4 azioni frequenti sempre raggiungibili ──
-  const bottomNav = `<nav class="bottom-nav" aria-label="Navigazione rapida">
-    ${[
-      {id:'home', ic:'🏠', lbl:'Home'},
-      {id:'work', ic:'🏋️', lbl:'Workout'},
-      {id:'diet', ic:'🥗', lbl:'Dieta'},
-      {id:'body', ic:'📊', lbl:'Stats'}
-    ].map(n => `<button class="bn-item ${ST.tab===n.id?'on':''}" onclick="gotoTab('${n.id}')" aria-label="${n.lbl}">
-      <span class="bn-ic">${n.ic}</span>
-      <span class="bn-lbl">${n.lbl}</span>
-    </button>`).join('')}
-  </nav>`;
-  root.innerHTML=H+bottomNav+sheetH+moreSheetH+shortPickH+renderTour()+renderDisclaimer();
+  root.innerHTML=H+sheetH+moreSheetH+shortPickH+renderTour()+renderDisclaimer();
+  // Applica tema salvato (sessione 15)
+  try { if (typeof applyTheme === 'function') applyTheme(ST?.theme || 'dark'); } catch(_) {}
+  // ── RIPRISTINA SCROLL (sessione 15) ──
+  // Dopo aver riassegnato innerHTML, il browser ha resettato lo scroll a 0.
+  // Lo ripristino in posizione (solo se siamo nello stesso tab e nessuna sheet è cambiata).
+  if (_shouldPreserveScroll && _savedScrollY > 0) {
+    // Uso requestAnimationFrame per garantire che il DOM sia layoutato prima dello scroll
+    requestAnimationFrame(() => {
+      try { window.scrollTo(0, _savedScrollY); } catch(_) {}
+    });
+  }
   if(ST.tab==='coach') setTimeout(()=>{const c=el('chatArea');if(c)c.scrollTop=c.scrollHeight;},50);
   // PUNTO 11: inizializza visibilità campi in Configurazione
   if(ST.tab==='set') setTimeout(()=>{if(window.toggleSessVisibilitySettings) toggleSessVisibilitySettings();},0);
