@@ -7,14 +7,14 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION17-PROFILE-CLEANUP">
+<meta name="ft-version" content="build-SESSION18-VIDEO-PDF-NUTRITION">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="FitTracker">
-<meta name="theme-color" content="#0d0d0f">
+<meta name="theme-color" id="metaThemeColor" content="#0d0d0f">
 <meta name="mobile-web-app-capable" content="yes">
 
 <!-- ── PWA MANIFEST (sessione 8: file separato per evitare parsing issues data URL) ── -->
@@ -32,8 +32,7 @@
   --yel: #fbbf24; --text: #f4f4f5; --mut: #a1a1aa; --dim: #27272a;
 }
 
-/* ── MODALITÀ CHIARA (sessione 15) ── */
-/* Si attiva con [data-theme="light"] sul body. Mantiene gli accent colors. */
+/* ── MODALITÀ CHIARA (sessione 15, esteso 18) ── */
 body[data-theme="light"] {
   --bg: #f5f5f7; --surf: #ffffff; --card: #ffffff; --bord: #d4d4d8;
   --acc: #84cc16; --acc-glow: rgba(132, 204, 22, 0.18); --ora: #ea580c;
@@ -46,6 +45,21 @@ body[data-theme="light"] .drawer { background: var(--card); }
 body[data-theme="light"] input, body[data-theme="light"] select, body[data-theme="light"] textarea {
   background: var(--surf) !important; color: var(--text) !important; border-color: var(--bord) !important;
 }
+/* Override aggressivi tema light: gradient hardcoded scuri → chiari */
+body[data-theme="light"] [style*="#0c1a00"],
+body[data-theme="light"] [style*="#0a1000"],
+body[data-theme="light"] [style*="#1e2d00"] {
+  background: linear-gradient(135deg, #f0f9e8, #e6f5d4) !important;
+  border-color: var(--bord) !important;
+  color: var(--text) !important;
+}
+body[data-theme="light"] [style*="#0d0d0f"] { background: var(--card) !important; }
+/* SVG fill scuri (omino anatomico) → grigi chiari */
+body[data-theme="light"] svg [fill="#27272a"],
+body[data-theme="light"] svg [fill="#3f3f46"],
+body[data-theme="light"] svg [fill="#52525b"] { fill: #d4d4d8 !important; }
+body[data-theme="light"] svg [stroke="#27272a"],
+body[data-theme="light"] svg [stroke="#3f3f46"] { stroke: #71717a !important; }
 
 /* Sistema: usa preferenza OS quando data-theme="auto" */
 @media (prefers-color-scheme: light) {
@@ -60,6 +74,16 @@ body[data-theme="light"] input, body[data-theme="light"] select, body[data-theme
   body[data-theme="auto"] input, body[data-theme="auto"] select, body[data-theme="auto"] textarea {
     background: var(--surf) !important; color: var(--text) !important; border-color: var(--bord) !important;
   }
+  body[data-theme="auto"] [style*="#0c1a00"],
+  body[data-theme="auto"] [style*="#0a1000"],
+  body[data-theme="auto"] [style*="#1e2d00"] {
+    background: linear-gradient(135deg, #f0f9e8, #e6f5d4) !important;
+    border-color: var(--bord) !important;
+    color: var(--text) !important;
+  }
+  body[data-theme="auto"] svg [fill="#27272a"],
+  body[data-theme="auto"] svg [fill="#3f3f46"],
+  body[data-theme="auto"] svg [fill="#52525b"] { fill: #d4d4d8 !important; }
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
 html, body { height: 100%; overscroll-behavior: none; }
@@ -3286,6 +3310,205 @@ window.setWorkoutMode=function(mode){
   save();
 };
 
+// ── EXPORT PDF SCHEDA (sessione 18) ──
+// Carica jsPDF da CDN al volo (solo quando l'utente chiede l'export).
+// Funziona sia per schede AI ('A','B','C') sia per schede custom (id custom_xxx).
+window.__jsPDFLoading = false;
+window.__loadJsPDF = function() {
+  return new Promise((resolve, reject) => {
+    if (window.jspdf?.jsPDF) return resolve(window.jspdf.jsPDF);
+    if (window.__jsPDFLoading) {
+      // Già in caricamento: aspetta e ritenta
+      const t = setInterval(() => {
+        if (window.jspdf?.jsPDF) { clearInterval(t); resolve(window.jspdf.jsPDF); }
+      }, 100);
+      setTimeout(() => { clearInterval(t); reject(new Error('Timeout caricamento PDF library')); }, 8000);
+      return;
+    }
+    window.__jsPDFLoading = true;
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload = () => {
+      window.__jsPDFLoading = false;
+      if (window.jspdf?.jsPDF) resolve(window.jspdf.jsPDF);
+      else reject(new Error('jsPDF non disponibile dopo il caricamento'));
+    };
+    s.onerror = () => {
+      window.__jsPDFLoading = false;
+      reject(new Error('Impossibile caricare jsPDF (controlla connessione)'));
+    };
+    document.head.appendChild(s);
+  });
+};
+
+window.exportWorkoutPDF = async function(workoutId) {
+  if (!workoutId) return;
+  try {
+    // 1) Recupero dati scheda
+    let wo;
+    let schemaTitle, schemaSubtitle;
+    const customW = (ST.p?.customWorkouts || []).find(w => w.id === workoutId);
+    if (customW) {
+      wo = { name: customW.name, emoji: customW.emoji || '🛠️', exercises: customW.exercises || [] };
+      schemaTitle = `${wo.emoji} ${wo.name}`.trim();
+      schemaSubtitle = `Scheda personalizzata · ${wo.exercises.length} esercizi`;
+    } else {
+      // Scheda AI: usa buildWorkout
+      const built = window.buildWorkout(workoutId, ST.p, 1, ST.exPrefs || {}, AU.profile?.sx || 'm');
+      if (!built) {
+        alert('Scheda non trovata. Configura prima il programma in Configurazione.');
+        return;
+      }
+      wo = { name: built.name || `Scheda ${workoutId}`, emoji: built.emoji || '💪', exercises: built.exercises || [] };
+      schemaTitle = `${wo.emoji} ${wo.name}`;
+      schemaSubtitle = `Scheda automatica AI · ${wo.exercises.length} esercizi`;
+    }
+
+    // 2) Carica jsPDF
+    if (typeof alert === 'function' && typeof navigator !== 'undefined' && !navigator.onLine) {
+      // Serve CDN. Se offline avviso.
+      alert('Per scaricare il PDF serve essere online (la libreria si carica al volo).');
+      return;
+    }
+    const jsPDF = await window.__loadJsPDF();
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+    // 3) Header
+    const W = 210, M = 18;
+    let y = 22;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(20);
+    doc.setTextColor(40, 40, 40);
+    doc.text('FitTracker PRO', M, y);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(120, 120, 120);
+    doc.text(`Generato il ${new Date().toLocaleDateString('it-IT', {day:'2-digit', month:'long', year:'numeric'})}`, W - M, y, { align: 'right' });
+    y += 6;
+    doc.setDrawColor(132, 204, 22);
+    doc.setLineWidth(1.2);
+    doc.line(M, y, W - M, y);
+    y += 10;
+
+    // 4) Titolo scheda
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(22);
+    doc.setTextColor(20, 20, 20);
+    doc.text(schemaTitle, M, y);
+    y += 7;
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(110, 110, 110);
+    doc.text(schemaSubtitle, M, y);
+    y += 4;
+
+    // Profilo utente sintetico
+    if (AU.user) {
+      y += 5;
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      const profileLine = `Atleta: ${AU.user}` + (ST.p?.t ? ` · Obiettivo: ${ST.p.t === 'cut' ? 'Definizione' : ST.p.t === 'bulk' ? 'Massa' : 'Mantenimento'}` : '');
+      doc.text(profileLine, M, y);
+      y += 3;
+    }
+
+    y += 6;
+
+    // 5) Esercizi
+    wo.exercises.forEach((ex, idx) => {
+      // Salto warmup/cooldown nel PDF (la scheda è gli esercizi principali)
+      if (ex.isWarmup || ex.isCooldown) return;
+
+      // Pagina nuova se non c'è spazio (serve almeno 50mm per esercizio)
+      if (y > 250) {
+        doc.addPage();
+        y = 22;
+      }
+
+      // Numero + nome esercizio
+      doc.setFillColor(132, 204, 22);
+      doc.rect(M, y - 4, 8, 8, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(255, 255, 255);
+      doc.text(String(idx + 1), M + 4, y + 1.5, { align: 'center' });
+
+      doc.setFontSize(13);
+      doc.setTextColor(30, 30, 30);
+      const exName = (ex.name || ex.id || 'Esercizio').replace(/[^\x00-\x7Fàèéìòù]/g, '').trim() || (ex.name || 'Esercizio');
+      // Tolgo emoji per evitare problemi font
+      const cleanName = (ex.name || 'Esercizio').replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{27BF}]/gu, '').trim();
+      doc.text(cleanName, M + 12, y + 1);
+      y += 6;
+
+      // Linea sottile
+      doc.setDrawColor(220, 220, 220);
+      doc.setLineWidth(0.2);
+      doc.line(M + 12, y, W - M, y);
+      y += 5;
+
+      // Sets / Reps / Riposo
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(80, 80, 80);
+      const sets = ex.sets || 3;
+      const reps = ex.reps || '8-12';
+      const rest = ex.rest != null ? `${ex.rest}s` : '60s';
+      const muscolo = (ex.mus || '').replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{27BF}]/gu, '').trim();
+      doc.text(`${sets} serie × ${reps} reps`, M + 12, y);
+      doc.text(`Riposo: ${rest}`, M + 80, y);
+      if (muscolo) doc.text(`Muscolo: ${muscolo}`, M + 130, y);
+      y += 5;
+
+      // Esecuzione (max 3 step per spazio)
+      if (ex.steps && ex.steps.length) {
+        doc.setFontSize(9);
+        doc.setTextColor(100, 100, 100);
+        const stepsToShow = ex.steps.slice(0, 3);
+        stepsToShow.forEach((s, i) => {
+          const cleanStep = (s || '').replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{27BF}]/gu, '').trim();
+          const wrapped = doc.splitTextToSize(`${i + 1}. ${cleanStep}`, W - M - M - 14);
+          doc.text(wrapped, M + 14, y);
+          y += wrapped.length * 3.8;
+        });
+      }
+
+      // Spazio per scrivere peso effettivo (utile in palestra)
+      y += 2;
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      doc.text('Peso fatto:', M + 14, y);
+      doc.setDrawColor(180, 180, 180);
+      for (let i = 0; i < sets; i++) {
+        const x = M + 35 + i * 24;
+        if (x < W - M - 5) {
+          doc.line(x, y + 0.5, x + 18, y + 0.5);
+          doc.setFontSize(7);
+          doc.text(`s${i + 1}`, x, y - 1.5);
+        }
+      }
+
+      y += 8;
+    });
+
+    // 6) Footer su ultima pagina
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(160, 160, 160);
+      doc.text(`Pag. ${i}/${totalPages} · FitTracker PRO`, W / 2, 290, { align: 'center' });
+    }
+
+    // 7) Salva
+    const fileName = `${wo.name.replace(/[^\w\sàèéìòù]/gi, '').trim() || 'scheda'}.pdf`;
+    doc.save(fileName);
+  } catch (err) {
+    console.error('exportWorkoutPDF fail:', err);
+    alert('Errore durante l\'esportazione PDF: ' + (err.message || 'sconosciuto'));
+  }
+};
+
 window.estimateWorkoutVolume=function(cw){
   let totalSets=0,totalReps=0;
   (cw.exercises||[]).forEach(e=>{
@@ -4772,6 +4995,7 @@ window.loadLeaderboard = async function() {
 window.enableLeaderboardConsent = async function() {
   ST.shareLeaderboardConsent = true;
   await save();
+  render(); // FIX SESSIONE 18: render istantaneo per riflettere lo stato attivato
   // Carico la classifica subito dopo aver dato consenso
   if (typeof loadLeaderboard === 'function') {
     setTimeout(() => loadLeaderboard(), 300);
@@ -5921,14 +6145,29 @@ window.toggleWorkoutSec = function(key) {
 window.applyTheme = function(themeName) {
   const t = themeName || ST?.theme || 'dark';
   document.body.setAttribute('data-theme', t);
+  // FIX SESSIONE 18: aggiorno meta theme-color per la barra di stato OS/browser
+  try {
+    const meta = document.getElementById('metaThemeColor');
+    if (meta) {
+      let color = '#0d0d0f';
+      if (t === 'light') color = '#f5f5f7';
+      else if (t === 'auto' && window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+        color = '#f5f5f7';
+      }
+      meta.setAttribute('content', color);
+    }
+  } catch(_) {}
 };
 
 window.setTheme = async function(themeName) {
   if (!['dark','light','auto'].includes(themeName)) return;
   if (!ST) return;
   ST.theme = themeName;
+  // FIX SESSIONE 18: applico tema + render PRIMA del save per feedback istantaneo
   applyTheme(themeName);
-  await save();
+  render();
+  // Save in background, non blocca UI
+  save().catch(_ => {});
 };
 
 // ── SKELETON LOADING (sessione 15) ──
@@ -8198,7 +8437,10 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
             <div style="font-size:12px;color:var(--mut);margin-top:3px;">${woInfo.exCount} esercizi · ~${ST.p.dur||60} min${woInfo.isCustom?' · tua scheda':''}</div>
           </div>
         </div>
-        <button class="btn" style="width:100%;padding:16px;background:${woInfo.col};color:#000;font-family:'Bebas Neue';font-size:20px;letter-spacing:2px;border:none;border-radius:12px;" onclick="startWo('${woInfo.id}')">▶ INIZIA ALLENAMENTO</button>
+        <div style="display:flex;gap:8px;">
+          <button class="btn" style="flex:1;padding:16px;background:${woInfo.col};color:#000;font-family:'Bebas Neue';font-size:20px;letter-spacing:2px;border:none;border-radius:12px;" onclick="startWo('${woInfo.id}')">▶ INIZIA</button>
+          <button class="btn" style="padding:16px;background:var(--surf);color:var(--blu);border:1px solid var(--blu);border-radius:12px;font-size:15px;font-weight:700;flex-shrink:0;" onclick="event.stopPropagation();exportWorkoutPDF('${woInfo.id}')" title="Scarica PDF scheda">📄</button>
+        </div>
       </div>`;
     } else {
       // Card SECONDARIA: compatta, grigio soft
@@ -10863,16 +11105,32 @@ window.getMuscleHeatmap = function() {
   const last7Start = Date.now() - 7*86400000;
   const wHist = ST.wHistory || {};
   const muscleVolume = { chest:0, back:0, legs:0, shoulders:0, arms:0, core:0, cardio:0 };
+  // FIX SESSIONE 18: mapping più ampio (triceps/biceps→arms; abs→core; quads/glutes→legs)
+  const catMap = {
+    chest: 'chest', back: 'back',
+    legs: 'legs', glutes: 'legs', quads: 'legs', hamstrings: 'legs', calves: 'legs',
+    shoulders: 'shoulders',
+    arms: 'arms', biceps: 'arms', triceps: 'arms', forearms: 'arms',
+    core: 'core', abs: 'core', obliques: 'core',
+    cardio: 'cardio'
+  };
   Object.entries(wHist).forEach(([d, exMap]) => {
     if (new Date(d).getTime() < last7Start) return;
     Object.entries(exMap || {}).forEach(([exId, e]) => {
       if (!e?.ok) return;
       const ex = window.EX?.[exId] || ST.customExercises?.[exId];
       const cat = ex?.cat;
-      if (!cat) return;
-      const vol = (e.kg || 0) * (e.actualReps || parseInt(e.reps||8) || 1) * (parseInt(e.completedSets||1) || 1);
-      if (cat in muscleVolume) muscleVolume[cat] += vol;
-      else if (cat === 'fullbody') {
+      if (!cat || cat === 'warmup' || cat === 'cooldown') return;
+      // FIX SESSIONE 18: anche esercizi senza peso reale contano (bodyweight/isometrici)
+      const kg = e.kg || 0;
+      const reps = e.actualReps || parseInt(e.reps) || 8;
+      const sets = parseInt(e.completedSets) || 3;
+      // Volume: kg×reps×sets se peso reale, altrimenti reps×sets×5 (peso simbolico bodyweight)
+      const vol = kg > 0 ? (kg * reps * sets) : (reps * sets * 5);
+      const target = catMap[cat];
+      if (target && target in muscleVolume) {
+        muscleVolume[target] += vol;
+      } else if (cat === 'fullbody') {
         muscleVolume.chest += vol/4;
         muscleVolume.back += vol/4;
         muscleVolume.legs += vol/4;
@@ -11357,7 +11615,7 @@ window.renderSettings = function(mac){
 
   ${sectionTitle('sec-nutrition', '🥗', 'ALIMENTAZIONE', 'var(--gre)')}
 
-  <!-- ════ 3. INTOLLERANZE ════ -->
+  <!-- ════ INTOLLERANZE ════ -->
   <div class="card">
     <div class="bebas" style="font-size:20px;margin-bottom:6px;">⚠️ INTOLLERANZE ALIMENTARI</div>
     <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:14px;">Tocca per attivare/disattivare. I cibi corrispondenti verranno esclusi dai pasti suggeriti.</div>
@@ -11365,40 +11623,27 @@ window.renderSettings = function(mac){
     <button class="btn" style="width:100%;padding:14px;background:var(--blu);color:#fff;font-size:15px;font-weight:700;letter-spacing:1px;border-radius:12px;border:none;cursor:pointer;margin-top:6px;" onclick="updateIntolerances()">SALVA INTOLLERANZE</button>
   </div>
 
-  ${sectionTitle('sec-training', '💪', 'ALLENAMENTO', 'var(--ora)')}
-
-  <!-- ════ 4. FOCUS ALLENAMENTO ════ -->
-  <div id="wrapEFocus"><div class="card">
-    <div class="bebas" style="font-size:20px;margin-bottom:6px;">💪 FOCUS DI ALLENAMENTO</div>
-    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:14px;">Scegli quali gruppi muscolari privilegiare nelle schede.</div>
-    <div id="focusChips" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:10px;">
-      ${FOCUS_LIST.map(f=>{const isOn=(ST.p.focus||'total')===f.id;return`<div class="focus-chip2 ${isOn?'on':''}" data-focus="${f.id}" data-col="${f.col}" style="border-color:${isOn?'var(--acc)':'var(--bord)'};background:${isOn?'rgba(197,241,53,.08)':'var(--surf)'};padding:10px 6px;border:2px solid var(--bord);border-radius:12px;cursor:pointer;text-align:center;transition:.2s;" onclick="pickFocusChip(this)"><div style="font-size:16px;margin-bottom:2px;">${f.icon}</div><div style="font-size:10px;font-weight:700;line-height:1.2;color:${isOn?'var(--acc)':'var(--text)'};">${f.label}</div></div>`;}).join('')}
-    </div>
-    <div id="focusDesc2" style="font-size:12px;color:var(--mut);margin-bottom:14px;padding:8px 12px;background:var(--bg);border-radius:8px;line-height:1.5;">${(FOCUS_LIST.find(f=>f.id===(ST.p.focus||'total'))||FOCUS_LIST[0]).desc}</div>
-    <button class="btn" style="width:100%;padding:14px;background:var(--blu);color:#fff;font-size:15px;font-weight:700;letter-spacing:1px;border-radius:12px;border:none;cursor:pointer;margin-top:0;" onclick="updateFocus()">SALVA FOCUS</button>
-  </div></div>
-
-  <!-- ════ 5. ALIMENTAZIONE (omnivoro/vegetariano/vegano) ════ -->
+  <!-- ════ TIPO ALIMENTAZIONE (sessione 18: spostato qui da Allenamento) ════ -->
   <div class="card">
-    <div class="bebas" style="font-size:20px;margin-bottom:6px;">🥗 ALIMENTAZIONE</div>
-    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:14px;">Tipo di alimentazione che segui.</div>
+    <div class="bebas" style="font-size:20px;margin-bottom:6px;">🥗 TIPO DI ALIMENTAZIONE</div>
+    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:14px;">Influenza i pasti suggeriti.</div>
     <div id="dietChips" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:14px;">
       ${[{id:'omnivore',icon:'🥩',lbl:'Onnivoro'},{id:'vegetarian',icon:'🥦',lbl:'Vegetariano'},{id:'vegan',icon:'🌱',lbl:'Vegano'}].map(d=>{const isOn=(ST.p.diet||'omnivore')===d.id;return`<div class="diet-chip2 ${isOn?'on':''}" data-diet="${d.id}" style="padding:12px 6px;border-radius:12px;border:2px solid ${isOn?'var(--acc)':'var(--bord)'};background:${isOn?'rgba(197,241,53,.08)':'var(--surf)'};cursor:pointer;text-align:center;transition:.2s;" onclick="pickDietChip(this)"><div style="font-size:20px;margin-bottom:3px;">${d.icon}</div><div style="font-size:10px;font-weight:700;">${d.lbl}</div></div>`;}).join('')}
     </div>
     <button class="btn" style="width:100%;padding:14px;background:var(--blu);color:#fff;font-size:15px;font-weight:700;letter-spacing:1px;border-radius:12px;border:none;cursor:pointer;margin-top:0;" onclick="updateDiet()">SALVA ALIMENTAZIONE</button>
   </div>
 
-  <!-- ════ 6. INTEGRATORI ════ -->
+  <!-- ════ INTEGRATORI (sessione 18: spostato qui da Allenamento) ════ -->
   <div class="card">
     <div class="bebas" style="font-size:20px;margin-bottom:6px;">💊 INTEGRATORI PROTEICI</div>
-    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:14px;">Se usi proteine in polvere/whey, lo includiamo nei suggerimenti.</div>
+    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:14px;">Se usi proteine in polvere/whey, le includiamo nei suggerimenti.</div>
     <div id="suppChips" style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px;">
       ${[{id:'yes',icon:'💪',lbl:'Sì, li uso'},{id:'no',icon:'🌱',lbl:'No, solo cibi'}].map(s=>{const cur=ST.p.usesSupplements?'yes':'no';const isOn=cur===s.id;return`<div class="supp-chip2 ${isOn?'on':''}" data-supp="${s.id}" style="padding:12px 6px;border-radius:12px;border:2px solid ${isOn?'var(--acc)':'var(--bord)'};background:${isOn?'rgba(197,241,53,.08)':'var(--surf)'};cursor:pointer;text-align:center;transition:.2s;" onclick="pickSuppChip(this)"><div style="font-size:20px;margin-bottom:3px;">${s.icon}</div><div style="font-size:10px;font-weight:700;">${s.lbl}</div></div>`;}).join('')}
     </div>
     <button class="btn" style="width:100%;padding:14px;background:var(--blu);color:#fff;font-size:15px;font-weight:700;letter-spacing:1px;border-radius:12px;border:none;cursor:pointer;margin-top:0;" onclick="updateSupplements()">SALVA INTEGRATORI</button>
   </div>
 
-  <!-- ════ 7. PIATTI PREFERITI ════ -->
+  <!-- ════ PIATTI PREFERITI (sessione 18: spostato qui da Allenamento) ════ -->
   <div class="card">
     <div class="bebas" style="font-size:20px;margin-bottom:6px;">🍽️ I MIEI PIATTI PREFERITI</div>
     <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:14px;">Cercheremo di includerli nei consigli mantenendo il target calorico. Opzionale.</div>
@@ -11410,6 +11655,19 @@ window.renderSettings = function(mac){
     <textarea id="eFavCen" maxlength="200" rows="2" placeholder="Es. pesce alla griglia..." style="margin-bottom:14px;font-size:13px;">${escapeHtml(ST.p.favs?.cen||'')}</textarea>
     <button class="btn" style="width:100%;padding:14px;background:var(--blu);color:#fff;font-size:15px;font-weight:700;letter-spacing:1px;border-radius:12px;border:none;cursor:pointer;margin-top:0;" onclick="updateFavs()">SALVA PREFERITI</button>
   </div>
+
+  ${sectionTitle('sec-training', '💪', 'ALLENAMENTO', 'var(--ora)')}
+
+  <!-- ════ FOCUS ALLENAMENTO ════ -->
+  <div id="wrapEFocus"><div class="card">
+    <div class="bebas" style="font-size:20px;margin-bottom:6px;">💪 FOCUS DI ALLENAMENTO</div>
+    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:14px;">Scegli quali gruppi muscolari privilegiare nelle schede.</div>
+    <div id="focusChips" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:10px;">
+      ${FOCUS_LIST.map(f=>{const isOn=(ST.p.focus||'total')===f.id;return`<div class="focus-chip2 ${isOn?'on':''}" data-focus="${f.id}" data-col="${f.col}" style="border-color:${isOn?'var(--acc)':'var(--bord)'};background:${isOn?'rgba(197,241,53,.08)':'var(--surf)'};padding:10px 6px;border:2px solid var(--bord);border-radius:12px;cursor:pointer;text-align:center;transition:.2s;" onclick="pickFocusChip(this)"><div style="font-size:16px;margin-bottom:2px;">${f.icon}</div><div style="font-size:10px;font-weight:700;line-height:1.2;color:${isOn?'var(--acc)':'var(--text)'};">${f.label}</div></div>`;}).join('')}
+    </div>
+    <div id="focusDesc2" style="font-size:12px;color:var(--mut);margin-bottom:14px;padding:8px 12px;background:var(--bg);border-radius:8px;line-height:1.5;">${(FOCUS_LIST.find(f=>f.id===(ST.p.focus||'total'))||FOCUS_LIST[0]).desc}</div>
+    <button class="btn" style="width:100%;padding:14px;background:var(--blu);color:#fff;font-size:15px;font-weight:700;letter-spacing:1px;border-radius:12px;border:none;cursor:pointer;margin-top:0;" onclick="updateFocus()">SALVA FOCUS</button>
+  </div></div>
 
   <!-- PREFERENZE ALLENAMENTO -->
   <div class="card" style="border-color:var(--gre);">
@@ -11432,6 +11690,17 @@ window.renderSettings = function(mac){
   <div class="card" style="border-color:var(--purp);">
     <div class="bebas" style="font-size:20px;color:var(--purp);margin-bottom:6px;">🛠️ LE MIE SCHEDE</div>
     <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:14px;">Crea schede di allenamento personalizzate. Possono affiancare le schede automatiche A/B/C nella tua rotazione settimanale.</div>
+
+    <!-- ── EXPORT PDF SCHEDE AI (sessione 18) ── -->
+    <div style="background:rgba(96,165,250,.06);border:1px dashed var(--blu);border-radius:10px;padding:10px;margin-bottom:12px;">
+      <div style="font-size:11px;color:var(--blu);font-weight:700;letter-spacing:1px;margin-bottom:6px;">📄 ESPORTA PDF</div>
+      <div style="font-size:11px;color:var(--mut);line-height:1.4;margin-bottom:8px;">Scarica le schede A/B/C generate dall'AI in PDF stampabile.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+        <button class="btn-s" style="padding:8px;background:var(--surf);border:1px solid var(--blu);color:var(--blu);font-weight:700;font-size:12px;border-radius:8px;cursor:pointer;" onclick="exportWorkoutPDF('A')">📄 Scheda A</button>
+        <button class="btn-s" style="padding:8px;background:var(--surf);border:1px solid var(--blu);color:var(--blu);font-weight:700;font-size:12px;border-radius:8px;cursor:pointer;" onclick="exportWorkoutPDF('B')">📄 Scheda B</button>
+        <button class="btn-s" style="padding:8px;background:var(--surf);border:1px solid var(--blu);color:var(--blu);font-weight:700;font-size:12px;border-radius:8px;cursor:pointer;" onclick="exportWorkoutPDF('C')">📄 Scheda C</button>
+      </div>
+    </div>
 
     <!-- FIX 7: toggle 3 stati per scegliere cosa mostrare in Allenamento -->
     ${(ST.p.customWorkouts||[]).length>0 ? (() => {
@@ -11461,6 +11730,7 @@ window.renderSettings = function(mac){
             <div style="font-size:11px;color:var(--mut);margin-top:2px;">${cw.exercises.length} esercizi · ${vol.totalSets} serie totali</div>
           </div>
           <div style="display:flex;gap:6px;">
+            <button class="btn-s" style="background:var(--blu);color:#fff;font-size:11px;padding:6px 10px;" onclick="exportWorkoutPDF('${cw.id}')" title="Esporta PDF">📄</button>
             <button class="btn-s btn-action" style="font-size:11px;padding:6px 10px;" onclick="openCustomWorkoutEditor('${cw.id}')">✏️</button>
             <button class="btn-s" style="background:var(--red);color:#fff;font-size:11px;padding:6px 10px;" onclick="deleteCustomWorkout('${cw.id}')">🗑️</button>
           </div>
@@ -11894,6 +12164,16 @@ window.render = function() {
         };
 
         let html = '';
+        // ── BOTTONE VIDEO YOUTUBE (sessione 18) ──
+        // Apre ricerca YouTube con il nome esercizio. Funziona offline (link diretto al browser).
+        if (ex.name && !ex.isWarmup && !ex.isCooldown) {
+          const queryName = (ex.name || '').replace(/[^\w\sàèéìòù]/gi,'').trim();
+          const ytQuery = encodeURIComponent(queryName + ' tutorial corretto');
+          const ytUrl = `https://www.youtube.com/results?search_query=${ytQuery}`;
+          html += `<a href="${ytUrl}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 14px;margin-bottom:8px;background:linear-gradient(135deg,rgba(255,68,68,.08),rgba(255,68,68,.04));border:1px solid var(--red);border-radius:10px;text-decoration:none;color:var(--red);font-weight:700;font-size:13px;cursor:pointer;">
+            <span style="font-size:18px;">▶️</span><span>VEDI TUTORIAL VIDEO</span>
+          </a>`;
+        }
         // Esecuzione step-by-step
         if ((ex.steps||[]).length) {
           html += sec('steps', '📋', `ESECUZIONE (${ex.steps.length} passi)`, 'var(--text)',
