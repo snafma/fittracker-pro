@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION19-HEATMAP-SWAP-FIX">
+<meta name="ft-version" content="build-SESSION20-LOGIN-SAFE">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -1104,8 +1104,6 @@ const EX={
   // DEFATICAMENTO E STRETCHING
   cd_stretch:{cat:'cooldown',t:'cooldown',name:'🧘 DEFATICAMENTO & STRETCHING (5 min)',mus:'Tutto il corpo',isCooldown:true,sets:1,reps:'5 minuti',rest:0,steps:['45 sec — Child\'s Pose: inginocchiati, porta le braccia in avanti e la testa a terra','45 sec — Quad Stretch: in piedi, porta il piede verso il gluteo tenendo la caviglia','45 sec — Chest Opener: mani intrecciate dietro la schiena, apri il petto verso l\'alto','45 sec — Hamstring Stretch: seduto, gambe dritte, raggiungi le punte dei piedi','45 sec — Pigeon Pose (o Figura 4): allungamento intenso dei flessori dell\'anca','45 sec — Spinal Twist: seduto, ruota il busto con un ginocchio piegato al petto'],cues:['Lo stretching post-workout migliora il recupero del 30%','Ogni posizione si mantiene 30-45 secondi — senti lo stretch, mai dolore','Respira profondamente durante ogni posizione: l\'espirazione aiuta il rilassamento muscolare','Non rimandare: lo stretching va fatto caldo, subito dopo l\'allenamento']},
 };
-// FIX SESSIONE 19: espongo EX su window per accesso da funzioni pubbliche (heatmap, stats, ecc.)
-window.EX = EX;
 const EX_G={
   chest:['ch_man','ch_bil','ch_incl','ch_croci','ch_pieg','ch_pieg_inc','ch_pieg_dec','ch_dip_bench','ch_floor_press','ch_cable_cross','ch_svend','ex_push_exp','ch_pec_deck','ch_dumbbell_pullover','ch_landmine_press'],
   triceps:['tri_fr','tri_push','tri_dips','tri_oh','tri_dips_chair','tri_rope','tri_skull','tri_kickback','tri_closebench','tri_overhead_rope'],
@@ -1119,8 +1117,6 @@ const EX_G={
   forearms:['fa_wrist_curl','fa_rev_curl','fa_farmer','fa_dead_hang','fa_plate_pinch'],
   cardio:['ex_burpee','ex_mountain','ex_jump_rope','ex_assault_bike'],
 };
-// FIX SESSIONE 19: espongo anche EX_G per uso da funzioni pubbliche (sostituisci esercizio runtime)
-window.EX_G = EX_G;
 
 // ═══════════════════════════════════════════════════════════════════
 // FIX 2: DB SPORT OUTDOOR — 30 sport con MET per calcolo kcal
@@ -7346,7 +7342,7 @@ window.getEx=function(){return getWo().exercises[ST.step];}
 // ── Helper: lookup esercizio supportando anche custom utente (sessione 13) ──
 window.getExDef = function(exId) {
   if (!exId) return null;
-  if (window.EX && window.EX[exId]) return window.EX[exId];
+  if (typeof EX !== 'undefined' && EX[exId]) return EX[exId];
   if (window.ST?.customExercises && window.ST.customExercises[exId]) {
     return {...window.ST.customExercises[exId], isCustom: true};
   }
@@ -9662,7 +9658,7 @@ return `<div class="card" style="border-color:var(--purp);">
   <div style="background:var(--surf);border-radius:12px;padding:12px;">
     <div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:8px;">🏋️ ESERCIZI PIÙ FREQUENTI</div>
     ${topExEntries.map(([eid,n],i) => {
-      const ex = window.EX?.[eid] || ST.customExercises?.[eid];
+      const ex = (typeof EX !== 'undefined' ? EX[eid] : null) || ST.customExercises?.[eid];
       const exName = ex?.name || eid;
       const medal = i===0?'🥇':i===1?'🥈':'🥉';
       return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;${i<topExEntries.length-1?'border-bottom:1px dashed var(--bord);':''}">
@@ -10451,7 +10447,7 @@ const first = hist[0].oneRM;
 const last = hist[hist.length-1].oneRM;
 if (first <= 0) return;
 const pct = ((last - first) / first) * 100;
-const ex = window.EX?.[exId] || ST.customExercises?.[exId];
+const ex = (typeof EX !== ‘undefined’ ? EX[exId] : null) || ST.customExercises?.[exId];
 progress.push({
 id: exId,
 name: ex?.name || exId,
@@ -10646,7 +10642,7 @@ ${topExs.length > 0 ? `
     ${topExs.map(([exId, freq]) => {
       const best = window.getBest1RM(exId);
       if (!best.value) return '';
-      const ex = window.EX?.[exId] || ST.customExercises?.[exId];
+      const ex = (typeof EX !== 'undefined' ? EX[exId] : null) || ST.customExercises?.[exId];
       const exName = ex?.name || exId;
       const dateLabel = best.date ? new Date(best.date).toLocaleDateString('it-IT', {day:'2-digit', month:'short', year:'2-digit'}) : '';
       return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--bord);">
@@ -10931,9 +10927,9 @@ arms: ‘arms’, biceps: ‘arms’, triceps: ‘arms’, forearms: ‘arms’,
 core: ‘core’, abs: ‘core’, obliques: ‘core’,
 cardio: ‘cardio’
 };
-// Helper: deduce categoria da exId se EX[exId] non disponibile
-// Pattern: ch_xxx=chest, bk_xxx=back, sh_xxx=shoulders, lg_xxx=legs, gl_xxx=glutes,
-// tri_xxx=triceps, bi_xxx=biceps, ab_xxx=abs/core, cd_xxx=cooldown
+// Helper: deduce categoria da exId se EX[exId] non disponibile (workout legacy)
+// Pattern noto: ch_*=chest, bk_*=back, sh_*=shoulders, lg_*=legs, gl_*=glutes,
+// tri_*=triceps, bi_*=biceps, ab_*=abs/core, cd_*=cooldown, wu_*=warmup
 const idPrefixMap = {
 ch_: ‘chest’, bk_: ‘back’, sh_: ‘shoulders’, lg_: ‘legs’, gl_: ‘glutes’,
 tri_: ‘triceps’, bi_: ‘biceps’, ab_: ‘core’, co_: ‘core’, ca_: ‘cardio’,
@@ -10943,11 +10939,12 @@ Object.entries(wHist).forEach(([d, exMap]) => {
 if (new Date(d).getTime() < last7Start) return;
 Object.entries(exMap || {}).forEach(([exId, e]) => {
 if (!e?.ok) return;
-// Lookup esercizio: prima window.EX, poi customExercises, poi getExDef helper
+// Lookup esercizio: prima getExDef helper (gestisce custom), poi EX (scope locale modulo)
 let ex = (typeof window.getExDef === ‘function’) ? window.getExDef(exId) : null;
-if (!ex) ex = window.EX?.[exId] || ST.customExercises?.[exId];
+if (!ex && typeof EX !== ‘undefined’) ex = EX[exId];
+if (!ex) ex = ST.customExercises?.[exId];
 let cat = ex?.cat;
-// Fallback: deduco categoria da prefisso ID
+// Fallback: deduco categoria da prefisso ID (utile per workout legacy)
 if (!cat) {
 for (const prefix in idPrefixMap) {
 if (exId.startsWith(prefix)) { cat = idPrefixMap[prefix]; break; }
@@ -12003,7 +12000,7 @@ root.innerHTML=`<div class="wo"><div class="wo-head"><div><div style="font-size:
   // Uso il pattern della sheet globale: swapEx('slot','id') è la funzione corretta.
   ST.sheet==='swap' && ST.sheetData ? (() => {
     const sd = ST.sheetData;
-    const curEx = window.EX[sd.curId] || ST.customExercises?.[sd.curId];
+    const curEx = (typeof EX !== 'undefined' ? EX[sd.curId] : null) || ST.customExercises?.[sd.curId];
     const curCat = curEx?.cat;
     return `<div class="sh-ov" style="z-index:9999;" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div>
       <div class="bebas" style="font-size:22px;margin-bottom:4px;">🔄 SOSTITUISCI ESERCIZIO</div>
