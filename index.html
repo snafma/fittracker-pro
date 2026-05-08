@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION16-AI-COACH-STATS-PRO">
+<meta name="ft-version" content="build-SESSION17-PROFILE-CLEANUP">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -2849,11 +2849,35 @@ window.getNextWorkoutForDay=function(wLog,sessions,programStart,currentDateStr,f
   // Già fatto oggi?
   const todayDone=done.find(w=>w.d===currentDateStr);
   if(todayDone) return todayDone.woId;
-  // Prossimo in sequenza
-  if(!done.length) return rotation[0]; // Primo allenamento = sempre A
-  const lastWo=done[done.length-1].woId;
-  const lastIdx=rotation.lastIndexOf(lastWo);
-  return rotation[(lastIdx>=0?lastIdx+1:0)%rotation.length];
+
+  // ── FIX SESSIONE 17: priorità ai workout MANCANTI della settimana corrente ──
+  // Se la settimana corrente prevede [A, B, C] e ho fatto solo [A, C], oggi suggerisco B
+  // (non D, come sarebbe la sequenza pura).
+  const today = new Date(currentDateStr + 'T12:00:00');
+  const dow = (today.getDay() + 6) % 7; // 0=Lun
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - dow);
+  const weekStart = monday.toISOString().split('T')[0];
+  // Workout fatti questa settimana
+  const thisWeekDone = done.filter(w => w.d >= weekStart && w.d <= currentDateStr).map(w => w.woId);
+  // Conta quanti di ciascun tipo nella rotazione settimanale (es. rotation = ['A','B','C'])
+  const weeklyTarget = {};
+  rotation.forEach(id => { weeklyTarget[id] = (weeklyTarget[id]||0) + 1; });
+  // Conta quanti già fatti questa settimana
+  const weeklyDone = {};
+  thisWeekDone.forEach(id => { weeklyDone[id] = (weeklyDone[id]||0) + 1; });
+  // Trova il primo nella rotazione che ancora deve essere fatto questa settimana
+  for (const woId of rotation) {
+    if ((weeklyDone[woId]||0) < (weeklyTarget[woId]||0)) {
+      return woId;
+    }
+  }
+
+  // Tutti completati questa settimana (raro): vai al prossimo della prossima settimana
+  if (!done.length) return rotation[0];
+  const lastWo = done[done.length-1].woId;
+  const lastIdx = rotation.lastIndexOf(lastWo);
+  return rotation[(lastIdx>=0 ? lastIdx+1 : 0) % rotation.length];
 }
 // ── FIX 3: Stato reale della settimana corrente (pianificato vs effettivo) ──
 window.getWeekStatus=function(currentDateStr,wLog,sessions,programStart,cardioLevel,analysis,focus){
@@ -2977,6 +3001,57 @@ window.analyze=function(history,goal,wLog){
   }
   return{status,msg,col,calAdj,cardioAdj,wRate:wRate.toFixed(2),tRate,ratio:ratio.toFixed(2),proj,wkNeed:wkNeed.toFixed(1),alert,missed,adherencePct};
 }
+
+// ── ADATTAMENTO DATA TARGET (sessione 17) ──
+// Se il peso non cambia ma la data target si avvicina, propone di spostare la data
+// per mantenere realistico l'obiettivo. Restituisce {needsShift, suggestedDate, weeksDelay}
+window.checkTargetAdjustment = function(history, goal) {
+  if (!history || history.length < 4 || !goal?.targetD) return { needsShift: false };
+  const recent = history.slice(-21); // ultime 3 settimane
+  if (recent.length < 4) return { needsShift: false };
+  const fw = recent[0].w;
+  const lw = recent[recent.length-1].w;
+  const days = Math.max(1, recent.length);
+  // Variazione effettiva settimanale
+  const wRate = goal.t === 'cut' ? ((fw - lw) / days * 7) : ((lw - fw) / days * 7);
+  const currW = recent[recent.length-1].w;
+  const rem = Math.abs(currW - goal.g);
+  // Quanti giorni mancano alla data target?
+  const today = new Date();
+  const tgt = new Date(goal.targetD);
+  const daysToTarget = Math.ceil((tgt - today) / 86400000);
+  if (daysToTarget < 7) return { needsShift: false }; // troppo vicina, non rimodulare
+  // Quanti kg necessari nella settimana?
+  const reqRate = (rem / daysToTarget) * 7;
+  // Se il ratio reale è molto basso E richiede uno sforzo non realistico
+  if (wRate < reqRate * 0.4 && wRate > 0) {
+    // Calcolo nuova data realistica basata su rate effettivo
+    const wkNeed = rem / Math.max(0.1, wRate);
+    const newDate = new Date();
+    newDate.setDate(newDate.getDate() + Math.ceil(wkNeed * 7));
+    const weeksDelay = Math.ceil((newDate - tgt) / 86400000 / 7);
+    if (weeksDelay >= 2) {
+      return {
+        needsShift: true,
+        suggestedDate: newDate.toISOString().slice(0,10),
+        weeksDelay,
+        currentRate: wRate.toFixed(2),
+        requiredRate: reqRate.toFixed(2)
+      };
+    }
+  }
+  return { needsShift: false };
+};
+
+// Applica spostamento target alla data suggerita
+window.acceptTargetShift = async function() {
+  const adj = window.checkTargetAdjustment(ST.h, ST.p);
+  if (!adj.needsShift || !ST.p) return;
+  ST.p.targetD = adj.suggestedDate;
+  // Memorizza che è stato fatto uno shift, evita di proporlo subito di nuovo
+  ST.lastTargetShift = { date: new Date().toISOString().slice(0,10), to: adj.suggestedDate };
+  await save();
+};
 window.getSetsReps=function(type,goal,pw2,focus){
   const cyc=Math.floor((pw2-1)/4),wic=(pw2-1)%4,isD=wic===3;
   const isHyp=focus==='hyp', isStr=focus==='strength';
@@ -3434,6 +3509,27 @@ window.getSuggest=function(exId,wHist,unitOverride){
       return Math.round(kg/step)*step;
     }
   }
+  // ── DELOAD WEEK: suggerimento ridotto (sessione 17) ──
+  // Se siamo in settimana di scarico, l'app suggerisce -30% sul peso ultima sessione
+  // (mantenendo le reps), per permettere supercompensazione.
+  const inDeload = (window.ST && typeof window.isDeloadWeek === 'function')
+    ? window.isDeloadWeek(window.ST.programStart)
+    : false;
+  if (inDeload && val > 0) {
+    if (unit === 'kg') {
+      const reduced = roundGymWeight(val * 0.7, exId);
+      return {kg: reduced, val: reduced, unit, hint: `🛌 SETTIMANA DI SCARICO — usa ${reduced}kg (era ${val}kg, -30%)`};
+    }
+    if (unit === 'sec') {
+      const reduced = Math.max(10, Math.round(val * 0.7));
+      return {kg: null, val: reduced, unit, hint: `🛌 SCARICO — ${reduced}s (era ${val}s)`};
+    }
+    if (unit === 'reps') {
+      const reduced = Math.max(5, Math.round(val * 0.7));
+      return {kg: null, val: reduced, unit, hint: `🛌 SCARICO — ${reduced} reps (era ${val})`};
+    }
+  }
+
   // Suggerimento progressivo: se 3+ sessioni completate ok consecutivamente, suggerisci +5%
   if (entries.length >= 3 && entries.slice(0,3).every(e => e[exId]?.ok) && val > 0) {
     let next;
@@ -4547,7 +4643,29 @@ window.saveU=async function(){
       cheatDebt:ST.cheatDebt,measures:ST.measures,notes:ST.notes,suppLog:ST.suppLog,
       chatHistory:ST.chatHistory,exPrefs:ST.exPrefs,wHistory:ST.wHistory,
       programStart:ST.programStart,mealOpts:ST.mealOpts,aiPlan:ST.aiPlan,
-      activities:ST.activities,stopwatch:ST.stopwatch,lastCheatMealSlot:ST.lastCheatMealSlot,exNotes:ST.exNotes
+      activities:ST.activities,stopwatch:ST.stopwatch,lastCheatMealSlot:ST.lastCheatMealSlot,exNotes:ST.exNotes,
+      // ── Campi sessioni 11-16 (FIX SESSIONE 17) ──
+      // Senza questi campi nel payload, le impostazioni utente NON venivano salvate.
+      cheats:ST.cheats,
+      body:ST.body,
+      notifPrefs:ST.notifPrefs,
+      shoppingState:ST.shoppingState,
+      settingsGroupOpen:ST.settingsGroupOpen,
+      workoutSecOpen:ST.workoutSecOpen,
+      customExercises:ST.customExercises,
+      customFoods:ST.customFoods,
+      theme:ST.theme,
+      injuries:ST.injuries,
+      onboardingDone:ST.onboardingDone,
+      coachView:ST.coachView,
+      statsView:ST.statsView,
+      travelMode:ST.travelMode,
+      shareLeaderboardConsent:ST.shareLeaderboardConsent,
+      shortcuts:ST.shortcuts,
+      deloadDismissed:ST.deloadDismissed,
+      draftValues:ST.draftValues,
+      draftReps:ST.draftReps,
+      lastTargetShift:ST.lastTargetShift
     };
     if(AU.profile) payload.profile=AU.profile;
     // DB.s sanifica il payload internamente con JSON round-trip
@@ -7776,8 +7894,8 @@ window.renderAuth = function(root){
     <button class="btn" onclick="doLogin()">ACCEDI</button>
     <div style="text-align:center;margin-top:12px;"><span onclick="AU.tab='forgot';AU.fgStep=1;AU.msg='';render()" style="font-size:13px;color:var(--mut);cursor:pointer;text-decoration:underline;">🔑 Password dimenticata?</span></div>
     </div>`:`<div class="card">
-    <span class="lbl">USERNAME (solo lettere minuscole, numeri, _)</span>
-    <input id="aU" placeholder="Es. marco_fitness" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9_]/g,'')">
+    <span class="lbl">USERNAME</span>
+    <input id="aU" placeholder="Scegli un username" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9_]/g,'')">
     <span class="lbl">EMAIL (per recupero password)</span><input id="aE" type="email" placeholder="La tua vera email">
     <span class="lbl">PASSWORD (min 8 car., 1 num., 1 spec.)</span><div class="pw-wrap"><input id="aP" type="password" placeholder="Crea una password forte"><span class="pw-eye" onclick="togglePw(this)">👁️</span></div>
     <span class="lbl">CONFERMA PASSWORD</span><div class="pw-wrap"><input id="aP2" type="password" placeholder="Ripeti la password"><span class="pw-eye" onclick="togglePw(this)">👁️</span></div>
@@ -8306,6 +8424,32 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
         <div style="font-size:9px;color:var(--ora);font-weight:800;letter-spacing:1.2px;">💪 WORKOUT 7G</div>
         <div class="bebas" style="font-size:24px;color:var(--text);line-height:1.1;margin-top:2px;">${woThisWeek}<span style="font-size:11px;color:var(--mut);"> / ${sessionsTarget}</span></div>
         <div style="height:3px;background:var(--bg);border-radius:3px;margin-top:4px;overflow:hidden;"><div style="height:100%;width:${woProgressPct}%;background:var(--ora);border-radius:3px;"></div></div>
+      </div>
+    </div>`;
+  })()}
+
+  ${(()=>{
+    // ── BANNER SHIFT TARGET (sessione 17) ──
+    // Mostra se peso non cambia abbastanza rispetto alla data target.
+    if (typeof window.checkTargetAdjustment !== 'function') return '';
+    const adj = window.checkTargetAdjustment(ST.h, ST.p);
+    if (!adj.needsShift) return '';
+    // Evito di mostrarlo se già fatto shift nelle ultime 2 settimane
+    if (ST.lastTargetShift?.date) {
+      const lastShiftDays = Math.ceil((Date.now() - new Date(ST.lastTargetShift.date).getTime())/86400000);
+      if (lastShiftDays < 14) return '';
+    }
+    const newDateLabel = new Date(adj.suggestedDate).toLocaleDateString('it-IT', { day:'numeric', month:'short', year:'numeric' });
+    return `
+    <div style="background:linear-gradient(135deg,rgba(167,139,250,.12),rgba(167,139,250,.04));border:2px solid var(--purp);border-radius:14px;padding:14px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <div style="font-size:22px;">🎯</div>
+        <div style="font-size:11px;color:var(--purp);font-weight:800;letter-spacing:1px;">DATA OBIETTIVO DA RIVEDERE</div>
+      </div>
+      <div style="font-size:12px;color:var(--text);line-height:1.5;margin-bottom:10px;">Il tuo ritmo attuale (${adj.currentRate}kg/sett) è inferiore a quello richiesto (${adj.requiredRate}kg/sett). Sposterei la data target a <strong>${newDateLabel}</strong> (+${adj.weeksDelay} sett.) per mantenerla realistica.</div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn-s" style="flex:1;padding:10px;background:var(--purp);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;" onclick="window.acceptTargetShift()">✓ SPOSTA DATA</button>
+        <button class="btn-s" style="flex:1;padding:10px;background:var(--surf);color:var(--text);border:1px solid var(--bord);border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;" onclick="ST.tab='set';render()">⚙️ CAMBIA STRATEGIA</button>
       </div>
     </div>`;
   })()}
@@ -9445,242 +9589,16 @@ window.renderBody = function(cW,mac,theme,pWeek,sx){
     </div>`;
   })()}
 
-  <!-- ── STATISTICHE AVANZATE (sessione 5) ── -->
-  ${(()=>{
-    if(ST.wLog.length<3) return '';
-    // Calcoli aggregati professionali
-    const allW=ST.wLog.filter(w=>!w.isRest);
-    const allDays=Object.keys(ST.measures).length;
-    const sessionsTot=allW.length;
-    const totVolume=allW.reduce((s,w)=>s+(w.vol||0),0);
-    const totKcalGym=allW.reduce((s,w)=>s+(w.kcal||0),0);
-    const avgSessionsWeek=Math.round((sessionsTot/Math.max(1,(pWeek||1)))*10)/10;
 
-    // Streak attuale e migliore
-    const stk=typeof streak==='function'?streak(ST.wLog):0;
-    let bestStreak=0, currentStreak=0;
-    const sortedDates=[...new Set(ST.wLog.filter(w=>!w.isRest).map(w=>w.d))].sort();
-    let prevDate=null;
-    sortedDates.forEach(d=>{
-      if(prevDate){
-        const diff=(new Date(d)-new Date(prevDate))/86400000;
-        if(diff<=2) currentStreak++; else currentStreak=1;
-      } else currentStreak=1;
-      bestStreak=Math.max(bestStreak,currentStreak);
-      prevDate=d;
-    });
-
-    // Aderenza dieta ultimi 30gg (% giorni con almeno 2 pasti loggati)
-    const last30Dates=[];
-    for(let i=0;i<30;i++){
-      const d=new Date(); d.setDate(d.getDate()-i);
-      last30Dates.push(d.toISOString().slice(0,10));
-    }
-    const dietAdh=last30Dates.filter(d=>{
-      const n=ST.nutri[d];
-      return n && (n.logged?.length||0)>=2;
-    }).length;
-    const dietPct=Math.round((dietAdh/30)*100);
-
-    // Frequenza sgarri ultimi 30gg
-    const cheats30=last30Dates.reduce((s,d)=>s+(ST.nutri[d]?.cheatLog?.length||0),0);
-
-    // Esercizio top (più frequente)
-    const exFreq={};
-    ST.wLog.forEach(w=>{
-      if(!w.exercises) return;
-      Object.keys(w.exercises||{}).forEach(exId=>{ exFreq[exId]=(exFreq[exId]||0)+1; });
-    });
-    const exStats=typeof buildExerciseStats==='function'?buildExerciseStats(ST.wHistory||{}):[];
-    const topExId=Object.entries(exFreq).sort((a,b)=>b[1]-a[1])[0]?.[0];
-    const topExName=topExId&&typeof EX!=='undefined'?(EX.find(e=>e.id===topExId)?.name||topExId):null;
-    // Conta PR totali (esercizi con isPR true)
-    const totPRs=Object.values(ST.wHistory||{}).reduce((sum,day)=>{
-      return sum+Object.values(day).filter(e=>e.isPR).length;
-    },0);
-
-    // Tasso completamento serie (% serie ok vs schedulate, approssimazione su wHistory)
-    const allHistEntries=Object.values(ST.wHistory||{}).reduce((arr,day)=>arr.concat(Object.values(day)),[]);
-    const okEntries=allHistEntries.filter(e=>e.ok).length;
-
-    // Volume allenamento medio per sessione (kg)
-    const avgVolSession=sessionsTot>0?Math.round(totVolume/sessionsTot):0;
-
-    // Variazione peso totale (vs primo)
-    const wDelta=ST.h.length>=2?(ST.h[ST.h.length-1].w-ST.h[0].w):0;
-    const wDeltaPct=ST.h[0]?.w>0?Math.round((wDelta/ST.h[0].w)*1000)/10:0;
-
-    // 1RM stimato per esercizio principale
-    const top1RM=topExId?(exStats.find(s=>s.exId===topExId)?.best1RM||0):0;
-
-    return `<div class="bebas" style="font-size:22px;color:var(--ora);margin:24px 0 12px;letter-spacing:1px;">📊 STATISTICHE AVANZATE</div>
-      <!-- Card big metrics -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
-        <div class="card" style="padding:14px;border-left:3px solid var(--acc);">
-          <div style="font-size:9px;color:var(--mut);letter-spacing:1.5px;font-weight:700;">VOLUME TOTALE</div>
-          <div class="bebas" style="font-size:26px;color:var(--acc);line-height:1.1;">${(totVolume/1000).toFixed(1)}<span style="font-size:13px;">k</span></div>
-          <div style="font-size:10px;color:var(--mut);">kg sollevati</div>
-        </div>
-        <div class="card" style="padding:14px;border-left:3px solid var(--ora);">
-          <div style="font-size:9px;color:var(--mut);letter-spacing:1.5px;font-weight:700;">KCAL BRUCIATE</div>
-          <div class="bebas" style="font-size:26px;color:var(--ora);line-height:1.1;">${totKcalGym.toLocaleString('it')}</div>
-          <div style="font-size:10px;color:var(--mut);">in palestra</div>
-        </div>
-        <div class="card" style="padding:14px;border-left:3px solid var(--blu);">
-          <div style="font-size:9px;color:var(--mut);letter-spacing:1.5px;font-weight:700;">FREQUENZA</div>
-          <div class="bebas" style="font-size:26px;color:var(--blu);line-height:1.1;">${avgSessionsWeek}</div>
-          <div style="font-size:10px;color:var(--mut);">sessioni/sett.</div>
-        </div>
-        <div class="card" style="padding:14px;border-left:3px solid var(--purp);">
-          <div style="font-size:9px;color:var(--mut);letter-spacing:1.5px;font-weight:700;">VOL/SESSIONE</div>
-          <div class="bebas" style="font-size:26px;color:var(--purp);line-height:1.1;">${avgVolSession.toLocaleString('it')}</div>
-          <div style="font-size:10px;color:var(--mut);">kg medio</div>
-        </div>
-      </div>
-
-      <!-- Streak + serie OK -->
-      <div class="card" style="margin-bottom:10px;padding:14px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1.5px;">🔥 STREAK</div>
-          <div style="font-size:10px;color:var(--mut);">Migliore di sempre</div>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div>
-            <div class="bebas" style="font-size:32px;color:var(--ora);line-height:1;">${stk||currentStreak}</div>
-            <div style="font-size:10px;color:var(--mut);">giorni attuali</div>
-          </div>
-          <div style="text-align:right;">
-            <div class="bebas" style="font-size:24px;color:var(--text);line-height:1;">${bestStreak}</div>
-            <div style="font-size:10px;color:var(--mut);">record</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Aderenza dieta -->
-      <div class="card" style="margin-bottom:10px;padding:14px;">
-        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
-          <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1.5px;">🥗 ADERENZA DIETA (30 gg)</div>
-          <div class="bebas" style="font-size:22px;color:${dietPct>=70?'var(--acc)':dietPct>=40?'var(--yel)':'var(--red)'};line-height:1;">${dietPct}%</div>
-        </div>
-        <div style="background:var(--bg);height:8px;border-radius:4px;overflow:hidden;">
-          <div style="width:${dietPct}%;height:100%;background:${dietPct>=70?'var(--acc)':dietPct>=40?'var(--yel)':'var(--red)'};transition:width .3s;"></div>
-        </div>
-        <div style="font-size:10px;color:var(--mut);margin-top:6px;">${dietAdh}/30 giorni con almeno 2 pasti tracciati · ${cheats30} sgarri totali</div>
-      </div>
-
-      <!-- Personal records -->
-      ${totPRs > 0 ? `<div class="card" style="margin-bottom:10px;padding:14px;border-left:3px solid #fbbf24;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-          <div style="font-size:24px;">🏆</div>
-          <div style="flex:1;">
-            <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1.5px;">PERSONAL RECORDS</div>
-            <div class="bebas" style="font-size:24px;color:#fbbf24;line-height:1;">${totPRs} PR battuti</div>
-          </div>
-        </div>
-        ${topExName?`<div style="font-size:11px;color:var(--mut);line-height:1.5;">Esercizio top: <strong style="color:var(--text);">${escapeHtml(topExName)}</strong>${top1RM>0?` · 1RM stimato <strong style="color:var(--acc);">${top1RM}kg</strong>`:''}</div>`:''}
-      </div>`:''}
-
-      <!-- Variazione peso -->
-      ${wDelta!==0?`<div class="card" style="margin-bottom:10px;padding:14px;border-left:3px solid ${wDelta<0?'var(--acc)':'var(--ora)'};">
-        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1.5px;">⚖️ VARIAZIONE PESO TOTALE</div>
-        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:4px;">
-          <div class="bebas" style="font-size:28px;color:${wDelta<0?'var(--acc)':'var(--ora)'};line-height:1;">${wDelta>0?'+':''}${wDelta.toFixed(1)} kg</div>
-          <div style="font-size:13px;color:var(--mut);font-weight:700;">${wDeltaPct>0?'+':''}${wDeltaPct}%</div>
-        </div>
-        <div style="font-size:10px;color:var(--mut);margin-top:4px;">dall'inizio del programma (${ST.h.length} pesate registrate)</div>
-      </div>`:''}
-
-      <!-- Serie completate totali -->
-      <div class="card" style="padding:14px;border-left:3px solid var(--blu);">
-        <div style="display:flex;justify-content:space-between;align-items:baseline;">
-          <div>
-            <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1.5px;">💪 SERIE COMPLETATE</div>
-            <div class="bebas" style="font-size:24px;color:var(--blu);line-height:1;margin-top:4px;">${okEntries}</div>
-          </div>
-          <div style="text-align:right;">
-            <div style="font-size:11px;color:var(--mut);">esercizi unici</div>
-            <div class="bebas" style="font-size:18px;color:var(--text);line-height:1;">${Object.keys(exFreq).length}</div>
-          </div>
-        </div>
-      </div>
-    `;
-  })()}
-
-  <!-- ── CONFRONTO SETTIMANE (sessione 4) ── -->
-  ${(() => {
-    // Calcolo metriche settimana corrente (last 7 days) vs settimana precedente (-14 a -7)
-    const now = new Date();
-    const oneWeekMs = 7 * 86400000;
-    const startThis = new Date(now.getTime() - oneWeekMs);
-    const startPrev = new Date(now.getTime() - 2*oneWeekMs);
-    const fmtD = (d) => d.toISOString().slice(0,10);
-    const startThisStr = fmtD(startThis);
-    const startPrevStr = fmtD(startPrev);
-    // Allenamenti
-    const woThis = wLogF.filter(w => w.d >= startThisStr).length;
-    const woPrev = wLogF.filter(w => w.d >= startPrevStr && w.d < startThisStr).length;
-    // Volume
-    const volThis = wLogF.filter(w => w.d >= startThisStr).reduce((s,w)=>s+(w.vol||0),0);
-    const volPrev = wLogF.filter(w => w.d >= startPrevStr && w.d < startThisStr).reduce((s,w)=>s+(w.vol||0),0);
-    // Kcal bruciate
-    const kcalThis = wLogF.filter(w => w.d >= startThisStr).reduce((s,w)=>s+(w.kcal||0),0);
-    const kcalPrev = wLogF.filter(w => w.d >= startPrevStr && w.d < startThisStr).reduce((s,w)=>s+(w.kcal||0),0);
-    // Peso medio
-    const hThis = ST.h.filter(x => x.d >= startThisStr);
-    const hPrev = ST.h.filter(x => x.d >= startPrevStr && x.d < startThisStr);
-    const wAvgThis = hThis.length ? hThis.reduce((s,x)=>s+x.w,0)/hThis.length : 0;
-    const wAvgPrev = hPrev.length ? hPrev.reduce((s,x)=>s+x.w,0)/hPrev.length : 0;
-    // Sgarri
-    const cheatsThis = Object.entries(ST.nutri).filter(([d])=>d>=startThisStr).reduce((s,[,n])=>s+(n.cheatLog?.length||0),0);
-    const cheatsPrev = Object.entries(ST.nutri).filter(([d])=>d>=startPrevStr && d<startThisStr).reduce((s,[,n])=>s+(n.cheatLog?.length||0),0);
-
-    if (woThis === 0 && woPrev === 0) return ''; // niente da confrontare
-
-    const arrow = (curr, prev, betterIfMore=true, suffix='') => {
-      if (prev === 0 && curr === 0) return `<span style="color:var(--mut);font-size:11px;">—</span>`;
-      if (prev === 0) return `<span style="color:var(--gre);font-size:11px;font-weight:700;">+${curr}${suffix} (nuovo)</span>`;
-      const diff = curr - prev;
-      const pct = Math.round((diff/prev)*100);
-      const isUp = diff > 0;
-      const isGood = (betterIfMore && isUp) || (!betterIfMore && !isUp);
-      const col = isGood ? 'var(--gre)' : (Math.abs(pct) < 5 ? 'var(--mut)' : 'var(--ora)');
-      const sign = isUp ? '+' : '';
-      return `<span style="color:${col};font-size:11px;font-weight:700;">${sign}${diff.toFixed(suffix==='kg'?1:0)}${suffix} (${sign}${pct}%)</span>`;
-    };
-    const wDiff = wAvgThis && wAvgPrev ? (wAvgThis - wAvgPrev) : 0;
-    const isCut = ST.p?.t === 'cut';
-    const wColor = (isCut ? wDiff < 0 : wDiff > 0) ? 'var(--gre)' : (Math.abs(wDiff) < 0.1 ? 'var(--mut)' : 'var(--ora)');
-
-    return `<div class="card" style="border-color:var(--blu);">
-      <div class="bebas" style="font-size:20px;color:var(--blu);margin-bottom:6px;">📊 SETTIMANA VS PRECEDENTE</div>
-      <div style="font-size:11px;color:var(--mut);margin-bottom:14px;line-height:1.5;">Confronto degli ultimi 7 giorni con i 7 precedenti.</div>
-      <div style="display:grid;grid-template-columns:1fr;gap:8px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--surf);border-radius:10px;">
-          <div><div style="font-size:11px;color:var(--mut);font-weight:700;">🏋️ ALLENAMENTI</div><div class="bebas" style="font-size:20px;color:var(--text);line-height:1;">${woThis} <span style="color:var(--mut);font-size:13px;">vs ${woPrev}</span></div></div>
-          <div style="text-align:right;">${arrow(woThis, woPrev, true)}</div>
-        </div>
-        ${volThis > 0 || volPrev > 0 ? `
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--surf);border-radius:10px;">
-          <div><div style="font-size:11px;color:var(--mut);font-weight:700;">📈 VOLUME (kg×reps)</div><div class="bebas" style="font-size:20px;color:var(--text);line-height:1;">${volThis} <span style="color:var(--mut);font-size:13px;">vs ${volPrev}</span></div></div>
-          <div style="text-align:right;">${arrow(volThis, volPrev, true)}</div>
-        </div>` : ''}
-        ${kcalThis > 0 || kcalPrev > 0 ? `
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--surf);border-radius:10px;">
-          <div><div style="font-size:11px;color:var(--mut);font-weight:700;">🔥 KCAL BRUCIATE</div><div class="bebas" style="font-size:20px;color:var(--text);line-height:1;">${kcalThis} <span style="color:var(--mut);font-size:13px;">vs ${kcalPrev}</span></div></div>
-          <div style="text-align:right;">${arrow(kcalThis, kcalPrev, true)}</div>
-        </div>` : ''}
-        ${wAvgThis > 0 && wAvgPrev > 0 ? `
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--surf);border-radius:10px;">
-          <div><div style="font-size:11px;color:var(--mut);font-weight:700;">⚖️ PESO MEDIO</div><div class="bebas" style="font-size:20px;color:var(--text);line-height:1;">${wAvgThis.toFixed(1)} <span style="color:var(--mut);font-size:13px;">vs ${wAvgPrev.toFixed(1)} kg</span></div></div>
-          <div style="text-align:right;"><span style="color:${wColor};font-size:11px;font-weight:700;">${wDiff>=0?'+':''}${wDiff.toFixed(1)}kg</span></div>
-        </div>` : ''}
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--surf);border-radius:10px;">
-          <div><div style="font-size:11px;color:var(--mut);font-weight:700;">🍔 SGARRI</div><div class="bebas" style="font-size:20px;color:var(--text);line-height:1;">${cheatsThis} <span style="color:var(--mut);font-size:13px;">vs ${cheatsPrev}</span></div></div>
-          <div style="text-align:right;">${arrow(cheatsThis, cheatsPrev, false)}</div>
-        </div>
-      </div>
-    </div>`;
-  })()}
+  <!-- ── BOTTONE → STATISTICHE PRO (sessione 17, sostituisce duplicati) ── -->
+  ${ST.wLog.length>=3 ? `<div onclick="ST.tab='stats';render()" class="card" style="cursor:pointer;background:linear-gradient(135deg,rgba(96,165,250,.08),rgba(167,139,250,.04));border:1.5px solid var(--blu);padding:14px;display:flex;align-items:center;gap:12px;">
+    <div style="font-size:24px;">📈</div>
+    <div style="flex:1;">
+      <div style="font-size:13px;font-weight:700;color:var(--blu);">Vedi Statistiche Pro</div>
+      <div style="font-size:11px;color:var(--mut);margin-top:1px;">Confronto periodi, calcolatore 1RM, calendario, top progressi</div>
+    </div>
+    <div style="font-size:18px;color:var(--blu);">›</div>
+  </div>` : ''}
 
   <!-- PUNTO 6: ANALISI GRANULARE PER ESERCIZIO -->
   ${(() => {
@@ -10718,8 +10636,10 @@ window.renderStatsCalendar = function() {
     wLogMap[k] = w;
   });
   const cheatMap = {};
-  Object.entries(ST.cheats||{}).forEach(([d, items]) => {
-    cheatMap[d] = (items||[]).length;
+  // FIX SESSIONE 17: gli sgarri sono in ST.nutri[date].cheatLog, non in ST.cheats
+  Object.entries(ST.nutri||{}).forEach(([d, nutri]) => {
+    const list = nutri?.cheatLog || [];
+    if (list.length > 0) cheatMap[d] = list.length;
   });
   const wEntryMap = {};
   (ST.h||[]).forEach(h => { wEntryMap[h.d] = h.w; });
@@ -10738,7 +10658,9 @@ window.renderStatsCalendar = function() {
   }
   // Stats mese
   const monthWos = (ST.wLog||[]).filter(w => w.d && w.d.startsWith(`${year}-${String(month+1).padStart(2,'0')}`) && !w.isRest);
-  const monthCheats = Object.entries(ST.cheats||{}).filter(([d]) => d.startsWith(`${year}-${String(month+1).padStart(2,'0')}`)).reduce((s,[_,v]) => s + (v?.length||0), 0);
+  const monthCheats = Object.entries(ST.nutri||{})
+    .filter(([d]) => d.startsWith(`${year}-${String(month+1).padStart(2,'0')}`))
+    .reduce((s,[_,v]) => s + (v?.cheatLog?.length||0), 0);
   return `
   <!-- Navigazione mese -->
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
@@ -10767,8 +10689,10 @@ window.renderStatsCalendar = function() {
       ${cells.map(c => {
         if (!c) return `<div></div>`;
         const today = c.dStr === (new Date().toISOString().slice(0,10));
-        return `<div style="aspect-ratio:1;background:${today?'rgba(197,241,53,.15)':'var(--surf)'};border:1px solid ${today?'var(--acc)':'var(--bord)'};border-radius:6px;padding:3px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;font-size:10px;position:relative;">
-          <div style="font-weight:${today?'800':'600'};color:${today?'var(--acc)':'var(--text)'};">${c.d}</div>
+        // FIX SESSIONE 17: celle NON cliccabili, "oggi" indicato solo da pallino sotto il numero
+        return `<div style="aspect-ratio:1;background:var(--surf);border:1px solid var(--bord);border-radius:6px;padding:3px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;font-size:10px;position:relative;cursor:default;">
+          <div style="font-weight:${today?'800':'500'};color:${today?'var(--acc)':'var(--text)'};">${c.d}</div>
+          ${today ? `<div style="width:4px;height:4px;border-radius:50%;background:var(--acc);margin-top:1px;"></div>` : ''}
           <div style="display:flex;gap:1px;flex-wrap:wrap;justify-content:center;margin-top:1px;font-size:8px;">
             ${c.wo && !c.wo.isRest ? '<span title="Workout">🏋️</span>' : ''}
             ${c.cheats > 0 ? '<span title="Sgarro">🥗</span>' : ''}
@@ -10975,7 +10899,7 @@ window.getWeeklyRecap = function() {
   });
   const weights = (ST.h || []).filter(h => new Date(h.d).getTime() >= sevenDaysAgo);
   const wChange = weights.length >= 2 ? (weights[weights.length-1].w - weights[0].w) : 0;
-  const cheats = Object.entries(ST.cheats || {}).filter(([d]) => new Date(d).getTime() >= sevenDaysAgo).reduce((s,[_,v]) => s + (v?.length||0), 0);
+  const cheats = Object.entries(ST.nutri || {}).filter(([d]) => new Date(d).getTime() >= sevenDaysAgo).reduce((s,[_,v]) => s + (v?.cheatLog?.length||0), 0);
   let sleepCount = 0; let sleepTotal = 0;
   for (let i=0; i<7; i++) {
     const d = new Date(now - i*86400000).toISOString().slice(0,10);
@@ -11167,12 +11091,6 @@ window.renderCoachTools = function() {
       </div>` : `<div style="font-size:11px;color:var(--mut);font-style:italic;text-align:center;padding:10px;">Nessun infortunio attivo.</div>`}
     <button class="btn-s" style="width:100%;padding:10px;background:rgba(239,68,68,.1);border:1.5px dashed var(--red);color:var(--red);font-weight:700;font-size:12px;border-radius:8px;cursor:pointer;" onclick="window.openInjurySheet()">+ SEGNALA INFORTUNIO</button>
   </div>
-
-  <div class="card">
-    <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1.5px;margin-bottom:6px;">🎓 ALTRE AZIONI</div>
-    <button class="btn-s" style="width:100%;padding:10px;margin-bottom:6px;background:var(--surf);border:1px solid var(--bord);color:var(--text);font-size:12px;border-radius:8px;text-align:left;cursor:pointer;" onclick="window.startOnboardingTour()">🎯 Riguarda tutorial introduttivo</button>
-    <button class="btn-s" style="width:100%;padding:10px;background:var(--surf);border:1px solid var(--bord);color:var(--text);font-size:12px;border-radius:8px;text-align:left;cursor:pointer;" onclick="window.aiRecalculatePlan && window.aiRecalculatePlan(true)">🔄 Ricalcola piano AI ora</button>
-  </div>
   `;
 };
 
@@ -11278,6 +11196,93 @@ window.renderCoach = function(){
   `;
 };
 
+// ═══════════════════════════════════════════════════════════
+// RENDER PROFILO (sessione 17)
+// Tab dedicato a dati personali + sicurezza + privacy + zona pericolosa
+// ═══════════════════════════════════════════════════════════
+window.renderProfile = function() {
+  const sx=AU.profile?.sx||'m';
+  const wStart=ST.h && ST.h.length>0 ? ST.h[0].w : 70;
+
+  return `
+  <div style="margin:8px 0 14px;">
+    <div class="bebas" style="font-size:30px;color:var(--blu);margin-bottom:2px;">👤 PROFILO</div>
+    <div style="font-size:12px;color:var(--mut);">I tuoi dati personali, sicurezza e privacy.</div>
+  </div>
+
+  <!-- IL MIO PROFILO -->
+  <div class="card" style="border-color:var(--blu);">
+    <div class="bebas" style="font-size:18px;color:var(--blu);margin-bottom:8px;">📋 I MIEI DATI</div>
+
+    <span class="lbl" style="margin-bottom:6px;">SESSO</span>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px;">
+      ${[{id:'m',icon:'👨',lbl:'Uomo'},{id:'f',icon:'👩',lbl:'Donna'}].map(s=>{const isOn=sx===s.id;return`<div class="profile-sx-chip ${isOn?'on':''}" data-sx="${s.id}" style="padding:12px 6px;border-radius:12px;border:2px solid ${isOn?'var(--acc)':'var(--bord)'};background:${isOn?'rgba(197,241,53,.08)':'var(--surf)'};cursor:pointer;text-align:center;transition:.2s;" onclick="pickProfileSxChip(this)"><div style="font-size:20px;margin-bottom:3px;">${s.icon}</div><div style="font-size:11px;font-weight:700;">${s.lbl}</div></div>`;}).join('')}
+    </div>
+
+    <div class="g2">
+      <div>
+        <span class="lbl">ALTEZZA (CM)</span>
+        <input type="number" id="pfHt" value="${AU.profile?.ht||170}" step="1" min="100" max="250">
+      </div>
+      <div>
+        <span class="lbl">ETÀ</span>
+        <input type="number" id="pfAg" value="${AU.profile?.ag||30}" step="1" min="10" max="100">
+      </div>
+    </div>
+
+    <span class="lbl">PESO DI PARTENZA (KG)</span>
+    <input type="number" id="pfWStart" value="${wStart}" step=".1" min="20" max="300" style="margin-bottom:10px;">
+
+    <button class="btn" style="width:100%;padding:12px;background:var(--blu);color:#fff;" onclick="updateProfile()">SALVA DATI</button>
+  </div>
+
+  <!-- CAMBIA PASSWORD -->
+  <div class="card" style="border-color:var(--purp);">
+    <div class="bebas" style="font-size:18px;color:var(--purp);margin-bottom:10px;">🔑 CAMBIA PASSWORD</div>
+    <span class="lbl">PASSWORD ATTUALE</span>
+    <div class="pw-wrap"><input type="password" id="cpCur" placeholder="Password attuale"><span class="pw-eye" onclick="togglePw(this)">👁️</span></div>
+    <span class="lbl">NUOVA PASSWORD</span>
+    <div class="pw-wrap"><input type="password" id="cpNew" placeholder="Min 8 car., 1 num, 1 spec."><span class="pw-eye" onclick="togglePw(this)">👁️</span></div>
+    <span class="lbl">CONFERMA</span>
+    <div class="pw-wrap"><input type="password" id="cpNew2" placeholder="Ripeti la nuova password"><span class="pw-eye" onclick="togglePw(this)">👁️</span></div>
+    <button class="btn-s btn-purp" style="width:100%;padding:13px;font-family:'Bebas Neue';font-size:16px;letter-spacing:1px;" onclick="doChangePassword()">AGGIORNA PASSWORD</button>
+  </div>
+
+  <!-- PRIVACY & DATI -->
+  <div class="card" style="border-color:var(--gre);">
+    <div class="bebas" style="font-size:18px;color:var(--gre);margin-bottom:10px;">🛡️ PRIVACY & I MIEI DATI</div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <button class="btn-s" style="width:100%;padding:11px;font-size:13px;background:rgba(34,197,94,.1);border:1px solid var(--gre);color:var(--gre);font-weight:600;border-radius:8px;cursor:pointer;" onclick="exportMyData()">📥 ESPORTA I MIEI DATI (JSON)</button>
+      <button class="btn-s" style="width:100%;padding:11px;font-size:13px;background:var(--surf);border:1px solid var(--bord);color:var(--text);font-weight:600;border-radius:8px;cursor:pointer;" onclick="openDisclaimerView()">📋 INFORMATIVA PRIVACY</button>
+      <button class="btn-s" style="width:100%;padding:11px;font-size:13px;background:var(--surf);border:1px solid var(--bord);color:var(--mut);font-weight:600;border-radius:8px;cursor:pointer;" onclick="resetGdprConsent()">🔄 RIVEDI BANNER PRIVACY</button>
+      ${(typeof isPwaInstalled === 'function' && isPwaInstalled()) ? `
+        <div style="text-align:center;padding:10px;background:rgba(34,197,94,.08);border:1px solid var(--gre);border-radius:8px;font-size:11px;color:var(--gre);font-weight:600;">✓ App installata sul dispositivo</div>
+      ` : `
+        <button class="btn-s" style="width:100%;padding:11px;font-size:13px;background:var(--surf);border:1px solid var(--bord);color:var(--mut);font-weight:600;border-radius:8px;cursor:pointer;" onclick="resetPwaInstallBanner()">📲 INSTALLA APP SUL DISPOSITIVO</button>
+      `}
+    </div>
+  </div>
+
+  <!-- ACCOUNT & SICUREZZA -->
+  <div class="card" style="border-color:var(--blu);">
+    <div class="bebas" style="font-size:18px;color:var(--blu);margin-bottom:8px;">🔐 ACCOUNT & SICUREZZA</div>
+    <div style="background:rgba(96,165,250,.08);border-left:3px solid var(--blu);border-radius:0 10px 10px 0;padding:10px 12px;margin-bottom:12px;">
+      <div style="font-size:12px;color:var(--text);line-height:1.5;">I tuoi dati sono al sicuro nel cloud. Dopo il logout puoi rientrare con la tua email.</div>
+    </div>
+    <button class="btn btn-action" style="padding:13px;width:100%;font-family:'Bebas Neue';font-size:16px;" onclick="doLogout()">🚪 LOGOUT</button>
+  </div>
+
+  <!-- ZONA PERICOLOSA -->
+  <div class="card card-red">
+    <div class="bebas" style="color:var(--red);font-size:18px;margin-bottom:8px;">⚠️ ZONA PERICOLOSA</div>
+    <div style="background:rgba(239,68,68,.08);border-left:3px solid var(--red);border-radius:0 10px 10px 0;padding:10px 12px;margin-bottom:12px;font-size:12px;line-height:1.5;color:var(--text);">
+      Cancellazione <strong>irreversibile</strong>: allenamenti, peso, sgarri, note, schede e PR persi per sempre. Richiede tripla conferma.
+    </div>
+    <button class="btn btn-red" onclick="doDeleteAccount()">CANCELLA IL MIO ACCOUNT</button>
+  </div>
+  `;
+};
+
 window.renderSettings = function(mac){
   const sx=AU.profile?.sx||'m';
   const wStart=ST.h && ST.h.length>0 ? ST.h[0].w : 70;
@@ -11287,12 +11292,12 @@ window.renderSettings = function(mac){
     <div class="card" style="background:linear-gradient(135deg,rgba(96,165,250,.06),rgba(167,139,250,.04));border:1.5px solid var(--blu);padding:12px;margin-bottom:14px;">
       <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:8px;">🧭 NAVIGA RAPIDAMENTE</div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
-        <button onclick="document.getElementById('sec-profile')?.scrollIntoView({behavior:'smooth',block:'start'})" style="padding:10px 4px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;cursor:pointer;font-size:10px;color:var(--text);font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;"><span style="font-size:18px;">👤</span><span>Profilo</span></button>
         <button onclick="document.getElementById('sec-program')?.scrollIntoView({behavior:'smooth',block:'start'})" style="padding:10px 4px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;cursor:pointer;font-size:10px;color:var(--text);font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;"><span style="font-size:18px;">🎯</span><span>Programma</span></button>
         <button onclick="document.getElementById('sec-training')?.scrollIntoView({behavior:'smooth',block:'start'})" style="padding:10px 4px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;cursor:pointer;font-size:10px;color:var(--text);font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;"><span style="font-size:18px;">💪</span><span>Allenam.</span></button>
         <button onclick="document.getElementById('sec-nutrition')?.scrollIntoView({behavior:'smooth',block:'start'})" style="padding:10px 4px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;cursor:pointer;font-size:10px;color:var(--text);font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;"><span style="font-size:18px;">🥗</span><span>Aliment.</span></button>
         <button onclick="document.getElementById('sec-coaching')?.scrollIntoView({behavior:'smooth',block:'start'})" style="padding:10px 4px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;cursor:pointer;font-size:10px;color:var(--text);font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;"><span style="font-size:18px;">🤖</span><span>Coaching</span></button>
-        <button onclick="document.getElementById('sec-account')?.scrollIntoView({behavior:'smooth',block:'start'})" style="padding:10px 4px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;cursor:pointer;font-size:10px;color:var(--text);font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;"><span style="font-size:18px;">⚙️</span><span>Account</span></button>
+        <button onclick="document.getElementById('sec-notifications')?.scrollIntoView({behavior:'smooth',block:'start'})" style="padding:10px 4px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;cursor:pointer;font-size:10px;color:var(--text);font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;"><span style="font-size:18px;">🔔</span><span>Notifiche</span></button>
+        <button onclick="document.getElementById('sec-advanced')?.scrollIntoView({behavior:'smooth',block:'start'})" style="padding:10px 4px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;cursor:pointer;font-size:10px;color:var(--text);font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;"><span style="font-size:18px;">⚙️</span><span>Avanzate</span></button>
       </div>
     </div>
   `;
@@ -11314,31 +11319,6 @@ window.renderSettings = function(mac){
   </div>
 
   ${sectionsMenu}
-
-  ${sectionTitle('sec-profile', '👤', 'IL MIO PROFILO', 'var(--blu)')}
-
-  <!-- NUOVO: IL MIO PROFILO — modifica sesso, altezza, età, peso iniziale -->
-  <div class="card" style="border-color:var(--blu);">
-    <div class="bebas" style="font-size:20px;color:var(--blu);margin-bottom:6px;">👤 IL MIO PROFILO</div>
-    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:14px;">Dati personali usati per calcolare BMR, TDEE e macro. Modifica solo se devi correggere un valore sbagliato o se è passato del tempo (es. compleanno).</div>
-
-    <span class="lbl" style="margin-bottom:8px;">SESSO</span>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px;">
-      ${[{id:'m',icon:'👨',lbl:'Uomo'},{id:'f',icon:'👩',lbl:'Donna'}].map(s=>{const isOn=sx===s.id;return`<div class="profile-sx-chip ${isOn?'on':''}" data-sx="${s.id}" style="padding:12px 6px;border-radius:12px;border:2px solid ${isOn?'var(--acc)':'var(--bord)'};background:${isOn?'rgba(197,241,53,.08)':'var(--surf)'};cursor:pointer;text-align:center;transition:.2s;" onclick="pickProfileSxChip(this)"><div style="font-size:20px;margin-bottom:3px;">${s.icon}</div><div style="font-size:11px;font-weight:700;">${s.lbl}</div></div>`;}).join('')}
-    </div>
-
-    <span class="lbl">ALTEZZA (CM)</span>
-    <input type="number" id="pfHt" value="${AU.profile?.ht||170}" step="1" min="100" max="250" style="margin-bottom:10px;">
-
-    <span class="lbl">ETÀ (ANNI)</span>
-    <input type="number" id="pfAg" value="${AU.profile?.ag||30}" step="1" min="10" max="100" style="margin-bottom:10px;">
-
-    <span class="lbl">PESO DI PARTENZA (KG)</span>
-    <input type="number" id="pfWStart" value="${wStart}" step=".1" min="20" max="300" style="margin-bottom:4px;">
-    <div style="font-size:11px;color:var(--mut);margin-bottom:14px;line-height:1.4;">È il peso all'inizio del programma (usato per calcolare i progressi). Non modifica il tuo peso attuale.</div>
-
-    <button class="btn" style="width:100%;padding:12px;background:var(--blu);color:#fff;" onclick="updateProfile()">SALVA DATI PROFILO</button>
-  </div>
 
   ${sectionTitle('sec-program', '🎯', 'PROGRAMMA & OBIETTIVI', 'var(--acc)')}
 
@@ -11489,10 +11469,12 @@ window.renderSettings = function(mac){
     <button class="btn" style="background:var(--purp);color:#fff;padding:12px;" onclick="openCustomWorkoutEditor()">+ CREA NUOVA SCHEDA</button>
   </div>
 
-  <!-- AI RICALCOLO PIANO -->
+  ${sectionTitle('sec-coaching', '🤖', 'COACHING', 'var(--purp)')}
+
+  <!-- AI RICALCOLO PIANO (sessione 17: spostato qui dentro Coaching) -->
   <div class="card" style="border-color:var(--acc);">
     <div class="bebas" style="font-size:20px;color:var(--acc);margin-bottom:6px;">🤖 RICALCOLO COACHING</div>
-    <div style="font-size:12px;color:var(--mut);line-height:1.55;margin-bottom:12px;">Genera un'analisi dei tuoi progressi reali (peso, allenamenti completati, sgarri, costanza) e ti propone aggiustamenti su calorie, cardio e nutrizione come farebbe un coach esperto. Funziona sempre — anche offline usa una rule-based engine.</div>
+    <div style="font-size:12px;color:var(--mut);line-height:1.55;margin-bottom:12px;">Analizza progressi e propone aggiustamenti su calorie, cardio e nutrizione. Funziona anche offline.</div>
     ${ST.aiPlan?`<div style="background:rgba(197,241,53,.06);border:1px solid var(--acc);border-radius:10px;padding:12px;margin-bottom:12px;">
       <div style="font-size:11px;color:var(--acc);font-weight:700;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">
         <span>ULTIMO CONSIGLIO · ${ST.aiPlan.date||''}</span>
@@ -11502,24 +11484,6 @@ window.renderSettings = function(mac){
     </div>`:''}
     <button class="btn ${window.aiPlanLoading?'':'btn-action'}" style="${window.aiPlanLoading?'opacity:.6;pointer-events:none;':''}" onclick="aiRecalculatePlan()">${window.aiPlanLoading?'🔍 ANALISI IN CORSO...':'🧠 GENERA NUOVO CONSIGLIO'}</button>
   </div>
-  <div class="card" style="border-color:var(--purp);">
-    <div class="bebas" style="font-size:20px;color:var(--purp);margin-bottom:14px;">🔑 CAMBIA PASSWORD</div>
-    <span class="lbl">PASSWORD ATTUALE</span>
-    <div class="pw-wrap"><input type="password" id="cpCur" placeholder="Password attuale"><span class="pw-eye" onclick="togglePw(this)">👁️</span></div>
-    <span class="lbl">NUOVA PASSWORD</span>
-    <div class="pw-wrap"><input type="password" id="cpNew" placeholder="Min 8 car., 1 num, 1 spec."><span class="pw-eye" onclick="togglePw(this)">👁️</span></div>
-    <span class="lbl">CONFERMA NUOVA PASSWORD</span>
-    <div class="pw-wrap"><input type="password" id="cpNew2" placeholder="Ripeti la nuova password"><span class="pw-eye" onclick="togglePw(this)">👁️</span></div>
-    <button class="btn-s btn-purp" style="width:100%;padding:13px;font-family:'Bebas Neue';font-size:18px;" onclick="doChangePassword()">AGGIORNA PASSWORD</button>
-  </div>
-  <!-- PUNTO 15: bottone rivedi tour -->
-  <div class="card" style="border-color:var(--purp);">
-    <div class="bebas" style="font-size:18px;color:var(--purp);margin-bottom:6px;">🎓 TUTORIAL APP</div>
-    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:10px;">Rivedi il tour guidato di benvenuto in 5 passi.</div>
-    <button class="btn-s btn-action" style="width:100%;padding:11px;font-size:13px;" onclick="startTour();render();">▶ RIVEDI TOUR</button>
-  </div>
-
-  ${sectionTitle('sec-coaching', '🤖', 'COACHING & NOTIFICHE', 'var(--purp)')}
 
   <!-- ── MODALITÀ TRASFERTA (sessione 7) ── -->
   ${(() => {
@@ -11553,6 +11517,8 @@ window.renderSettings = function(mac){
       `}
     </div>`;
   })()}
+
+  ${sectionTitle('sec-notifications', '🔔', 'NOTIFICHE & TUTORIAL', 'var(--ora)')}
 
   <!-- ── NOTIFICHE PUSH (sessione 12 - master toggle + UX migliorata) ── -->
   <div class="card" style="border-color:var(--ora);">
@@ -11630,7 +11596,14 @@ window.renderSettings = function(mac){
     })()}
   </div>
 
-  ${sectionTitle('sec-account', '⚙️', 'ACCOUNT & AVANZATE', 'var(--mut)')}
+  <!-- TUTORIAL APP (sessione 17: spostato qui da Coaching) -->
+  <div class="card" style="border-color:var(--purp);">
+    <div class="bebas" style="font-size:18px;color:var(--purp);margin-bottom:6px;">🎓 TUTORIAL APP</div>
+    <div style="font-size:12px;color:var(--mut);line-height:1.4;margin-bottom:10px;">Rivedi il tour guidato di benvenuto.</div>
+    <button class="btn-s btn-action" style="width:100%;padding:11px;font-size:13px;" onclick="window.startOnboardingTour()">▶ RIVEDI TOUR</button>
+  </div>
+
+  ${sectionTitle('sec-advanced', '⚙️', 'AVANZATE', 'var(--mut)')}
 
   <!-- ── TEMA APP (sessione 15) ── -->
   <div class="card" style="border-color:var(--blu);">
@@ -11709,44 +11682,6 @@ window.renderSettings = function(mac){
         File CSV importabile in MyFitnessPal, Cronometer, Excel, Google Sheets.
       </div>
     </div>
-  </div>
-
-  <!-- ── PRIVACY & DATI (GDPR — sessione 6) ── -->
-  <div class="card" style="border-color:var(--gre);">
-    <div class="bebas" style="font-size:18px;color:var(--gre);margin-bottom:6px;">🛡️ PRIVACY & I MIEI DATI</div>
-    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:12px;">
-      Esercita i tuoi diritti GDPR: scarica una copia dei tuoi dati, rivedi le impostazioni privacy o consulta l'informativa completa.
-    </div>
-    <div style="display:flex;flex-direction:column;gap:8px;">
-      <button class="btn-s" style="width:100%;padding:11px;font-size:13px;background:rgba(34,197,94,.1);border:1px solid var(--gre);color:var(--gre);font-weight:600;border-radius:8px;cursor:pointer;" onclick="exportMyData()">📥 ESPORTA I MIEI DATI (JSON)</button>
-      <button class="btn-s" style="width:100%;padding:11px;font-size:13px;background:var(--surf);border:1px solid var(--bord);color:var(--text);font-weight:600;border-radius:8px;cursor:pointer;" onclick="openDisclaimerView()">📋 INFORMATIVA PRIVACY</button>
-      <button class="btn-s" style="width:100%;padding:11px;font-size:13px;background:var(--surf);border:1px solid var(--bord);color:var(--mut);font-weight:600;border-radius:8px;cursor:pointer;" onclick="resetGdprConsent()">🔄 RIVEDI BANNER PRIVACY</button>
-      ${(typeof isPwaInstalled === 'function' && isPwaInstalled()) ? `
-        <div style="text-align:center;padding:10px;background:rgba(34,197,94,.08);border:1px solid var(--gre);border-radius:8px;font-size:11px;color:var(--gre);font-weight:600;">✓ App installata sul dispositivo</div>
-      ` : `
-        <button class="btn-s" style="width:100%;padding:11px;font-size:13px;background:var(--surf);border:1px solid var(--bord);color:var(--mut);font-weight:600;border-radius:8px;cursor:pointer;" onclick="resetPwaInstallBanner()">📲 INSTALLA APP SUL DISPOSITIVO</button>
-      `}
-    </div>
-  </div>
-
-  <!-- ── ACCOUNT & SICUREZZA (sessione 4) ── -->
-  <div class="card" style="border-color:var(--blu);">
-    <div class="bebas" style="font-size:18px;color:var(--blu);margin-bottom:6px;">🔐 ACCOUNT & SICUREZZA</div>
-    <div style="background:rgba(96,165,250,.08);border-left:3px solid var(--blu);border-radius:0 10px 10px 0;padding:10px 12px;margin-bottom:12px;">
-      <div style="font-size:12px;color:var(--text);line-height:1.6;">
-        <strong style="color:var(--blu);">I tuoi dati sono al sicuro nel cloud.</strong><br>
-        Anche dopo il logout potrai rientrare in qualsiasi momento con la tua email — allenamenti, peso, misure e PR vengono mantenuti automaticamente.
-      </div>
-    </div>
-    <button class="btn btn-action" style="padding:14px;width:100%;font-family:'Bebas Neue';font-size:18px;" onclick="doLogout()">🚪 LOGOUT</button>
-  </div>
-  <div class="card card-red">
-    <div class="bebas" style="color:var(--red);font-size:20px;margin-bottom:8px;">⚠️ ZONA PERICOLOSA</div>
-    <div style="background:rgba(239,68,68,.08);border-left:3px solid var(--red);border-radius:0 10px 10px 0;padding:10px 12px;margin-bottom:12px;font-size:12px;line-height:1.6;color:var(--text);">
-      La cancellazione è <strong>irreversibile</strong>: tutti i tuoi dati (allenamenti, peso, sgarri, note, schede personalizzate, PR) verranno eliminati definitivamente dal cloud e <strong>non potranno essere recuperati</strong>.<br><br>
-      Per evitare cancellazioni accidentali è richiesta una <strong>tripla conferma</strong>: email, password e parola di sicurezza.
-    </div>
-    <button class="btn btn-red" onclick="doDeleteAccount()">CANCELLA IL MIO ACCOUNT</button>
   </div>`;
 }
 // ── RENDER PRINCIPALE ─────────────────────────────────────────
@@ -12931,6 +12866,7 @@ window.render = function() {
     // ALTRO
     {id:'share',ic:'📤',lbl:'Condividi App',group:'other'},
     {id:'set',ic:'⚙️',lbl:'Configurazione',group:'other'},
+    {id:'profile',ic:'👤',lbl:'Profilo',group:'other'}, // sessione 17
   ];
   const NAV_GROUPS = [
     {id:'daily', lbl:'QUOTIDIANO'},
@@ -13011,17 +12947,23 @@ window.render = function() {
   else if(ST.tab==='stats') H+=renderStatsPro(); // sessione 16
   else if(ST.tab==='share') H+=renderShare();
   else if(ST.tab==='set') H+=renderSettings(mac);
+  else if(ST.tab==='profile') H+=renderProfile(); // sessione 17
   H+=`</div></div>`;
   root.innerHTML=H+sheetH+moreSheetH+shortPickH+renderTour()+renderDisclaimer();
   // Applica tema salvato (sessione 15)
   try { if (typeof applyTheme === 'function') applyTheme(ST?.theme || 'dark'); } catch(_) {}
-  // ── RIPRISTINA SCROLL (sessione 15) ──
+  // ── RIPRISTINA SCROLL (sessione 15, esteso 17) ──
   // Dopo aver riassegnato innerHTML, il browser ha resettato lo scroll a 0.
   // Lo ripristino in posizione (solo se siamo nello stesso tab e nessuna sheet è cambiata).
   if (_shouldPreserveScroll && _savedScrollY > 0) {
     // Uso requestAnimationFrame per garantire che il DOM sia layoutato prima dello scroll
     requestAnimationFrame(() => {
       try { window.scrollTo(0, _savedScrollY); } catch(_) {}
+    });
+  } else if (_isTabChange) {
+    // FIX SESSIONE 17: cambio tab → scroll esplicito a 0
+    requestAnimationFrame(() => {
+      try { window.scrollTo(0, 0); } catch(_) {}
     });
   }
   if(ST.tab==='coach') setTimeout(()=>{const c=el('chatArea');if(c)c.scrollTop=c.scrollHeight;},50);
