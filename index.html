@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION15-PASSIVE-FEATURES">
+<meta name="ft-version" content="build-SESSION16-AI-COACH-STATS-PRO">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -3342,13 +3342,46 @@ window.buildWorkout=function(woId,goal,pw2,exPrefs,sex,analysis){
   const sch=WO_SCH[woId];
   if(!sch) return null;
   const defs=getDefs(sex,goal.loc);
-  const exercises=sch.slots.map(sl=>{
+  let exercises=sch.slots.map(sl=>{
     const exId=(exPrefs&&exPrefs[sl.k])||defs[sl.k];
     // Lookup esteso: supporta esercizi custom utente (sessione 13)
     const ex=(window.getExDef ? window.getExDef(exId) : EX[exId])||EX[defs[sl.k]];
     const sr=getSetsReps(ex.t,goal.t,pw2,goal.focus);
     return{...ex,id:exId,slot:sl.k,cat:sl.cat,...sr};
   });
+
+  // ── FILTRO INFORTUNI (sessione 16) ──
+  // Esclude esercizi che coinvolgono zone infortunate.
+  // Mapping zona → categorie esercizi che la coinvolgono.
+  if (window.ST?.injuries?.length) {
+    const today = new Date().toISOString().slice(0,10);
+    const activeInjuries = window.ST.injuries.filter(i => i.until >= today).map(i => i.area);
+    if (activeInjuries.length > 0) {
+      const injuryToCats = {
+        shoulder: ['shoulders', 'chest', 'arms'],
+        back: ['back', 'legs'],
+        knee: ['legs', 'cardio'],
+        wrist: ['arms', 'chest', 'back', 'shoulders'],
+        ankle: ['legs', 'cardio'],
+        elbow: ['arms', 'chest', 'back']
+      };
+      const blockedCats = new Set();
+      activeInjuries.forEach(area => {
+        (injuryToCats[area] || []).forEach(c => blockedCats.add(c));
+      });
+      exercises = exercises.filter(ex => !blockedCats.has(ex.cat));
+      // Se sono rimasti meno di 2 esercizi, aggiungo cardio leggero come fallback
+      if (exercises.filter(e => !e.isWarmup && !e.isCooldown).length === 0) {
+        exercises.push({
+          id: 'walk_easy', name: '🚶 Camminata facile', cat: 'cardio',
+          mus: 'Cardio leggero', t: 'cardio', sets: 1, reps: '20 min', rest: 0,
+          steps: ['Cammina a passo medio per 20 minuti, evitando carichi sulla zona infortunata'],
+          cues: ['Mantieni postura eretta', 'Respira profondamente']
+        });
+      }
+    }
+  }
+
   // Aggiungi HIIT bonus in caso di stallo
   if(analysis?.alert==='stalled'){
     exercises.push({...EX['cd_hiit'],id:'cd_hiit',slot:'bonus',cat:'cardio',sets:1,reps:'15 min HIIT',rest:0,isBonus:true});
@@ -4492,6 +4525,11 @@ window.defST=function(){
     customExercises:{},          // esercizi personalizzati creati dall'utente {id: {name,cat,sets,reps,...}}
     // ── Campi sessione 15 ──
     theme:'dark',                // 'dark' | 'light' | 'auto' (segue OS)
+    // ── Campi sessione 16 ──
+    injuries:[],                 // [{area, until}] infortuni attivi
+    coachView:'proactive',       // vista corrente AI Coach
+    statsView:'overview',        // vista corrente Statistiche Pro
+    onboardingDone:false,        // tour iniziale completato
   };
 }
 window.ST=defST();
@@ -5040,6 +5078,17 @@ window.__initAuthListener=function(){
             Object.assign(ST, {...base, ...data, notifPrefs: mergedNotifPrefs, shoppingState: mergedShoppingState, settingsGroupOpen: mergedSettingsGroupOpen, workoutSecOpen: mergedWorkoutSecOpen, customExercises: mergedCustomExercises});
             if(!ST.chartFilter) ST.chartFilter = 30;
             AU.profile = data.profile || null;
+            // ── ONBOARDING AUTOMATICO al primo accesso (sessione 16) ──
+            // Se utente ha programma configurato ma non ha mai visto il tour, lo mostro dopo 2s
+            if (ST.p && !ST.onboardingDone && (ST.wLog?.length || 0) < 2) {
+              setTimeout(() => {
+                try {
+                  if (window.startOnboardingTour && !ST.onboardingDone && !ST.sheet) {
+                    window.startOnboardingTour();
+                  }
+                } catch(_) {}
+              }, 2000);
+            }
           } catch(mergeErr) {
             console.error("ST merge fallito:", mergeErr);
             // Recovery: stato pulito + profile ricaricato
@@ -10356,6 +10405,383 @@ window.shareShoppingList = function() {
   }
 };
 
+// ═══════════════════════════════════════════════════════════
+// SESSIONE 16: STATISTICHE PRO + AI COACH PROATTIVO
+// ═══════════════════════════════════════════════════════════
+
+// ── HELPER 1RM (formula Epley): peso × (1 + reps/30) ──
+window.calc1RM = function(weight, reps) {
+  if (!weight || !reps || reps < 1) return 0;
+  if (reps === 1) return weight;
+  return Math.round(weight * (1 + reps/30) * 10) / 10;
+};
+
+// ── HELPER: aggregati per periodo ──
+window.getPeriodStats = function(daysBack, daysOffset = 0) {
+  const now = Date.now();
+  const startTs = now - (daysBack + daysOffset) * 86400000;
+  const endTs = now - daysOffset * 86400000;
+  const inRange = (d) => {
+    const t = new Date(d).getTime();
+    return t >= startTs && t <= endTs;
+  };
+  const wos = (ST.wLog || []).filter(w => !w.isRest && inRange(w.d));
+  const totalVol = wos.reduce((s, w) => s + (w.vol || 0), 0);
+  const totalKcal = wos.reduce((s, w) => s + (w.kcal || 0), 0);
+  const totalDur = wos.reduce((s, w) => s + (w.dur || 0), 0);
+  const wHist = ST.wHistory || {};
+  let prCount = 0;
+  Object.keys(wHist).forEach(d => {
+    if (inRange(d)) {
+      Object.values(wHist[d] || {}).forEach(e => { if (e?.isPR) prCount++; });
+    }
+  });
+  const weights = (ST.h || []).filter(h => inRange(h.d));
+  const wStart = weights.length ? weights[0].w : null;
+  const wEnd = weights.length ? weights[weights.length-1].w : null;
+  const wChange = (wStart && wEnd) ? (wEnd - wStart) : 0;
+  return {
+    days: daysBack, workouts: wos.length, totalVol, totalKcal, totalDur,
+    avgVol: wos.length ? Math.round(totalVol/wos.length) : 0,
+    prCount, wStart, wEnd, wChange
+  };
+};
+
+// ── HELPER: 1RM per esercizio (best storico) ──
+window.getBest1RM = function(exId) {
+  const wHist = ST.wHistory || {};
+  let best = 0; let bestDate = null;
+  Object.keys(wHist).forEach(d => {
+    const e = wHist[d]?.[exId];
+    if (!e || !e.ok || !e.kg) return;
+    const reps = e.actualReps || parseInt(e.reps || 8);
+    const oneRM = calc1RM(e.kg, reps);
+    if (oneRM > best) { best = oneRM; bestDate = d; }
+  });
+  return { value: best, date: bestDate };
+};
+
+// ── HELPER: top esercizi per progresso (1RM crescente) ──
+window.getTopProgressExercises = function(limit = 5) {
+  const wHist = ST.wHistory || {};
+  const dates = Object.keys(wHist).sort();
+  if (dates.length < 2) return [];
+  // Per ogni esercizio raccolgo storico 1RM
+  const exMap = {};
+  dates.forEach(d => {
+    Object.entries(wHist[d] || {}).forEach(([exId, e]) => {
+      if (!e?.ok || !e.kg) return;
+      if (e.actualReps == null && !e.reps) return;
+      const reps = e.actualReps || parseInt(e.reps || 8);
+      const oneRM = calc1RM(e.kg, reps);
+      if (!exMap[exId]) exMap[exId] = [];
+      exMap[exId].push({ date: d, oneRM });
+    });
+  });
+  // Calcolo % progresso per ogni esercizio
+  const progress = [];
+  Object.entries(exMap).forEach(([exId, hist]) => {
+    if (hist.length < 2) return;
+    const first = hist[0].oneRM;
+    const last = hist[hist.length-1].oneRM;
+    if (first <= 0) return;
+    const pct = ((last - first) / first) * 100;
+    const ex = window.EX?.[exId] || ST.customExercises?.[exId];
+    progress.push({
+      id: exId,
+      name: ex?.name || exId,
+      first, last, pct,
+      sessions: hist.length
+    });
+  });
+  return progress.sort((a,b) => b.pct - a.pct).slice(0, limit);
+};
+
+window.renderStatsPro = function() {
+  // Stato vista (selezione strumento)
+  if (!ST.statsView) ST.statsView = 'overview'; // overview | compare | calc1rm | calendar
+  const view = ST.statsView;
+  const tabs = [
+    {id:'overview', emo:'📊', lbl:'Panoramica'},
+    {id:'compare', emo:'⚖️', lbl:'Confronta'},
+    {id:'calc1rm', emo:'🏋️', lbl:'1RM'},
+    {id:'calendar', emo:'📅', lbl:'Calendario'}
+  ];
+  return `
+  <div class="bebas" style="font-size:30px;color:var(--blu);margin:8px 0 4px;">📈 STATISTICHE PRO</div>
+  <div style="font-size:12px;color:var(--mut);margin-bottom:14px;">Analisi avanzata dei tuoi dati.</div>
+
+  <!-- Tab interni (sticky in alto) -->
+  <div style="position:sticky;top:60px;z-index:10;background:var(--bg);padding:8px 0;margin-bottom:10px;border-bottom:1px solid var(--bord);">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;">
+      ${tabs.map(t => `<button class="btn-s" style="padding:10px 4px;background:${view===t.id?'var(--blu)':'var(--surf)'};color:${view===t.id?'#fff':'var(--mut)'};border:1px solid ${view===t.id?'var(--blu)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;" onclick="ST.statsView='${t.id}';render()">
+        <span style="font-size:16px;">${t.emo}</span><span>${t.lbl}</span>
+      </button>`).join('')}
+    </div>
+  </div>
+
+  ${view==='overview' ? renderStatsOverview() : ''}
+  ${view==='compare' ? renderStatsCompare() : ''}
+  ${view==='calc1rm' ? renderStats1RM() : ''}
+  ${view==='calendar' ? renderStatsCalendar() : ''}
+  `;
+};
+
+// ── PANORAMICA: stats key chiare ──
+window.renderStatsOverview = function() {
+  const total = (ST.wLog||[]).filter(w => !w.isRest).length;
+  const last30 = window.getPeriodStats(30);
+  const top = window.getTopProgressExercises(3);
+  if (total === 0) return `<div class="card" style="text-align:center;padding:30px;"><div style="font-size:40px;margin-bottom:8px;">📭</div><div class="bebas" style="font-size:20px;color:var(--mut);">Nessun dato</div><div style="font-size:12px;color:var(--mut);margin-top:4px;">Completa qualche allenamento per vedere le statistiche.</div></div>`;
+  return `
+  <!-- Card riepilogo totale -->
+  <div class="card" style="background:linear-gradient(135deg,rgba(96,165,250,.08),rgba(167,139,250,.04));border-color:var(--blu);">
+    <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1.5px;">RIEPILOGO TOTALE</div>
+    <div class="bebas" style="font-size:36px;color:var(--blu);line-height:1;margin-top:4px;">${total}</div>
+    <div style="font-size:12px;color:var(--text);margin-top:2px;">allenamenti completati dall'inizio</div>
+  </div>
+
+  <!-- Grid stats 30gg -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+    <div class="card" style="padding:12px;margin:0;">
+      <div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;">📊 VOLUME 30G</div>
+      <div class="bebas" style="font-size:22px;color:var(--text);margin-top:2px;">${last30.totalVol.toLocaleString('it-IT')}</div>
+      <div style="font-size:10px;color:var(--mut);">kg totali</div>
+    </div>
+    <div class="card" style="padding:12px;margin:0;">
+      <div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;">🔥 KCAL 30G</div>
+      <div class="bebas" style="font-size:22px;color:var(--ora);margin-top:2px;">${last30.totalKcal.toLocaleString('it-IT')}</div>
+      <div style="font-size:10px;color:var(--mut);">bruciate</div>
+    </div>
+    <div class="card" style="padding:12px;margin:0;">
+      <div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;">🥇 PR 30G</div>
+      <div class="bebas" style="font-size:22px;color:#fbbf24;margin-top:2px;">${last30.prCount}</div>
+      <div style="font-size:10px;color:var(--mut);">record battuti</div>
+    </div>
+    <div class="card" style="padding:12px;margin:0;">
+      <div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;">⏱ TEMPO 30G</div>
+      <div class="bebas" style="font-size:22px;color:var(--text);margin-top:2px;">${Math.round(last30.totalDur/60)}h</div>
+      <div style="font-size:10px;color:var(--mut);">${last30.workouts} sessioni</div>
+    </div>
+  </div>
+
+  ${top.length > 0 ? `
+  <!-- Top esercizi in progresso -->
+  <div class="card">
+    <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1.5px;margin-bottom:10px;">🚀 TOP PROGRESSI</div>
+    ${top.map((p,i) => `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;${i<top.length-1?'border-bottom:1px solid var(--bord);':''}">
+        <div style="width:28px;height:28px;border-radius:50%;background:${i===0?'#fbbf24':i===1?'#cbd5e1':'#cd7f32'};color:#000;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;">${i+1}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:700;color:var(--text);">${escapeHtml(p.name)}</div>
+          <div style="font-size:10px;color:var(--mut);">${p.first.toFixed(1)}kg → ${p.last.toFixed(1)}kg · ${p.sessions} sessioni</div>
+        </div>
+        <div class="bebas" style="font-size:18px;color:${p.pct>0?'var(--gre)':'var(--red)'};">${p.pct>=0?'+':''}${p.pct.toFixed(0)}%</div>
+      </div>`).join('')}
+  </div>` : ''}
+  `;
+};
+
+// ── CONFRONTO PERIODI ──
+window.renderStatsCompare = function() {
+  if (!ST.statsCompareDays) ST.statsCompareDays = 30;
+  const days = ST.statsCompareDays;
+  const cur = window.getPeriodStats(days, 0);
+  const prev = window.getPeriodStats(days, days);
+  const pct = (a, b) => b > 0 ? Math.round(((a-b)/b)*100) : (a > 0 ? 100 : 0);
+  const compare = (a, b, label, unit, isReverse=false) => {
+    const p = pct(a, b);
+    const better = isReverse ? p < 0 : p > 0;
+    const col = p === 0 ? 'var(--mut)' : (better ? 'var(--gre)' : 'var(--red)');
+    return `
+    <div style="background:var(--surf);border-radius:10px;padding:12px;margin-bottom:8px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;">${label}</div>
+        <div class="bebas" style="font-size:14px;color:${col};">${p>=0?'+':''}${p}%</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;">
+        <div><span style="font-size:10px;color:var(--mut);">attuale: </span><strong style="color:var(--text);">${a.toLocaleString('it-IT')}${unit}</strong></div>
+        <div><span style="font-size:10px;color:var(--mut);">precedente: </span><strong style="color:var(--mut);">${b.toLocaleString('it-IT')}${unit}</strong></div>
+      </div>
+    </div>`;
+  };
+  return `
+  <div style="display:flex;gap:6px;margin-bottom:12px;">
+    ${[7,30,90].map(d => `<button class="btn-s" style="flex:1;padding:10px;background:${days===d?'var(--blu)':'var(--surf)'};color:${days===d?'#fff':'var(--mut)'};border:1px solid ${days===d?'var(--blu)':'var(--bord)'};font-weight:700;border-radius:8px;font-size:12px;" onclick="ST.statsCompareDays=${d};render()">${d}gg</button>`).join('')}
+  </div>
+  <div style="font-size:11px;color:var(--mut);margin-bottom:10px;text-align:center;">Ultimi ${days}gg vs ${days}gg precedenti</div>
+  ${compare(cur.workouts, prev.workouts, '💪 Allenamenti', '')}
+  ${compare(cur.totalVol, prev.totalVol, '📊 Volume', ' kg')}
+  ${compare(cur.totalKcal, prev.totalKcal, '🔥 Kcal bruciate', '')}
+  ${compare(cur.prCount, prev.prCount, '🥇 PR ottenuti', '')}
+  ${cur.wEnd && prev.wEnd ? `
+  <div style="background:var(--surf);border-radius:10px;padding:12px;margin-bottom:8px;">
+    <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:6px;">⚖️ PESO CORPOREO</div>
+    <div style="font-size:13px;color:var(--text);">Variazione: <strong style="color:${(ST.p?.t==='cut'&&cur.wChange<0)||(ST.p?.t==='bulk'&&cur.wChange>0)?'var(--gre)':'var(--ora)'};">${cur.wChange>=0?'+':''}${cur.wChange.toFixed(1)}kg</strong></div>
+  </div>` : ''}
+  `;
+};
+
+// ── CALCOLATORE 1RM ──
+window.renderStats1RM = function() {
+  if (!ST.calc1RMInput) ST.calc1RMInput = { weight: '', reps: '' };
+  const inp = ST.calc1RMInput;
+  const w = parseFloat(inp.weight) || 0;
+  const r = parseInt(inp.reps) || 0;
+  const rm = window.calc1RM(w, r);
+  // Massimali percentuali per varie reps
+  const percentages = [
+    { reps: 1, pct: 100, lbl: 'Forza max' },
+    { reps: 3, pct: 93, lbl: 'Forza' },
+    { reps: 5, pct: 87, lbl: 'Forza/Ipertrofia' },
+    { reps: 8, pct: 80, lbl: 'Ipertrofia' },
+    { reps: 10, pct: 75, lbl: 'Ipertrofia' },
+    { reps: 12, pct: 70, lbl: 'Resistenza' },
+    { reps: 15, pct: 65, lbl: 'Resistenza' }
+  ];
+  // Migliori 1RM storici per gli esercizi più frequenti
+  const wHist = ST.wHistory || {};
+  const exFreq = {};
+  Object.values(wHist).forEach(day => {
+    Object.keys(day||{}).forEach(exId => {
+      if (day[exId]?.ok && day[exId]?.kg) exFreq[exId] = (exFreq[exId]||0) + 1;
+    });
+  });
+  const topExs = Object.entries(exFreq).sort((a,b) => b[1]-a[1]).slice(0,5);
+  return `
+  <div class="card" style="border-color:var(--blu);">
+    <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1.5px;margin-bottom:6px;">CALCOLA 1RM (massimale)</div>
+    <div style="font-size:12px;color:var(--mut);margin-bottom:10px;">Inserisci peso e reps fatte. La formula stima il tuo 1RM teorico.</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <div style="flex:1;">
+        <div style="font-size:10px;color:var(--mut);margin-bottom:3px;">Peso (kg)</div>
+        <input type="number" step="0.5" min="0" max="500" value="${inp.weight}" oninput="ST.calc1RMInput.weight=this.value;render()" style="width:100%;font-size:18px;text-align:center;font-weight:700;padding:10px;">
+      </div>
+      <div style="flex:1;">
+        <div style="font-size:10px;color:var(--mut);margin-bottom:3px;">Reps</div>
+        <input type="number" step="1" min="1" max="20" value="${inp.reps}" oninput="ST.calc1RMInput.reps=this.value;render()" style="width:100%;font-size:18px;text-align:center;font-weight:700;padding:10px;">
+      </div>
+    </div>
+    ${rm > 0 ? `
+    <div style="background:linear-gradient(135deg,rgba(96,165,250,.15),rgba(96,165,250,.04));border:1.5px solid var(--blu);border-radius:12px;padding:14px;text-align:center;margin-bottom:12px;">
+      <div style="font-size:11px;color:var(--mut);">Il tuo 1RM stimato</div>
+      <div class="bebas" style="font-size:42px;color:var(--blu);line-height:1;">${rm}<span style="font-size:18px;color:var(--mut);"> kg</span></div>
+    </div>
+    <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:6px;">CARICHI CONSIGLIATI</div>
+    ${percentages.map(p => `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--surf);border-radius:6px;margin-bottom:4px;">
+      <div style="font-size:11px;color:var(--text);">${p.reps} reps · <span style="color:var(--mut);">${p.lbl}</span></div>
+      <div style="font-size:13px;font-weight:700;color:var(--blu);">${(rm*p.pct/100).toFixed(1)} kg</div>
+    </div>`).join('')}
+    ` : `<div style="font-size:11px;color:var(--mut);text-align:center;padding:12px;">Inserisci peso e reps per calcolare</div>`}
+  </div>
+
+  ${topExs.length > 0 ? `
+  <div class="card">
+    <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1.5px;margin-bottom:10px;">📈 I TUOI 1RM RECORD</div>
+    ${topExs.map(([exId, freq]) => {
+      const best = window.getBest1RM(exId);
+      if (!best.value) return '';
+      const ex = window.EX?.[exId] || ST.customExercises?.[exId];
+      const exName = ex?.name || exId;
+      const dateLabel = best.date ? new Date(best.date).toLocaleDateString('it-IT', {day:'2-digit', month:'short', year:'2-digit'}) : '';
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--bord);">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;font-weight:700;color:var(--text);">${escapeHtml(exName)}</div>
+          <div style="font-size:10px;color:var(--mut);">${freq} sessioni · ${dateLabel}</div>
+        </div>
+        <div class="bebas" style="font-size:20px;color:var(--blu);">${best.value}<span style="font-size:11px;color:var(--mut);">kg</span></div>
+      </div>`;
+    }).join('')}
+  </div>` : ''}
+  `;
+};
+
+// ── CALENDARIO UNIFICATO ──
+window.renderStatsCalendar = function() {
+  if (!ST.calMonthOffset) ST.calMonthOffset = 0;
+  const offset = ST.calMonthOffset;
+  const now = new Date();
+  now.setDate(1);
+  now.setMonth(now.getMonth() + offset);
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const monthName = now.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month+1, 0);
+  const daysInMonth = lastDay.getDate();
+  const startWeekday = (firstDay.getDay() + 6) % 7; // lun=0
+  // Mappa eventi per giorno
+  const wLogMap = {};
+  (ST.wLog||[]).forEach(w => {
+    if (!w.d) return;
+    const k = w.d;
+    wLogMap[k] = w;
+  });
+  const cheatMap = {};
+  Object.entries(ST.cheats||{}).forEach(([d, items]) => {
+    cheatMap[d] = (items||[]).length;
+  });
+  const wEntryMap = {};
+  (ST.h||[]).forEach(h => { wEntryMap[h.d] = h.w; });
+  const measureMap = {};
+  Object.keys(ST.body||{}).forEach(d => { measureMap[d] = true; });
+  // Costruisci griglia
+  const cells = [];
+  for (let i=0; i<startWeekday; i++) cells.push(null);
+  for (let d=1; d<=daysInMonth; d++) {
+    const dStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const wo = wLogMap[dStr];
+    const cheats = cheatMap[dStr] || 0;
+    const weight = wEntryMap[dStr];
+    const measure = measureMap[dStr];
+    cells.push({ d, dStr, wo, cheats, weight, measure });
+  }
+  // Stats mese
+  const monthWos = (ST.wLog||[]).filter(w => w.d && w.d.startsWith(`${year}-${String(month+1).padStart(2,'0')}`) && !w.isRest);
+  const monthCheats = Object.entries(ST.cheats||{}).filter(([d]) => d.startsWith(`${year}-${String(month+1).padStart(2,'0')}`)).reduce((s,[_,v]) => s + (v?.length||0), 0);
+  return `
+  <!-- Navigazione mese -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+    <button class="btn-s" style="padding:8px 14px;background:var(--surf);border:1px solid var(--bord);font-size:18px;border-radius:8px;cursor:pointer;" onclick="ST.calMonthOffset=(ST.calMonthOffset||0)-1;render()">‹</button>
+    <div class="bebas" style="font-size:20px;color:var(--text);text-transform:capitalize;">${monthName}</div>
+    <button class="btn-s" style="padding:8px 14px;background:var(--surf);border:1px solid var(--bord);font-size:18px;border-radius:8px;cursor:pointer;${offset>=0?'opacity:.4;pointer-events:none;':''}" onclick="ST.calMonthOffset=(ST.calMonthOffset||0)+1;render()">›</button>
+  </div>
+
+  <!-- Stats mese -->
+  <div style="display:flex;gap:6px;margin-bottom:10px;">
+    <div style="flex:1;background:var(--surf);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:10px;color:var(--mut);">Workout</div><div class="bebas" style="font-size:18px;color:var(--ora);">${monthWos.length}</div></div>
+    <div style="flex:1;background:var(--surf);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:10px;color:var(--mut);">Sgarri</div><div class="bebas" style="font-size:18px;color:var(--red);">${monthCheats}</div></div>
+  </div>
+
+  <!-- Legenda -->
+  <div style="display:flex;flex-wrap:wrap;gap:8px;font-size:10px;color:var(--mut);margin-bottom:10px;">
+    <span>🏋️ Workout</span><span>🥗 Sgarro</span><span>⚖️ Pesata</span><span>📐 Misure</span>
+  </div>
+
+  <!-- Calendario -->
+  <div style="background:var(--card);border:1px solid var(--bord);border-radius:12px;padding:8px;">
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px;">
+      ${['L','M','M','G','V','S','D'].map(d => `<div style="text-align:center;font-size:10px;color:var(--mut);font-weight:700;padding:4px;">${d}</div>`).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;">
+      ${cells.map(c => {
+        if (!c) return `<div></div>`;
+        const today = c.dStr === (new Date().toISOString().slice(0,10));
+        return `<div style="aspect-ratio:1;background:${today?'rgba(197,241,53,.15)':'var(--surf)'};border:1px solid ${today?'var(--acc)':'var(--bord)'};border-radius:6px;padding:3px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;font-size:10px;position:relative;">
+          <div style="font-weight:${today?'800':'600'};color:${today?'var(--acc)':'var(--text)'};">${c.d}</div>
+          <div style="display:flex;gap:1px;flex-wrap:wrap;justify-content:center;margin-top:1px;font-size:8px;">
+            ${c.wo && !c.wo.isRest ? '<span title="Workout">🏋️</span>' : ''}
+            ${c.cheats > 0 ? '<span title="Sgarro">🥗</span>' : ''}
+            ${c.weight ? '<span title="Pesata">⚖️</span>' : ''}
+            ${c.measure ? '<span title="Misure">📐</span>' : ''}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>
+  `;
+};
+
 window.renderShare = function(){
   return `
   <div class="bebas" style="font-size:30px;color:var(--blu);margin:8px 0 4px;">📤 CONDIVIDI L'APP</div>
@@ -10413,33 +10839,444 @@ window.renderShare = function(){
   </div>`;
 };
 
+// ── HELPER: alert AI proattivi (sessione 16) ──
+window.getCoachAlerts = function() {
+  const alerts = [];
+  const now = Date.now();
+  const today = new Date().toISOString().slice(0,10);
+  const wLog = ST.wLog || [];
+  const completedWos = wLog.filter(w => !w.isRest);
+
+  // 1. Workout saltati ultima settimana
+  const last7 = completedWos.filter(w => new Date(w.d) >= new Date(now - 7*86400000));
+  const targetSess = ST.p?.sessions || 3;
+  if (last7.length < targetSess - 1 && completedWos.length >= 5) {
+    alerts.push({
+      level: 'warning',
+      icon: '⚠️',
+      title: 'Allenamenti saltati',
+      msg: `Hai fatto ${last7.length}/${targetSess} sessioni questa settimana. Recupera con un workout breve oggi se puoi.`,
+      action: { label: 'Vai ad Allenamento', cb: "ST.tab='work';render()" }
+    });
+  }
+
+  // 2. Peso in stallo da 3+ settimane
+  const recentWeights = (ST.h || []).filter(h => new Date(h.d) >= new Date(now - 21*86400000));
+  if (recentWeights.length >= 3) {
+    const wMin = Math.min(...recentWeights.map(h => h.w));
+    const wMax = Math.max(...recentWeights.map(h => h.w));
+    if (Math.abs(wMax - wMin) < 0.5) {
+      alerts.push({
+        level: 'info', icon: '📊', title: 'Peso in stallo',
+        msg: `Il tuo peso è stabile da 3 settimane (${wMin.toFixed(1)}-${wMax.toFixed(1)}kg). ${ST.p?.t==='cut'?'Prova ad aumentare cardio o ridurre 100 kcal.':'Prova ad aumentare 100-200 kcal/die da fonti sane.'}`,
+        action: null
+      });
+    }
+  }
+
+  // 3. PR oggi (motivazionale)
+  const todayPR = ST.wHistory?.[today] ? Object.values(ST.wHistory[today]).filter(e => e?.isPR).length : 0;
+  if (todayPR > 0) {
+    alerts.push({
+      level: 'success', icon: '🏆', title: `${todayPR} PR oggi!`,
+      msg: 'Stai progredendo. Il muscolo cresce nel recupero, non nell\'allenamento. Idratati e dormi bene stanotte.',
+      action: null
+    });
+  }
+
+  // 4. Misure non aggiornate da 30+ giorni
+  const measureDates = Object.keys(ST.body || {}).sort();
+  const lastMeasure = measureDates[measureDates.length-1];
+  if (completedWos.length >= 8) {
+    if (!lastMeasure) {
+      alerts.push({
+        level: 'info', icon: '📐', title: 'Mai prese le misure',
+        msg: 'Aggiungere le misure (vita, fianchi, braccia) ti dà un quadro più preciso del tuo progresso. Il peso da solo inganna.',
+        action: { label: 'Vai a Misure', cb: "ST.tab='measures';render()" }
+      });
+    } else {
+      const daysSince = Math.floor((now - new Date(lastMeasure).getTime()) / 86400000);
+      if (daysSince >= 30) {
+        alerts.push({
+          level: 'info', icon: '📐', title: 'Misure da rifare',
+          msg: `Ultima volta ${daysSince} giorni fa. Rifai per vedere com'è cambiata la composizione corporea.`,
+          action: { label: 'Vai a Misure', cb: "ST.tab='measures';render()" }
+        });
+      }
+    }
+  }
+
+  // 5. Sonno insufficiente settimana scorsa
+  const last7days = [];
+  for (let i=0; i<7; i++) {
+    const d = new Date(now - i*86400000).toISOString().slice(0,10);
+    if (ST.life?.[d]?.sleep) last7days.push(ST.life[d].sleep);
+  }
+  if (last7days.length >= 4) {
+    const avgSleep = last7days.reduce((s,v) => s+v, 0) / last7days.length;
+    if (avgSleep < 6) {
+      alerts.push({
+        level: 'warning', icon: '😴', title: 'Sonno insufficiente',
+        msg: `Media ultime notti: ${avgSleep.toFixed(1)}h. Sotto 6h riduci adattazioni e aumenti cortisolo. Mira a 7-8h.`,
+        action: null
+      });
+    }
+  }
+
+  // 6. Settimana ottima
+  if (last7.length >= targetSess && todayPR === 0) {
+    alerts.push({
+      level: 'success', icon: '✨', title: 'Settimana on track',
+      msg: `Stai rispettando il programma alla grande. Continua così.`,
+      action: null
+    });
+  }
+  return alerts;
+};
+
+// ── HEATMAP MUSCOLI 7 GIORNI (sessione 16) ──
+window.getMuscleHeatmap = function() {
+  const last7Start = Date.now() - 7*86400000;
+  const wHist = ST.wHistory || {};
+  const muscleVolume = { chest:0, back:0, legs:0, shoulders:0, arms:0, core:0, cardio:0 };
+  Object.entries(wHist).forEach(([d, exMap]) => {
+    if (new Date(d).getTime() < last7Start) return;
+    Object.entries(exMap || {}).forEach(([exId, e]) => {
+      if (!e?.ok) return;
+      const ex = window.EX?.[exId] || ST.customExercises?.[exId];
+      const cat = ex?.cat;
+      if (!cat) return;
+      const vol = (e.kg || 0) * (e.actualReps || parseInt(e.reps||8) || 1) * (parseInt(e.completedSets||1) || 1);
+      if (cat in muscleVolume) muscleVolume[cat] += vol;
+      else if (cat === 'fullbody') {
+        muscleVolume.chest += vol/4;
+        muscleVolume.back += vol/4;
+        muscleVolume.legs += vol/4;
+        muscleVolume.core += vol/4;
+      }
+    });
+  });
+  return muscleVolume;
+};
+
+// ── RIEPILOGO SETTIMANA (sessione 16) ──
+window.getWeeklyRecap = function() {
+  const now = Date.now();
+  const sevenDaysAgo = now - 7*86400000;
+  const wLog = ST.wLog || [];
+  const last7Wos = wLog.filter(w => !w.isRest && new Date(w.d).getTime() >= sevenDaysAgo);
+  const totalVol = last7Wos.reduce((s,w) => s + (w.vol||0), 0);
+  const totalKcal = last7Wos.reduce((s,w) => s + (w.kcal||0), 0);
+  const totalDur = last7Wos.reduce((s,w) => s + (w.dur||0), 0);
+  let prCount = 0;
+  Object.entries(ST.wHistory || {}).forEach(([d, m]) => {
+    if (new Date(d).getTime() < sevenDaysAgo) return;
+    Object.values(m||{}).forEach(e => { if (e?.isPR) prCount++; });
+  });
+  const weights = (ST.h || []).filter(h => new Date(h.d).getTime() >= sevenDaysAgo);
+  const wChange = weights.length >= 2 ? (weights[weights.length-1].w - weights[0].w) : 0;
+  const cheats = Object.entries(ST.cheats || {}).filter(([d]) => new Date(d).getTime() >= sevenDaysAgo).reduce((s,[_,v]) => s + (v?.length||0), 0);
+  let sleepCount = 0; let sleepTotal = 0;
+  for (let i=0; i<7; i++) {
+    const d = new Date(now - i*86400000).toISOString().slice(0,10);
+    if (ST.life?.[d]?.sleep) { sleepTotal += ST.life[d].sleep; sleepCount++; }
+  }
+  const avgSleep = sleepCount > 0 ? (sleepTotal/sleepCount).toFixed(1) : null;
+  return {
+    workouts: last7Wos.length, targetWos: ST.p?.sessions || 3,
+    totalVol, totalKcal, totalDur, prCount, wChange, cheats, avgSleep
+  };
+};
+
 window.renderCoach = function(){
   const sx=AU.profile?.sx||'m';
-  return`
-  <div style="display:flex;flex-direction:column;height:calc(100vh - 105px);padding-top:10px;">
-    <div style="text-align:center;padding:10px 14px 0;">
-      <div style="font-size:36px;margin-bottom:4px;">🤖</div>
-      <div class="bebas" style="font-size:22px;color:var(--acc);">MARCELLO — AI COACH</div>
-      <div style="font-size:11px;color:var(--mut);">Conosce il tuo profilo completo · Powered by Claude AI</div>
-    </div>
-    <div id="chatArea" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;">
-      ${ST.chatHistory.length===0?`<div style="text-align:center;margin-top:20px;">
-        <div style="font-size:14px;color:var(--text);line-height:1.65;margin-bottom:20px;padding:20px;background:var(--card);border:1px solid var(--bord);border-radius:12px;">Sono Marcello, il tuo coach personale. Conosco il tuo sesso, età, obiettivo, intolleranze e progressi. Chiedimi qualsiasi cosa!</div>
-        <div style="display:flex;flex-direction:column;gap:7px;">
-          ${[sx==='f'?'Come ottimizzare l\'allenamento per i glutei?':'Come accelerare la perdita di grasso?','Cosa mangiare prima dell\'allenamento?','Ho saltato 3 allenamenti, cosa faccio?','Spiega il recupero muscolare e il riposo'].map(q=>`<div onclick="el('aiIn').value='${q}';sendMsg();" style="cursor:pointer;background:var(--surf);border:1px solid var(--bord);border-radius:10px;padding:11px 14px;font-size:13px;text-align:left;">${q}</div>`).join('')}
-        </div>
-      </div>`:ST.chatHistory.map(m=>`<div style="display:flex;justify-content:${m.role==='user'?'flex-end':'flex-start'};"><div class="bbl ${m.role==='user'?'bbl-u':'bbl-ai'}">${m.content.replace(/\n/g,'<br>')}</div></div>`).join('')}
-      ${ST.chatLoading?`<div style="display:flex;"><div class="bbl bbl-ai"><span style="letter-spacing:3px;animation:blink 1s infinite">●●●</span></div></div>`:''}
-    </div>
-    <div style="padding:12px 14px;background:var(--bg);border-top:1px solid var(--bord);">
-      <div style="display:flex;gap:8px;margin-bottom:${ST.chatHistory.length?'8':'0'}px;">
-        <input id="aiIn" placeholder="Chiedimi qualcosa..." style="flex:1;margin:0;" onkeydown="if(event.key==='Enter')sendMsg();">
-        <button class="btn" style="width:auto;padding:0 18px;margin:0;font-size:18px;${ST.chatLoading?'opacity:.5;pointer-events:none':''}" onclick="sendMsg()">➤</button>
+  if (!ST.coachView) ST.coachView = 'proactive';
+  const view = ST.coachView;
+  const tabs = [
+    {id:'proactive', emo:'🔔', lbl:'Per te'},
+    {id:'recap', emo:'📊', lbl:'Settimana'},
+    {id:'tools', emo:'🛠️', lbl:'Strumenti'},
+    {id:'chat', emo:'💬', lbl:'Chat'}
+  ];
+
+  if (view === 'chat') {
+    return `
+    <div style="display:flex;flex-direction:column;min-height:calc(100vh - 130px);padding-top:6px;">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:10px;">
+        ${tabs.map(t => `<button class="btn-s" style="padding:10px 4px;background:${view===t.id?'var(--acc)':'var(--surf)'};color:${view===t.id?'#000':'var(--mut)'};border:1px solid ${view===t.id?'var(--acc)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;" onclick="ST.coachView='${t.id}';render()"><span style="font-size:16px;">${t.emo}</span><span>${t.lbl}</span></button>`).join('')}
       </div>
-      ${ST.chatHistory.length>0?`<div style="text-align:center;"><button class="btn-s btn-action" style="font-size:10px;padding:4px 8px;" onclick="clearChat()">🗑 Svuota chat</button></div>`:''}
+      <div id="chatArea" style="flex:1;overflow-y:auto;padding:8px 0 14px;display:flex;flex-direction:column;gap:8px;min-height:300px;">
+        ${ST.chatHistory.length===0?`<div style="text-align:center;margin-top:10px;">
+          <div style="font-size:13px;color:var(--text);line-height:1.55;margin-bottom:14px;padding:14px;background:var(--card);border:1px solid var(--bord);border-radius:12px;">🤖 Sono Marcello. Conosco il tuo profilo. Chiedimi quello che vuoi.</div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            ${[sx==='f'?'Come ottimizzo i glutei?':'Come accelero la perdita di grasso?','Cosa mangiare prima dell\'allenamento?','Ho saltato 3 allenamenti, cosa faccio?'].map(q=>`<div onclick="el('aiIn').value='${q}';sendMsg();" style="cursor:pointer;background:var(--surf);border:1px solid var(--bord);border-radius:10px;padding:10px 12px;font-size:12px;text-align:left;">${q}</div>`).join('')}
+          </div>
+        </div>`:ST.chatHistory.map(m=>`<div style="display:flex;justify-content:${m.role==='user'?'flex-end':'flex-start'};"><div class="bbl ${m.role==='user'?'bbl-u':'bbl-ai'}">${m.content.replace(/\n/g,'<br>')}</div></div>`).join('')}
+        ${ST.chatLoading?`<div style="display:flex;"><div class="bbl bbl-ai"><span style="letter-spacing:3px;animation:blink 1s infinite">●●●</span></div></div>`:''}
+      </div>
+      <div style="padding:10px 0;background:var(--bg);border-top:1px solid var(--bord);">
+        <div style="display:flex;gap:8px;margin-bottom:${ST.chatHistory.length?'6':'0'}px;">
+          <input id="aiIn" placeholder="Chiedimi qualcosa..." style="flex:1;margin:0;" onkeydown="if(event.key==='Enter')sendMsg();">
+          <button class="btn" style="width:auto;padding:0 16px;margin:0;font-size:16px;${ST.chatLoading?'opacity:.5;pointer-events:none':''}" onclick="sendMsg()">➤</button>
+        </div>
+        ${ST.chatHistory.length>0?`<div style="text-align:center;"><button class="btn-s btn-action" style="font-size:10px;padding:4px 8px;" onclick="clearChat()">🗑 Svuota chat</button></div>`:''}
+      </div>
+    </div>`;
+  }
+
+  return `
+  <div class="bebas" style="font-size:30px;color:var(--acc);margin:8px 0 4px;">🤖 AI COACH</div>
+
+  <div style="position:sticky;top:60px;z-index:10;background:var(--bg);padding:8px 0;margin-bottom:10px;border-bottom:1px solid var(--bord);">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;">
+      ${tabs.map(t => `<button class="btn-s" style="padding:10px 4px;background:${view===t.id?'var(--acc)':'var(--surf)'};color:${view===t.id?'#000':'var(--mut)'};border:1px solid ${view===t.id?'var(--acc)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;" onclick="ST.coachView='${t.id}';render()"><span style="font-size:16px;">${t.emo}</span><span>${t.lbl}</span></button>`).join('')}
     </div>
-  </div>`;
-}
+  </div>
+
+  ${view==='proactive' ? renderCoachProactive() : ''}
+  ${view==='recap' ? renderCoachRecap() : ''}
+  ${view==='tools' ? renderCoachTools() : ''}
+  `;
+};
+
+// ── COACH PROATTIVO ──
+window.renderCoachProactive = function() {
+  const alerts = window.getCoachAlerts();
+  if (alerts.length === 0) {
+    return `<div class="card" style="text-align:center;padding:30px;">
+      <div style="font-size:40px;margin-bottom:8px;">✨</div>
+      <div class="bebas" style="font-size:20px;color:var(--text);">Tutto sotto controllo</div>
+      <div style="font-size:12px;color:var(--mut);margin-top:6px;">Continua il tuo programma. Ti avviserò se serve.</div>
+    </div>`;
+  }
+  const lvlCol = { warning: 'var(--ora)', success: 'var(--gre)', info: 'var(--blu)' };
+  return `
+  <div style="font-size:11px;color:var(--mut);margin-bottom:10px;">Insight personalizzati basati sui tuoi dati.</div>
+  ${alerts.map(a => {
+    const col = lvlCol[a.level] || 'var(--blu)';
+    return `<div class="card" style="border-left:3px solid ${col};padding:12px 14px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+        <div style="font-size:20px;">${a.icon}</div>
+        <div style="font-size:13px;font-weight:700;color:${col};">${a.title}</div>
+      </div>
+      <div style="font-size:12px;color:var(--text);line-height:1.5;">${a.msg}</div>
+      ${a.action ? `<button class="btn-s" style="margin-top:8px;padding:8px 14px;background:${col};color:#000;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;" onclick="${a.action.cb}">${a.action.label} →</button>` : ''}
+    </div>`;
+  }).join('')}
+  `;
+};
+
+// ── COACH RECAP SETTIMANA + HEATMAP ──
+window.renderCoachRecap = function() {
+  const r = window.getWeeklyRecap();
+  const heat = window.getMuscleHeatmap();
+  const maxVol = Math.max(...Object.values(heat), 1);
+  const muscleLabels = { chest:'Petto', back:'Schiena', legs:'Gambe', shoulders:'Spalle', arms:'Braccia', core:'Core', cardio:'Cardio' };
+  return `
+  <div class="card" style="background:linear-gradient(135deg,rgba(167,139,250,.08),rgba(167,139,250,.02));border-color:var(--purp);">
+    <div style="font-size:11px;color:var(--purp);font-weight:700;letter-spacing:1.5px;">📅 ULTIMI 7 GIORNI</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;">
+      <div style="text-align:center;padding:10px;background:var(--surf);border-radius:10px;">
+        <div class="bebas" style="font-size:24px;color:var(--ora);">${r.workouts}<span style="font-size:11px;color:var(--mut);">/${r.targetWos}</span></div>
+        <div style="font-size:10px;color:var(--mut);">workout</div>
+      </div>
+      <div style="text-align:center;padding:10px;background:var(--surf);border-radius:10px;">
+        <div class="bebas" style="font-size:24px;color:#fbbf24;">${r.prCount}</div>
+        <div style="font-size:10px;color:var(--mut);">PR battuti</div>
+      </div>
+      <div style="text-align:center;padding:10px;background:var(--surf);border-radius:10px;">
+        <div class="bebas" style="font-size:18px;color:var(--text);">${r.totalVol.toLocaleString('it-IT')}<span style="font-size:9px;color:var(--mut);">kg</span></div>
+        <div style="font-size:10px;color:var(--mut);">volume totale</div>
+      </div>
+      <div style="text-align:center;padding:10px;background:var(--surf);border-radius:10px;">
+        <div class="bebas" style="font-size:18px;color:var(--ora);">${r.totalKcal.toLocaleString('it-IT')}</div>
+        <div style="font-size:10px;color:var(--mut);">kcal bruciate</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px;">
+      <div style="text-align:center;padding:8px;background:var(--bg);border:1px solid var(--bord);border-radius:8px;">
+        <div style="font-size:10px;color:var(--mut);">⚖️ Peso</div>
+        <div style="font-size:12px;font-weight:700;color:${(ST.p?.t==='cut'&&r.wChange<0)||(ST.p?.t==='bulk'&&r.wChange>0)?'var(--gre)':'var(--text)'};">${r.wChange>=0?'+':''}${r.wChange.toFixed(1)}kg</div>
+      </div>
+      <div style="text-align:center;padding:8px;background:var(--bg);border:1px solid var(--bord);border-radius:8px;">
+        <div style="font-size:10px;color:var(--mut);">🥗 Sgarri</div>
+        <div style="font-size:12px;font-weight:700;color:${r.cheats<=2?'var(--gre)':'var(--ora)'};">${r.cheats}</div>
+      </div>
+      <div style="text-align:center;padding:8px;background:var(--bg);border:1px solid var(--bord);border-radius:8px;">
+        <div style="font-size:10px;color:var(--mut);">😴 Sonno</div>
+        <div style="font-size:12px;font-weight:700;color:${r.avgSleep>=7?'var(--gre)':r.avgSleep>=6?'var(--ora)':'var(--red)'};">${r.avgSleep||'—'}${r.avgSleep?'h':''}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1.5px;margin-bottom:10px;">💪 GRUPPI MUSCOLARI</div>
+    ${Object.entries(heat).map(([k,v]) => {
+      const pct = maxVol > 0 ? (v/maxVol)*100 : 0;
+      const intensity = pct > 70 ? 'var(--gre)' : pct > 30 ? 'var(--ora)' : pct > 0 ? 'var(--blu)' : 'var(--bord)';
+      return `<div style="margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+          <div style="font-size:12px;color:var(--text);">${muscleLabels[k]||k}</div>
+          <div style="font-size:11px;color:var(--mut);">${v > 0 ? Math.round(v).toLocaleString('it-IT')+' kg' : '—'}</div>
+        </div>
+        <div style="height:8px;background:var(--bg);border-radius:4px;overflow:hidden;">
+          <div style="width:${pct}%;height:100%;background:${intensity};border-radius:4px;transition:width .4s;"></div>
+        </div>
+      </div>`;
+    }).join('')}
+    <div style="font-size:10px;color:var(--mut);margin-top:8px;line-height:1.4;">${(()=>{
+      const lowMuscles = Object.entries(heat).filter(([k,v]) => v === 0 && k !== 'cardio').map(([k]) => muscleLabels[k]||k);
+      if (lowMuscles.length > 0) return `⚠️ Non hai allenato: ${lowMuscles.join(', ')}.`;
+      return '✓ Hai bilanciato tutti i gruppi.';
+    })()}</div>
+  </div>
+  `;
+};
+
+// ── COACH STRUMENTI: gestione infortuni + altre azioni ──
+window.renderCoachTools = function() {
+  if (!ST.injuries) ST.injuries = [];
+  const today = new Date().toISOString().slice(0,10);
+  const activeInjuries = ST.injuries.filter(inj => inj.until >= today);
+  const areas = [
+    {id:'shoulder', emo:'💪', lbl:'Spalla'},
+    {id:'back', emo:'🔙', lbl:'Schiena'},
+    {id:'knee', emo:'🦵', lbl:'Ginocchio'},
+    {id:'wrist', emo:'✋', lbl:'Polso'},
+    {id:'ankle', emo:'🦶', lbl:'Caviglia'},
+    {id:'elbow', emo:'💪', lbl:'Gomito'}
+  ];
+  return `
+  <div class="card" style="border-color:var(--red);">
+    <div style="font-size:11px;color:var(--red);font-weight:700;letter-spacing:1.5px;margin-bottom:6px;">🤕 INFORTUNI</div>
+    <div style="font-size:11px;color:var(--mut);margin-bottom:10px;">Esclude esercizi che coinvolgono la zona.</div>
+    ${activeInjuries.length > 0 ? `
+      <div style="margin-bottom:10px;">
+        ${activeInjuries.map(inj => {
+          const a = areas.find(x => x.id === inj.area);
+          const daysLeft = Math.ceil((new Date(inj.until).getTime() - Date.now()) / 86400000);
+          return `<div style="display:flex;align-items:center;gap:8px;padding:10px;background:rgba(239,68,68,.08);border:1px solid var(--red);border-radius:8px;margin-bottom:6px;">
+            <div style="font-size:18px;">${a?.emo||'⚠️'}</div>
+            <div style="flex:1;">
+              <div style="font-size:13px;font-weight:700;color:var(--red);">${a?.lbl||inj.area}</div>
+              <div style="font-size:10px;color:var(--mut);">${daysLeft} ${daysLeft===1?'giorno':'giorni'} rimanenti</div>
+            </div>
+            <button onclick="window.removeInjury('${inj.area}')" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;" title="Guarito">✓</button>
+          </div>`;
+        }).join('')}
+      </div>` : `<div style="font-size:11px;color:var(--mut);font-style:italic;text-align:center;padding:10px;">Nessun infortunio attivo.</div>`}
+    <button class="btn-s" style="width:100%;padding:10px;background:rgba(239,68,68,.1);border:1.5px dashed var(--red);color:var(--red);font-weight:700;font-size:12px;border-radius:8px;cursor:pointer;" onclick="window.openInjurySheet()">+ SEGNALA INFORTUNIO</button>
+  </div>
+
+  <div class="card">
+    <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1.5px;margin-bottom:6px;">🎓 ALTRE AZIONI</div>
+    <button class="btn-s" style="width:100%;padding:10px;margin-bottom:6px;background:var(--surf);border:1px solid var(--bord);color:var(--text);font-size:12px;border-radius:8px;text-align:left;cursor:pointer;" onclick="window.startOnboardingTour()">🎯 Riguarda tutorial introduttivo</button>
+    <button class="btn-s" style="width:100%;padding:10px;background:var(--surf);border:1px solid var(--bord);color:var(--text);font-size:12px;border-radius:8px;text-align:left;cursor:pointer;" onclick="window.aiRecalculatePlan && window.aiRecalculatePlan(true)">🔄 Ricalcola piano AI ora</button>
+  </div>
+  `;
+};
+
+// ── INFORTUNI ──
+window.openInjurySheet = function() {
+  ST.sheet = 'injury';
+  ST.sheetData = { area: 'shoulder', days: 7 };
+  render();
+};
+window.confirmInjury = function() {
+  const d = ST.sheetData;
+  if (!d?.area || !d.days) return;
+  if (!ST.injuries) ST.injuries = [];
+  ST.injuries = ST.injuries.filter(i => i.area !== d.area);
+  const until = new Date(Date.now() + d.days * 86400000).toISOString().slice(0,10);
+  ST.injuries.push({ area: d.area, until });
+  ST.sheet = null; ST.sheetData = null;
+  save().then(() => render());
+};
+window.removeInjury = async function(area) {
+  if (!ST.injuries) return;
+  ST.injuries = ST.injuries.filter(i => i.area !== area);
+  await save();
+  render();
+};
+
+// ── ONBOARDING TOUR ──
+window.startOnboardingTour = function() {
+  ST.sheet = 'onboarding';
+  ST.sheetData = { step: 0 };
+  render();
+};
+window.advanceOnboarding = function() {
+  if (!ST.sheetData) return;
+  ST.sheetData.step++;
+  const steps = window.__onboardingSteps || [];
+  if (ST.sheetData.step >= steps.length) {
+    ST.onboardingDone = true;
+    ST.sheet = null; ST.sheetData = null;
+    save();
+  }
+  render();
+};
+
+window.__onboardingSteps = [
+  { emo:'👋', title:'Benvenuto!', msg:'Sono FitTracker PRO, ti guiderò in pochi passi. Allenamento, alimentazione, progressi: tutto in un\'app.' },
+  { emo:'🏠', title:'La Home', msg:'Trovi sempre lo stato del giorno: pasto, allenamento, peso, kcal, streak. Quattro card cliccabili in alto per accesso rapido.' },
+  { emo:'🏋️', title:'Allenamento', msg:'Tap sulla scheda del giorno. Ti guido serie per serie: peso, reps, riposo. Tracciamento PR automatico.' },
+  { emo:'🥗', title:'Alimentazione', msg:'Pasti calcolati sulle tue intolleranze. Sgarri tracciabili con un tap. Calcoli automatici di proteine/carbo/grassi.' },
+  { emo:'📊', title:'Statistiche Pro', msg:'Confronto periodi, calcolatore 1RM, calendario unificato, top progressi.' },
+  { emo:'🤖', title:'AI Coach', msg:'Alert personalizzati, riepilogo settimana, gestione infortuni, chat AI. Per ogni dubbio.' },
+  { emo:'⚙️', title:'Tutto pronto', msg:'Personalizza profilo, programma, intolleranze, notifiche, tema in Configurazione. Iniziamo!' }
+];
+
+window.renderCoach = function(){
+  const sx=AU.profile?.sx||'m';
+  if (!ST.coachView) ST.coachView = 'proactive';
+  const view = ST.coachView;
+  const tabs = [
+    {id:'proactive', emo:'🔔', lbl:'Per te'},
+    {id:'recap', emo:'📊', lbl:'Settimana'},
+    {id:'tools', emo:'🛠️', lbl:'Strumenti'},
+    {id:'chat', emo:'💬', lbl:'Chat'}
+  ];
+
+  if (view === 'chat') {
+    return `
+    <div style="display:flex;flex-direction:column;min-height:calc(100vh - 130px);padding-top:6px;">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:10px;">
+        ${tabs.map(t => `<button class="btn-s" style="padding:10px 4px;background:${view===t.id?'var(--acc)':'var(--surf)'};color:${view===t.id?'#000':'var(--mut)'};border:1px solid ${view===t.id?'var(--acc)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;" onclick="ST.coachView='${t.id}';render()"><span style="font-size:16px;">${t.emo}</span><span>${t.lbl}</span></button>`).join('')}
+      </div>
+      <div id="chatArea" style="flex:1;overflow-y:auto;padding:8px 0 14px;display:flex;flex-direction:column;gap:8px;min-height:300px;">
+        ${ST.chatHistory.length===0?`<div style="text-align:center;margin-top:10px;">
+          <div style="font-size:13px;color:var(--text);line-height:1.55;margin-bottom:14px;padding:14px;background:var(--card);border:1px solid var(--bord);border-radius:12px;">🤖 Sono Marcello. Conosco il tuo profilo. Chiedimi quello che vuoi.</div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            ${[sx==='f'?'Come ottimizzo i glutei?':'Come accelero la perdita di grasso?','Cosa mangiare prima dell\'allenamento?','Ho saltato 3 allenamenti, cosa faccio?'].map(q=>`<div onclick="el('aiIn').value='${q}';sendMsg();" style="cursor:pointer;background:var(--surf);border:1px solid var(--bord);border-radius:10px;padding:10px 12px;font-size:12px;text-align:left;">${q}</div>`).join('')}
+          </div>
+        </div>`:ST.chatHistory.map(m=>`<div style="display:flex;justify-content:${m.role==='user'?'flex-end':'flex-start'};"><div class="bbl ${m.role==='user'?'bbl-u':'bbl-ai'}">${m.content.replace(/\n/g,'<br>')}</div></div>`).join('')}
+        ${ST.chatLoading?`<div style="display:flex;"><div class="bbl bbl-ai"><span style="letter-spacing:3px;animation:blink 1s infinite">●●●</span></div></div>`:''}
+      </div>
+      <div style="padding:10px 0;background:var(--bg);border-top:1px solid var(--bord);">
+        <div style="display:flex;gap:8px;margin-bottom:${ST.chatHistory.length?'6':'0'}px;">
+          <input id="aiIn" placeholder="Chiedimi qualcosa..." style="flex:1;margin:0;" onkeydown="if(event.key==='Enter')sendMsg();">
+          <button class="btn" style="width:auto;padding:0 16px;margin:0;font-size:16px;${ST.chatLoading?'opacity:.5;pointer-events:none':''}" onclick="sendMsg()">➤</button>
+        </div>
+        ${ST.chatHistory.length>0?`<div style="text-align:center;"><button class="btn-s btn-action" style="font-size:10px;padding:4px 8px;" onclick="clearChat()">🗑 Svuota chat</button></div>`:''}
+      </div>
+    </div>`;
+  }
+
+  return `
+  <div class="bebas" style="font-size:30px;color:var(--acc);margin:8px 0 4px;">🤖 AI COACH</div>
+
+  <div style="position:sticky;top:60px;z-index:10;background:var(--bg);padding:8px 0;margin-bottom:10px;border-bottom:1px solid var(--bord);">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;">
+      ${tabs.map(t => `<button class="btn-s" style="padding:10px 4px;background:${view===t.id?'var(--acc)':'var(--surf)'};color:${view===t.id?'#000':'var(--mut)'};border:1px solid ${view===t.id?'var(--acc)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;" onclick="ST.coachView='${t.id}';render()"><span style="font-size:16px;">${t.emo}</span><span>${t.lbl}</span></button>`).join('')}
+    </div>
+  </div>
+
+  ${view==='proactive' ? renderCoachProactive() : ''}
+  ${view==='recap' ? renderCoachRecap() : ''}
+  ${view==='tools' ? renderCoachTools() : ''}
+  `;
+};
 
 window.renderSettings = function(mac){
   const sx=AU.profile?.sx||'m';
@@ -10918,21 +11755,36 @@ window.render = function() {
   const root=document.getElementById('app');
   if(!AU.user){renderAuth(root);return;}
 
-  // ── PRESERVA SCROLL POSITION (sessione 15) ──
+  // ── PRESERVA SCROLL POSITION (sessione 15, esteso sessione 16) ──
   // Quando render() viene chiamato dopo cambi di stato (toggle, save, espandi),
   // il browser perde la posizione di scroll perché root.innerHTML distrugge il DOM.
   // Salvo prima del render, ripristino dopo.
   // NON preserva tra cambi di TAB (lì voglio scroll a 0) e quando si apre/chiude SHEET.
   const _prevTab = window.__lastRenderedTab;
   const _prevSheet = window.__lastRenderedSheet;
+  const _prevWoPhase = window.__lastRenderedWoPhase;
+  const _prevStep = window.__lastRenderedStep;
   const _curTab = ST.tab;
   const _curSheet = ST.sheet || null;
+  const _curWoPhase = ST.woPhase || null;
+  const _curStep = ST.step;
   const _isTabChange = _prevTab && _prevTab !== _curTab;
   const _isSheetChange = _prevSheet !== _curSheet;
-  const _shouldPreserveScroll = !_isTabChange && !_isSheetChange;
+  // Cambio fase workout (ready→active→rest) o cambio esercizio = scroll a 0
+  const _isWorkoutPhaseChange = (_prevWoPhase !== _curWoPhase) || (_prevStep !== _curStep);
+  const _shouldPreserveScroll = !_isTabChange && !_isSheetChange && !_isWorkoutPhaseChange;
+  // Salva scroll della finestra principale
   const _savedScrollY = _shouldPreserveScroll ? (window.scrollY || window.pageYOffset || 0) : 0;
+  // Salva scroll del container .wo (runtime workout) se presente
+  const _woEl = document.querySelector('.wo');
+  const _savedWoScroll = _shouldPreserveScroll && _woEl ? _woEl.scrollTop : 0;
+  // Salva scroll del container interno .wo > div con overflow (per allenamento attivo)
+  const _woInnerEl = _woEl ? _woEl.querySelector(':scope > div[style*="overflow-y"]') : null;
+  const _savedWoInnerScroll = _shouldPreserveScroll && _woInnerEl ? _woInnerEl.scrollTop : 0;
   window.__lastRenderedTab = _curTab;
   window.__lastRenderedSheet = _curSheet;
+  window.__lastRenderedWoPhase = _curWoPhase;
+  window.__lastRenderedStep = _curStep;
 
   // Auto-ricalcolo coaching settimanale: se sono passati >= 7 giorni dall'ultimo
   // consiglio, rigenera automaticamente in background al primo render utile.
@@ -11143,7 +11995,24 @@ window.render = function() {
       })()}
       `}
     </div>
-    <div style="position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--bord);padding:14px;">${!isActive?`<button class="btn btn-gre" style="height:72px;font-size:24px;" onclick="startSet()">▶ INIZIA SERIE ${ST.currentSet+1}/${totalSets}</button>`:`<button class="btn" style="height:72px;font-size:22px;" onclick="completeSet()">✅ SERIE COMPLETATA</button>`}</div></div>`;return;
+    <div style="position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--bord);padding:14px;">${!isActive?`<button class="btn btn-gre" style="height:72px;font-size:24px;" onclick="startSet()">▶ INIZIA SERIE ${ST.currentSet+1}/${totalSets}</button>`:`<button class="btn" style="height:72px;font-size:22px;" onclick="completeSet()">✅ SERIE COMPLETATA</button>`}</div></div>`;
+    // ── RIPRISTINA SCROLL WORKOUT (sessione 16) ──
+    // Quando l'utente espande sezioni come "Errori comuni", il render distrugge il DOM
+    // e lo scroll si resetta. Ripristino la posizione precedente del container scrollabile.
+    if (_shouldPreserveScroll && (_savedWoInnerScroll > 0 || _savedWoScroll > 0)) {
+      requestAnimationFrame(() => {
+        try {
+          const newWo = document.querySelector('.wo');
+          if (newWo) {
+            const inner = newWo.querySelector(':scope > div[style*="overflow-y"]');
+            if (inner && _savedWoInnerScroll > 0) inner.scrollTop = _savedWoInnerScroll;
+            if (_savedWoScroll > 0) newWo.scrollTop = _savedWoScroll;
+          }
+        } catch(_) {}
+      });
+    }
+    try { if (typeof applyTheme === 'function') applyTheme(ST?.theme || 'dark'); } catch(_) {}
+    return;
   }
   // ── FIX 5: Swap sheet con spiegazione chiara (sostituzione, NON salto) — sessione 13: + custom ──
   const sheetH=ST.sheet==='swap'&&ST.sheetData?`<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div>
@@ -11519,6 +12388,68 @@ window.render = function() {
     </div></div>`;
   })():
   // ── SHEET CREA ESERCIZIO PERSONALIZZATO (sessione 13) ──
+  // ── SHEET INFORTUNIO (sessione 16) ──
+  ST.sheet==='injury'&&ST.sheetData?(()=>{
+    const d = ST.sheetData;
+    const areas = [
+      {id:'shoulder', emo:'💪', lbl:'Spalla'},
+      {id:'back', emo:'🔙', lbl:'Schiena'},
+      {id:'knee', emo:'🦵', lbl:'Ginocchio'},
+      {id:'wrist', emo:'✋', lbl:'Polso'},
+      {id:'ankle', emo:'🦶', lbl:'Caviglia'},
+      {id:'elbow', emo:'💪', lbl:'Gomito'}
+    ];
+    return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh">
+      <div class="sh-h"></div>
+      <div class="bebas" style="font-size:22px;margin-bottom:6px;">🤕 SEGNALA INFORTUNIO</div>
+      <div style="font-size:12px;color:var(--mut);margin-bottom:14px;">Esclude esercizi della zona dal piano per il periodo che indichi.</div>
+
+      <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:6px;">ZONA INTERESSATA</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px;">
+        ${areas.map(a => `<button class="btn-s" style="padding:12px 4px;background:${d.area===a.id?'var(--red)':'var(--surf)'};color:${d.area===a.id?'#fff':'var(--text)'};border:1px solid ${d.area===a.id?'var(--red)':'var(--bord)'};font-weight:700;border-radius:10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;" onclick="ST.sheetData.area='${a.id}';render()">
+          <span style="font-size:18px;">${a.emo}</span><span>${a.lbl}</span>
+        </button>`).join('')}
+      </div>
+
+      <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:6px;">DURATA STIMATA</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px;">
+        ${[3,7,14,30].map(n => `<button class="btn-s" style="padding:12px 4px;background:${d.days===n?'var(--red)':'var(--surf)'};color:${d.days===n?'#fff':'var(--text)'};border:1px solid ${d.days===n?'var(--red)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;font-size:13px;" onclick="ST.sheetData.days=${n};render()">${n}gg</button>`).join('')}
+      </div>
+
+      <div style="background:rgba(96,165,250,.06);border:1px solid var(--blu);border-radius:8px;padding:10px;margin-bottom:14px;">
+        <div style="font-size:11px;color:var(--blu);font-weight:700;margin-bottom:3px;">💡 NOTA</div>
+        <div style="font-size:11px;color:var(--text);line-height:1.4;">Per infortuni gravi consulta sempre un medico. Quando guarisci prima del previsto, premi ✓ per riattivare.</div>
+      </div>
+
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-action" style="flex:1;padding:12px;" onclick="closeSheet()">ANNULLA</button>
+        <button class="btn" style="flex:2;padding:12px;background:var(--red);color:#fff;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;" onclick="confirmInjury()">✓ CONFERMA</button>
+      </div>
+    </div></div>`;
+  })():
+  ST.sheet==='onboarding'&&ST.sheetData?(()=>{
+    const steps = window.__onboardingSteps || [];
+    const idx = ST.sheetData.step || 0;
+    if (idx >= steps.length) return '';
+    const s = steps[idx];
+    const isLast = idx === steps.length - 1;
+    return `<div class="sh-ov" style="background:rgba(0,0,0,.85);"><div class="sh" style="text-align:center;">
+      <div class="sh-h"></div>
+      <div style="font-size:54px;margin:10px 0;">${s.emo}</div>
+      <div class="bebas" style="font-size:28px;color:var(--acc);margin-bottom:8px;letter-spacing:1.5px;">${s.title}</div>
+      <div style="font-size:14px;color:var(--text);line-height:1.55;margin-bottom:18px;">${s.msg}</div>
+
+      <!-- Indicatori step -->
+      <div style="display:flex;justify-content:center;gap:5px;margin-bottom:16px;">
+        ${steps.map((_,i) => `<div style="width:${i===idx?'18':'8'}px;height:6px;border-radius:3px;background:${i===idx?'var(--acc)':i<idx?'var(--gre)':'var(--bord)'};transition:all .25s;"></div>`).join('')}
+      </div>
+
+      <div style="display:flex;gap:6px;">
+        ${idx > 0 ? `<button class="btn btn-action" style="flex:1;padding:12px;" onclick="ST.sheetData.step--;render()">← Indietro</button>` : `<button class="btn btn-action" style="flex:1;padding:12px;" onclick="closeSheet()">Salta</button>`}
+        <button class="btn" style="flex:2;padding:12px;background:var(--acc);color:#000;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;" onclick="advanceOnboarding()">${isLast ? '✓ INIZIA' : 'AVANTI →'}</button>
+      </div>
+    </div></div>`;
+  })():
   ST.sheet==='customExercise'&&ST.sheetData?(()=>{
     const d = ST.sheetData;
     const cats = [
@@ -11994,6 +12925,7 @@ window.render = function() {
     {id:'measures',ic:'📐',lbl:'Misure',group:'tools'},
     // ANALISI
     {id:'body',ic:'📊',lbl:'Progressi',group:'insights'},
+    {id:'stats',ic:'📈',lbl:'Statistiche Pro',group:'insights'}, // sessione 16
     {id:'coach',ic:'🤖',lbl:'AI Coach',group:'insights'},
     {id:'social',ic:'🏆',lbl:'Classifica',group:'insights'},
     // ALTRO
@@ -12076,6 +13008,7 @@ window.render = function() {
   else if(ST.tab==='measures') H+=renderMeasures(cW,mac,theme,pWeek,sx);
   else if(ST.tab==='social') H+=renderSocial();
   else if(ST.tab==='coach') H+=renderCoach();
+  else if(ST.tab==='stats') H+=renderStatsPro(); // sessione 16
   else if(ST.tab==='share') H+=renderShare();
   else if(ST.tab==='set') H+=renderSettings(mac);
   H+=`</div></div>`;
