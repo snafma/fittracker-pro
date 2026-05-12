@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION23-FOODS-BARCODE-COMMUNITY">
+<meta name="ft-version" content="build-SESSION24-CART-FAVORITES">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -478,7 +478,7 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
     <div class="spinner"></div>
     <div class="bebas" style="color:var(--text);font-size:28px;letter-spacing:3px;">SYSTEM BOOTING</div>
     <div style="color:var(--mut);font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:1px;">Connessione al Cloud Secure Database...</div>
-    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION23</div>
+    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION24</div>
   </div>
 </div>
 
@@ -5343,6 +5343,8 @@ window.defST=function(){
     travelMode:null,             // {active:true, startD:'2026-05-04', endD:'2026-05-08', hasGym:false, sessions:3, dur:30}
     // ── Campi sessione 9 ──
     customFoods:[],              // cibi personalizzati creati dall'utente per gli sgarri
+    // ── Campi sessione 24 ──
+    cartFavorites:[],            // combo carrello salvati: [{id, name, items:[{foodId,qty,grams,kcal,label}]}]
     shoppingState:{removed:[], extras:[], checked:[], lastGenWeek:null}, // stato lista spesa
     // ── Campi sessione 13 ──
     workoutSecOpen:{steps:false, tips:false, muscle:false, mistakes:false, breath:false}, // sezioni espandibili runtime workout
@@ -5382,6 +5384,7 @@ window.saveU=async function(){
       workoutSecOpen:ST.workoutSecOpen,
       customExercises:ST.customExercises,
       customFoods:ST.customFoods,
+      cartFavorites:ST.cartFavorites,
       theme:ST.theme,
       injuries:ST.injuries,
       onboardingDone:ST.onboardingDone,
@@ -7086,6 +7089,54 @@ window.logCheat=async function(){
   // Caso normale: aggiungi al log
   applyCheatToLog(txt,result.items||[],result.total);
 }
+// ═══════════════════════════════════════════════════════════
+// AUTO-CLASSIFY MEAL TYPE (sessione 24)
+// Classifica un pasto in: cheat (sgarro) / replacement (sostituzione) / light (leggero) / snack (fuori pasto)
+// Basato sul confronto tra kcal effettivo e kcal previsto per quel slot
+// ═══════════════════════════════════════════════════════════
+window.classifyMealKcal = function(mealSlot, actualKcal) {
+  // Fuori pasto: sempre "snack" (extra, sempre sgarro a meno che <50 kcal)
+  if (mealSlot === 'altro' || mealSlot === 'other') return actualKcal > 50 ? 'cheat' : 'snack';
+
+  // Pasti tracciabili: confronto vs target previsto
+  const trackable = ['col','sp1','pra','sp2','cen','sp3'];
+  if (!trackable.includes(mealSlot)) return 'cheat';
+
+  // Calcolo kcal target per quel slot
+  if (typeof window.calcMacros !== 'function' || !ST.p) return 'cheat';
+  try {
+    const profile = ST.profile || AU.profile || {};
+    const cW = ST.h.length ? ST.h[ST.h.length-1].w : (ST.p.s || 70);
+    const an = typeof analyze === 'function' ? analyze(ST.h, ST.p) : {};
+    const sess = ST.p.sessions != null ? ST.p.sessions : 3;
+    const extraK = typeof getActivitiesKcal === 'function' ? getActivitiesKcal(currentDateStr) : 0;
+    const mac = calcMacros(cW, profile.ht || 170, profile.ag || 30, profile.sx || 'm', ST.p, sess, an, extraK);
+    if (!mac?.kcal) return 'cheat';
+
+    // Distribuzione kcal per pasto (approssimata)
+    const slotShare = {
+      col: 0.20,  // 20% colazione
+      sp1: 0.10,  // 10% spuntino mattina
+      pra: 0.30,  // 30% pranzo
+      sp2: 0.10,  // 10% spuntino pomeriggio
+      cen: 0.25,  // 25% cena
+      sp3: 0.05   // 5% spuntino sera
+    };
+    const expectedKcal = Math.round(mac.kcal * (slotShare[mealSlot] || 0.20));
+
+    // Classificazione: ±15% range = sostituzione, +15% = sgarro, -15% = leggero
+    const diff = actualKcal - expectedKcal;
+    const pct = (diff / expectedKcal) * 100;
+
+    if (pct > 15) return 'cheat';         // 🔴 sgarro vero (>15% sopra)
+    if (pct < -15) return 'light';        // 🟢 leggero (>15% sotto)
+    return 'replacement';                  // 🟡 sostituzione (entro ±15%)
+  } catch(e) {
+    console.warn('classifyMealKcal err:', e);
+    return 'cheat';
+  }
+};
+
 window.applyCheatToLog=function(txt,items,total){
   if(!ST.nutri[currentDateStr]) ST.nutri[currentDateStr]={k:0,p:0,c:0,f:0,logged:[],skipped:[],cheatLog:[]};
   if(!ST.nutri[currentDateStr].cheatLog) ST.nutri[currentDateStr].cheatLog=[];
@@ -7095,6 +7146,10 @@ window.applyCheatToLog=function(txt,items,total){
   // Determina pasto: priorità su selezione esplicita, poi ultimo, poi 'altro'
   const mealSlot = window.cheatMealSlot || window.__cheatMeal || ST.lastCheatMealSlot || 'altro';
 
+  // ── SESSIONE 24: AUTO-CLASSIFY pasto in cheat/replacement/light/snack ──
+  // Confronto kcal effettivo vs kcal previsto del pasto per dare feedback all'utente
+  const mealType = window.classifyMealKcal ? window.classifyMealKcal(mealSlot, totalK) : 'cheat';
+
   // ── Macros realistici per sgarri (pizza/dolci/fritti tipici) ──
   // Distribuzione media: 12% proteine, 48% carbo, 40% grassi (totale 100%)
   // Convertendo: prot in grammi (4 kcal/g), carb (4 kcal/g), fat (9 kcal/g)
@@ -7102,7 +7157,7 @@ window.applyCheatToLog=function(txt,items,total){
   ST.nutri[currentDateStr].p+=Math.round(totalK*0.12/4);
   ST.nutri[currentDateStr].c+=Math.round(totalK*0.48/4);
   ST.nutri[currentDateStr].f+=Math.round(totalK*0.40/9);
-  ST.nutri[currentDateStr].cheatLog.push({txt,kcal:totalK,items,ts:Date.now(),mealSlot});
+  ST.nutri[currentDateStr].cheatLog.push({txt,kcal:totalK,items,ts:Date.now(),mealSlot,mealType});
 
   // ── FIX: Se lo sgarro è per un pasto specifico (non "altro" o "fuori pasto"),
   // marca quel pasto come "saltato" così l'utente non lo segna ANCHE come fatto.
@@ -7124,12 +7179,12 @@ window.applyCheatToLog=function(txt,items,total){
   // NON resetto cheatMealSlot: rimane la selezione visibile per il prossimo sgarro
   // (l'utente vede chiaramente che il pasto è "ricordato")
   window.__cheatMeal=null;
-  showCheatToast(totalK);
+  showCheatToast(totalK, mealType);
   save();
 }
 
 // Toast di feedback dopo aver salvato uno sgarro
-window.showCheatToast=function(addedKcal){
+window.showCheatToast=function(addedKcal, mealType){
   // Calcola consumo totale aggiornato
   const dLog=ST.nutri[currentDateStr]||{k:0};
   // Per stimare il target serve macros corrente
@@ -7152,8 +7207,16 @@ window.showCheatToast=function(addedKcal){
   const toast=document.createElement('div');
   toast.id='cheatToast';
   const isOver=dLog.k>targetK;
-  toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:200;background:'+(isOver?'#ef4444':'#22c55e')+';color:#fff;padding:14px 20px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.4);font-size:13px;font-weight:600;max-width:90vw;text-align:center;line-height:1.5;';
-  toast.innerHTML=`✅ Sgarro registrato: <strong>+${addedKcal} kcal</strong><br><span style="font-size:11px;opacity:.9;">Oggi: ${dLog.k}/${targetK} kcal · ${isOver?'+'+(dLog.k-targetK)+' eccesso':remaining+' rimaste'}</span>`;
+  // SESSIONE 24: messaggio + colore in base al tipo classificato
+  let bgCol = isOver?'#ef4444':'#22c55e';
+  let typeIcon = '✅';
+  let typeLbl = 'registrato';
+  if (mealType === 'cheat') { bgCol = '#ef4444'; typeIcon = '🔴'; typeLbl = 'sgarro vero'; }
+  else if (mealType === 'replacement') { bgCol = '#ca8a04'; typeIcon = '🟡'; typeLbl = 'sostituzione pasto (entro budget)'; }
+  else if (mealType === 'light') { bgCol = '#16a34a'; typeIcon = '🟢'; typeLbl = 'pasto leggero'; }
+  else if (mealType === 'snack') { bgCol = '#ea580c'; typeIcon = '🟠'; typeLbl = 'fuori pasto'; }
+  toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:200;background:'+bgCol+';color:#fff;padding:14px 20px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.4);font-size:13px;font-weight:600;max-width:90vw;text-align:center;line-height:1.5;';
+  toast.innerHTML=`${typeIcon} Pasto ${typeLbl}: <strong>+${addedKcal} kcal</strong><br><span style="font-size:11px;opacity:.9;">Oggi: ${dLog.k}/${targetK} kcal · ${isOver?'+'+(dLog.k-targetK)+' eccesso':remaining+' rimaste'}</span>`;
   document.body.appendChild(toast);
   setTimeout(()=>{toast.style.opacity='0';toast.style.transition='opacity .4s';setTimeout(()=>toast.remove(),400);},3500);
 };
@@ -7340,6 +7403,20 @@ window.__barcodeStream = null;
 window.__barcodeScanning = false;
 
 window.startBarcodeScan = async function() {
+  window.__barcodeMode = 'newFood';
+  return _doBarcodeScan();
+};
+
+// SESSIONE 24: variante per aggiungere direttamente al carrello sgarro
+window.startBarcodeScanForCart = async function() {
+  window.__barcodeMode = 'cart';
+  // Memorizzo lo stato precedente per tornarci dopo
+  window.__barcodePrevSheet = ST.sheet;
+  window.__barcodePrevData = ST.sheetData ? {...ST.sheetData} : null;
+  return _doBarcodeScan();
+};
+
+async function _doBarcodeScan() {
   // Check supporto
   if (!('BarcodeDetector' in window)) {
     alert('Il tuo browser non supporta lo scan del codice a barre.\n\nFunziona su:\n• iPhone con iOS 17+ in Safari\n• Android con Chrome aggiornato\n\nIn alternativa, inserisci manualmente il codice qui sotto.');
@@ -7416,7 +7493,7 @@ window.startBarcodeScan = async function() {
     }
     stopBarcodeScan();
   }
-};
+}
 
 window.stopBarcodeScan = function(closeSheet = true) {
   window.__barcodeScanning = false;
@@ -7425,18 +7502,32 @@ window.stopBarcodeScan = function(closeSheet = true) {
     window.__barcodeStream = null;
   }
   if (closeSheet && ST.sheet === 'barcodeScan') {
-    ST.sheet = 'customFood';
-    if (!ST.sheetData) ST.sheetData = {};
+    // Sessione 24: se eravamo in modalità cart, torno al picker DB
+    if (window.__barcodeMode === 'cart') {
+      ST.sheet = window.__barcodePrevSheet || 'cheatDb';
+      ST.sheetData = window.__barcodePrevData || {};
+    } else {
+      ST.sheet = 'customFood';
+      if (!ST.sheetData) ST.sheetData = {};
+    }
     render();
   }
 };
 
 window.lookupBarcode = async function(code) {
-  // Mostra loading
-  ST.sheet = 'customFood';
-  if (!ST.sheetData) ST.sheetData = {};
-  ST.sheetData.barcodeLoading = true;
-  ST.sheetData.barcodeCode = code;
+  const isCart = window.__barcodeMode === 'cart';
+  // Mostra loading: se mode cart torno alla sheet cheatDb e mostro loader lì
+  if (isCart) {
+    ST.sheet = window.__barcodePrevSheet || 'cheatDb';
+    ST.sheetData = window.__barcodePrevData || ST.sheetData || { mode:'select', cart:[], foodQuery:'', foodCat:null, grams:100, meal: window.cheatMealSlot || 'altro' };
+    ST.sheetData.barcodeLoading = true;
+    ST.sheetData.barcodeCode = code;
+  } else {
+    ST.sheet = 'customFood';
+    if (!ST.sheetData) ST.sheetData = {};
+    ST.sheetData.barcodeLoading = true;
+    ST.sheetData.barcodeCode = code;
+  }
   render();
 
   try {
@@ -7463,7 +7554,7 @@ window.lookupBarcode = async function(code) {
     const fat = Math.round((n['fat_100g'] || 0) * 10) / 10;
 
     if (!kcal) {
-      ST.sheetData.barcodeError = 'Trovato "' + fullName + '" ma mancano dati nutrizionali. Compila manualmente.';
+      ST.sheetData.barcodeError = 'Trovato "' + fullName + '" ma mancano dati nutrizionali. ' + (isCart?'Cercalo manualmente nel DB.':'Compila manualmente.');
       ST.sheetData.name = fullName;
       render();
       return;
@@ -7483,7 +7574,34 @@ window.lookupBarcode = async function(code) {
     else if (cats.includes('biscuit') || cats.includes('dessert') || cats.includes('cake') || cats.includes('chocolate')) cat = 'dolci';
     else if (cats.includes('legume')) cat = 'legumi';
 
-    // Pre-popola la sheet
+    if (isCart) {
+      // ── MODE CART: salvo come "selectedFood" virtuale e vado direttamente al configure quantità ──
+      const virtualFood = {
+        id: 'bc_' + code,
+        name: fullName,
+        cat: cat,
+        kcal: kcal,
+        p: prot,
+        c: carbs,
+        f: fat,
+        refGrams: 100,
+        isPortion: false,
+        fromBarcode: true,
+        barcodeCode: code
+      };
+      ST.sheet = 'cheatDb';
+      // Mantengo carrello esistente
+      ST.sheetData.selectedFood = virtualFood;
+      ST.sheetData.grams = 100;
+      ST.sheetData.mode = 'configure';
+      ST.sheetData.barcodeSuccess = `✓ Trovato: ${fullName}`;
+      delete ST.sheetData.barcodeLoading;
+      delete ST.sheetData.barcodeError;
+      render();
+      return;
+    }
+
+    // Pre-popola la sheet customFood (mode newFood)
     ST.sheetData.name = fullName;
     ST.sheetData.cat = cat;
     ST.sheetData.kcal = kcal;
@@ -7497,7 +7615,7 @@ window.lookupBarcode = async function(code) {
     render();
   } catch(err) {
     ST.sheetData.barcodeLoading = false;
-    ST.sheetData.barcodeError = 'Errore di rete. Compila manualmente.';
+    ST.sheetData.barcodeError = 'Errore di rete. ' + (isCart?'Riprova oppure cerca manualmente.':'Compila manualmente.');
     render();
   }
 };
@@ -7582,6 +7700,61 @@ window.confirmCheatCart=function(){
   ST.sheet=null;
   ST.sheetData=null;
 };
+
+// ═══════════════════════════════════════════════════════════
+// PREFERITI CARRELLO (sessione 24)
+// Permette di salvare combinazioni di cibi che si usano spesso
+// Es. "Mio pranzo standard" = pasta 100g + petto pollo 150g + insalata
+// ═══════════════════════════════════════════════════════════
+window.saveCartAsFavorite = function() {
+  if (!ST.sheetData?.cart || !ST.sheetData.cart.length) return;
+  const name = prompt('Come vuoi chiamare questo combo?\nEs. "Pranzo da ufficio", "Spuntino post workout"...');
+  if (!name || !name.trim()) return;
+  if (!ST.cartFavorites) ST.cartFavorites = [];
+  ST.cartFavorites.push({
+    id: 'fav_' + Date.now(),
+    name: name.trim().substring(0, 40),
+    items: ST.sheetData.cart.map(it => ({
+      foodId: it.foodId || null,
+      qty: it.qty || 1,
+      grams: it.grams || null,
+      kcal: it.kcal,
+      label: it.label
+    })),
+    createdAt: Date.now()
+  });
+  save();
+  alert(`✓ Combo "${name.trim()}" salvato! Lo ritrovi in cima ai cibi quando apri il picker.`);
+  render();
+};
+
+window.useCartFavorite = function(favId) {
+  if (!ST.cartFavorites || !ST.sheetData) return;
+  const fav = ST.cartFavorites.find(f => f.id === favId);
+  if (!fav) return;
+  // Aggiungo TUTTI gli items del combo al carrello attuale
+  if (!ST.sheetData.cart) ST.sheetData.cart = [];
+  for (const it of fav.items) {
+    ST.sheetData.cart.push({
+      foodId: it.foodId,
+      qty: it.qty,
+      grams: it.grams,
+      kcal: it.kcal,
+      label: it.label
+    });
+  }
+  render();
+};
+
+window.deleteCartFavorite = function(favId) {
+  if (!ST.cartFavorites) return;
+  const fav = ST.cartFavorites.find(f => f.id === favId);
+  if (!fav) return;
+  if (!confirm(`Eliminare il combo "${fav.name}"?`)) return;
+  ST.cartFavorites = ST.cartFavorites.filter(f => f.id !== favId);
+  save();
+  render();
+};
 window.selectCheatFoodFromDb=function(foodId){
   if(!ST.sheetData) return;
   const f=window.foodById?(window.foodById(foodId)):window.FOOD_DB?.find(x=>x.id===foodId);
@@ -7642,6 +7815,76 @@ window.setCheatFoodCat=function(cat){
   ST.sheetData.foodCat=(ST.sheetData.foodCat===cat)?null:cat;
   render();
 };
+// ═══════════════════════════════════════════════════════════
+// HELPERS CIBI: frequenti, recenti, suggeriti per pasto (sessione 24)
+// ═══════════════════════════════════════════════════════════
+// Computa i 5 cibi più frequenti basandosi sul cheatLog degli ultimi 30 giorni
+window.getFrequentFoods = function(limit) {
+  limit = limit || 5;
+  const counts = {};
+  const cutoff = Date.now() - 30*86400000;
+  Object.values(ST.nutri || {}).forEach(day => {
+    (day.cheatLog || []).forEach(entry => {
+      if (entry.ts && entry.ts < cutoff) return;
+      (entry.items || []).forEach(it => {
+        if (it.foodId) counts[it.foodId] = (counts[it.foodId] || 0) + (it.qty || 1);
+      });
+    });
+  });
+  const all = window.getAllFoods ? window.getAllFoods() : (window.FOOD_DB || []);
+  const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]).slice(0, limit);
+  return sorted.map(([id, cnt]) => {
+    const f = all.find(x => x.id === id);
+    return f ? {...f, freqCount: cnt} : null;
+  }).filter(Boolean);
+};
+
+// Cibi recenti: ultimi 10 cibi diversi inseriti
+window.getRecentFoods = function(limit) {
+  limit = limit || 10;
+  const seen = new Set();
+  const out = [];
+  const all = window.getAllFoods ? window.getAllFoods() : (window.FOOD_DB || []);
+  // Itero dal più recente al più vecchio
+  const entries = [];
+  Object.entries(ST.nutri || {}).forEach(([d, day]) => {
+    (day.cheatLog || []).forEach(e => entries.push({...e, date: d}));
+  });
+  entries.sort((a,b) => (b.ts||0) - (a.ts||0));
+  for (const entry of entries) {
+    for (const it of (entry.items || [])) {
+      if (!it.foodId || seen.has(it.foodId)) continue;
+      seen.add(it.foodId);
+      const f = all.find(x => x.id === it.foodId);
+      if (f) out.push(f);
+      if (out.length >= limit) return out;
+    }
+  }
+  return out;
+};
+
+// Suggeriti per pasto: cibi tipici per ogni slot
+window.getMealSuggestions = function(slot) {
+  // Pattern di cibi tipici per ogni pasto (basati su FOOD_DB esistente)
+  const patterns = {
+    col: ['caffe','cappucc','cornetto','biscott','yogurt','latte','fette','marmellata','cereali','pane','plumcake','muesli'],
+    sp1: ['frutta','mela','banana','noci','mandorle','barretta'],
+    pra: ['pasta','riso','insalata','pollo','tonno','pizza','panino','tramezzino'],
+    sp2: ['frutta','yogurt','barretta','biscott','mandorle','crackers'],
+    cen: ['carne','pesce','verdure','salmone','manzo','tacchino','uova','formaggio'],
+    sp3: ['yogurt','frutta','tisana','latte']
+  };
+  const keywords = patterns[slot] || [];
+  if (!keywords.length) return [];
+  const all = window.getAllFoods ? window.getAllFoods() : (window.FOOD_DB || []);
+  const matches = all.filter(f => {
+    const name = (f.name || '').toLowerCase();
+    return keywords.some(k => name.includes(k));
+  });
+  // Ritorno max 8 con shuffle leggero
+  return matches.slice(0, 8);
+};
+
 window._buildCheatDbListHtml=function(){
   if(!ST.sheetData) return '';
   const q=(ST.sheetData.foodQuery||'').trim();
@@ -7653,6 +7896,52 @@ window._buildCheatDbListHtml=function(){
   } else if(cat){
     results=window.foodsByCat(cat).slice(0,30);
   }
+
+  // ── SESSIONE 24: Quick-access (frequenti + recenti + suggeriti per pasto) ──
+  // Mostrato solo quando l'utente NON ha digitato e NON ha filtrato per cat
+  if (q.length < 2 && !cat) {
+    const freq = (window.getFrequentFoods?.(5)) || [];
+    const recent = (window.getRecentFoods?.(8)) || [];
+    const slot = ST.sheetData.meal || window.cheatMealSlot || 'altro';
+    const suggested = slot !== 'altro' ? ((window.getMealSuggestions?.(slot)) || []) : [];
+
+    const renderQuickRow = (foods, lbl, col, emoji) => {
+      if (!foods.length) return '';
+      return `<div style="margin-bottom:12px;">
+        <div style="font-size:10px;color:${col};font-weight:800;letter-spacing:1.2px;margin-bottom:6px;">${emoji} ${lbl}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;">
+          ${foods.map(f => `<button onclick="selectCheatFoodFromDb('${f.id}')" style="background:var(--surf);border:1px solid ${col};color:var(--text);padding:7px 10px;border-radius:18px;font-size:11px;cursor:pointer;font-weight:600;white-space:nowrap;">${escapeHtml(f.name).substring(0,30)}${(f.name||'').length>30?'…':''}</button>`).join('')}
+        </div>
+      </div>`;
+    };
+
+    // SESSIONE 24: Preferiti carrello (combo salvati dall'utente)
+    const favs = ST.cartFavorites || [];
+    const favsHtml = favs.length ? `<div style="margin-bottom:12px;">
+      <div style="font-size:10px;color:var(--purp);font-weight:800;letter-spacing:1.2px;margin-bottom:6px;">⭐ I TUOI COMBO PREFERITI</div>
+      <div style="display:flex;flex-direction:column;gap:5px;">
+        ${favs.map(fav => {
+          const totalK = (fav.items||[]).reduce((s,it)=>s+(it.kcal||0),0);
+          return `<div style="display:flex;align-items:center;gap:6px;background:rgba(167,139,250,.06);border:1px solid var(--purp);border-radius:10px;padding:8px 10px;">
+            <div style="flex:1;min-width:0;cursor:pointer;" onclick="useCartFavorite('${fav.id}')">
+              <div style="font-size:12px;font-weight:700;color:var(--text);line-height:1.3;">${escapeHtml(fav.name)}</div>
+              <div style="font-size:10px;color:var(--mut);">${(fav.items||[]).length} cibi · ${totalK} kcal · tocca per aggiungere al carrello</div>
+            </div>
+            <button onclick="event.stopPropagation();deleteCartFavorite('${fav.id}')" style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;padding:4px 8px;flex-shrink:0;" title="Elimina combo">🗑️</button>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>` : '';
+
+    const quickHtml = favsHtml +
+                      renderQuickRow(freq, 'I TUOI PIÙ FREQUENTI', 'var(--ora)', '⭐') +
+                      renderQuickRow(recent, 'RECENTI', 'var(--blu)', '🕐') +
+                      renderQuickRow(suggested, `SUGGERITI PER ${slot==='col'?'COLAZIONE':slot==='sp1'?'SPUNTINO MATTINA':slot==='pra'?'PRANZO':slot==='sp2'?'SPUNTINO POMERIGGIO':slot==='cen'?'CENA':'PASTO'}`, 'var(--gre)', '💡');
+    if (quickHtml) {
+      return quickHtml + `<div style="text-align:center;padding:14px 8px;font-size:11px;color:var(--mut);line-height:1.5;margin-top:6px;border-top:1px dashed var(--bord);padding-top:14px;">💡 Digita 2+ lettere o scegli una categoria per cercare tra ${(window.FOOD_DB||[]).length} cibi.</div>`;
+    }
+  }
+
   if(results.length===0){
     if(q.length>=2) return `<div style="text-align:center;padding:20px;font-size:12px;color:var(--mut);">Nessun cibo trovato per "${escapeHtml(q)}".<br>Usa il campo "veloce" per testo libero.</div>`;
     if(cat) return `<div style="text-align:center;padding:14px;font-size:12px;color:var(--mut);">Nessun cibo nella categoria.</div>`;
@@ -9387,10 +9676,10 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
         <div class="bebas" style="font-size:24px;color:var(--text);line-height:1.1;margin-top:2px;">${todayCal}<span style="font-size:11px;color:var(--mut);"> / ${mac.kcal}</span></div>
         <div style="height:3px;background:var(--bg);border-radius:3px;margin-top:4px;overflow:hidden;"><div style="height:100%;width:${calProgressPct}%;background:var(--gre);border-radius:3px;"></div></div>
       </div>
-      <!-- Card workout settimana -->
+      <!-- Card workout settimana (sessione 24: rimosso /3 perché confondeva rolling 7gg vs settimana) -->
       <div onclick="ST.tab='work';render()" style="background:linear-gradient(135deg,rgba(255,104,53,.08),rgba(255,104,53,.02));border:1px solid var(--ora);border-radius:14px;padding:12px;cursor:pointer;transition:.15s;">
         <div style="font-size:9px;color:var(--ora);font-weight:800;letter-spacing:1.2px;">💪 WORKOUT 7G</div>
-        <div class="bebas" style="font-size:24px;color:var(--text);line-height:1.1;margin-top:2px;">${woThisWeek}<span style="font-size:11px;color:var(--mut);"> / ${sessionsTarget}</span></div>
+        <div class="bebas" style="font-size:24px;color:var(--text);line-height:1.1;margin-top:2px;">${woThisWeek}<span style="font-size:11px;color:var(--mut);"> sessioni</span></div>
         <div style="height:3px;background:var(--bg);border-radius:3px;margin-top:4px;overflow:hidden;"><div style="height:100%;width:${woProgressPct}%;background:var(--ora);border-radius:3px;"></div></div>
       </div>
     </div>`;
@@ -9989,12 +10278,18 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
       </div>
 
       <!-- DB picker primario (modalità sicura, consigliata) -->
-      <button class="btn" style="width:100%;padding:14px;font-size:15px;font-weight:700;background:var(--purp);color:#fff;border:none;border-radius:12px;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;" onclick="openCheatDbPicker()">
+      <button class="btn" style="width:100%;padding:14px;font-size:15px;font-weight:700;background:var(--purp);color:#fff;border:none;border-radius:12px;cursor:pointer;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:8px;" onclick="openCheatDbPicker()">
         <span style="font-size:18px;">🔍</span>
-        <span>SCEGLI DAL DATABASE (consigliato)</span>
+        <span>SCEGLI DAL DATABASE</span>
+      </button>
+
+      <!-- Barcode picker (sessione 24: 4° bottone allo stesso livello, aggiunge al carrello) -->
+      <button class="btn" style="width:100%;padding:14px;font-size:15px;font-weight:700;background:linear-gradient(135deg,var(--blu),#4488ff);color:#fff;border:none;border-radius:12px;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;" onclick="startBarcodeScanForCart()">
+        <span style="font-size:18px;">📷</span>
+        <span>SCANSIONA CODICE A BARRE</span>
       </button>
       <div style="font-size:11px;color:var(--mut);text-align:center;margin-bottom:12px;line-height:1.5;">
-        Più preciso: scegli il cibo e i grammi esatti tra 698 alimenti
+        Per prodotti confezionati · dati da OpenFoodFacts
       </div>
 
       <!-- Sezione "veloce" (testo libero) collassabile -->
@@ -10014,18 +10309,30 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
       ${window.cheatLoading?`<div style="text-align:center;font-size:11px;color:var(--mut);margin-top:8px;">Riconoscimento in corso...</div>`:''}
     `}
     ${dLog.cheatLog.length?`<div style="margin-top:14px;">
-      <div style="font-size:11px;color:var(--ora);font-weight:700;letter-spacing:1px;margin-bottom:8px;">📌 SGARRI DI OGGI (${dLog.cheatLog.length})</div>
+      <div style="font-size:11px;color:var(--ora);font-weight:700;letter-spacing:1px;margin-bottom:8px;">📌 PASTI EXTRA OGGI (${dLog.cheatLog.length})</div>
       ${dLog.cheatLog.map((e,i)=>{
         const mealLabels={col:'🌅 Colazione',sp1:'🍎 Spuntino mat.',pra:'🍝 Pranzo',sp2:'🍪 Spuntino pom.',cen:'🍽 Cena',sp3:'🌙 Spuntino sera',altro:'🌙 Fuori pasto',other:'🌙 Fuori pasto'};
         const slot = e.mealSlot || e.meal || 'altro';
         const mealLbl = mealLabels[slot] || mealLabels.altro;
-        return `<div style="padding:11px;background:rgba(255,104,53,.08);border:1px solid rgba(255,104,53,.25);border-radius:10px;margin-bottom:6px;">
+        // SESSIONE 24: badge tipo pasto (cheat=rosso, replacement=giallo, light=verde, snack=arancio)
+        const mealType = e.mealType || 'cheat'; // backward compat: vecchi entry = cheat
+        const typeMeta = {
+          cheat: { lbl:'SGARRO', emo:'🔴', col:'var(--red)', bg:'rgba(220,38,38,.08)', bord:'rgba(220,38,38,.3)' },
+          replacement: { lbl:'SOSTITUZIONE', emo:'🟡', col:'var(--yel)', bg:'rgba(202,138,4,.08)', bord:'rgba(202,138,4,.3)' },
+          light: { lbl:'LEGGERO', emo:'🟢', col:'var(--gre)', bg:'rgba(34,197,94,.08)', bord:'rgba(34,197,94,.3)' },
+          snack: { lbl:'FUORI PASTO', emo:'🟠', col:'var(--ora)', bg:'rgba(255,104,53,.08)', bord:'rgba(255,104,53,.25)' }
+        };
+        const tm = typeMeta[mealType] || typeMeta.cheat;
+        return `<div style="padding:11px;background:${tm.bg};border:1px solid ${tm.bord};border-radius:10px;margin-bottom:6px;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
           <div style="flex:1;min-width:0;">
-            <div style="font-size:10px;color:var(--ora);font-weight:700;letter-spacing:1px;margin-bottom:4px;">${mealLbl}</div>
+            <div style="display:flex;gap:6px;align-items:center;margin-bottom:4px;flex-wrap:wrap;">
+              <span style="font-size:10px;color:var(--mut);font-weight:600;letter-spacing:1px;">${mealLbl}</span>
+              <span style="font-size:9px;background:${tm.col};color:#fff;padding:2px 6px;border-radius:4px;font-weight:700;letter-spacing:.5px;">${tm.emo} ${tm.lbl}</span>
+            </div>
             <div style="font-size:13px;color:var(--text);margin-bottom:4px;line-height:1.4;">"${e.txt}"</div>
             ${e.items&&e.items.length?`<div style="font-size:11px;color:var(--mut);">${e.items.map(it=>`${it.qty>1?it.qty+'× ':''}${it.label}`).join(' · ')}</div>`:''}
-            <div style="font-size:12px;color:var(--ora);font-weight:700;margin-top:4px;">+${e.kcal} kcal</div>
+            <div style="font-size:12px;color:${tm.col};font-weight:700;margin-top:4px;">+${e.kcal} kcal</div>
           </div>
           <button class="btn-s btn-red" style="padding:5px 9px;font-size:10px;flex-shrink:0;" onclick="removeCheatEntry(${i})">✕</button>
         </div>
@@ -10033,6 +10340,58 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
     </div>`:''}
   </div>
   ${ST.p.intol?.length?`<div class="card" style="border-color:var(--red);background:rgba(255,71,87,.03);padding:14px;"><div class="badge" style="background:var(--red);color:#fff;">MENU ADATTATO</div><div style="font-size:12px;color:var(--text);line-height:1.6;padding-right:60px;">Pasti adattati per: <strong>${ST.p.intol.map(i=>INTOL_LIST.find(x=>x.id===i)?.label||i).join(', ')}</strong></div></div>`:''}
+
+  <!-- ── PIANIFICA SETTIMANA (sessione 24) ── -->
+  <details class="card" style="padding:0;overflow:hidden;">
+    <summary style="padding:14px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:8px;">
+      <div>
+        <div class="bebas" style="font-size:16px;color:var(--blu);letter-spacing:1px;">📅 PIANIFICA SETTIMANA</div>
+        <div style="font-size:11px;color:var(--mut);margin-top:2px;">Vedi il menù dei prossimi 7 giorni</div>
+      </div>
+      <div style="font-size:18px;color:var(--mut);">›</div>
+    </summary>
+    <div style="padding:0 14px 14px;border-top:1px solid var(--bord);">
+      <div style="font-size:11px;color:var(--mut);line-height:1.5;margin-top:10px;margin-bottom:12px;">Menù basato su obiettivo, intolleranze e tipo di alimentazione. Cambia ogni giorno: train days hanno più carbo, rest days hanno meno.</div>
+      ${(()=>{
+        if (typeof window.buildMeals !== 'function' || typeof window.calcMacros !== 'function' || !ST.p) return '<div style="text-align:center;padding:14px;font-size:12px;color:var(--mut);">Pianificazione non disponibile</div>';
+        const days = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
+        const today = new Date(currentDateStr || new Date().toISOString().slice(0,10));
+        const dowToday = (today.getDay() + 6) % 7; // 0=lun
+        const sessionsPerWeek = ST.p.sessions || 3;
+        const trainDaysIdx = sessionsPerWeek === 3 ? [0,2,4] : sessionsPerWeek === 4 ? [0,1,3,5] : sessionsPerWeek === 5 ? [0,1,2,4,5] : [0,2,4];
+        try {
+          const profile = ST.profile || AU.profile || {};
+          const cW = ST.h.length ? ST.h[ST.h.length-1].w : (ST.p.s || 70);
+          const an = typeof analyze === 'function' ? analyze(ST.h, ST.p) : {};
+          const extraK = typeof getActivitiesKcal === 'function' ? getActivitiesKcal(currentDateStr) : 0;
+          const mac = calcMacros(cW, profile.ht || 170, profile.ag || 30, profile.sx || 'm', ST.p, sessionsPerWeek, an, extraK);
+          return days.map((dname, idx) => {
+            const isRest = !trainDaysIdx.includes(idx);
+            const meals = window.buildMeals(mac, ST.p.intol||[], profile.sx||'m', isRest, ST.p.diet||'omnivore', null, ST.p.usesSupplements, ST.p.favs);
+            const totalK = (meals||[]).reduce((s,m) => s + (m.opts?.[0]?.kcal || m.kcal || 0), 0);
+            const isToday = idx === dowToday;
+            return `<div style="background:${isToday?'rgba(96,165,250,.06)':'var(--surf)'};border:1px solid ${isToday?'var(--blu)':'var(--bord)'};border-radius:10px;padding:10px;margin-bottom:6px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                <div>
+                  <span style="font-size:13px;font-weight:700;color:var(--text);">${dname}${isToday?' (oggi)':''}</span>
+                  <span style="font-size:10px;background:${isRest?'var(--mut)':'var(--ora)'};color:#fff;padding:2px 7px;border-radius:4px;margin-left:6px;font-weight:600;">${isRest?'RIPOSO':'TRAIN'}</span>
+                </div>
+                <div style="font-size:11px;color:var(--blu);font-weight:700;">~${totalK} kcal</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:3px;">
+                ${(meals||[]).slice(0,5).map(m => `<div style="font-size:10px;color:var(--mut);line-height:1.4;">
+                  <span style="font-weight:600;color:var(--text);">${m.n}:</span> ${escapeHtml((m.opts?.[0]?.name || m.opts?.[0]?.lbl || '').substring(0,45))}${(m.opts?.[0]?.name || '').length>45?'…':''}
+                </div>`).join('')}
+              </div>
+            </div>`;
+          }).join('');
+        } catch(e) {
+          return '<div style="text-align:center;padding:14px;font-size:12px;color:var(--mut);">Errore: '+e.message+'</div>';
+        }
+      })()}
+    </div>
+  </details>
+
   <div class="bebas" style="font-size:18px;color:var(--mut);margin:16px 0 10px;letter-spacing:1px;">MENU DELLA GIORNATA</div>
   <!-- PUNTO 17: banner proiezione obiettivo se dieta custom -->
   ${(()=>{const proj=computeCustomProjection();if(!proj)return '';const diverg=proj.divergePct;const col=diverg<=10?'var(--acc)':diverg<=20?'var(--yel)':'var(--red)';const emo=diverg<=10?'✅':diverg<=20?'⚠️':'🚨';return`<div style="background:rgba(255,71,87,${diverg>20?'.08':'.04'});border:1.5px solid ${col};border-radius:14px;padding:12px 14px;margin-bottom:12px;">
@@ -13733,7 +14092,8 @@ window.render = function() {
               <button onclick="removeFromCheatCart(${i})" style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;padding:2px 4px;flex-shrink:0;">✕</button>
             </div>`).join('')}
           </div>
-          <button class="btn" style="width:100%;padding:14px;background:var(--ora);color:#fff;font-family:'Bebas Neue';font-size:20px;letter-spacing:1.5px;border:none;border-radius:10px;font-weight:bold;box-shadow:0 4px 12px rgba(255,104,53,.4);cursor:pointer;" onclick="confirmCheatCart()">✓ CONFERMA SGARRO · ${cartTotalKcal} kcal</button>
+          <button class="btn" style="width:100%;padding:14px;background:var(--ora);color:#fff;font-family:'Bebas Neue';font-size:20px;letter-spacing:1.5px;border:none;border-radius:10px;font-weight:bold;box-shadow:0 4px 12px rgba(255,104,53,.4);cursor:pointer;" onclick="confirmCheatCart()">✓ CONFERMA PASTO · ${cartTotalKcal} kcal</button>
+          ${cart.length >= 2 ? `<button class="btn-s" style="width:100%;padding:8px;margin-top:6px;background:transparent;border:1px dashed var(--ora);color:var(--ora);font-size:11px;font-weight:600;border-radius:8px;cursor:pointer;" onclick="saveCartAsFavorite()">⭐ Salva come combo preferito</button>` : ''}
         </div>
       ` : '';
 
@@ -13821,9 +14181,9 @@ window.render = function() {
           </div>
           <!-- ── Label unità di misura PERSISTENTE ── -->
           <div style="font-size:10px;color:var(--mut);text-align:center;margin-bottom:10px;font-style:italic;">📌 ${unitDescription}</div>
-          <!-- Quick buttons quantità comuni -->
-          <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:center;">
-            ${[0.5, 1, 1.5, 2, 3].map(q=>`<button class="btn-s" style="font-size:11px;padding:5px 10px;background:var(--surf);border:1px solid var(--bord);color:var(--text);" onclick="document.getElementById('cheatQty').value=${q};document.getElementById('cheatPreviewK').textContent=Math.round(${f.kcal}*${portionMult}*${q})+' kcal'">${q===0.5?'½':q===1.5?'1½':q}× </button>`).join('')}
+          <!-- Quick buttons quantità comuni (sessione 24: più visibili) -->
+          <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:2px;">
+            ${[0.5, 1, 1.5, 2, 3].map(q=>`<button class="btn-s" style="font-size:14px;padding:9px 14px;background:var(--surf);border:1.5px solid var(--ora);color:var(--ora);font-weight:700;border-radius:10px;cursor:pointer;flex:1;min-width:50px;" onclick="document.getElementById('cheatQty').value=${q};document.getElementById('cheatPreviewK').textContent=Math.round(${f.kcal}*${portionMult}*${q})+' kcal'">${q===0.5?'½':q===1.5?'1½':q}×</button>`).join('')}
           </div>
         </div>
       ` : `
@@ -13836,8 +14196,8 @@ window.render = function() {
           </div>
           <!-- Label unità di misura PERSISTENTE -->
           <div style="font-size:10px;color:var(--mut);text-align:center;margin-bottom:10px;font-style:italic;">📌 Inserisci il peso reale del cibo (anche da bilancia)</div>
-          <div style="display:flex;gap:5px;flex-wrap:wrap;">
-            ${[50,100,150,200,250,300].map(g=>`<button class="btn-s" style="font-size:11px;padding:5px 10px;background:var(--surf);border:1px solid var(--bord);color:var(--text);" onclick="document.getElementById('cheatGrams').value=${g};document.getElementById('cheatPreviewK').textContent=Math.round(${f.kcal}*${g}/100)+' kcal'">${g}g</button>`).join('')}
+          <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:2px;">
+            ${[50,100,150,200,250,300].map(g=>`<button class="btn-s" style="font-size:13px;padding:9px 12px;background:var(--surf);border:1.5px solid var(--purp);color:var(--purp);font-weight:700;border-radius:10px;cursor:pointer;flex:1;min-width:50px;" onclick="document.getElementById('cheatGrams').value=${g};document.getElementById('cheatPreviewK').textContent=Math.round(${f.kcal}*${g}/100)+' kcal'">${g}g</button>`).join('')}
           </div>
         </div>
       `}
