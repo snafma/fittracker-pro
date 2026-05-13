@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION24-CART-FAVORITES">
+<meta name="ft-version" content="build-SESSION25-CYCLING-EXTRAS">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -478,7 +478,7 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
     <div class="spinner"></div>
     <div class="bebas" style="color:var(--text);font-size:28px;letter-spacing:3px;">SYSTEM BOOTING</div>
     <div style="color:var(--mut);font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:1px;">Connessione al Cloud Secure Database...</div>
-    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION24</div>
+    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION25</div>
   </div>
 </div>
 
@@ -3355,7 +3355,34 @@ window.getMissedWorkouts=function(wLog,sessions,programStart){
 window.calcBMR=function(w,h,age,sex){return sex==='m'?Math.round(10*w+6.25*h-5*age+5):Math.round(10*w+6.25*h-5*age-161);}
 window.actMultiplier=function(s){if(s===0) return 1.2;if(s<=2) return 1.375;if(s<=4) return 1.55;return 1.725;}
 // ─── § 8. LOGICA PROGRAMMA: calcMacros, buildMeals, buildWorkout ──────────
-window.calcMacros=function(w,h,age,sex,goal,sessions,analysis,extraKcal){
+// ═══════════════════════════════════════════════════════════
+// CALORIE CYCLING (sessione 25)
+// Aggiusta kcal e carbo in base al tipo di giorno (train/rest)
+// Filosofia per obiettivo:
+//  - cut: train day = X | rest day = X - 250 (carb -50g, prot stabile)
+//  - bulk: train day = X + 250 | rest day = X - 100 (carbo + sul train, - sul rest)
+//  - recomp/maintenance: ±150 banda simmetrica
+// La media settimanale resta uguale al target originale.
+// ═══════════════════════════════════════════════════════════
+window.getDayCalorieAdjustment = function(goalType, isRestDay) {
+  if (isRestDay === null || isRestDay === undefined) return { kcalDelta: 0, carbDelta: 0, label: '' };
+  if (goalType === 'cut') {
+    return isRestDay
+      ? { kcalDelta: -250, carbDelta: -50, label: 'Rest day (cut stretto)' }
+      : { kcalDelta: +100, carbDelta: +20, label: 'Train day (cut con carbo workout)' };
+  }
+  if (goalType === 'bulk') {
+    return isRestDay
+      ? { kcalDelta: -100, carbDelta: -30, label: 'Rest day (bulk pulito)' }
+      : { kcalDelta: +250, carbDelta: +60, label: 'Train day (bulk con carbo)' };
+  }
+  // recomp / maintenance / default
+  return isRestDay
+    ? { kcalDelta: -150, carbDelta: -30, label: 'Rest day' }
+    : { kcalDelta: +150, carbDelta: +30, label: 'Train day' };
+};
+
+window.calcMacros=function(w,h,age,sex,goal,sessions,analysis,extraKcal,dayType){
   const bmr=calcBMR(w,h||170,age||25,sex||'m');
   const tdeeBase=Math.round(bmr*actMultiplier(sessions));
   // FIX 2: sommo kcal da attività outdoor se presenti (somma al TDEE → deficit/surplus si preserva)
@@ -3365,15 +3392,154 @@ window.calcMacros=function(w,h,age,sex,goal,sessions,analysis,extraKcal){
   if(goal.t==='cut'&&kcal<w*22) kcal=w*22;
   kcal=Math.round(kcal);
   // PUNTO 11: se 0 sessioni allenamento, niente focus proteine (target più basso)
-  // Senza pesi, proteine alte sono sprecate: con 0 sessioni usiamo 1.2g/kg uomo, 1.0g/kg donna
   const noTraining = (sessions||0)===0;
   const protPerKg = noTraining ? (sex==='f'?1.0:1.2) : (sex==='f'?1.8:2.2);
   const prot=Math.round(w*protPerKg);
   const fat=Math.round(w*(sex==='f'?1.0:0.8));
-  const carb=Math.max(50,Math.round((kcal-(prot*4)-(fat*9))/4));
+  let carb=Math.max(50,Math.round((kcal-(prot*4)-(fat*9))/4));
+  // ── SESSIONE 25: CALORIE CYCLING ──
+  // dayType: 'train' | 'rest' | null/undefined (giornaliero standard)
+  let dayLabel = '';
+  if (dayType === 'train' || dayType === 'rest') {
+    const isRest = dayType === 'rest';
+    const adj = window.getDayCalorieAdjustment ? window.getDayCalorieAdjustment(goal.t, isRest) : {kcalDelta:0,carbDelta:0,label:''};
+    kcal += adj.kcalDelta;
+    carb = Math.max(50, carb + adj.carbDelta);
+    dayLabel = adj.label;
+  }
   const effCardio=Math.max(0,Math.min(5,(goal.cardioLevel||1)+(analysis?.cardioAdj||0)));
-  return{kcal,prot,fat,carb,bmr,tdee,tdeeBase,extraKcal:Math.round(extraKcal||0),cardioLevel:effCardio};
+  return{kcal,prot,fat,carb,bmr,tdee,tdeeBase,extraKcal:Math.round(extraKcal||0),cardioLevel:effCardio,dayType:dayType||null,dayLabel};
 }
+// ═══════════════════════════════════════════════════════════
+// PATTERN DETECTOR SGARRI RICORRENTI (sessione 25)
+// Rileva se l'utente ha sgarri sistematici in certi giorni della settimana
+// (es. "ogni venerdì sera pizza") → pre-allerta nello stesso giorno
+// ═══════════════════════════════════════════════════════════
+// Toggle rapido posizione allenamento (casa/palestra) dalla home - sessione 25
+window.toggleWorkoutLoc = function(newLoc) {
+  if (!ST.p) return;
+  if (!['gym','home'].includes(newLoc)) return;
+  if (ST.p.loc === newLoc) return; // niente da fare
+  ST.p.loc = newLoc;
+  save();
+  render();
+};
+
+// Navigazione calendario mensile (sessione 25)
+window.changeCalMonth = function(delta) {
+  if (!ST.calendarMonth) ST.calendarMonth = currentDateStr.slice(0,7);
+  const [yr, mo] = ST.calendarMonth.split('-').map(Number);
+  const d = new Date(yr, mo - 1 + delta, 1);
+  ST.calendarMonth = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  render();
+};
+
+// ═══════════════════════════════════════════════════════════
+// MODALITÀ VACANZA (sessione 25)
+// Sospende deficit, alert, banner sgarro per N giorni
+// Tracking resta attivo ma senza pressione psicologica
+// ═══════════════════════════════════════════════════════════
+window.isVacationActive = function() {
+  const v = ST.vacationMode;
+  if (!v?.active || !v?.startD || !v?.endD) return false;
+  const today = currentDateStr || new Date().toISOString().slice(0,10);
+  return today >= v.startD && today <= v.endD;
+};
+
+window.startVacation = async function() {
+  const today = new Date();
+  const endDefault = new Date(today);
+  endDefault.setDate(endDefault.getDate() + 7);
+  const startStr = prompt('Quando inizi la vacanza? (formato AAAA-MM-GG)', today.toISOString().slice(0,10));
+  if (!startStr) return;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(startStr)) return alert('Formato data non valido');
+  const endStr = prompt('Quando finisce la vacanza? (formato AAAA-MM-GG)', endDefault.toISOString().slice(0,10));
+  if (!endStr) return;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(endStr)) return alert('Formato data non valido');
+  if (endStr < startStr) return alert('La data fine non può essere prima della data inizio');
+  ST.vacationMode = { active: true, startD: startStr, endD: endStr };
+  await save();
+  render();
+};
+
+window.endVacation = async function() {
+  if (!confirm('Vuoi tornare al programma normale?\n\nDeficit, obiettivo e alert torneranno attivi.')) return;
+  ST.vacationMode = null;
+  await save();
+  render();
+};
+
+window.detectCheatPattern = function() {
+  if (!ST.nutri) return null;
+  const dowCounts = {}; // {0:{count:N, totalKcal:X}, 1:..., 6:...}
+  let totalDaysAnalyzed = 0;
+  const days = Object.entries(ST.nutri);
+  const recent = days.slice(-56); // ultime 8 settimane
+  recent.forEach(([d, day]) => {
+    if (!day?.cheatLog?.length) return;
+    const realCheats = day.cheatLog.filter(e => (e.mealType || 'cheat') === 'cheat' && (e.kcal || 0) > 300);
+    if (!realCheats.length) return;
+    const dow = (new Date(d).getDay() + 6) % 7; // 0=lun
+    if (!dowCounts[dow]) dowCounts[dow] = { count: 0, totalKcal: 0 };
+    dowCounts[dow].count += 1;
+    dowCounts[dow].totalKcal += realCheats.reduce((s,c)=>s+(c.kcal||0), 0);
+    totalDaysAnalyzed++;
+  });
+  if (totalDaysAnalyzed < 3) return null;
+  // Trovo il dow con più ricorrenze
+  const sorted = Object.entries(dowCounts).sort((a,b) => b[1].count - a[1].count);
+  if (!sorted.length) return null;
+  const [topDow, info] = sorted[0];
+  // Devo avere ≥3 occorrenze su un singolo dow per parlare di pattern
+  if (info.count < 3) return null;
+  const dowNames = ['lunedì','martedì','mercoledì','giovedì','venerdì','sabato','domenica'];
+  const avgKcal = Math.round(info.totalKcal / info.count);
+  return {
+    dow: parseInt(topDow),
+    dowName: dowNames[parseInt(topDow)],
+    count: info.count,
+    avgKcal,
+    todayMatches: (new Date(currentDateStr).getDay() + 6) % 7 === parseInt(topDow)
+  };
+};
+// Capisce se oggi è un train day o rest day dal calendario settimanale
+// ═══════════════════════════════════════════════════════════
+window.isRestDayFor = function(dateStr) {
+  if (!ST.p?.sessions) return false;
+  // Se l'utente ha già loggato un workout oggi, è train day
+  if (ST.wHistory?.[dateStr] && Object.values(ST.wHistory[dateStr]).some(e => e?.ok)) return false;
+  // Calcolo i train days della settimana basandomi su sessions
+  const d = new Date(dateStr);
+  const dow = (d.getDay() + 6) % 7; // 0=lun, 6=dom
+  const sess = ST.p.sessions;
+  // Pattern train days di default per # sessioni
+  const patterns = {
+    1: [0],
+    2: [0, 3],
+    3: [0, 2, 4],
+    4: [0, 1, 3, 5],
+    5: [0, 1, 2, 4, 5],
+    6: [0, 1, 2, 3, 4, 5]
+  };
+  const trainDays = patterns[sess] || [0, 2, 4];
+  return !trainDays.includes(dow);
+};
+
+window.isTodayRestDay = function() {
+  return window.isRestDayFor(currentDateStr || new Date().toISOString().slice(0,10));
+};
+
+window.calcMacrosForToday = function() {
+  if (!ST.p) return null;
+  const profile = ST.profile || AU.profile || {};
+  const cW = ST.h.length ? ST.h[ST.h.length-1].w : (ST.p.s || 70);
+  const an = typeof analyze === 'function' ? analyze(ST.h, ST.p) : {};
+  const sess = ST.p.sessions != null ? ST.p.sessions : 3;
+  const extraK = typeof getActivitiesKcal === 'function' ? getActivitiesKcal(currentDateStr) : 0;
+  const dayType = window.isTodayRestDay() ? 'rest' : 'train';
+  return calcMacros(cW, profile.ht || 170, profile.ag || 30, profile.sx || 'm', ST.p, sess, an, extraK, dayType);
+};
+
 window.analyze=function(history,goal,wLog){
   if(!history||history.length<4) return{status:'new',msg:'Inserisci almeno 4 pesate per l\'AI.',col:'var(--mut)',calAdj:0,cardioAdj:0,alert:null,missed:0};
   const recent=history.slice(-14);
@@ -5345,6 +5511,8 @@ window.defST=function(){
     customFoods:[],              // cibi personalizzati creati dall'utente per gli sgarri
     // ── Campi sessione 24 ──
     cartFavorites:[],            // combo carrello salvati: [{id, name, items:[{foodId,qty,grams,kcal,label}]}]
+    // ── Campi sessione 25 ──
+    vacationMode:null,           // {active:true, startD:'2026-06-01', endD:'2026-06-14'} o null
     shoppingState:{removed:[], extras:[], checked:[], lastGenWeek:null}, // stato lista spesa
     // ── Campi sessione 13 ──
     workoutSecOpen:{steps:false, tips:false, muscle:false, mistakes:false, breath:false}, // sezioni espandibili runtime workout
@@ -5385,6 +5553,7 @@ window.saveU=async function(){
       customExercises:ST.customExercises,
       customFoods:ST.customFoods,
       cartFavorites:ST.cartFavorites,
+      vacationMode:ST.vacationMode,
       theme:ST.theme,
       injuries:ST.injuries,
       onboardingDone:ST.onboardingDone,
@@ -9444,10 +9613,18 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
   } else if(woInfo){
     // Allenamento da fare
     const isPrim = !mealIsPrimary;
+    // SESSIONE 25: toggle loc casa/palestra compatto
+    const locToggle = `<div style="display:flex;gap:4px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;padding:2px;font-size:10px;">
+        <button onclick="event.stopPropagation();toggleWorkoutLoc('gym')" style="padding:4px 8px;background:${(ST.p.loc||'gym')==='gym'?'var(--ora)':'transparent'};color:${(ST.p.loc||'gym')==='gym'?'#fff':'var(--mut)'};border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:10px;">🏋️</button>
+        <button onclick="event.stopPropagation();toggleWorkoutLoc('home')" style="padding:4px 8px;background:${(ST.p.loc||'gym')==='home'?'var(--blu)':'transparent'};color:${(ST.p.loc||'gym')==='home'?'#fff':'var(--mut)'};border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:10px;">🏠</button>
+      </div>`;
     if(isPrim){
       // Card PRIMARIA: grande, bottone INIZIA vivo
       woCardHtml=`<div style="background:${woCardStyle.bg};border:2px solid ${woCardStyle.border};border-radius:18px;padding:18px;${woCardStyle.glow}">
-        <div style="font-size:10px;font-weight:700;color:${woInfo.col};letter-spacing:2px;margin-bottom:10px;">💪 ALLENAMENTO OGGI</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;">
+          <div style="font-size:10px;font-weight:700;color:${woInfo.col};letter-spacing:2px;">💪 ALLENAMENTO OGGI</div>
+          ${locToggle}
+        </div>
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
           <div style="font-size:40px;line-height:1;">${woInfo.emoji}</div>
           <div style="flex:1;min-width:0;">
@@ -9460,7 +9637,10 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
     } else {
       // Card SECONDARIA: compatta, grigio soft
       woCardHtml=`<div style="background:${woCardStyle.bg};border:1.5px solid ${woCardStyle.border};border-radius:18px;padding:16px;cursor:pointer;" onclick="ST.tab='work';render()">
-        <div style="font-size:10px;font-weight:700;color:var(--mut);letter-spacing:1.5px;margin-bottom:8px;">💪 ALLENAMENTO OGGI</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;">
+          <div style="font-size:10px;font-weight:700;color:var(--mut);letter-spacing:1.5px;">💪 ALLENAMENTO OGGI</div>
+          ${locToggle}
+        </div>
         <div style="display:flex;align-items:center;gap:12px;">
           <div style="font-size:28px;">${woInfo.emoji}</div>
           <div style="flex:1;min-width:0;">
@@ -9672,7 +9852,10 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
       </div>
       <!-- Card kcal oggi -->
       <div onclick="ST.tab='diet';render()" style="background:linear-gradient(135deg,rgba(74,222,128,.08),rgba(74,222,128,.02));border:1px solid var(--gre);border-radius:14px;padding:12px;cursor:pointer;transition:.15s;">
-        <div style="font-size:9px;color:var(--gre);font-weight:800;letter-spacing:1.2px;">🍽️ KCAL OGGI</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:4px;">
+          <div style="font-size:9px;color:var(--gre);font-weight:800;letter-spacing:1.2px;">🍽️ KCAL OGGI</div>
+          <span style="font-size:8px;background:${mac.dayType==='rest'?'var(--mut)':'var(--ora)'};color:#fff;padding:1px 5px;border-radius:3px;font-weight:700;letter-spacing:.3px;">${mac.dayType==='rest'?'REST':'TRAIN'}</span>
+        </div>
         <div class="bebas" style="font-size:24px;color:var(--text);line-height:1.1;margin-top:2px;">${todayCal}<span style="font-size:11px;color:var(--mut);"> / ${mac.kcal}</span></div>
         <div style="height:3px;background:var(--bg);border-radius:3px;margin-top:4px;overflow:hidden;"><div style="height:100%;width:${calProgressPct}%;background:var(--gre);border-radius:3px;"></div></div>
       </div>
@@ -9686,8 +9869,54 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
   })()}
 
   ${(()=>{
+    // ── BANNER MODALITÀ VACANZA (sessione 25) ──
+    // Mostrato sempre quando attiva, con countdown ai giorni rimasti
+    if (typeof window.isVacationActive !== 'function' || !window.isVacationActive()) return '';
+    const vm = ST.vacationMode;
+    const today = new Date(currentDateStr);
+    const end = new Date(vm.endD);
+    const daysLeft = Math.max(0, Math.ceil((end - today) / 86400000));
+    return `<div style="background:linear-gradient(135deg,rgba(96,165,250,.15),rgba(96,165,250,.04));border:2px solid var(--blu);border-radius:14px;padding:12px 14px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="font-size:24px;">🏖️</div>
+        <div style="flex:1;">
+          <div style="font-size:11px;color:var(--blu);font-weight:800;letter-spacing:1px;">MODALITÀ VACANZA · ${daysLeft===0?'ultimo giorno':daysLeft+' giorni rimasti'}</div>
+          <div style="font-size:12px;color:var(--text);margin-top:2px;line-height:1.4;">Goditi il riposo! Tracciamo tutto ma senza pressione. Lo streak è preservato.</div>
+        </div>
+      </div>
+    </div>`;
+  })()}
+
+  ${(()=>{
+    // ── BANNER PATTERN SGARRO (sessione 25) ──
+    // Se rilevato pattern ricorrente e oggi è quel giorno → pre-allerta
+    if (typeof window.isVacationActive === 'function' && window.isVacationActive()) return ''; // SESSIONE 25: niente alert in vacanza
+    if (typeof window.detectCheatPattern !== 'function') return '';
+    const pat = window.detectCheatPattern();
+    if (!pat || !pat.todayMatches) return '';
+    // Solo se non ha ancora sgarrato oggi
+    const todayLog = ST.nutri[currentDateStr];
+    const hasCheatedToday = todayLog?.cheatLog?.some(e => (e.mealType || 'cheat') === 'cheat');
+    if (hasCheatedToday) return '';
+    // Solo nel pomeriggio (dopo le 14) per non infastidire
+    const now = new Date();
+    if (now.getHours() < 14) return '';
+    return `
+    <div style="background:linear-gradient(135deg,rgba(234,88,12,.10),rgba(234,88,12,.03));border:1.5px solid var(--ora);border-radius:14px;padding:12px 14px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="font-size:22px;">🍕</div>
+        <div style="flex:1;">
+          <div style="font-size:11px;color:var(--ora);font-weight:800;letter-spacing:1px;">PATTERN ${pat.dowName.toUpperCase()} RILEVATO</div>
+          <div style="font-size:12px;color:var(--text);margin-top:2px;line-height:1.4;">Negli ultimi mesi hai fatto sgarri ${pat.count} volte di ${pat.dowName} (~${pat.avgKcal} kcal). Se stasera è uguale, considera <strong>carbo bassi a pranzo</strong> per compensare.</div>
+        </div>
+      </div>
+    </div>`;
+  })()}
+
+  ${(()=>{
     // ── BANNER SHIFT TARGET (sessione 17) ──
     // Mostra se peso non cambia abbastanza rispetto alla data target.
+    if (typeof window.isVacationActive === 'function' && window.isVacationActive()) return ''; // SESSIONE 25: niente alert in vacanza
     if (typeof window.checkTargetAdjustment !== 'function') return '';
     const adj = window.checkTargetAdjustment(ST.h, ST.p);
     if (!adj.needsShift) return '';
@@ -9712,29 +9941,39 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
   })()}
 
   ${(()=>{
-    // ── SLEEP-AWARE TRAINING ALERT (sessione 15) ──
+    // ── SLEEP-AWARE TRAINING ALERT (sessione 15, esteso sessione 25) ──
     // Suggerisce workout ridotto se sonno <5h, motivazione se >7.5h.
-    // Valuta sonno di IERI (perché il workout di oggi dipende dal sonno notturno).
+    // SESSIONE 25: aggiunto consiglio dieta per sonno medio (5-6h: +carbo, +caffeina pre-workout)
+    if (typeof window.isVacationActive === 'function' && window.isVacationActive()) return ''; // SESSIONE 25: niente alert in vacanza
     const yesterdayKey = (()=>{
       const d = new Date(t2); d.setDate(d.getDate()-1);
       return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     })();
     const yesterdaySleep = ST.life[yesterdayKey]?.sleep;
     const isWorkoutDay = todayWoId && todayWoId !== 'rest' && todayWoId !== 'cardio';
-    if (!yesterdaySleep || !isWorkoutDay || todayLog) return '';
+    if (!yesterdaySleep) return '';
     if (yesterdaySleep < 5) {
       return `
       <div style="background:linear-gradient(135deg,rgba(239,68,68,.12),rgba(239,68,68,.04));border:2px solid var(--red);border-radius:14px;padding:12px 14px;margin-bottom:12px;">
         <div style="display:flex;align-items:center;gap:10px;">
           <div style="font-size:22px;">😴</div>
           <div style="flex:1;">
-            <div style="font-size:11px;color:var(--red);font-weight:800;letter-spacing:1px;">SONNO INSUFFICIENTE</div>
-            <div style="font-size:12px;color:var(--text);margin-top:2px;line-height:1.4;">Hai dormito solo ${yesterdaySleep}h. Riduci pesi del 20-30% oggi o opta per riposo attivo.</div>
+            <div style="font-size:11px;color:var(--red);font-weight:800;letter-spacing:1px;">SONNO INSUFFICIENTE (${yesterdaySleep}h)</div>
+            <div style="font-size:12px;color:var(--text);margin-top:2px;line-height:1.4;">${isWorkoutDay && !todayLog ? 'Riduci pesi del 20-30% oggi o opta per riposo attivo. ' : ''}Considera +100 kcal carbo: sonno scarso aumenta cortisolo e fame.</div>
           </div>
         </div>
       </div>`;
     }
-    if (yesterdaySleep >= 7.5) {
+    if (yesterdaySleep < 6.5 && isWorkoutDay && !todayLog) {
+      return `
+      <div style="background:linear-gradient(135deg,rgba(202,138,4,.10),rgba(202,138,4,.03));border:1.5px solid var(--yel);border-radius:14px;padding:10px 14px;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="font-size:20px;">⚠️</div>
+          <div style="flex:1;font-size:12px;color:var(--text);line-height:1.4;">Sonno medio (${yesterdaySleep}h): mantieni intensità ma <strong>50g carbo pre-workout</strong> ti aiuteranno. Caffè 30min prima.</div>
+        </div>
+      </div>`;
+    }
+    if (yesterdaySleep >= 7.5 && isWorkoutDay && !todayLog) {
       return `
       <div style="background:linear-gradient(135deg,rgba(34,197,94,.10),rgba(34,197,94,.03));border:1.5px solid var(--gre);border-radius:14px;padding:10px 14px;margin-bottom:12px;">
         <div style="display:flex;align-items:center;gap:10px;">
@@ -10364,9 +10603,10 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
           const cW = ST.h.length ? ST.h[ST.h.length-1].w : (ST.p.s || 70);
           const an = typeof analyze === 'function' ? analyze(ST.h, ST.p) : {};
           const extraK = typeof getActivitiesKcal === 'function' ? getActivitiesKcal(currentDateStr) : 0;
-          const mac = calcMacros(cW, profile.ht || 170, profile.ag || 30, profile.sx || 'm', ST.p, sessionsPerWeek, an, extraK);
           return days.map((dname, idx) => {
             const isRest = !trainDaysIdx.includes(idx);
+            // SESSIONE 25: calcolo kcal per ogni giorno usando dayType
+            const mac = calcMacros(cW, profile.ht || 170, profile.ag || 30, profile.sx || 'm', ST.p, sessionsPerWeek, an, extraK, isRest ? 'rest' : 'train');
             const meals = window.buildMeals(mac, ST.p.intol||[], profile.sx||'m', isRest, ST.p.diet||'omnivore', null, ST.p.usesSupplements, ST.p.favs);
             const totalK = (meals||[]).reduce((s,m) => s + (m.opts?.[0]?.kcal || m.kcal || 0), 0);
             const isToday = idx === dowToday;
@@ -10376,7 +10616,7 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
                   <span style="font-size:13px;font-weight:700;color:var(--text);">${dname}${isToday?' (oggi)':''}</span>
                   <span style="font-size:10px;background:${isRest?'var(--mut)':'var(--ora)'};color:#fff;padding:2px 7px;border-radius:4px;margin-left:6px;font-weight:600;">${isRest?'RIPOSO':'TRAIN'}</span>
                 </div>
-                <div style="font-size:11px;color:var(--blu);font-weight:700;">~${totalK} kcal</div>
+                <div style="font-size:11px;color:${isRest?'var(--mut)':'var(--ora)'};font-weight:700;">~${mac.kcal} kcal</div>
               </div>
               <div style="display:flex;flex-direction:column;gap:3px;">
                 ${(meals||[]).slice(0,5).map(m => `<div style="font-size:10px;color:var(--mut);line-height:1.4;">
@@ -10640,6 +10880,93 @@ window.renderBody = function(cW,mac,theme,pWeek,sx){
   <div class="g2" style="margin-bottom:10px;">
     ${[['KG PERSI',`${lost>=0?'-':'+'}${Math.abs(lost).toFixed(1)}kg`,'var(--acc)'],['MANCANTI',Math.abs(ST.p.g-cW).toFixed(1)+' kg','var(--ora)'],['MEDIA 7G',avg7+' kg','var(--blu)'],['SESSIONI',wLogF.length,'var(--purp)']].map(([l,v,col])=>`<div class="card" style="text-align:center;padding:14px;border-top:3px solid ${col};"><div class="bebas" style="font-size:28px;color:${col};line-height:1;">${v}</div><div style="font-size:9px;color:var(--mut);letter-spacing:1.5px;margin-top:2px;">${l}</div></div>`).join('')}
   </div>
+
+  <!-- ── CALENDARIO MENSILE COLORATO (sessione 25) ── -->
+  ${(()=>{
+    if (!ST.calendarMonth) ST.calendarMonth = currentDateStr.slice(0,7); // 'YYYY-MM'
+    const [yr, mo] = ST.calendarMonth.split('-').map(Number);
+    const firstOfMonth = new Date(yr, mo-1, 1);
+    const lastOfMonth = new Date(yr, mo, 0);
+    const daysInMonth = lastOfMonth.getDate();
+    const firstDow = (firstOfMonth.getDay() + 6) % 7; // 0=lun
+    const monthLabel = firstOfMonth.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
+
+    // Helper: stato di un giorno (workout, sgarro, PR, peso registrato)
+    const getDayInfo = (dateStr) => {
+      const info = { hasWorkout:false, hasSgarro:false, hasPR:false, hasWeigh:false, isToday:false, isRest:false };
+      info.isToday = dateStr === currentDateStr;
+      info.isRest = typeof window.isRestDayFor === 'function' ? window.isRestDayFor(dateStr) : false;
+      const wlog = (ST.wLog||[]).find(w => w.d === dateStr && !w.isRest);
+      if (wlog) info.hasWorkout = true;
+      const wHist = ST.wHistory?.[dateStr];
+      if (wHist) {
+        if (Object.values(wHist).some(e => e?.isPR)) info.hasPR = true;
+      }
+      const nutri = ST.nutri?.[dateStr];
+      if (nutri?.cheatLog?.length) {
+        if (nutri.cheatLog.some(e => (e.mealType || 'cheat') === 'cheat')) info.hasSgarro = true;
+      }
+      const wEntry = ST.h.find(w => w.d === dateStr);
+      if (wEntry) info.hasWeigh = true;
+      return info;
+    };
+
+    // Build cells (6 settimane × 7 giorni)
+    let cells = '';
+    // Padding iniziale (giorni del mese precedente come spazi vuoti)
+    for (let i = 0; i < firstDow; i++) {
+      cells += `<div style="aspect-ratio:1;"></div>`;
+    }
+    // Giorni del mese
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateStr = `${yr}-${String(mo).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      const info = getDayInfo(dateStr);
+      let bg = 'var(--surf)';
+      let dot = '';
+      let border = '1px solid var(--bord)';
+      let textCol = 'var(--text)';
+      if (info.hasPR) {
+        bg = 'rgba(234,179,8,.25)';
+        border = '1.5px solid #eab308';
+        dot = '<span style="position:absolute;top:2px;right:3px;font-size:9px;">🏆</span>';
+      } else if (info.hasSgarro) {
+        bg = 'rgba(239,68,68,.20)';
+        border = '1.5px solid var(--red)';
+        dot = '<span style="position:absolute;top:2px;right:3px;width:5px;height:5px;background:var(--red);border-radius:50%;"></span>';
+      } else if (info.hasWorkout) {
+        bg = 'rgba(34,197,94,.18)';
+        border = '1.5px solid var(--gre)';
+        dot = '<span style="position:absolute;top:2px;right:3px;width:5px;height:5px;background:var(--gre);border-radius:50%;"></span>';
+      } else if (info.isRest && new Date(dateStr) < new Date(currentDateStr)) {
+        bg = 'rgba(113,113,122,.12)';
+        textCol = 'var(--mut)';
+      }
+      if (info.isToday) {
+        border = '2px solid var(--blu)';
+      }
+      // Peso registrato: cerchietto blu in basso
+      const weighDot = info.hasWeigh ? '<span style="position:absolute;bottom:2px;right:3px;width:5px;height:5px;background:var(--blu);border-radius:50%;"></span>' : '';
+      cells += `<div style="aspect-ratio:1;background:${bg};border:${border};border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;color:${textCol};font-weight:${info.isToday?'700':'500'};position:relative;">${day}${dot}${weighDot}</div>`;
+    }
+
+    return `<div class="card" style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <button onclick="changeCalMonth(-1)" style="background:var(--surf);border:1px solid var(--bord);color:var(--text);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:14px;">‹</button>
+        <div class="bebas" style="font-size:16px;color:var(--text);text-transform:capitalize;">📅 ${monthLabel}</div>
+        <button onclick="changeCalMonth(1)" style="background:var(--surf);border:1px solid var(--bord);color:var(--text);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:14px;">›</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;">
+        ${['L','M','M','G','V','S','D'].map(d => `<div style="text-align:center;font-size:9px;color:var(--mut);font-weight:700;letter-spacing:.5px;padding:3px 0;">${d}</div>`).join('')}
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;">${cells}</div>
+      <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;font-size:10px;color:var(--mut);">
+        <div style="display:flex;align-items:center;gap:3px;"><span style="width:8px;height:8px;background:var(--gre);border-radius:50%;display:inline-block;"></span> Workout</div>
+        <div style="display:flex;align-items:center;gap:3px;"><span style="width:8px;height:8px;background:var(--red);border-radius:50%;display:inline-block;"></span> Sgarro</div>
+        <div style="display:flex;align-items:center;gap:3px;">🏆 PR</div>
+        <div style="display:flex;align-items:center;gap:3px;"><span style="width:8px;height:8px;background:var(--blu);border-radius:50%;display:inline-block;"></span> Peso</div>
+      </div>
+    </div>`;
+  })()}
 
   ${(()=>{
     // ── ANDAMENTO TARGET (sessione 23) ──
@@ -12947,6 +13274,38 @@ window.renderSettings = function(mac){
     </div>`;
   })()}
 
+  <!-- ── MODALITÀ VACANZA (sessione 25) ── -->
+  ${(() => {
+    const vm = ST.vacationMode || {};
+    const isVacOn = typeof window.isVacationActive === 'function' && window.isVacationActive();
+    return `<div class="card" style="border-color:${isVacOn?'var(--blu)':'var(--bord)'};${isVacOn?'background:linear-gradient(135deg,rgba(96,165,250,.06),transparent);':''}">
+      <div class="bebas" style="font-size:18px;color:${isVacOn?'var(--blu)':'var(--text)'};margin-bottom:6px;">🏖️ MODALITÀ VACANZA ${isVacOn?'(ATTIVA)':''}</div>
+      ${isVacOn ? `
+        <div style="background:rgba(96,165,250,.08);border:1px solid var(--blu);border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;line-height:1.6;">
+          <div style="font-weight:700;color:var(--blu);margin-bottom:4px;">🌴 In vacanza fino al ${new Date(vm.endD+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'long'})}</div>
+          <div style="color:var(--text);">
+            🏝️ Allenamento e dieta <strong>opzionali</strong><br>
+            😌 Nessun banner deficit/sgarro<br>
+            🔥 Streak preservato — niente pressione<br>
+            📊 Tracking comunque attivo
+          </div>
+        </div>
+        <button class="btn-s" style="width:100%;padding:10px;font-size:12px;background:var(--surf);border:1px solid var(--red);color:var(--red);font-weight:600;border-radius:8px;cursor:pointer;" onclick="endVacation()">✓ TORNATO DALLA VACANZA</button>
+      ` : `
+        <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:12px;">
+          Stacchi per qualche giorno? Attiva la modalità vacanza per:
+          <ul style="margin-top:8px;margin-left:20px;font-size:12px;">
+            <li>Sospendere alert deficit/sgarro</li>
+            <li>Mantenere lo streak senza pressione</li>
+            <li>Allenarti solo se vuoi (niente obblighi)</li>
+            <li>Continuare a tracciare per analisi future</li>
+          </ul>
+        </div>
+        <button class="btn-s" style="width:100%;padding:11px;font-size:13px;background:rgba(96,165,250,.1);border:1px solid var(--blu);color:var(--blu);font-weight:600;border-radius:8px;cursor:pointer;" onclick="startVacation()">🏖️ ATTIVA MODALITÀ VACANZA</button>
+      `}
+    </div>`;
+  })()}
+
   ${sectionTitle('sec-notifications', '🔔', 'NOTIFICHE & TUTORIAL', 'var(--ora)')}
 
   <!-- ── NOTIFICHE PUSH (sessione 12 - master toggle + UX migliorata) ── -->
@@ -13180,7 +13539,10 @@ window.render = function() {
   let cW=ST.h.length?ST.h[ST.h.length-1].w:0;
   const wEntry=ST.h.find(x=>x.d===currentDateStr);if(wEntry) cW=wEntry.w;
   const an=ST.p?analyze(ST.h,{...ST.p,programStart:ST.programStart},ST.wLog):{status:'new',msg:'',col:'var(--mut)',calAdj:0,cardioAdj:0,alert:null,missed:0};
-  const mac=ST.p?calcMacros(cW,ht,ag,sx,ST.p,(ST.p.sessions!=null?ST.p.sessions:3),an,getActivitiesKcal(currentDateStr)):{kcal:1700,prot:120,carb:150,fat:50,bmr:0,tdee:0,cardioLevel:1};
+  // ── SESSIONE 25: calorie cycling - dayType in base a workout di oggi ──
+  const __isRest = ST.p && typeof window.isTodayRestDay === 'function' ? window.isTodayRestDay() : false;
+  const __dayType = ST.p ? (__isRest ? 'rest' : 'train') : null;
+  const mac=ST.p?calcMacros(cW,ht,ag,sx,ST.p,(ST.p.sessions!=null?ST.p.sessions:3),an,getActivitiesKcal(currentDateStr), __dayType):{kcal:1700,prot:120,carb:150,fat:50,bmr:0,tdee:0,cardioLevel:1};
   const theme=ST.p?.t==='cut'?'var(--acc)':'var(--blu)';
   const dOfW=(new Date(currentDateStr).getDay()+6)%7;
   // Stato reale della settimana + sequenza workout basata sulla storia
