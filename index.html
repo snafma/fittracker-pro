@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION25-CYCLING-EXTRAS">
+<meta name="ft-version" content="build-SESSION26-PR-NOTIF-HELP">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -478,7 +478,7 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
     <div class="spinner"></div>
     <div class="bebas" style="color:var(--text);font-size:28px;letter-spacing:3px;">SYSTEM BOOTING</div>
     <div style="color:var(--mut);font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:1px;">Connessione al Cloud Secure Database...</div>
-    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION25</div>
+    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION26</div>
   </div>
 </div>
 
@@ -5505,7 +5505,7 @@ window.defST=function(){
     // ── Campi sessione 6 ──
     shareLeaderboardConsent:false, // opt-in per classifica amici (privacy by default)
     // ── Campi sessione 7 ──
-    notifPrefs:{master:true, workout:true, meals:true, weighIn:true}, // preferenze notifiche
+    notifPrefs:{master:true, workout:true, meals:true, weighIn:true, sleep:true, water:false, workoutCheck:true, foodCheck:false, dailyWeight:false}, // preferenze notifiche (sessione 26)
     travelMode:null,             // {active:true, startD:'2026-05-04', endD:'2026-05-08', hasGym:false, sessions:3, dur:30}
     // ── Campi sessione 9 ──
     customFoods:[],              // cibi personalizzati creati dall'utente per gli sgarri
@@ -7063,6 +7063,71 @@ window.rescheduleAllNotifications = function() {
       scheduleNotification(friday.getTime(), '⚖️ È venerdì! Pesata settimanale', 'Sali sulla bilancia e registra il peso per tracciare i progressi.', 'ft-weigh-' + friday.toISOString().slice(0,10));
     }
   }
+
+  // ─── SESSIONE 26: nuove notifiche promemoria ─────────────────────────
+  // 4. Pesata giornaliera (08:00) — solo se non già loggata oggi
+  if (prefs.dailyWeight === true) {
+    const wt = new Date(today);
+    wt.setHours(8, 0, 0, 0);
+    if (wt.getTime() > Date.now()) {
+      const already = (ST.h || []).some(h => h.d === todayStr);
+      if (!already) {
+        scheduleNotification(wt.getTime(), '⚖️ Pesata di oggi', 'Inizia bene la giornata: registra il peso in 5 secondi.', 'ft-dailyweight-' + todayStr);
+      }
+    }
+  }
+
+  // 5. Sonno (07:30) — se non già registrato
+  if (prefs.sleep !== false) {
+    const sl = new Date(today);
+    sl.setHours(7, 30, 0, 0);
+    if (sl.getTime() > Date.now()) {
+      const already = ST.life?.[todayStr]?.sleep;
+      if (!already) {
+        scheduleNotification(sl.getTime(), '😴 Quanto hai dormito?', 'Servono 5 sec, calibriamo il workout di oggi.', 'ft-sleep-' + todayStr);
+      }
+    }
+  }
+
+  // 6. Acqua (10:00, 13:00, 16:00, 19:00)
+  if (prefs.water === true) {
+    [10, 13, 16, 19].forEach(h => {
+      const wat = new Date(today);
+      wat.setHours(h, 0, 0, 0);
+      if (wat.getTime() > Date.now()) {
+        scheduleNotification(wat.getTime(), '💧 Bevi un bicchiere d\'acqua', 'Idratazione = performance + dimagrimento.', 'ft-water-' + todayStr + '-' + h);
+      }
+    });
+  }
+
+  // 7. Check workout serale (21:00) — solo se non già loggato
+  if (prefs.workoutCheck !== false) {
+    const wc = new Date(today);
+    wc.setHours(21, 0, 0, 0);
+    if (wc.getTime() > Date.now()) {
+      const todayLogged = (ST.wLog || []).some(w => w.d === todayStr);
+      const dayOfWeek = today.getDay();
+      const sess = ST.p.sessions || 3;
+      const trainingDays = sess >= 6 ? [1,2,3,4,5,6] : sess === 5 ? [1,2,3,4,5] : sess === 4 ? [1,2,4,5] : sess === 3 ? [1,3,5] : [2,4];
+      const isTrainDay = trainingDays.includes(dayOfWeek);
+      if (!todayLogged) {
+        const title = isTrainDay ? '💪 Hai allenato oggi?' : '😌 Hai riposato?';
+        const body = isTrainDay ? 'Registra la sessione o segna riposo, così non perdi lo streak.' : 'Conferma il riposo per mantenere lo streak.';
+        scheduleNotification(wc.getTime(), title, body, 'ft-wocheck-' + todayStr);
+      }
+    }
+  }
+
+  // 8. Check cibo dopo pranzo (14:30) e dopo cena (21:30)
+  if (prefs.foodCheck === true) {
+    [{h:14,m:30,lbl:'pranzo'}, {h:21,m:30,lbl:'cena'}].forEach((slot, idx) => {
+      const fc = new Date(today);
+      fc.setHours(slot.h, slot.m, 0, 0);
+      if (fc.getTime() > Date.now()) {
+        scheduleNotification(fc.getTime(), `🍽️ Come è andato il ${slot.lbl}?`, `Inserisci eventuali sgarri o sostituzioni in 10 secondi.`, 'ft-foodcheck-' + todayStr + '-' + idx);
+      }
+    });
+  }
 };
 
 // Auto-schedulazione quando l'app si carica (se permessi attivi)
@@ -8162,6 +8227,31 @@ window.removeCheatEntry=function(idx){
   if(!day.cheatLog.length) ST.cheatDebt=0;
   save();
 }
+// ═══════════════════════════════════════════════════════════
+// FOCUS PASTO DA HOME (sessione 26)
+// Apre tab Alimentazione con scroll automatico al pasto specifico
+// e bordo highlighted per 2 secondi
+// ═══════════════════════════════════════════════════════════
+window.goToMeal = function(mealId) {
+  ST.tab = 'diet';
+  window.__focusMealId = mealId;
+  render();
+  // Dopo render, scroll + highlight (al prossimo tick dopo DOM update)
+  setTimeout(() => {
+    const el = document.getElementById('meal-' + mealId);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.style.transition = 'box-shadow .3s, transform .3s';
+    el.style.boxShadow = '0 0 0 3px var(--acc), 0 0 32px rgba(74,222,128,.4)';
+    el.style.transform = 'scale(1.02)';
+    setTimeout(() => {
+      el.style.boxShadow = '';
+      el.style.transform = '';
+      window.__focusMealId = null;
+    }, 2400);
+  }, 50);
+};
+
 // FIX 1: logMeal accetta actualKcal (ultimo param) per pasti custom
 // Se presente, usa il valore effettivo invece di k*pct (target %)
 window.logMeal=function(id,pct,k,p,c,f,actualKcal){
@@ -8577,54 +8667,111 @@ window.completeSet=function(){
     }
     if(!ST.wHistory[currentDateStr]) ST.wHistory[currentDateStr]={};
 
-    // ── PR DETECTION (sessione 4, fix sessione 13) ──
-    // Confronta il valore con il record storico per questo esercizio
+    // ── PR DETECTION v3 (sessione 26) ──
+    // FIX: il vecchio sistema confrontava solo il PESO max, ignorando le reps.
+    // Quindi se ieri 80kg×6 e oggi 80kg×8, NON segnava PR (sbagliato).
+    // Inoltre il record veniva sovrascritto ad ogni serie nella stessa sessione.
+    //
+    // Nuova logica:
+    //  - Per ogni esercizio, salvo la MIGLIOR serie del giorno (best kg, best reps a quel kg)
+    //  - Confronto con la miglior performance storica passata di QUELL'esercizio specifico
+    //  - 2 tipi di PR:
+    //    A) PR di PESO MASSIMO: kg > bestPrevKg
+    //    B) PR di REPS allo stesso peso: kg == bestPrevKg && reps > prevRepsAtSameKg
     let isPR = false;
     let prMsg = '';
-    // ── FIX FALSO PR (sessione 13) ──
-    // Per esercizi a tempo (sec), il PR scatta SOLO se l'utente ha inserito un valore manualmente.
-    // Altrimenti il timer automatico potrebbe sempre superare il record precedente solo
-    // perché il default è il target (es. 30s di plank target sempre raggiunti).
-    // Per esercizi a peso/reps, se l'utente non ha messo NULLA non c'è PR.
-    const skipPR = (unit === 'sec' && !userEnteredValue) || // tempo senza input manuale
-                   (unit === 'kg' && !userEnteredValue && !actualReps) || // peso senza nulla
-                   (unit === 'reps' && !userEnteredValue); // reps senza input
+    let prType = null; // 'weight' | 'reps' | 'first'
+    const skipPR = (unit === 'sec' && !userEnteredValue) ||
+                   (unit === 'kg' && !userEnteredValue && !actualReps) ||
+                   (unit === 'reps' && !userEnteredValue);
     if (value > 0 && !ex.isWarmup && !ex.isCooldown && !skipPR) {
-      let bestPrev = 0;
+      let bestPrevKg = 0;
+      let bestPrevReps = 0;       // per esercizi unit='reps'
+      let bestPrevSec = 0;        // per esercizi unit='sec'
+      let prevRepsAtSameKg = 0;   // reps storiche fatte allo stesso peso
       const histDates = Object.keys(ST.wHistory).sort();
       histDates.forEach(d => {
         if (d === currentDateStr) return; // escludo oggi
         const prev = ST.wHistory[d]?.[ex.id];
         if (!prev || !prev.ok) return;
-        const prevVal = unit === 'kg' ? (prev.kg || 0) : unit === 'sec' ? (prev.sec || 0) : (prev.reps || 0);
-        if (prevVal > bestPrev) bestPrev = prevVal;
+        if (unit === 'kg') {
+          const prevKg = prev.kg || 0;
+          const prevReps = prev.actualReps || 0;
+          if (prevKg > bestPrevKg) bestPrevKg = prevKg;
+          if (prevKg === value && prevReps > prevRepsAtSameKg) prevRepsAtSameKg = prevReps;
+        } else if (unit === 'sec') {
+          if ((prev.sec||0) > bestPrevSec) bestPrevSec = prev.sec||0;
+        } else if (unit === 'reps') {
+          if ((prev.reps||0) > bestPrevReps) bestPrevReps = prev.reps||0;
+        }
       });
-      if (bestPrev > 0 && value > bestPrev) {
-        isPR = true;
-        const u = unit === 'sec' ? 's' : unit === 'reps' ? ' reps' : 'kg';
-        prMsg = `🏆 NUOVO RECORD! ${value}${u} (era ${bestPrev}${u}, +${(value-bestPrev).toFixed(unit==='kg'?1:0)})`;
-      } else if (bestPrev === 0 && value > 0) {
-        // Prima sessione registrata
-        isPR = true;
-        const u = unit === 'sec' ? 's' : unit === 'reps' ? ' reps' : 'kg';
-        prMsg = `🎯 Prima volta: ${value}${u} registrato!`;
+
+      if (unit === 'kg') {
+        if (bestPrevKg === 0) {
+          isPR = true; prType = 'first';
+          prMsg = `🎯 Prima volta: ${value}kg${actualReps?'× '+actualReps+' reps':''} registrato!`;
+        } else if (value > bestPrevKg) {
+          isPR = true; prType = 'weight';
+          prMsg = `🏆 NUOVO PR PESO! ${value}kg${actualReps?'× '+actualReps:''} (era ${bestPrevKg}kg, +${(value-bestPrevKg).toFixed(1)}kg)`;
+        } else if (value === bestPrevKg && actualReps && actualReps > prevRepsAtSameKg && prevRepsAtSameKg > 0) {
+          isPR = true; prType = 'reps';
+          prMsg = `🏆 NUOVO PR REPS! ${value}kg × ${actualReps} reps (era ${prevRepsAtSameKg}, +${actualReps-prevRepsAtSameKg})`;
+        }
+      } else if (unit === 'sec') {
+        if (bestPrevSec === 0 && value > 0) {
+          isPR = true; prType = 'first';
+          prMsg = `🎯 Prima volta: ${value}s registrato!`;
+        } else if (value > bestPrevSec) {
+          isPR = true; prType = 'weight';
+          prMsg = `🏆 NUOVO RECORD! ${value}s (era ${bestPrevSec}s, +${value-bestPrevSec}s)`;
+        }
+      } else if (unit === 'reps') {
+        if (bestPrevReps === 0 && value > 0) {
+          isPR = true; prType = 'first';
+          prMsg = `🎯 Prima volta: ${value} reps registrate!`;
+        } else if (value > bestPrevReps) {
+          isPR = true; prType = 'weight';
+          prMsg = `🏆 NUOVO RECORD! ${value} reps (era ${bestPrevReps}, +${value-bestPrevReps})`;
+        }
       }
     }
 
-    // Salvo struttura completa (val + unit + reps) per memoria precisa
-    ST.wHistory[currentDateStr][ex.id] = {
-      kg: unit === 'kg' && value > 0 ? value : null,
-      sec: unit === 'sec' && value > 0 ? value : null,
-      reps: unit === 'reps' && value > 0 ? value : (actualReps || null),
-      actualReps: actualReps, // ripetizioni realmente fatte (per esercizi kg)
-      unit: unit,
-      ok: true,
-      isPR: isPR // flag per render banner
-    };
+    // ── BEST-OF-DAY (sessione 26) ──
+    // Invece di sovrascrivere ad ogni serie, accumulo la MIGLIORE serie del giorno
+    const existingToday = ST.wHistory[currentDateStr][ex.id];
+    let saveEntry = true;
+    if (existingToday && existingToday.ok) {
+      if (unit === 'kg') {
+        const oldKg = existingToday.kg || 0;
+        const oldReps = existingToday.actualReps || 0;
+        if (value < oldKg) saveEntry = false;
+        else if (value === oldKg && (actualReps || 0) <= oldReps) saveEntry = false;
+      } else if (unit === 'sec') {
+        if (value <= (existingToday.sec || 0)) saveEntry = false;
+      } else if (unit === 'reps') {
+        if (value <= (existingToday.reps || 0)) saveEntry = false;
+      }
+      if (!saveEntry && existingToday.isPR) {
+        isPR = existingToday.isPR;
+        prMsg = ''; // niente toast aggiuntivo (già mostrato)
+      }
+    }
+    if (saveEntry) {
+      ST.wHistory[currentDateStr][ex.id] = {
+        kg: unit === 'kg' && value > 0 ? value : null,
+        sec: unit === 'sec' && value > 0 ? value : null,
+        reps: unit === 'reps' && value > 0 ? value : (actualReps || null),
+        actualReps: actualReps,
+        unit: unit,
+        ok: true,
+        isPR: isPR,
+        prType: prType
+      };
+    }
     // Mostro il toast PR se è un nuovo record
     if (isPR && prMsg) {
       window.__lastPRMsg = prMsg;
-      // Suono trionfale ulteriore
+      // Suono trionfale
       setTimeout(() => {
         BeepPlayer.buzz(659, 0.10, 0.95);
         setTimeout(() => BeepPlayer.buzz(880, 0.10, 0.95), 110);
@@ -9523,7 +9670,7 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
     const actionTxt = mealLogged ? 'Fatto' : 'Saltato';
     const iconTxt = mealLogged ? '✓' : '✕';
     const iconCol = mealLogged ? 'var(--gre)' : 'var(--mut)';
-    mealCardHtml=`<div style="background:${mealCardStyle.bg};border:2px solid ${mealCardStyle.border};border-radius:18px;padding:14px 16px;" onclick="ST.tab='diet';render()">
+    mealCardHtml=`<div style="background:${mealCardStyle.bg};border:2px solid ${mealCardStyle.border};border-radius:18px;padding:14px 16px;cursor:pointer;" onclick="goToMeal('${mealToShow.id}')">
       <div style="display:flex;align-items:center;gap:12px;">
         <div style="width:40px;height:40px;border-radius:50%;background:${iconCol}20;border:2px solid ${iconCol};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:${iconCol};flex-shrink:0;">${iconTxt}</div>
         <div style="flex:1;min-width:0;">
@@ -9537,8 +9684,8 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
   } else if(activeMeal){
     // Card ATTIVA: grande, bottoni FATTO/SALTO
     mealCardHtml=`<div style="background:${mealCardStyle.bg};border:2px solid ${mealCardStyle.border};border-radius:18px;padding:18px;${mealCardStyle.glow}">
-      <div style="font-size:10px;font-weight:700;color:var(--acc);letter-spacing:2px;margin-bottom:10px;">⏰ È ORA DI MANGIARE</div>
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+      <div style="font-size:10px;font-weight:700;color:var(--acc);letter-spacing:2px;margin-bottom:10px;cursor:pointer;" onclick="goToMeal('${mealToShow.id}')">⏰ È ORA DI MANGIARE</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;cursor:pointer;" onclick="goToMeal('${mealToShow.id}')">
         <div style="font-size:40px;line-height:1;">${mealToShow.icon}</div>
         <div style="flex:1;min-width:0;">
           <div class="bebas" style="font-size:24px;line-height:1;">${mealToShow.name}</div>
@@ -9549,11 +9696,11 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
         <button class="btn" style="padding:14px 8px;background:var(--acc);color:#000;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;border:none;border-radius:12px;" onclick="logMeal('${mealToShow.id}',${PCT_H[mealToShow.id]},${mac.kcal},${mac.prot},${mac.carb},${mac.fat},${mealCustom?mealKcal:'null'})">✓ FATTO</button>
         <button class="btn" style="padding:14px 8px;background:var(--surf);color:var(--red);border:1.5px solid var(--red);font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;border-radius:12px;" onclick="skipMeal('${mealToShow.id}')">✕ SALTO</button>
       </div>
-      <button onclick="ST.tab='diet';render()" style="width:100%;background:transparent;border:none;color:var(--mut);font-size:11px;padding:4px;text-decoration:underline;cursor:pointer;">vedi dettaglio cibi →</button>
+      <button onclick="goToMeal('${mealToShow.id}')" style="width:100%;background:transparent;border:none;color:var(--mut);font-size:11px;padding:4px;text-decoration:underline;cursor:pointer;">vedi dettaglio cibi →</button>
     </div>`;
   } else if(nextMeal){
     // Card INATTIVA: prossimo pasto in attesa
-    mealCardHtml=`<div style="background:${mealCardStyle.bg};border:1.5px solid ${mealCardStyle.border};border-radius:18px;padding:16px;opacity:.92;cursor:pointer;" onclick="ST.tab='diet';render()">
+    mealCardHtml=`<div style="background:${mealCardStyle.bg};border:1.5px solid ${mealCardStyle.border};border-radius:18px;padding:16px;opacity:.92;cursor:pointer;" onclick="goToMeal('${mealToShow.id}')">
       <div style="font-size:10px;font-weight:700;color:var(--mut);letter-spacing:1.5px;margin-bottom:8px;">🍽️ PROSSIMO PASTO</div>
       <div style="display:flex;align-items:center;gap:12px;">
         <div style="font-size:32px;">${mealToShow.icon}</div>
@@ -9566,7 +9713,7 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
     </div>`;
   } else {
     // Edge case: nessun pasto (dopo cena)
-    mealCardHtml=`<div style="background:var(--card);border:1.5px solid var(--bord);border-radius:18px;padding:16px;" onclick="ST.tab='diet';render()">
+    mealCardHtml=`<div style="background:var(--card);border:1.5px solid var(--bord);border-radius:18px;padding:16px;cursor:pointer;" onclick="ST.tab='diet';render()">
       <div style="display:flex;align-items:center;gap:10px;">
         <div style="font-size:28px;">🌙</div>
         <div style="flex:1;"><div style="font-size:13px;font-weight:700;">Giornata alimentare conclusa</div><div style="font-size:11px;color:var(--mut);margin-top:2px;">${dLog.k||0}/${mac.kcal} kcal consumate</div></div>
@@ -9619,7 +9766,7 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
         <button onclick="event.stopPropagation();toggleWorkoutLoc('home')" style="padding:4px 8px;background:${(ST.p.loc||'gym')==='home'?'var(--blu)':'transparent'};color:${(ST.p.loc||'gym')==='home'?'#fff':'var(--mut)'};border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:10px;">🏠</button>
       </div>`;
     if(isPrim){
-      // Card PRIMARIA: grande, bottone INIZIA vivo
+      // Card PRIMARIA: grande, bottone INIZIA vivo + opzione "oggi riposo"
       woCardHtml=`<div style="background:${woCardStyle.bg};border:2px solid ${woCardStyle.border};border-radius:18px;padding:18px;${woCardStyle.glow}">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;">
           <div style="font-size:10px;font-weight:700;color:${woInfo.col};letter-spacing:2px;">💪 ALLENAMENTO OGGI</div>
@@ -9633,15 +9780,17 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
           </div>
         </div>
         <button class="btn" style="width:100%;padding:16px;background:${woInfo.col};color:#000;font-family:'Bebas Neue';font-size:20px;letter-spacing:2px;border:none;border-radius:12px;" onclick="startWo('${woInfo.id}')">▶ INIZIA ALLENAMENTO</button>
+        <!-- SESSIONE 26: opzione "oggi è riposo" direttamente dalla card -->
+        <button class="btn-s" style="width:100%;padding:9px;margin-top:8px;background:transparent;color:var(--mut);border:1px dashed var(--bord);font-size:12px;font-weight:600;border-radius:10px;cursor:pointer;" onclick="logRestDay()">💤 oggi mi riposo</button>
       </div>`;
     } else {
       // Card SECONDARIA: compatta, grigio soft
-      woCardHtml=`<div style="background:${woCardStyle.bg};border:1.5px solid ${woCardStyle.border};border-radius:18px;padding:16px;cursor:pointer;" onclick="ST.tab='work';render()">
+      woCardHtml=`<div style="background:${woCardStyle.bg};border:1.5px solid ${woCardStyle.border};border-radius:18px;padding:16px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;">
-          <div style="font-size:10px;font-weight:700;color:var(--mut);letter-spacing:1.5px;">💪 ALLENAMENTO OGGI</div>
+          <div style="font-size:10px;font-weight:700;color:var(--mut);letter-spacing:1.5px;cursor:pointer;" onclick="ST.tab='work';render()">💪 ALLENAMENTO OGGI</div>
           ${locToggle}
         </div>
-        <div style="display:flex;align-items:center;gap:12px;">
+        <div style="display:flex;align-items:center;gap:12px;cursor:pointer;" onclick="ST.tab='work';render()">
           <div style="font-size:28px;">${woInfo.emoji}</div>
           <div style="flex:1;min-width:0;">
             <div style="font-size:15px;font-weight:700;line-height:1.2;color:var(--text);">${escapeHtml(woInfo.name)}</div>
@@ -9649,6 +9798,7 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
           </div>
           <button onclick="event.stopPropagation();startWo('${woInfo.id}')" style="background:${woInfo.col};color:#000;border:none;border-radius:10px;padding:10px 14px;font-family:'Bebas Neue';font-size:14px;letter-spacing:1px;cursor:pointer;flex-shrink:0;">▶ INIZIA</button>
         </div>
+        <button class="btn-s" style="width:100%;padding:7px;margin-top:8px;background:transparent;color:var(--mut);border:1px dashed var(--bord);font-size:11px;font-weight:600;border-radius:8px;cursor:pointer;" onclick="logRestDay()">💤 oggi mi riposo</button>
       </div>`;
     }
   } else if(isRestDayPlanned){
@@ -9692,21 +9842,71 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
   const bannerAllDone = workoutHandled && primaryMealsHandled;
 
   // ═══════════════════════════════════════════════════════════
-  // HEADER (avatar + peso + streak)
+  // HEADER (avatar + peso + streak + barra progresso enhanced)
   // ═══════════════════════════════════════════════════════════
-  const headerHtml=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;padding:0 2px;">
+  // SESSIONE 26: barra progresso con data prevista calcolata
+  // Calcolo data prevista al ritmo reale e la confronto con la data scelta dall'utente
+  let etaInfo = null;
+  if (typeof window.getTargetSummary === 'function') {
+    const summary = window.getTargetSummary(ST.h, ST.p);
+    if (summary && summary.etaDate) {
+      etaInfo = summary;
+    }
+  }
+  // Progresso effettivo: peso percorso vs totale percorso necessario
+  // Per cut: lost = (startW - currW); totale = (startW - goalW)
+  // Per bulk: gained = (currW - startW); totale = (goalW - startW)
+  const startW = ST.p.s || cW;
+  const goalW = ST.p.g;
+  const totalKg = Math.abs(goalW - startW);
+  const doneKg = ST.p.t==='cut' ? Math.max(0, startW - cW) : Math.max(0, cW - startW);
+  const progressEnh = totalKg > 0 ? Math.min(100, Math.round((doneKg / totalKg) * 100)) : 0;
+
+  // Formatto le date
+  const tgtDate = ST.p.targetD ? new Date(ST.p.targetD) : null;
+  const tgtLabel = tgtDate ? tgtDate.toLocaleDateString('it-IT', { day:'numeric', month:'short', year:'2-digit' }) : '—';
+  const etaDate = etaInfo?.etaDate ? new Date(etaInfo.etaDate) : null;
+  const etaLabel = etaDate ? etaDate.toLocaleDateString('it-IT', { day:'numeric', month:'short', year:'2-digit' }) : null;
+  const etaDiffDays = etaInfo?.etaDiffDays;
+  // Colore dot ETA: verde se ≤ data target, giallo se +1-21gg, rosso se >21gg
+  let etaCol = 'var(--gre)';
+  if (etaDiffDays != null) {
+    if (etaDiffDays > 21) etaCol = 'var(--red)';
+    else if (etaDiffDays > 0) etaCol = 'var(--ora)';
+  }
+
+  const headerHtml=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;padding:0 2px;">
     <div onclick="ST.tab='set';render()" style="width:46px;height:46px;border-radius:50%;background:${theme}25;border:2px solid ${theme}60;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:20px;color:${theme};cursor:pointer;flex-shrink:0;">${AU.user.charAt(0).toUpperCase()}</div>
     <div style="flex:1;min-width:0;">
       <div style="font-size:10px;font-weight:700;color:${theme};letter-spacing:1.5px;">${ST.p.t==='cut'?'DEFINIZIONE':'MASSA'} · SETT.${pWeek}${isD?' · DELOAD':''}</div>
       <div style="display:flex;align-items:baseline;gap:6px;">
         <span class="bebas" style="font-size:26px;line-height:1;">${cW}<span style="font-size:13px;color:var(--mut);">kg</span></span>
-        <span style="font-size:11px;color:var(--mut);">→ ${ST.p.g}kg · <strong style="color:${theme};">${kgLeft}kg</strong></span>
+        <span style="font-size:11px;color:var(--mut);">→ ${ST.p.g}kg · <strong style="color:${theme};">${kgLeft}kg mancanti</strong></span>
       </div>
     </div>
     ${stk>=2?`<div style="background:rgba(255,104,53,.15);color:var(--ora);padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap;">🔥 ${stk}gg</div>`:''}
   </div>
-  <div style="background:var(--surf);border-radius:99px;height:4px;overflow:hidden;margin:0 2px 16px;">
-    <div style="width:${progress.toFixed(0)}%;height:4px;background:${theme};"></div>
+
+  <!-- ── PROGRESSO ENHANCED (sessione 26) ── -->
+  <div onclick="ST.tab='body';render()" style="background:var(--card);border:1px solid var(--bord);border-radius:14px;padding:11px 13px;margin:0 2px 14px;cursor:pointer;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:10px;letter-spacing:.8px;">
+      <span style="color:var(--mut);font-weight:700;">PROGRESSO OBIETTIVO · ${progressEnh}%</span>
+      <span style="color:${theme};font-weight:700;">${doneKg.toFixed(1)}/${totalKg.toFixed(1)} kg</span>
+    </div>
+    <div style="background:var(--surf);border-radius:99px;height:7px;overflow:hidden;position:relative;">
+      <div style="width:${progressEnh}%;height:7px;background:linear-gradient(90deg,${theme}aa,${theme});border-radius:99px;transition:width .4s;"></div>
+    </div>
+    ${etaLabel ? `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px;font-size:10px;">
+      <div style="background:var(--surf);border-radius:8px;padding:6px 8px;">
+        <div style="color:var(--mut);line-height:1.2;">📌 Target scelto</div>
+        <div style="color:var(--text);font-weight:700;">${tgtLabel}</div>
+      </div>
+      <div style="background:var(--surf);border-radius:8px;padding:6px 8px;border:1px solid ${etaCol}30;">
+        <div style="color:${etaCol};line-height:1.2;">🎯 Stima reale ${etaDiffDays > 0 ? '<span style="font-size:9px;">(+'+etaDiffDays+'gg)</span>' : etaDiffDays < 0 ? '<span style="font-size:9px;">('+etaDiffDays+'gg)</span>' : '<span style="font-size:9px;">(in tempo)</span>'}</div>
+        <div style="color:${etaCol};font-weight:700;">${etaLabel}</div>
+      </div>
+    </div>` : ''}
   </div>`;
 
   // ═══════════════════════════════════════════════════════════
@@ -10647,7 +10847,7 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
   ${meals.map(m=>{
     const isL=dLog.logged.includes(m.id),isS=dLog.skipped?.includes(m.id);
     const selIdx=ST.mealOpts?.[m.id]||0,opt=m.opts[selIdx]||m.opts[0];
-    return`<div class="card" style="opacity:${isL||isS?.55:1};">
+    return`<div id="meal-${m.id}" class="card" style="opacity:${isL||isS?.55:1};">
       <div class="r" style="margin-bottom:10px;">
         <div><div style="font-size:15px;font-weight:700;">${m.n}</div><div style="font-size:11px;color:var(--mut);">${m.isCustom?`<span style="color:var(--purp);font-weight:700;">${m.actualKcal} kcal</span> · personalizzato <span style="color:var(--mut);">(target ~${m.kcal})</span>`:`~${m.kcal} kcal`}${m.isRestSnack?' · Giorno riposo':''}</div></div>
         ${isL?`<div class="rc"><span style="color:var(--acc);font-size:12px;font-weight:700;">✅ FATTO</span><button class="btn-s btn-action" style="padding:4px 8px;font-size:10px;margin-left:6px;" onclick="uncheckMeal('${m.id}',${m.pct},${mac.kcal},${mac.prot},${mac.carb},${mac.fat},${m.isCustom?m.actualKcal:'null'})">annulla</button></div>`:
@@ -12860,11 +13060,15 @@ window.startOnboardingTour = function() {
 window.advanceOnboarding = function() {
   if (!ST.sheetData) return;
   ST.sheetData.step++;
-  const steps = window.__onboardingSteps || [];
+  // SESSIONE 26: se sono in un mini-tour di sezione (customSteps), uso quelli
+  const steps = ST.sheetData.customSteps || window.__onboardingSteps || [];
   if (ST.sheetData.step >= steps.length) {
-    ST.onboardingDone = true;
+    // Solo il tour onboarding principale marca come done; i mini-tour no
+    if (!ST.sheetData.isSection) {
+      ST.onboardingDone = true;
+      save();
+    }
     ST.sheet = null; ST.sheetData = null;
-    save();
   }
   render();
 };
@@ -12878,6 +13082,98 @@ window.__onboardingSteps = [
   { emo:'🤖', title:'AI Coach', msg:'Alert personalizzati, riepilogo settimana, gestione infortuni, chat AI. Per ogni dubbio.' },
   { emo:'⚙️', title:'Tutto pronto', msg:'Personalizza profilo, programma, intolleranze, notifiche, tema in Configurazione. Iniziamo!' }
 ];
+
+// ═══════════════════════════════════════════════════════════
+// HELP CONTESTUALE PER SEZIONE (sessione 26)
+// Ogni tab ha un suo mini-tour che spiega cosa puoi fare lì.
+// Si attiva col bottone (?) in alto a destra di ogni sezione.
+// AGGIORNARE QUI ogni volta che si aggiungono feature alla sezione.
+// ═══════════════════════════════════════════════════════════
+window.__sectionHelps = {
+  home: [
+    { emo:'🏠', title:'La tua Home', msg:'Qui hai il dashboard del giorno. Tutto quello che serve subito sotto gli occhi: peso, calorie, allenamento, prossimo pasto.' },
+    { emo:'📊', title:'Barra obiettivo', msg:'In alto vedi quanto sei vicino al peso target (%), con due date: quella che hai scelto e quella REALE calcolata dall\'app sul tuo ritmo attuale.' },
+    { emo:'🍽️', title:'Card pasto', msg:'La card del pasto attuale è cliccabile: ti porta direttamente al menu del giorno, focalizzato su quel pasto specifico.' },
+    { emo:'💪', title:'Card allenamento', msg:'Tap sul bottone INIZIA per partire. Se oggi vuoi riposare, c\'è "oggi mi riposo" sotto. Il chip 🏋️/🏠 cambia loc al volo.' },
+    { emo:'🔥', title:'Streak', msg:'Il fuoco arancione conta i giorni consecutivi di attività. Si rompe solo se salti completamente un giorno (no peso, no workout, no pasto).' },
+    { emo:'⏰', title:'Banner adattivi', msg:'Banner sonno, pattern sgarri, target da rivedere e vacanza: appaiono solo quando servono, sparisco se non sono utili.' }
+  ],
+  work: [
+    { emo:'💪', title:'Sezione Allenamento', msg:'Trovi la scheda di oggi e l\'archivio di tutte le tue sessioni. Le schede sono custom (tue) o auto-generate.' },
+    { emo:'▶️', title:'Avvia un workout', msg:'Tap INIZIA: l\'app ti guida serie per serie con timer riposo, suoni, conteggio reps, suggerimento peso basato sui PR storici.' },
+    { emo:'🏆', title:'Personal Records', msg:'Ogni volta che batti un record (peso O reps a parità di peso) l\'app celebra con suono e badge. La cronologia è in Statistiche.' },
+    { emo:'🔄', title:'Sostituisci esercizi', msg:'Durante il workout puoi sostituire un esercizio con uno simile se attrezzi occupati o infortunio.' },
+    { emo:'✏️', title:'Schede personalizzate', msg:'Crea le tue schede da zero o duplica le pre-impostate. Tap su "Schede" → "+ Nuova scheda".' },
+    { emo:'📦', title:'Esercizi tuoi', msg:'Aggiungi esercizi non presenti nel DB. Compaiono nella tua libreria con badge "tuo".' }
+  ],
+  diet: [
+    { emo:'🥗', title:'Sezione Alimentazione', msg:'Pasti generati su misura: rispettano calorie, intolleranze, allergie, dieta (omni/veg), e bilanciano automaticamente proteine/carbo/grassi.' },
+    { emo:'✓', title:'Conferma o salta', msg:'Per ogni pasto: FATTO ✓ se l\'hai mangiato come previsto, SALTO ✕ se non l\'hai fatto. Niente "in mezzo": per quello usa il sistema sgarro.' },
+    { emo:'🍕', title:'Sgarro/Sostituzione', msg:'Inserisci tutto ciò che mangi extra o diverso. L\'app classifica auto in: SGARRO (oltre +15% del previsto), SOSTITUZIONE (entro range), LEGGERO (sotto -15%).' },
+    { emo:'📷', title:'Barcode scanner', msg:'Per prodotti confezionati: tap "Scansiona codice a barre", inquadra l\'EAN, l\'app pesca i dati da OpenFoodFacts (2M+ prodotti).' },
+    { emo:'⭐', title:'Quick-access', msg:'Quando cerchi un cibo, vedi automaticamente: cibi più frequenti (top 5 usati), recenti, suggeriti per il pasto, e i tuoi combo salvati.' },
+    { emo:'📅', title:'Pianifica settimana', msg:'Card collassabile: vedi i 7 giorni con menu e kcal. I giorni train hanno più carbo, i rest day meno (calorie cycling automatico).' },
+    { emo:'✏️', title:'Personalizza pasti', msg:'Tap "Personalizza questo pasto" per cambiare ingredienti o sostituirli con i tuoi preferiti.' }
+  ],
+  shopping: [
+    { emo:'🛒', title:'Lista della spesa', msg:'Generata automaticamente dai pasti della settimana. Spunta gli articoli mentre fai la spesa.' },
+    { emo:'➕', title:'Aggiungi extra', msg:'Quello che non c\'è nei pasti pianificati lo aggiungi manualmente dal bottone "+ AGGIUNGI".' },
+    { emo:'🗑️', title:'Rimuovi', msg:'Tap su un articolo per rimuoverlo definitivamente dalla settimana. Tornerà se rigeneri.' }
+  ],
+  measures: [
+    { emo:'📏', title:'Misurazioni corporee', msg:'Registra circonferenze (braccio, vita, fianchi, gamba, polpaccio, torace) per tracciare la composizione corporea oltre al peso.' },
+    { emo:'📈', title:'Trend grafici', msg:'Vedi l\'evoluzione di ogni misura nel tempo: + e − rispetto al baseline. Utile in cut (vita ↓) e bulk (braccio ↑).' },
+    { emo:'📅', title:'Frequenza consigliata', msg:'Misura ogni 2-3 settimane, sempre nelle stesse condizioni (mattina, a digiuno, dopo wc).' }
+  ],
+  body: [
+    { emo:'📊', title:'Body Analytics', msg:'KPI peso, kg persi/mancanti, media 7gg, sessioni completate. Tutto sul tuo progresso fisico.' },
+    { emo:'🎯', title:'Andamento target', msg:'Card colorata che ti dice se sei in linea, in ritardo, in anticipo o fermo. Con consigli concreti su cosa cambiare.' },
+    { emo:'📅', title:'Calendario mensile', msg:'Griglia 7×N con stato di ogni giorno: 🟢 workout, 🔴 sgarro, 🏆 PR, blu = oggi, pallino blu = peso registrato.' },
+    { emo:'📉', title:'Grafico trend peso', msg:'Linea del peso negli ultimi N giorni (configurabile). Confronto con la traiettoria ideale verso il target.' }
+  ],
+  stats: [
+    { emo:'📊', title:'Statistiche Pro', msg:'Stats avanzate: confronto periodi, calcolatore 1RM, top esercizi in crescita, distribuzione muscoli, heatmap.' },
+    { emo:'🏋️', title:'Calcolatore 1RM', msg:'Inserisci peso×reps recenti, l\'app stima il tuo 1RM (massimale teorico) con formula Brzycki/Epley.' },
+    { emo:'🆚', title:'Confronto periodi', msg:'Confronta gli ultimi 30/60/90 giorni: volume, frequenza, kcal, peso medio. Vedi cosa migliora.' },
+    { emo:'🎯', title:'Top progressi', msg:'Gli esercizi dove sei migliorato di più (+ kg, + reps, + volume). Per capire dove sei più forte.' }
+  ],
+  coach: [
+    { emo:'🤖', title:'AI Coach', msg:'Alert intelligenti su stallo peso, deficit insufficiente, sovrallenamento, recovery scarso. Riepilogo settimana automatico.' },
+    { emo:'💬', title:'Chat AI', msg:'Domande libere su allenamento, dieta, recovery. L\'AI conosce i tuoi dati e risponde personalizzato.' },
+    { emo:'🤕', title:'Infortuni', msg:'Segnala un infortunio: l\'app adatta automaticamente gli allenamenti per evitare le aree problematiche.' }
+  ],
+  social: [
+    { emo:'👥', title:'Amici e classifica', msg:'Aggiungi amici tramite username e vedete chi è più costante nella settimana (sessioni, volume, streak).' },
+    { emo:'🏆', title:'Classifica', msg:'Aggiornata in tempo reale: chi alleno di più, chi ha streak più lungo, chi è più vicino al suo obiettivo.' }
+  ],
+  share: [
+    { emo:'📤', title:'Condividi progressi', msg:'Crea card grafiche con i tuoi PR, foto progresso, traguardi, da condividere su social o WhatsApp.' }
+  ],
+  set: [
+    { emo:'⚙️', title:'Configurazione', msg:'Tutte le impostazioni: profilo, programma, intolleranze, notifiche, tema, app PWA, modalità vacanza.' },
+    { emo:'🎯', title:'Programma', msg:'Cambia obiettivo (cut/bulk/recomp), peso target, data target, sessioni/settimana, durata, location, focus muscolare.' },
+    { emo:'🔔', title:'Notifiche', msg:'8 tipi diversi di promemoria opzionali: allenamento, pasti, peso, sonno, acqua, riposo, check pasto, pesata settimanale.' },
+    { emo:'🏖️', title:'Modalità vacanza', msg:'Sospende alert, deficit e obblighi per N giorni. Streak preservato. Tracking comunque attivo.' }
+  ],
+  profile: [
+    { emo:'👤', title:'Profilo', msg:'Riepilogo del tuo profilo: nome, età, peso/altezza, anni allenamento, foto profilo.' },
+    { emo:'📷', title:'Foto profilo', msg:'Carica una foto (max 1MB) dalla galleria. Salvata localmente.' },
+    { emo:'🚪', title:'Logout', msg:'Esce dall\'account. I dati restano salvati sul cloud per il prossimo login.' }
+  ]
+};
+
+window.showSectionHelp = function(sectionId) {
+  const steps = window.__sectionHelps?.[sectionId];
+  if (!steps?.length) return;
+  ST.sheet = 'onboarding';
+  ST.sheetData = { step: 0, customSteps: steps, isSection: true };
+  render();
+};
+
+// HTML helper: bottone "?" per ogni renderXxx, da incollare in alto a destra
+window.helpButton = function(sectionId) {
+  return `<button onclick="showSectionHelp('${sectionId}')" style="position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;background:var(--surf);border:1.5px solid var(--bord);color:var(--mut);font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;" title="Guida sezione">?</button>`;
+};
 
 window.renderCoach = function(){
   const sx=AU.profile?.sx||'m';
@@ -13376,6 +13672,58 @@ window.renderSettings = function(mac){
             </div>
           </div>
           <input type="checkbox" onchange="toggleNotifPref('weighIn',this.checked)" ${ST.notifPrefs?.weighIn===false?'':'checked'} style="width:20px;height:20px;cursor:pointer;flex-shrink:0;accent-color:var(--ora);">
+        </div>
+
+        <!-- ── SESSIONE 26: nuovi promemoria ── -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surf);border-radius:8px;font-size:12px;">
+          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+            <span style="font-size:16px;flex-shrink:0;">⚖️</span>
+            <div style="min-width:0;">
+              <div style="color:var(--text);font-weight:600;">Pesata quotidiana</div>
+              <div style="font-size:10px;color:var(--mut);">Ogni mattina alle 8:00 (se non già fatto)</div>
+            </div>
+          </div>
+          <input type="checkbox" onchange="toggleNotifPref('dailyWeight',this.checked)" ${ST.notifPrefs?.dailyWeight===true?'checked':''} style="width:20px;height:20px;cursor:pointer;flex-shrink:0;accent-color:var(--ora);">
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surf);border-radius:8px;font-size:12px;">
+          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+            <span style="font-size:16px;flex-shrink:0;">😴</span>
+            <div style="min-width:0;">
+              <div style="color:var(--text);font-weight:600;">Sonno della notte</div>
+              <div style="font-size:10px;color:var(--mut);">Mattina alle 7:30 (se non già registrato)</div>
+            </div>
+          </div>
+          <input type="checkbox" onchange="toggleNotifPref('sleep',this.checked)" ${ST.notifPrefs?.sleep===false?'':'checked'} style="width:20px;height:20px;cursor:pointer;flex-shrink:0;accent-color:var(--ora);">
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surf);border-radius:8px;font-size:12px;">
+          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+            <span style="font-size:16px;flex-shrink:0;">💧</span>
+            <div style="min-width:0;">
+              <div style="color:var(--text);font-weight:600;">Bevi acqua</div>
+              <div style="font-size:10px;color:var(--mut);">4 promemoria/giorno (10, 13, 16, 19)</div>
+            </div>
+          </div>
+          <input type="checkbox" onchange="toggleNotifPref('water',this.checked)" ${ST.notifPrefs?.water===true?'checked':''} style="width:20px;height:20px;cursor:pointer;flex-shrink:0;accent-color:var(--ora);">
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surf);border-radius:8px;font-size:12px;">
+          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+            <span style="font-size:16px;flex-shrink:0;">✅</span>
+            <div style="min-width:0;">
+              <div style="color:var(--text);font-weight:600;">Check allenamento serale</div>
+              <div style="font-size:10px;color:var(--mut);">Hai allenato/riposato? alle 21:00</div>
+            </div>
+          </div>
+          <input type="checkbox" onchange="toggleNotifPref('workoutCheck',this.checked)" ${ST.notifPrefs?.workoutCheck===false?'':'checked'} style="width:20px;height:20px;cursor:pointer;flex-shrink:0;accent-color:var(--ora);">
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surf);border-radius:8px;font-size:12px;">
+          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+            <span style="font-size:16px;flex-shrink:0;">🍽️</span>
+            <div style="min-width:0;">
+              <div style="color:var(--text);font-weight:600;">Check pasto</div>
+              <div style="font-size:10px;color:var(--mut);">Dopo pranzo (14:30) e cena (21:30)</div>
+            </div>
+          </div>
+          <input type="checkbox" onchange="toggleNotifPref('foodCheck',this.checked)" ${ST.notifPrefs?.foodCheck===true?'checked':''} style="width:20px;height:20px;cursor:pointer;flex-shrink:0;accent-color:var(--ora);">
         </div>
       </div>` : ''}
 
@@ -14203,11 +14551,13 @@ window.render = function() {
     </div></div>`;
   })():
   ST.sheet==='onboarding'&&ST.sheetData?(()=>{
-    const steps = window.__onboardingSteps || [];
+    // SESSIONE 26: usa customSteps se presenti (mini-tour sezione), altrimenti onboarding base
+    const steps = ST.sheetData.customSteps || window.__onboardingSteps || [];
     const idx = ST.sheetData.step || 0;
     if (idx >= steps.length) return '';
     const s = steps[idx];
     const isLast = idx === steps.length - 1;
+    const isMini = !!ST.sheetData.isSection;
     return `<div class="sh-ov" style="background:rgba(0,0,0,.85);"><div class="sh" style="text-align:center;">
       <div class="sh-h"></div>
       <div style="font-size:54px;margin:10px 0;">${s.emo}</div>
@@ -14220,8 +14570,8 @@ window.render = function() {
       </div>
 
       <div style="display:flex;gap:6px;">
-        ${idx > 0 ? `<button class="btn btn-action" style="flex:1;padding:12px;" onclick="ST.sheetData.step--;render()">← Indietro</button>` : `<button class="btn btn-action" style="flex:1;padding:12px;" onclick="closeSheet()">Salta</button>`}
-        <button class="btn" style="flex:2;padding:12px;background:var(--acc);color:#000;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;" onclick="advanceOnboarding()">${isLast ? '✓ INIZIA' : 'AVANTI →'}</button>
+        ${idx > 0 ? `<button class="btn btn-action" style="flex:1;padding:12px;" onclick="ST.sheetData.step--;render()">← Indietro</button>` : `<button class="btn btn-action" style="flex:1;padding:12px;" onclick="closeSheet()">${isMini?'Chiudi':'Salta'}</button>`}
+        <button class="btn" style="flex:2;padding:12px;background:var(--acc);color:#000;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;" onclick="advanceOnboarding()">${isLast ? (isMini?'✓ HO CAPITO':'✓ INIZIA') : 'AVANTI →'}</button>
       </div>
     </div></div>`;
   })():
@@ -14772,6 +15122,8 @@ window.render = function() {
     <button class="hamb" onclick="toggleDrawer()" aria-label="Menu"><span class="hamb-bars"><span></span><span></span><span></span></span></button>
     <div class="tb-title"><span class="acc">${curNav.ic}</span> ${curNav.lbl.toUpperCase()}</div>
     <div style="display:flex;align-items:center;gap:6px;">
+      <!-- SESSIONE 26: bottone help contestuale per ogni sezione -->
+      ${window.__sectionHelps?.[ST.tab] ? `<button onclick="showSectionHelp('${ST.tab}')" style="width:30px;height:30px;border-radius:50%;background:var(--surf);border:1.5px solid var(--bord);color:var(--mut);font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="Guida sezione">?</button>` : ''}
       ${currentDateStr!==getToday()?`<button class="btn-s" style="padding:6px 10px;font-size:11px;font-weight:700;background:var(--ora);color:#fff;border:none;letter-spacing:1px;" onclick="changeCurrentDate(getToday())">OGGI</button>`:''}
       <input type="date" value="${currentDateStr}" max="${getToday()}" onchange="changeCurrentDate(this.value)" style="width:auto;margin:0;padding:6px 8px;font-size:12px;border:1.5px solid ${currentDateStr!==getToday()?'var(--ora)':'var(--bord)'};border-radius:8px;color:${currentDateStr!==getToday()?'var(--ora)':'var(--text)'};background:var(--surf);font-weight:700;outline:none;cursor:pointer;">
     </div>
