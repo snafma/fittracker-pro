@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION26-PR-NOTIF-HELP">
+<meta name="ft-version" content="build-SESSION26-PR-NOTIF-HELP-FIX2">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -6937,6 +6937,7 @@ window.executeUndo = function(id) {
 window.toggleNotifPref = async function(key, enabled) {
   if (!ST.notifPrefs) ST.notifPrefs = {};
   ST.notifPrefs[key] = enabled;
+  render(); // SESSIONE 26 FIX: aggiorna UI subito (toggle visibile)
   await save();
   rescheduleAllNotifications();
 };
@@ -6945,6 +6946,7 @@ window.toggleNotifPref = async function(key, enabled) {
 window.toggleNotifMaster = async function(enabled) {
   if (!ST.notifPrefs) ST.notifPrefs = {};
   ST.notifPrefs.master = enabled;
+  render(); // SESSIONE 26 FIX
   await save();
   rescheduleAllNotifications();
 };
@@ -13641,90 +13643,37 @@ window.renderSettings = function(mac){
 
       ${!allOff ? `
       <!-- Toggle individuali (visibili solo se master ON) -->
+      <!-- SESSIONE 26 FIX: usato toggle switch custom (come il master) perché checkbox iOS-Safari renderizza male -->
       <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">
         <div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:2px;">QUALI VUOI RICEVERE</div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surf);border-radius:8px;font-size:12px;">
-          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
-            <span style="font-size:16px;flex-shrink:0;">💪</span>
-            <div style="min-width:0;">
-              <div style="color:var(--text);font-weight:600;">Promemoria allenamento</div>
-              <div style="font-size:10px;color:var(--mut);">15 min prima nei giorni di training</div>
+        ${[
+          {k:'workout', emo:'💪', t:'Promemoria allenamento', s:'15 min prima nei giorni di training', defOn:true},
+          {k:'meals', emo:'🍽️', t:'Promemoria pasti', s:'Colazione, pranzo, cena', defOn:true},
+          {k:'weighIn', emo:'⚖️', t:'Pesata settimanale', s:'Venerdì alle 8:00', defOn:true},
+          {k:'dailyWeight', emo:'⚖️', t:'Pesata quotidiana', s:'Ogni mattina alle 8:00 (se non già fatto)', defOn:false},
+          {k:'sleep', emo:'😴', t:'Sonno della notte', s:'Mattina alle 7:30 (se non già registrato)', defOn:true},
+          {k:'water', emo:'💧', t:'Bevi acqua', s:'4 promemoria/giorno (10, 13, 16, 19)', defOn:false},
+          {k:'workoutCheck', emo:'✅', t:'Check allenamento serale', s:'Hai allenato/riposato? alle 21:00', defOn:true},
+          {k:'foodCheck', emo:'🍽️', t:'Check pasto', s:'Dopo pranzo (14:30) e cena (21:30)', defOn:false}
+        ].map(opt => {
+          // Stato: se default ON, true salvo se !== false. Se default OFF, true solo se === true
+          const isOn = opt.defOn ? (ST.notifPrefs?.[opt.k] !== false) : (ST.notifPrefs?.[opt.k] === true);
+          return `<label style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surf);border-radius:8px;font-size:12px;cursor:pointer;border:1px solid ${isOn?'var(--ora)':'var(--bord)'};">
+            <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;pointer-events:none;">
+              <span style="font-size:16px;flex-shrink:0;">${opt.emo}</span>
+              <div style="min-width:0;">
+                <div style="color:var(--text);font-weight:600;">${opt.t}</div>
+                <div style="font-size:10px;color:var(--mut);">${opt.s}</div>
+              </div>
             </div>
-          </div>
-          <input type="checkbox" onchange="toggleNotifPref('workout',this.checked)" ${ST.notifPrefs?.workout===false?'':'checked'} style="width:20px;height:20px;cursor:pointer;flex-shrink:0;accent-color:var(--ora);">
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surf);border-radius:8px;font-size:12px;">
-          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
-            <span style="font-size:16px;flex-shrink:0;">🍽️</span>
-            <div style="min-width:0;">
-              <div style="color:var(--text);font-weight:600;">Promemoria pasti</div>
-              <div style="font-size:10px;color:var(--mut);">Colazione, pranzo, cena</div>
+            <div style="position:relative;width:44px;height:24px;flex-shrink:0;">
+              <input type="checkbox" ${isOn?'checked':''} onchange="toggleNotifPref('${opt.k}',this.checked)" style="opacity:0;width:0;height:0;position:absolute;">
+              <span style="position:absolute;top:0;left:0;right:0;bottom:0;background:${isOn?'var(--ora)':'var(--bord)'};border-radius:24px;transition:.25s;display:block;">
+                <span style="position:absolute;height:18px;width:18px;left:${isOn?'23px':'3px'};top:3px;background:#fff;border-radius:50%;transition:.25s;display:block;box-shadow:0 1px 3px rgba(0,0,0,.3);"></span>
+              </span>
             </div>
-          </div>
-          <input type="checkbox" onchange="toggleNotifPref('meals',this.checked)" ${ST.notifPrefs?.meals===false?'':'checked'} style="width:20px;height:20px;cursor:pointer;flex-shrink:0;accent-color:var(--ora);">
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surf);border-radius:8px;font-size:12px;">
-          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
-            <span style="font-size:16px;flex-shrink:0;">⚖️</span>
-            <div style="min-width:0;">
-              <div style="color:var(--text);font-weight:600;">Pesata settimanale</div>
-              <div style="font-size:10px;color:var(--mut);">Venerdì alle 8:00</div>
-            </div>
-          </div>
-          <input type="checkbox" onchange="toggleNotifPref('weighIn',this.checked)" ${ST.notifPrefs?.weighIn===false?'':'checked'} style="width:20px;height:20px;cursor:pointer;flex-shrink:0;accent-color:var(--ora);">
-        </div>
-
-        <!-- ── SESSIONE 26: nuovi promemoria ── -->
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surf);border-radius:8px;font-size:12px;">
-          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
-            <span style="font-size:16px;flex-shrink:0;">⚖️</span>
-            <div style="min-width:0;">
-              <div style="color:var(--text);font-weight:600;">Pesata quotidiana</div>
-              <div style="font-size:10px;color:var(--mut);">Ogni mattina alle 8:00 (se non già fatto)</div>
-            </div>
-          </div>
-          <input type="checkbox" onchange="toggleNotifPref('dailyWeight',this.checked)" ${ST.notifPrefs?.dailyWeight===true?'checked':''} style="width:20px;height:20px;cursor:pointer;flex-shrink:0;accent-color:var(--ora);">
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surf);border-radius:8px;font-size:12px;">
-          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
-            <span style="font-size:16px;flex-shrink:0;">😴</span>
-            <div style="min-width:0;">
-              <div style="color:var(--text);font-weight:600;">Sonno della notte</div>
-              <div style="font-size:10px;color:var(--mut);">Mattina alle 7:30 (se non già registrato)</div>
-            </div>
-          </div>
-          <input type="checkbox" onchange="toggleNotifPref('sleep',this.checked)" ${ST.notifPrefs?.sleep===false?'':'checked'} style="width:20px;height:20px;cursor:pointer;flex-shrink:0;accent-color:var(--ora);">
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surf);border-radius:8px;font-size:12px;">
-          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
-            <span style="font-size:16px;flex-shrink:0;">💧</span>
-            <div style="min-width:0;">
-              <div style="color:var(--text);font-weight:600;">Bevi acqua</div>
-              <div style="font-size:10px;color:var(--mut);">4 promemoria/giorno (10, 13, 16, 19)</div>
-            </div>
-          </div>
-          <input type="checkbox" onchange="toggleNotifPref('water',this.checked)" ${ST.notifPrefs?.water===true?'checked':''} style="width:20px;height:20px;cursor:pointer;flex-shrink:0;accent-color:var(--ora);">
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surf);border-radius:8px;font-size:12px;">
-          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
-            <span style="font-size:16px;flex-shrink:0;">✅</span>
-            <div style="min-width:0;">
-              <div style="color:var(--text);font-weight:600;">Check allenamento serale</div>
-              <div style="font-size:10px;color:var(--mut);">Hai allenato/riposato? alle 21:00</div>
-            </div>
-          </div>
-          <input type="checkbox" onchange="toggleNotifPref('workoutCheck',this.checked)" ${ST.notifPrefs?.workoutCheck===false?'':'checked'} style="width:20px;height:20px;cursor:pointer;flex-shrink:0;accent-color:var(--ora);">
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surf);border-radius:8px;font-size:12px;">
-          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
-            <span style="font-size:16px;flex-shrink:0;">🍽️</span>
-            <div style="min-width:0;">
-              <div style="color:var(--text);font-weight:600;">Check pasto</div>
-              <div style="font-size:10px;color:var(--mut);">Dopo pranzo (14:30) e cena (21:30)</div>
-            </div>
-          </div>
-          <input type="checkbox" onchange="toggleNotifPref('foodCheck',this.checked)" ${ST.notifPrefs?.foodCheck===true?'checked':''} style="width:20px;height:20px;cursor:pointer;flex-shrink:0;accent-color:var(--ora);">
-        </div>
+          </label>`;
+        }).join('')}
       </div>` : ''}
 
       ${!noPerm && !allOff ? `<button class="btn-s" style="width:100%;padding:8px;font-size:11px;background:var(--surf);border:1px solid var(--bord);color:var(--mut);font-weight:600;border-radius:8px;cursor:pointer;" onclick="testNotification()">🧪 INVIA NOTIFICA DI TEST</button>` : ''}
