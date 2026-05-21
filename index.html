@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION26-PR-NOTIF-HELP-FIX2">
+<meta name="ft-version" content="build-SESSION27-PLANNED-DAYS-WHATIS">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -1027,8 +1027,8 @@ const EX={
   co_lr:{cat:'core',t:'dynamic',name:'Leg Raise',mus:'Addominali Bassi',steps:['Sdraiato, mani sotto i glutei per stabilità','Solleva le gambe dritte fino a 90°','Abbassa lentamente senza toccare terra','Ripeti'],cues:['Respira fuori quando sollevi le gambe']},
   co_plkl:{cat:'core',t:'isometric',name:'Plank Laterale',mus:'Obliqui',steps:['Appoggiati sul gomito laterale sotto la spalla','Solleva i fianchi da terra','Tieni la posizione','Ripeti dall\'altro lato'],cues:['Ottimo per stabilità lombare']},
   cd_liss:{cat:'cardio',t:'cardio',name:'Cardio LISS (Bici/Camminata)',mus:'Cardio',steps:['Mantieni il 60-65% della FC max','Devi poter tenere una conversazione','Ritmo costante per tutta la durata','Durata: 25-40 minuti'],cues:['Brucia principalmente grassi a questa intensità','FC target: 110-130 bpm']},
-  cd_hiit:{cat:'cardio',t:'cardio',name:'HIIT — Scatti',mus:'Cardio Metabolico',steps:['Riscaldamento 5 minuti','30 secondi al massimo sforzo (80-90% FC max)','30 secondi di recupero attivo','Ripeti il ciclo 10-15 volte'],cues:['Molto più efficiente del LISS per il metabolismo','Max 3 volte a settimana']},
-  cd_burp:{cat:'cardio',t:'cardio',name:'Circuito HIIT a Corpo Libero',mus:'Corpo Completo',steps:['30s Burpees → 30s Riposo','30s Mountain Climbers → 30s Riposo','30s Jumping Jacks → 30s Riposo','Ripeti 5-8 volte'],cues:['Ottimo per bruciare calorie in poco tempo']},
+  cd_hiit:{cat:'cardio',t:'cardio',name:'HIIT — Scatti',mus:'Cardio Metabolico',whatIs:'HIIT (High Intensity Interval Training) = allenamento ad intervalli alta intensità. Alterni brevi periodi di sforzo MASSIMO (es. 30 secondi al 90% delle tue capacità) a periodi di recupero attivo (30s al 50%), ripetuti per 10-20 minuti totali. Brucia molte più calorie del cardio lento (LISS), accelera il metabolismo per 12-24 ore dopo l\'allenamento (effetto EPOC = "afterburn"), migliora rapidamente la capacità cardiovascolare. È intenso: max 2-3 volte/settimana per non sovrallenarsi.',steps:['Riscaldamento 5 minuti (camminata veloce o bici leggera)','30 secondi al massimo sforzo (80-90% FC max — devi essere senza fiato)','30 secondi di recupero attivo (camminata, jogging leggero)','Ripeti il ciclo 10-15 volte (totale 10-15 min)','Defaticamento 5 min camminata e stretching'],cues:['Molto più efficiente del LISS per il metabolismo (brucia 2x kcal/min)','Max 2-3 volte a settimana — è molto stressante per il sistema nervoso','NO HIIT lo stesso giorno di un allenamento pesi intenso','Devi essere così senza fiato che non riesci a parlare durante i 30s di sforzo','Effetto EPOC: continui a bruciare calorie per 12-24h dopo','Non per principianti assoluti: prima costruisci base aerobica con LISS']},
+  cd_burp:{cat:'cardio',t:'cardio',name:'Circuito HIIT a Corpo Libero',mus:'Corpo Completo',whatIs:'Variante di HIIT che usa solo il peso del corpo, perfetto a casa o in viaggio. Alterna 3 esercizi esplosivi a corpo libero (burpees, mountain climbers, jumping jacks) con brevi recuperi. Allena cardio + muscoli simultaneamente.',steps:['30s Burpees → 30s Riposo','30s Mountain Climbers → 30s Riposo','30s Jumping Jacks → 30s Riposo','Ripeti 5-8 volte (totale 12-20 min)'],cues:['Ottimo per bruciare calorie in poco tempo (~200-300 kcal in 15 min)','Forma corretta prima della velocità: meglio meno reps ma fatte bene','Se sei principiante inizia con 3 cicli e aumenta gradualmente','Indossa scarpe ammortizzate per non stressare le ginocchia']},
   // ═══════════════════════════════════════════════════════════
   // FIX 6 — ESERCIZI AGGIUNTIVI (+60): bodyweight, kettlebell, elastici, varianti
   // ═══════════════════════════════════════════════════════════
@@ -1158,11 +1158,11 @@ const EX={
   lg_clamshell:{cat:'glutes',t:'isolation',name:'Clamshell',mus:'Glutei (Medio)',steps:['Sdraiato sul fianco, ginocchia piegate a 90°','Mantenendo i piedi uniti, apri il ginocchio superiore','Stringi il gluteo medio in alto','Torna lento'],cues:['Ottimo per stabilità del bacino','Aggiunge banda elastica per intensità']},
 
   // RISCALDAMENTO
-  wu_general:{cat:'warmup',t:'warmup',name:'🔥 RISCALDAMENTO (5 min)',mus:'Tutto il corpo',isWarmup:true,sets:1,reps:'5 minuti',rest:0,steps:['1 min — Jumping Jacks (saltelli con braccia e gambe allargate)','1 min — Arm Circles (rotazioni delle braccia avanti e indietro)','1 min — Leg Swings (oscillazioni delle gambe avanti/indietro e laterali)','1 min — Hip Circles (rotazioni delle anche in cerchio)','1 min — Torso Rotations (rotazioni del busto con mani alle spalle)'],cues:['Il riscaldamento riduce le lesioni del 50% — non saltarlo mai','Aumenta gradualmente l\'intensità nei primi 5 minuti','Il corpo deve essere sudato leggermente prima di iniziare a caricare']},
-  wu_cut:{cat:'warmup',t:'warmup',name:'🔥 RISCALDAMENTO + CARDIO (8 min)',mus:'Tutto il corpo + Cardio',isWarmup:true,sets:1,reps:'8 minuti',rest:0,steps:['3 min — Camminata veloce o bici leggera (50-55% FC max)','1 min — Jumping Jacks','1 min — Arm Circles','1 min — Leg Swings','1 min — Hip Circles','1 min — Jump Rope o Marcia sul posto veloce'],cues:['Per la definizione: 3 minuti di cardio leggero prima dei pesi accelera il metabolismo fin dall\'inizio','Non esaurirti — il cardio di riscaldamento è leggero, non intenso']},
-  wu_bulk:{cat:'warmup',t:'warmup',name:'🔥 RISCALDAMENTO SPECIFICO (6 min)',mus:'Tutto il corpo',isWarmup:true,sets:1,reps:'6 minuti',rest:0,steps:['2 min — Camminata veloce o bici molto leggera','1 min — Rotazioni delle spalle e circoli con le braccia','1 min — Squat a corpo libero lenti (non carichi)','1 min — Affondi alternarti lenti','1 min — Plank 30 sec + Cat-Cow Stretch'],cues:['Per la massa: il riscaldamento specifico prepara i muscoli a sollevare carichi pesanti','Esegui 1 serie di riscaldamento leggera di ogni esercizio prima di caricare il peso vero']},
+  wu_general:{cat:'warmup',t:'warmup',name:'🔥 RISCALDAMENTO (5 min)',mus:'Tutto il corpo',isWarmup:true,sets:1,reps:'5 minuti',rest:0,whatIs:'Il riscaldamento è 5-10 minuti di movimenti leggeri PRIMA di iniziare l\'allenamento vero. Serve a portare gradualmente i muscoli e le articolazioni alla temperatura giusta, aumentare il flusso sanguigno e preparare il sistema nervoso allo sforzo. Riduce drasticamente il rischio di strappi, stiramenti e altri infortuni. NON è opzionale: anche chi ha poco tempo dovrebbe dedicarci almeno 3 minuti.',steps:['1 min — Jumping Jacks (saltelli con braccia e gambe allargate)','1 min — Arm Circles (rotazioni delle braccia avanti e indietro)','1 min — Leg Swings (oscillazioni delle gambe avanti/indietro e laterali)','1 min — Hip Circles (rotazioni delle anche in cerchio)','1 min — Torso Rotations (rotazioni del busto con mani alle spalle)'],cues:['Il riscaldamento riduce le lesioni del 50% — non saltarlo mai','Aumenta gradualmente l\'intensità nei primi 5 minuti','Il corpo deve essere sudato leggermente prima di iniziare a caricare','Se hai freddo o sei rigido, allunga il riscaldamento a 8-10 minuti','Movimenti dinamici (rotazioni, slanci) NO statici (stretching tenuto)']},
+  wu_cut:{cat:'warmup',t:'warmup',name:'🔥 RISCALDAMENTO + CARDIO (8 min)',mus:'Tutto il corpo + Cardio',isWarmup:true,sets:1,reps:'8 minuti',rest:0,whatIs:'Riscaldamento "potenziato" pensato per chi è in fase di definizione (cut). Include 3 minuti di cardio leggero iniziale per attivare il metabolismo e dare il segnale "brucia grassi" già prima dei pesi. Aumenta la spesa calorica totale della sessione del 10-15% senza compromettere la performance.',steps:['3 min — Camminata veloce o bici leggera (50-55% FC max)','1 min — Jumping Jacks','1 min — Arm Circles','1 min — Leg Swings','1 min — Hip Circles','1 min — Jump Rope o Marcia sul posto veloce'],cues:['Per la definizione: 3 minuti di cardio leggero prima dei pesi accelera il metabolismo fin dall\'inizio','Non esaurirti — il cardio di riscaldamento è leggero, non intenso','Devi essere caldo ma fresco, non stanco','Bevi 200-300ml di acqua prima di iniziare']},
+  wu_bulk:{cat:'warmup',t:'warmup',name:'🔥 RISCALDAMENTO SPECIFICO (6 min)',mus:'Tutto il corpo',isWarmup:true,sets:1,reps:'6 minuti',rest:0,whatIs:'Riscaldamento mirato alla fase di massa (bulk): meno cardio, più movimenti specifici degli esercizi che farai. Prepara le articolazioni a sostenere carichi pesanti e attiva il sistema nervoso per esprimere forza massimale. Include 1 serie "vuota" di squat/affondi per "pulire" il pattern motorio.',steps:['2 min — Camminata veloce o bici molto leggera','1 min — Rotazioni delle spalle e circoli con le braccia','1 min — Squat a corpo libero lenti (non carichi)','1 min — Affondi alternarti lenti','1 min — Plank 30 sec + Cat-Cow Stretch'],cues:['Per la massa: il riscaldamento specifico prepara i muscoli a sollevare carichi pesanti','Esegui 1 serie di riscaldamento leggera di ogni esercizio prima di caricare il peso vero','Per esercizi pesanti (squat/panca/stacco) fai 2-3 serie progressive: 40% → 60% → 80% del peso target','Mai partire subito col massimo: rischio infortunio enorme']},
   // DEFATICAMENTO E STRETCHING
-  cd_stretch:{cat:'cooldown',t:'cooldown',name:'🧘 DEFATICAMENTO & STRETCHING (5 min)',mus:'Tutto il corpo',isCooldown:true,sets:1,reps:'5 minuti',rest:0,steps:['45 sec — Child\'s Pose: inginocchiati, porta le braccia in avanti e la testa a terra','45 sec — Quad Stretch: in piedi, porta il piede verso il gluteo tenendo la caviglia','45 sec — Chest Opener: mani intrecciate dietro la schiena, apri il petto verso l\'alto','45 sec — Hamstring Stretch: seduto, gambe dritte, raggiungi le punte dei piedi','45 sec — Pigeon Pose (o Figura 4): allungamento intenso dei flessori dell\'anca','45 sec — Spinal Twist: seduto, ruota il busto con un ginocchio piegato al petto'],cues:['Lo stretching post-workout migliora il recupero del 30%','Ogni posizione si mantiene 30-45 secondi — senti lo stretch, mai dolore','Respira profondamente durante ogni posizione: l\'espirazione aiuta il rilassamento muscolare','Non rimandare: lo stretching va fatto caldo, subito dopo l\'allenamento']},
+  cd_stretch:{cat:'cooldown',t:'cooldown',name:'🧘 DEFATICAMENTO & STRETCHING (5 min)',mus:'Tutto il corpo',isCooldown:true,sets:1,reps:'5 minuti',rest:0,whatIs:'Il defaticamento (cooldown) sono 5-10 minuti di stretching statico DOPO l\'allenamento. Serve a far tornare la frequenza cardiaca a livelli normali in modo graduale, ridurre l\'accumulo di acido lattico, prevenire i DOMS (dolori muscolari ritardati) e migliorare la flessibilità a lungo termine. Mantenere ogni posizione 30-45 secondi senza forzare.',steps:['45 sec — Child\'s Pose: inginocchiati, porta le braccia in avanti e la testa a terra','45 sec — Quad Stretch: in piedi, porta il piede verso il gluteo tenendo la caviglia','45 sec — Chest Opener: mani intrecciate dietro la schiena, apri il petto verso l\'alto','45 sec — Hamstring Stretch: seduto, gambe dritte, raggiungi le punte dei piedi','45 sec — Pigeon Pose (o Figura 4): allungamento intenso dei flessori dell\'anca','45 sec — Spinal Twist: seduto, ruota il busto con un ginocchio piegato al petto'],cues:['Lo stretching post-workout migliora il recupero del 30%','Ogni posizione si mantiene 30-45 secondi — senti lo stretch, mai dolore','Respira profondamente durante ogni posizione: l\'espirazione aiuta il rilassamento muscolare','Non rimandare: lo stretching va fatto caldo, subito dopo l\'allenamento','NO stretching statico PRIMA del workout — riduce la forza del 5-10%']},
 };
 const EX_G={
   chest:['ch_man','ch_bil','ch_incl','ch_croci','ch_pieg','ch_pieg_inc','ch_pieg_dec','ch_dip_bench','ch_floor_press','ch_cable_cross','ch_svend','ex_push_exp','ch_pec_deck','ch_dumbbell_pullover','ch_landmine_press'],
@@ -3506,7 +3506,11 @@ window.detectCheatPattern = function() {
 // ═══════════════════════════════════════════════════════════
 window.isRestDayFor = function(dateStr) {
   if (!ST.p?.sessions) return false;
-  // Se l'utente ha già loggato un workout oggi, è train day
+  // SESSIONE 27: prima priorità — override manuale dell'utente
+  const planned = ST.plannedDays?.[dateStr];
+  if (planned === 'rest') return true;
+  if (planned === 'train') return false;
+  // Se l'utente ha già loggato un workout in quel giorno, è train day
   if (ST.wHistory?.[dateStr] && Object.values(ST.wHistory[dateStr]).some(e => e?.ok)) return false;
   // Calcolo i train days della settimana basandomi su sessions
   const d = new Date(dateStr);
@@ -3523,6 +3527,41 @@ window.isRestDayFor = function(dateStr) {
   };
   const trainDays = patterns[sess] || [0, 2, 4];
   return !trainDays.includes(dow);
+};
+
+// ── SESSIONE 27: pianificazione train/rest manuale ──
+// L'utente può forzare un giorno come train o rest indipendentemente dal pattern auto.
+// Lo usano: planner dieta settimanale, calorie cycling, calendario, banner notifiche.
+window.setPlannedDay = async function(dateStr, type) {
+  if (!ST.plannedDays) ST.plannedDays = {};
+  // Validazione: solo date future o oggi
+  const today = currentDateStr || new Date().toISOString().slice(0,10);
+  if (dateStr < today) {
+    alert('Non puoi cambiare giorni passati');
+    return;
+  }
+  if (type === 'auto' || type === null) {
+    // Rimuove override → torna al pattern default
+    delete ST.plannedDays[dateStr];
+  } else if (type === 'train' || type === 'rest') {
+    ST.plannedDays[dateStr] = type;
+  }
+  await save();
+  render();
+};
+
+// Stato pianificato di un giorno: 'train' | 'rest' | 'auto' (default da pattern)
+window.getPlannedType = function(dateStr) {
+  const override = ST.plannedDays?.[dateStr];
+  if (override === 'rest' || override === 'train') return override;
+  return 'auto';
+};
+
+// Apre sheet per scelta train/rest/auto su un giorno
+window.openPlannedDaySheet = function(dateStr) {
+  ST.sheet = 'plannedDay';
+  ST.sheetData = { dateStr };
+  render();
 };
 
 window.isTodayRestDay = function() {
@@ -5513,6 +5552,9 @@ window.defST=function(){
     cartFavorites:[],            // combo carrello salvati: [{id, name, items:[{foodId,qty,grams,kcal,label}]}]
     // ── Campi sessione 25 ──
     vacationMode:null,           // {active:true, startD:'2026-06-01', endD:'2026-06-14'} o null
+    // ── Sessione 27 ──
+    plannedDays:{},              // override manuale train/rest: {'2026-05-22':'rest', '2026-05-23':'train'}
+    // Ha priorità sul pattern auto basato su sessions
     shoppingState:{removed:[], extras:[], checked:[], lastGenWeek:null}, // stato lista spesa
     // ── Campi sessione 13 ──
     workoutSecOpen:{steps:false, tips:false, muscle:false, mistakes:false, breath:false}, // sezioni espandibili runtime workout
@@ -5554,6 +5596,7 @@ window.saveU=async function(){
       customFoods:ST.customFoods,
       cartFavorites:ST.cartFavorites,
       vacationMode:ST.vacationMode,
+      plannedDays:ST.plannedDays,
       theme:ST.theme,
       injuries:ST.injuries,
       onboardingDone:ST.onboardingDone,
@@ -10792,31 +10835,42 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
       <div style="font-size:18px;color:var(--mut);">›</div>
     </summary>
     <div style="padding:0 14px 14px;border-top:1px solid var(--bord);">
-      <div style="font-size:11px;color:var(--mut);line-height:1.5;margin-top:10px;margin-bottom:12px;">Menù basato su obiettivo, intolleranze e tipo di alimentazione. Cambia ogni giorno: train days hanno più carbo, rest days hanno meno.</div>
+      <div style="font-size:11px;color:var(--mut);line-height:1.5;margin-top:10px;margin-bottom:12px;">Menù basato su obiettivo, intolleranze e tipo di alimentazione. Train days = più carbo, rest days = meno. Imposta manualmente train/rest dal calendario in tab Body.</div>
       ${(()=>{
         if (typeof window.buildMeals !== 'function' || typeof window.calcMacros !== 'function' || !ST.p) return '<div style="text-align:center;padding:14px;font-size:12px;color:var(--mut);">Pianificazione non disponibile</div>';
         const days = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
         const today = new Date(currentDateStr || new Date().toISOString().slice(0,10));
         const dowToday = (today.getDay() + 6) % 7; // 0=lun
         const sessionsPerWeek = ST.p.sessions || 3;
-        const trainDaysIdx = sessionsPerWeek === 3 ? [0,2,4] : sessionsPerWeek === 4 ? [0,1,3,5] : sessionsPerWeek === 5 ? [0,1,2,4,5] : [0,2,4];
+        // SESSIONE 27: calcolo dateStr per ogni giorno della settimana corrente (lun-dom)
+        // Così isRestDayFor() può consultare anche plannedDays per gli override
+        const weekStart = new Date(today);
+        weekStart.setDate(today.getDate() - dowToday); // → lunedì
         try {
           const profile = ST.profile || AU.profile || {};
           const cW = ST.h.length ? ST.h[ST.h.length-1].w : (ST.p.s || 70);
           const an = typeof analyze === 'function' ? analyze(ST.h, ST.p) : {};
           const extraK = typeof getActivitiesKcal === 'function' ? getActivitiesKcal(currentDateStr) : 0;
           return days.map((dname, idx) => {
-            const isRest = !trainDaysIdx.includes(idx);
-            // SESSIONE 25: calcolo kcal per ogni giorno usando dayType
+            const d = new Date(weekStart);
+            d.setDate(weekStart.getDate() + idx);
+            const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+            // SESSIONE 27: rispetta override pianificati
+            const isRest = window.isRestDayFor(dateStr);
+            const hasOverride = ST.plannedDays?.[dateStr];
             const mac = calcMacros(cW, profile.ht || 170, profile.ag || 30, profile.sx || 'm', ST.p, sessionsPerWeek, an, extraK, isRest ? 'rest' : 'train');
             const meals = window.buildMeals(mac, ST.p.intol||[], profile.sx||'m', isRest, ST.p.diet||'omnivore', null, ST.p.usesSupplements, ST.p.favs);
-            const totalK = (meals||[]).reduce((s,m) => s + (m.opts?.[0]?.kcal || m.kcal || 0), 0);
             const isToday = idx === dowToday;
-            return `<div style="background:${isToday?'rgba(96,165,250,.06)':'var(--surf)'};border:1px solid ${isToday?'var(--blu)':'var(--bord)'};border-radius:10px;padding:10px;margin-bottom:6px;">
+            const isFuture = dateStr >= currentDateStr;
+            const dateLbl = d.toLocaleDateString('it-IT', {day:'numeric', month:'short'});
+            return `<div ${isFuture?`onclick="openPlannedDaySheet('${dateStr}')" style="cursor:pointer;"`:'style=""'} >
+              <div style="background:${isToday?'rgba(96,165,250,.06)':'var(--surf)'};border:1px solid ${isToday?'var(--blu)':'var(--bord)'};border-radius:10px;padding:10px;margin-bottom:6px;">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
                 <div>
                   <span style="font-size:13px;font-weight:700;color:var(--text);">${dname}${isToday?' (oggi)':''}</span>
+                  <span style="font-size:10px;color:var(--mut);margin-left:4px;">${dateLbl}</span>
                   <span style="font-size:10px;background:${isRest?'var(--mut)':'var(--ora)'};color:#fff;padding:2px 7px;border-radius:4px;margin-left:6px;font-weight:600;">${isRest?'RIPOSO':'TRAIN'}</span>
+                  ${hasOverride?'<span style="font-size:9px;color:var(--blu);margin-left:4px;" title="Pianificato manualmente">📌</span>':''}
                 </div>
                 <div style="font-size:11px;color:${isRest?'var(--mut)':'var(--ora)'};font-weight:700;">~${mac.kcal} kcal</div>
               </div>
@@ -10824,6 +10878,7 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
                 ${(meals||[]).slice(0,5).map(m => `<div style="font-size:10px;color:var(--mut);line-height:1.4;">
                   <span style="font-weight:600;color:var(--text);">${m.n}:</span> ${escapeHtml((m.opts?.[0]?.name || m.opts?.[0]?.lbl || '').substring(0,45))}${(m.opts?.[0]?.name || '').length>45?'…':''}
                 </div>`).join('')}
+              </div>
               </div>
             </div>`;
           }).join('');
@@ -11120,9 +11175,15 @@ window.renderBody = function(cW,mac,theme,pWeek,sx){
       cells += `<div style="aspect-ratio:1;"></div>`;
     }
     // Giorni del mese
+    const todayDateStr = currentDateStr;
     for (let day = 1; day <= daysInMonth; day++) {
       const dateStr = `${yr}-${String(mo).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
       const info = getDayInfo(dateStr);
+      const isFuture = dateStr > todayDateStr;
+      const isTodayOrFuture = dateStr >= todayDateStr;
+      // SESSIONE 27: stato pianificato (override utente o auto)
+      const plannedType = typeof window.getPlannedType === 'function' ? window.getPlannedType(dateStr) : 'auto';
+      const hasOverride = plannedType !== 'auto';
       let bg = 'var(--surf)';
       let dot = '';
       let border = '1px solid var(--bord)';
@@ -11143,12 +11204,30 @@ window.renderBody = function(cW,mac,theme,pWeek,sx){
         bg = 'rgba(113,113,122,.12)';
         textCol = 'var(--mut)';
       }
+      // SESSIONE 27: giorni futuri pianificati visualizzati con bordo colorato
+      if (isFuture && plannedType === 'rest') {
+        bg = 'rgba(113,113,122,.18)';
+        border = '1.5px dashed var(--mut)';
+        textCol = 'var(--mut)';
+      } else if (isFuture && plannedType === 'train') {
+        bg = 'rgba(255,104,53,.10)';
+        border = '1.5px dashed var(--ora)';
+      } else if (isFuture && info.isRest) {
+        // Futuro rest da pattern auto: visibile ma sottile
+        bg = 'rgba(113,113,122,.06)';
+        textCol = 'var(--mut)';
+      }
       if (info.isToday) {
         border = '2px solid var(--blu)';
       }
       // Peso registrato: cerchietto blu in basso
       const weighDot = info.hasWeigh ? '<span style="position:absolute;bottom:2px;right:3px;width:5px;height:5px;background:var(--blu);border-radius:50%;"></span>' : '';
-      cells += `<div style="aspect-ratio:1;background:${bg};border:${border};border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;color:${textCol};font-weight:${info.isToday?'700':'500'};position:relative;">${day}${dot}${weighDot}</div>`;
+      // Dot pin per override manuale (così l'utente riconosce le sue forzature)
+      const overrideDot = hasOverride ? '<span style="position:absolute;bottom:2px;left:3px;font-size:8px;">📌</span>' : '';
+      // SESSIONE 27: tap = apre sheet per i giorni futuri/oggi
+      const clickHandler = isTodayOrFuture ? `onclick="openPlannedDaySheet('${dateStr}')"` : '';
+      const cursorStyle = isTodayOrFuture ? 'cursor:pointer;' : '';
+      cells += `<div ${clickHandler} style="aspect-ratio:1;background:${bg};border:${border};border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;color:${textCol};font-weight:${info.isToday?'700':'500'};position:relative;${cursorStyle}">${day}${dot}${weighDot}${overrideDot}</div>`;
     }
 
     return `<div class="card" style="margin-bottom:10px;">
@@ -11157,6 +11236,7 @@ window.renderBody = function(cW,mac,theme,pWeek,sx){
         <div class="bebas" style="font-size:16px;color:var(--text);text-transform:capitalize;">📅 ${monthLabel}</div>
         <button onclick="changeCalMonth(1)" style="background:var(--surf);border:1px solid var(--bord);color:var(--text);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:14px;">›</button>
       </div>
+      <div style="font-size:10px;color:var(--mut);text-align:center;margin-bottom:6px;font-style:italic;">Tap su un giorno futuro per impostarlo Train/Riposo</div>
       <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;">
         ${['L','M','M','G','V','S','D'].map(d => `<div style="text-align:center;font-size:9px;color:var(--mut);font-weight:700;letter-spacing:.5px;padding:3px 0;">${d}</div>`).join('')}
       </div>
@@ -11166,6 +11246,7 @@ window.renderBody = function(cW,mac,theme,pWeek,sx){
         <div style="display:flex;align-items:center;gap:3px;"><span style="width:8px;height:8px;background:var(--red);border-radius:50%;display:inline-block;"></span> Sgarro</div>
         <div style="display:flex;align-items:center;gap:3px;">🏆 PR</div>
         <div style="display:flex;align-items:center;gap:3px;"><span style="width:8px;height:8px;background:var(--blu);border-radius:50%;display:inline-block;"></span> Peso</div>
+        <div style="display:flex;align-items:center;gap:3px;">📌 Pianificato</div>
       </div>
     </div>`;
   })()}
@@ -13982,6 +14063,16 @@ window.render = function() {
         };
 
         let html = '';
+        // ── SESSIONE 27: "COS'È" — descrizione esplicativa per warmup, HIIT, cooldown ──
+        // Aperta di default per non far perdere l'utente principiante
+        if (ex.whatIs) {
+          // Aggiungo temporaneamente la chiave "whatIs" come default-open
+          if (!ST.openExSec) ST.openExSec = {};
+          if (ST.openExSec.whatIs === undefined) ST.openExSec.whatIs = true;
+          html += sec('whatIs', '❓', `COS'È E A COSA SERVE`, 'var(--blu)',
+            `<div style="font-size:13px;line-height:1.6;color:var(--text);">${ex.whatIs}</div>`
+          );
+        }
         // ── BOTTONE VIDEO YOUTUBE (sessione 18) ──
         // Apre ricerca YouTube con il nome esercizio. Funziona offline (link diretto al browser).
         if (ex.name && !ex.isWarmup && !ex.isCooldown) {
@@ -13990,6 +14081,15 @@ window.render = function() {
           const ytUrl = `https://www.youtube.com/results?search_query=${ytQuery}`;
           html += `<a href="${ytUrl}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 14px;margin-bottom:8px;background:linear-gradient(135deg,rgba(255,68,68,.08),rgba(255,68,68,.04));border:1px solid var(--red);border-radius:10px;text-decoration:none;color:var(--red);font-weight:700;font-size:13px;cursor:pointer;">
             <span style="font-size:18px;">▶️</span><span>VEDI TUTORIAL VIDEO</span>
+          </a>`;
+        }
+        // SESSIONE 27: bottone YouTube anche per warmup/cooldown/HIIT (tutorial utili)
+        if (ex.name && (ex.isWarmup || ex.isCooldown || ex.t === 'cardio')) {
+          const queryName = (ex.name || '').replace(/[^\w\sàèéìòù]/gi,'').trim();
+          const ytQuery = encodeURIComponent(queryName + ' come si fa');
+          const ytUrl = `https://www.youtube.com/results?search_query=${ytQuery}`;
+          html += `<a href="${ytUrl}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 14px;margin-bottom:8px;background:linear-gradient(135deg,rgba(255,68,68,.08),rgba(255,68,68,.04));border:1px solid var(--red);border-radius:10px;text-decoration:none;color:var(--red);font-weight:700;font-size:13px;cursor:pointer;">
+            <span style="font-size:18px;">▶️</span><span>TUTORIAL VIDEO</span>
           </a>`;
         }
         // Esecuzione step-by-step
@@ -14497,6 +14597,46 @@ window.render = function() {
         <button class="btn btn-action" style="flex:1;padding:12px;" onclick="closeSheet()">ANNULLA</button>
         <button class="btn" style="flex:2;padding:12px;background:var(--red);color:#fff;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;" onclick="confirmInjury()">✓ CONFERMA</button>
       </div>
+    </div></div>`;
+  })():
+  ST.sheet==='plannedDay'&&ST.sheetData?(()=>{
+    // SESSIONE 27: scelta train/rest/auto per un giorno specifico
+    const d = new Date(ST.sheetData.dateStr);
+    const dayLbl = d.toLocaleDateString('it-IT', {weekday:'long', day:'numeric', month:'long'});
+    const current = typeof window.getPlannedType === 'function' ? window.getPlannedType(ST.sheetData.dateStr) : 'auto';
+    const autoRest = typeof window.isRestDayFor === 'function' && !ST.plannedDays?.[ST.sheetData.dateStr] && window.isRestDayFor(ST.sheetData.dateStr);
+    const autoLbl = autoRest ? 'Riposo' : 'Allenamento';
+    return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh">
+      <div class="sh-h"></div>
+      <div class="bebas" style="font-size:22px;margin-bottom:4px;letter-spacing:1px;">📅 ${dayLbl}</div>
+      <div style="font-size:11px;color:var(--mut);margin-bottom:14px;">Come vuoi programmare questo giorno?</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button onclick="setPlannedDay('${ST.sheetData.dateStr}','train');closeSheet()" style="display:flex;align-items:center;gap:12px;padding:14px;background:${current==='train'?'rgba(255,104,53,.15)':'var(--surf)'};border:2px solid ${current==='train'?'var(--ora)':'var(--bord)'};border-radius:12px;cursor:pointer;text-align:left;">
+          <div style="font-size:24px;">💪</div>
+          <div style="flex:1;">
+            <div style="font-size:14px;font-weight:700;color:var(--text);">Allenamento</div>
+            <div style="font-size:10px;color:var(--mut);">Forza il giorno come train, cambia anche le kcal del giorno</div>
+          </div>
+          ${current==='train'?'<div style="color:var(--ora);font-size:18px;">✓</div>':''}
+        </button>
+        <button onclick="setPlannedDay('${ST.sheetData.dateStr}','rest');closeSheet()" style="display:flex;align-items:center;gap:12px;padding:14px;background:${current==='rest'?'rgba(113,113,122,.18)':'var(--surf)'};border:2px solid ${current==='rest'?'var(--mut)':'var(--bord)'};border-radius:12px;cursor:pointer;text-align:left;">
+          <div style="font-size:24px;">💤</div>
+          <div style="flex:1;">
+            <div style="font-size:14px;font-weight:700;color:var(--text);">Riposo</div>
+            <div style="font-size:10px;color:var(--mut);">Forza giorno di riposo: meno carbo e kcal nel menu</div>
+          </div>
+          ${current==='rest'?'<div style="color:var(--mut);font-size:18px;">✓</div>':''}
+        </button>
+        <button onclick="setPlannedDay('${ST.sheetData.dateStr}','auto');closeSheet()" style="display:flex;align-items:center;gap:12px;padding:14px;background:${current==='auto'?'rgba(96,165,250,.12)':'var(--surf)'};border:2px solid ${current==='auto'?'var(--blu)':'var(--bord)'};border-radius:12px;cursor:pointer;text-align:left;">
+          <div style="font-size:24px;">⚙️</div>
+          <div style="flex:1;">
+            <div style="font-size:14px;font-weight:700;color:var(--text);">Automatico</div>
+            <div style="font-size:10px;color:var(--mut);">Segui il pattern (${ST.p.sessions} sessioni/sett) → sarebbe <strong>${autoLbl}</strong></div>
+          </div>
+          ${current==='auto'?'<div style="color:var(--blu);font-size:18px;">✓</div>':''}
+        </button>
+      </div>
+      <button class="btn btn-action" style="width:100%;padding:11px;margin-top:14px;" onclick="closeSheet()">CHIUDI</button>
     </div></div>`;
   })():
   ST.sheet==='onboarding'&&ST.sheetData?(()=>{
