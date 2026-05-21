@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION27-PLANNED-DAYS-WHATIS">
+<meta name="ft-version" content="build-SESSION28-TIMER-BACKGROUND">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -814,13 +814,21 @@ window.WakeLockMgr = {
 window.BeepPlayer = {
   _ctx: null,
   _ensureCtx() {
+    // SESSIONE 28: gestisce stati 'closed' (Safari aggressivo) ricreando il contesto
+    if (this._ctx && this._ctx.state === 'closed') {
+      this._ctx = null;
+    }
     if (!this._ctx) {
       try {
         const AC = window.AudioContext || window.webkitAudioContext;
         this._ctx = new AC();
       } catch(e) { console.warn('Audio non disponibile', e); return null; }
     }
-    if (this._ctx.state === 'suspended') this._ctx.resume();
+    if (this._ctx.state === 'suspended') {
+      // Tentativo di resume sincrono (Safari iOS può rifiutarlo se non c'è gesto utente,
+      // ma dato che siamo dentro a un beep dopo una serie, di solito ok)
+      try { this._ctx.resume(); } catch(_) {}
+    }
     return this._ctx;
   },
   unlock() { this._ensureCtx(); },
@@ -927,18 +935,59 @@ window.BeepPlayer = {
   }
 };
 
-// ── FIX SUONI dopo background/foreground (sessione 13) ──
+// ── FIX SUONI dopo background/foreground (sessione 13, rafforzato sessione 28) ──
 // Su mobile, quando il tab perde focus l'AudioContext viene sospeso.
 // Quando torna in primo piano va resumato manualmente, altrimenti
 // i beep/buzz non suonano più. Listener globale.
+// SESSIONE 28: aggiunge anche resync del timer recupero e notifica fine timer
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && window.BeepPlayer?._ctx) {
-    try {
-      if (window.BeepPlayer._ctx.state === 'suspended') {
-        window.BeepPlayer._ctx.resume().catch(_ => {});
-        console.log('[AUDIO] Context riattivato dopo background');
+  if (document.visibilityState === 'visible') {
+    // 1) Risveglio AudioContext
+    if (window.BeepPlayer?._ctx) {
+      try {
+        if (window.BeepPlayer._ctx.state === 'suspended') {
+          window.BeepPlayer._ctx.resume().catch(_ => {});
+          console.log('[AUDIO] Context riattivato dopo background');
+        } else if (window.BeepPlayer._ctx.state === 'closed') {
+          // Se il contesto è morto, lo ricreo al prossimo gesto utente
+          window.BeepPlayer._ctx = null;
+          console.log('[AUDIO] Context closed, sarà ricreato al prossimo input');
+        }
+      } catch(_) {}
+    }
+    // 2) Resync timer riposo: se l'utente era in pausa e il browser ha sospeso il setInterval,
+    // ricalcolo il valore reale e se è scaduto in background lo chiudo subito + beep
+    if (typeof window.ST !== 'undefined' && ST.woPhase === 'rest' && ST.tmrEndTs) {
+      const remainMs = ST.tmrEndTs - Date.now();
+      if (remainMs <= 0) {
+        // Timer scaduto in background → finalizza ora
+        try { clearInterval(ST.tmrId); } catch(_) {}
+        ST.tmr = 0;
+        ST.tmrEndTs = null;
+        ST._lastTickAt = null;
+        cancelRestEndNotification();
+        // Beep ora che l'utente è tornato
+        try { BeepPlayer.endOfRest(); } catch(_) {}
+        ST.woPhase = 'ready';
+        window.__lastPRMsg = null;
+        if (typeof render === 'function') render();
+      } else {
+        // Aggiorno il valore visualizzato al volo
+        ST.tmr = Math.max(0, Math.ceil(remainMs / 1000));
+        const e = document.getElementById('tmrUI');
+        if (e) e.textContent = ST.tmr;
       }
-    } catch(_) {}
+    }
+    // 3) Resync cronometro serie attiva (sessione 28)
+    if (typeof window.ST !== 'undefined' && ST.woPhase === 'active' && ST.setStartTs) {
+      ST.setElapsed = Math.floor((Date.now() - ST.setStartTs) / 1000);
+      const e = document.getElementById('setTmrUI');
+      if (e) {
+        const m = Math.floor(ST.setElapsed/60).toString().padStart(2,'0');
+        const s = (ST.setElapsed%60).toString().padStart(2,'0');
+        e.textContent = `${m}:${s}`;
+      }
+    }
   }
 });
 // Anche su pageshow (back/forward navigation)
@@ -947,6 +996,46 @@ window.addEventListener('pageshow', () => {
     try { window.BeepPlayer._ctx.resume().catch(_ => {}); } catch(_) {}
   }
 });
+
+// ═══════════════════════════════════════════════════════════
+// NOTIFICA FINE TIMER RECUPERO (sessione 28)
+// Programma una notifica web che si attiverà ANCHE se l'app è in background,
+// così l'utente non perde mai il "fine recupero" — l'iPhone vibra/suona
+// ═══════════════════════════════════════════════════════════
+window.__restEndNotifTimeout = null;
+window.scheduleRestEndNotification = function(endTs) {
+  cancelRestEndNotification();
+  const delay = endTs - Date.now();
+  if (delay <= 0) return;
+  // Usa setTimeout JS — funziona in foreground; se sospeso, al rientro non scatta MA
+  // il fallback nel visibilitychange handler chiude tutto correttamente
+  window.__restEndNotifTimeout = setTimeout(() => {
+    // Solo se l'app NON è visibile in quel momento (altrimenti basta il beep)
+    if (document.visibilityState !== 'visible') {
+      try {
+        if ('Notification' in window && Notification.permission === 'granted') {
+          const n = new Notification('⏱ Riposo finito!', {
+            body: 'Torna nell\'app e parti con la prossima serie.',
+            tag: 'ft-rest-end',
+            icon: '/icon-192.png',
+            requireInteraction: false,
+            silent: false,
+            vibrate: [200, 100, 200]
+          });
+          // Click su notifica → focus tab
+          n.onclick = () => { window.focus(); n.close(); };
+          setTimeout(() => { try { n.close(); } catch(_) {} }, 8000);
+        }
+      } catch(e) { console.warn('Notifica riposo fallita:', e); }
+    }
+  }, delay);
+};
+window.cancelRestEndNotification = function() {
+  if (window.__restEndNotifTimeout) {
+    clearTimeout(window.__restEndNotifTimeout);
+    window.__restEndNotifTimeout = null;
+  }
+};
 
 // ═════════════════════════════════════════════════════════════
 // PUNTO 7 — Determina l'unità di misura di un esercizio
@@ -8680,10 +8769,14 @@ window.closeWo=function(){
 }
 window.startSet=function(){
   ST.woPhase='active';ST.setElapsed=0;clearInterval(ST.setTmrId);
+  // SESSIONE 28: anche il cronometro serie usa startTs per non perdere secondi quando l'app va in background
+  ST.setStartTs = Date.now();
   ST.setTmrId=setInterval(()=>{
-    ST.setElapsed++;const e=el('setTmrUI');
+    // Calcolo elapsed reale dalla differenza, non da increment ciecamente
+    ST.setElapsed = Math.floor((Date.now() - ST.setStartTs) / 1000);
+    const e=el('setTmrUI');
     if(e){const m=Math.floor(ST.setElapsed/60).toString().padStart(2,'0');const s=(ST.setElapsed%60).toString().padStart(2,'0');e.textContent=`${m}:${s}`;}
-  },1000);render();
+  },500);render();
 }
 window.completeSet=function(){
   clearInterval(ST.setTmrId);
@@ -8843,29 +8936,46 @@ window.completeSet=function(){
     ST.woPhase='rest';
     // Tempo recupero adattato: compound pesanti 150s, compound 90s, isolation 60s, isometric 45s
     ST.tmr = (typeof getRecommendedRest==='function') ? getRecommendedRest(ex) : (ex.rest||60);
+    // ── SESSIONE 28 FIX: timer basato su endTs, immune a sospensione browser ──
+    // Quando l'utente esce dall'app, Safari blocca i setInterval. Salvando l'ora di fine
+    // assoluta in ST.tmrEndTs, possiamo ricalcolare il tempo restante reale al rientro
+    ST.tmrEndTs = Date.now() + ST.tmr * 1000;
+    // Notifica programmata per quando il timer scadrà: arriva ANCHE se l'app è in background
+    scheduleRestEndNotification(ST.tmrEndTs);
     render();
     ST.tmrId=setInterval(()=>{
-      ST.tmr--;const e=el('tmrUI');if(e)e.textContent=ST.tmr;
+      // Calcolo tempo restante reale dalla differenza, NON decremento ciecamente
+      const remainMs = ST.tmrEndTs - Date.now();
+      ST.tmr = Math.max(0, Math.ceil(remainMs/1000));
+      const e=el('tmrUI');if(e)e.textContent=ST.tmr;
       // Tick crescente in tono negli ultimi 3 secondi (countdown chiaro)
-      if (ST.tmr === 3 || ST.tmr === 2 || ST.tmr === 1) BeepPlayer.tick(ST.tmr);
+      // ATTENZIONE: con i salti possibili (rientro dopo sospensione), evito tick duplicati o saltati.
+      // Tick solo se siamo esattamente a 3/2/1 e non l'abbiamo già fatto questa serie
+      if (ST.tmr === 3 || ST.tmr === 2 || ST.tmr === 1) {
+        if (!ST._lastTickAt || ST._lastTickAt !== ST.tmr) {
+          BeepPlayer.tick(ST.tmr);
+          ST._lastTickAt = ST.tmr;
+        }
+      }
       if(ST.tmr<=0){
         clearInterval(ST.tmrId);
-        BeepPlayer.endOfRest();  // PUNTO 4: beep "fine pausa"
+        ST.tmrEndTs = null;
+        ST._lastTickAt = null;
+        cancelRestEndNotification(); // se torno proprio nel momento, evito doppia notifica
+        BeepPlayer.endOfRest();
         ST.woPhase='ready';
-        window.__lastPRMsg=null; // pulisco eventuale banner PR
-        // PUNTO 3: se autostart attivo, parte automaticamente la serie successiva
+        window.__lastPRMsg=null;
         if (ST.p?.autostartSeries) {
           render();
-          // Mini-delay per dare percezione del beep prima di partire
           setTimeout(() => { if (ST.aWo && ST.woPhase === 'ready') startSet(); }, 800);
         } else {
           render();
         }
       }
-    },1000);
+    },500); // tick più frequente (500ms) per essere reattivo al rientro
   }
 }
-window.skipRest=function(){clearInterval(ST.tmrId);ST.woPhase='ready';window.__lastPRMsg=null;render();}
+window.skipRest=function(){clearInterval(ST.tmrId);ST.tmrEndTs=null;ST._lastTickAt=null;cancelRestEndNotification();ST.woPhase='ready';window.__lastPRMsg=null;render();}
 window.advanceExercise=function(){
   const wo=getWo();
   if(ST.step<wo.exercises.length-1){
