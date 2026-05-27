@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION28-TIMER-BACKGROUND">
+<meta name="ft-version" content="build-SESSION29-WARMUP-STEPS-KCAL-ADAPTIVE">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -478,7 +478,7 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
     <div class="spinner"></div>
     <div class="bebas" style="color:var(--text);font-size:28px;letter-spacing:3px;">SYSTEM BOOTING</div>
     <div style="color:var(--mut);font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:1px;">Connessione al Cloud Secure Database...</div>
-    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION26</div>
+    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION29</div>
   </div>
 </div>
 
@@ -5045,16 +5045,157 @@ window.buildMeals=function(macros,intol=[],sex='m',isRestDay=false,diet='omnivor
     cenOpts.push({lbl:'🟡 Tofu & Verdure',items:[`${gP_cen}g Tofu o Tempeh`,'Wok di verdure colorate',(!haG?'1 fetta pane integrale':`${gR_cen}g Patate lesse`),olio]});
     if(!isVegan) cenOpts.push({lbl:'🥛 Ricotta & Verdure',items:[`${round10(gP_cen*0.9)}g Ricotta`,'Insalata abbondante','2 fette pane integrale',olio]});
   }
+  // ═══════════════════════════════════════════════════════════
+  // SESSIONE 29: KCAL ADATTIVE PER VARIANTI
+  // Problema risolto: ogni variante (pollo/tonno/manzo/legumi) aveva grammi simili
+  // ma densità caloriche diverse. Risultato: pollo+riso = 500 kcal, tofu+riso = 380 kcal,
+  // ma entrambi etichettati come "pranzo da 600 kcal". L'utente che seguiva la dieta
+  // poteva sforare (somma reale > target) o restare sotto.
+  //
+  // Soluzione: per ogni opzione calcolo le kcal REALI somando ingredienti, poi scalo
+  // gli ingredienti principali (proteina + carbo) per allinearle al target del pasto.
+  // ═══════════════════════════════════════════════════════════
+  // Densità kcal/g approssimate per matching nome → densità
+  const KCAL_DENSITY = {
+    // Proteine
+    pollo: 1.65, tacchino: 1.50, manzo: 2.50, vitello: 1.80, maiale: 2.20,
+    salmone: 2.10, tonno: 1.30, merluzzo: 0.85, branzino: 1.40, orata: 1.40, pesce: 1.50,
+    uova: 1.55, uovo: 1.55, ricotta: 1.50, fiocchi: 0.90, mozzarella: 2.50, parmigiano: 4.00,
+    tofu: 1.50, tempeh: 1.95, seitan: 1.40,
+    legumi: 1.10, lenticchie: 1.10, ceci: 1.10, fagioli: 1.10,
+    // Cereali (crudo)
+    riso: 3.50, pasta: 3.60, farro: 3.40, quinoa: 3.70, avena: 3.80, orzo: 3.50, couscous: 3.70,
+    pane: 2.50, gallette: 3.90,
+    patate: 0.85,
+    // Frutta secca
+    mandorle: 5.80, noci: 6.50, semi: 5.80, arachidi: 5.70, pistacchi: 5.60,
+    // Yogurt e simili
+    yogurt: 0.60, latte: 0.50, shaker: 1.00, whey: 4.00, isolate: 4.00,
+    // Frutta (assumo medio)
+    banana: 0.90, mela: 0.52, pera: 0.57, kiwi: 0.61, arancia: 0.47,
+    // Cioccolato
+    cioccolato: 5.50,
+    // Olio
+    olio: 9.00, evo: 9.00,
+    // Avocado
+    avocado: 1.60,
+    // Datteri
+    datteri: 2.82
+  };
+  // Stima kcal di una stringa "120g Pollo" o "1 banana"
+  const __estimateItemKcal = (str) => {
+    if (typeof str !== 'string') return 0;
+    // Caso "(~120 kcal)" o "(120 kcal)" esplicito
+    const explicit = str.match(/\((?:~|circa )?(\d+)\s*kcal/i);
+    if (explicit) return parseInt(explicit[1]);
+    // Caso "120g Nome" o "120 g Nome"
+    const gramMatch = str.match(/(\d+)\s*g\s+([^(,]+)/i);
+    if (gramMatch) {
+      const grams = parseInt(gramMatch[1]);
+      const name = gramMatch[2].toLowerCase();
+      // Trova la densità per parola chiave nel nome
+      for (const k in KCAL_DENSITY) {
+        if (name.includes(k)) return Math.round(grams * KCAL_DENSITY[k]);
+      }
+      return Math.round(grams * 1.5); // default densità media
+    }
+    // Caso "1 banana", "2 uova", "3 fette"
+    const countMatch = str.match(/^(\d+)\s+(banana|mela|pera|kiwi|arancia|uova|uovo|frutto|fetta|fette)/i);
+    if (countMatch) {
+      const n = parseInt(countMatch[1]);
+      const what = countMatch[2].toLowerCase();
+      if (what.includes('banana')) return n * 95;
+      if (what.includes('mela')) return n * 75;
+      if (what.includes('pera')) return n * 85;
+      if (what.includes('kiwi')) return n * 50;
+      if (what.includes('arancia')) return n * 65;
+      if (what.includes('uov')) return n * 80;
+      if (what.includes('fetta') || what.includes('fette')) return n * 75; // pane medio
+      if (what.includes('frutt')) return n * 70;
+    }
+    // ½ avocado, 1 cucchiaio olio ecc.
+    if (/avocado/i.test(str)) return 130;
+    if (/cucchiaio.*olio|olio.*cucchiaio|cucchiaio EVO/i.test(str)) return 90;
+    if (/cucchiaino.*olio/i.test(str)) return 40;
+    if (/caffè|tè|tisana|verde/i.test(str) && !/zucchero/i.test(str)) return 2;
+    if (/insalata|verdure/i.test(str) && !/grigliate/i.test(str)) return 30;
+    return 0;
+  };
+  // Calcola kcal totali stimate di un'opzione (somma items)
+  const __estimateOptKcal = (opt) => {
+    if (!opt?.items) return 0;
+    return opt.items.reduce((s, it) => s + __estimateItemKcal(it), 0);
+  };
+  // Scala gli ingredienti di un'opzione per allineare al target kcal
+  // Modifica IN-PLACE: cambia i grammi del primo ingrediente con grammi sostanziale
+  const __scaleOptToTarget = (opt, targetKcal) => {
+    if (!opt?.items || opt.isCustom) return opt;
+    const current = __estimateOptKcal(opt);
+    if (current === 0) { opt.kcal = targetKcal; return opt; }
+    const ratio = targetKcal / current;
+    // Se siamo già nel ±10% del target, non scalare
+    if (ratio > 0.9 && ratio < 1.1) {
+      opt.kcal = current;
+      return opt;
+    }
+    // Trova l'ingrediente da scalare: il primo "Ng Xxx" che pesa > 60 kcal
+    // Preferisco scalare il CARBOIDRATO (riso/pasta/pane) perché ha range più largo,
+    // poi la proteina se i carbo non sono presenti
+    const carbsKw = ['riso','pasta','farro','quinoa','avena','orzo','couscous','pane','gallette','patate'];
+    const protKw = ['pollo','tacchino','manzo','vitello','maiale','salmone','tonno','merluzzo','branzino','orata','pesce','tofu','tempeh','seitan','legumi','lenticchie','ceci','fagioli','ricotta','fiocchi','uova','uovo'];
+    let scaleIdx = -1;
+    let scaleType = null;
+    // Prima passata: cerca un carbo
+    for (let i = 0; i < opt.items.length; i++) {
+      const s = opt.items[i].toLowerCase();
+      const gMatch = opt.items[i].match(/^(\d+)\s*g\s+/i);
+      if (gMatch && parseInt(gMatch[1]) >= 30 && carbsKw.some(k => s.includes(k))) {
+        scaleIdx = i; scaleType = 'carb'; break;
+      }
+    }
+    // Seconda passata: se nessun carbo, scala la proteina
+    if (scaleIdx < 0) {
+      for (let i = 0; i < opt.items.length; i++) {
+        const s = opt.items[i].toLowerCase();
+        const gMatch = opt.items[i].match(/^(\d+)\s*g\s+/i);
+        if (gMatch && parseInt(gMatch[1]) >= 50 && protKw.some(k => s.includes(k))) {
+          scaleIdx = i; scaleType = 'prot'; break;
+        }
+      }
+    }
+    if (scaleIdx < 0) { opt.kcal = current; return opt; }
+    // Calcola nuovi grammi: differenza kcal / densità ingrediente principale
+    const orig = opt.items[scaleIdx];
+    const gMatch = orig.match(/^(\d+)\s*g\s+/i);
+    const origGrams = parseInt(gMatch[1]);
+    const nameLower = orig.toLowerCase();
+    let density = 1.5;
+    for (const k in KCAL_DENSITY) {
+      if (nameLower.includes(k)) { density = KCAL_DENSITY[k]; break; }
+    }
+    const deltaKcal = targetKcal - current;
+    const deltaGrams = Math.round(deltaKcal / density / 10) * 10; // arrotondo a decine
+    const newGrams = Math.max(30, origGrams + deltaGrams);
+    opt.items[scaleIdx] = orig.replace(/^(\d+)\s*g/i, newGrams + 'g');
+    opt.kcal = targetKcal;
+    return opt;
+  };
+  // Wrapper: scala tutte le opzioni di un pasto al target kcal
+  const __scaleOptsToTarget = (opts, targetKcal) => {
+    return (opts || []).map(o => __scaleOptToTarget({...o, items: [...(o.items||[])]}, targetKcal));
+  };
+
   // PUNTO 17: se l'utente ha un meal custom per questo pasto, sostituisce opts
   const customMeals=ST.p?.customMeals||{};
-  const mkOpts=(id,origOpts)=>{
+  const mkOpts=(id,origOpts,targetKcal)=>{
     const cm=customMeals[id];
     if(cm && cm.length>0){
       const items=cm.map(it=>`${it.grams}g ${escapeHtml(it.name)} (${it.kcal} kcal)`);
       const totalK=cm.reduce((s,i)=>s+(i.kcal||0),0);
-      return [{lbl:`✏️ Personalizzato (~${totalK} kcal)`,items,isCustom:true,actualKcal:totalK}];
+      return [{lbl:`✏️ Personalizzato (~${totalK} kcal)`,items,isCustom:true,actualKcal:totalK,kcal:totalK}];
     }
-    return origOpts;
+    // SESSIONE 29: scala le porzioni delle varianti al target kcal
+    return __scaleOptsToTarget(origOpts, targetKcal);
   };
   // FIX 1: helper per ottenere kcal effettive di un pasto (somma cibi custom oppure target AI)
   const getActualKcal=(id,fallbackKcal)=>{
@@ -5071,11 +5212,11 @@ window.buildMeals=function(macros,intol=[],sex='m',isRestDay=false,diet='omnivor
     return [...arr.slice(k), ...arr.slice(0,k)];
   };
   return[
-    {id:'col',pct:PCT.col,n:`🌅 COLAZIONE  ${T.col}`,kcal:kCol,actualKcal:getActualKcal('col',kCol),opts:mkOpts('col',rotate(colOpts)),fav:favs?.col||'',isCustom:!!customMeals.col?.length},
-    {id:'sp1',pct:PCT.sp1,n:`🍎 SPUNTINO  ${T.sp1}`,kcal:kSp1,actualKcal:getActualKcal('sp1',kSp1),opts:mkOpts('sp1',rotate(sp1Opts)),isCustom:!!customMeals.sp1?.length},
-    {id:'pra',pct:PCT.pra,n:`🍽️ PRANZO  ${T.pra}`,kcal:kPra,actualKcal:getActualKcal('pra',kPra),opts:mkOpts('pra',rotate(praOpts)),fav:favs?.pra||'',isCustom:!!customMeals.pra?.length},
-    {...sp2,actualKcal:getActualKcal('sp2',sp2.kcal),opts:mkOpts('sp2',rotate(sp2.opts)),isCustom:!!customMeals.sp2?.length},
-    {id:'cen',pct:PCT.cen,n:`🌙 CENA  ${T.cen}`,kcal:kCen,actualKcal:getActualKcal('cen',kCen),opts:mkOpts('cen',rotate(cenOpts)),fav:favs?.cen||'',isCustom:!!customMeals.cen?.length},
+    {id:'col',pct:PCT.col,n:`🌅 COLAZIONE  ${T.col}`,kcal:kCol,actualKcal:getActualKcal('col',kCol),opts:mkOpts('col',rotate(colOpts),kCol),fav:favs?.col||'',isCustom:!!customMeals.col?.length},
+    {id:'sp1',pct:PCT.sp1,n:`🍎 SPUNTINO  ${T.sp1}`,kcal:kSp1,actualKcal:getActualKcal('sp1',kSp1),opts:mkOpts('sp1',rotate(sp1Opts),kSp1),isCustom:!!customMeals.sp1?.length},
+    {id:'pra',pct:PCT.pra,n:`🍽️ PRANZO  ${T.pra}`,kcal:kPra,actualKcal:getActualKcal('pra',kPra),opts:mkOpts('pra',rotate(praOpts),kPra),fav:favs?.pra||'',isCustom:!!customMeals.pra?.length},
+    {...sp2,actualKcal:getActualKcal('sp2',sp2.kcal),opts:mkOpts('sp2',rotate(sp2.opts),sp2.kcal),isCustom:!!customMeals.sp2?.length},
+    {id:'cen',pct:PCT.cen,n:`🌙 CENA  ${T.cen}`,kcal:kCen,actualKcal:getActualKcal('cen',kCen),opts:mkOpts('cen',rotate(cenOpts),kCen),fav:favs?.cen||'',isCustom:!!customMeals.cen?.length},
   ];
 }
 // ═══════════════════════════════════════════════════════════════
@@ -14090,10 +14231,27 @@ window.render = function() {
       </div>
       <div style="display:flex;gap:8px;justify-content:center;margin-bottom:14px;">${Array(totalSets).fill(0).map((_,i)=>`<div class="set-dot ${i<ST.currentSet?'done':i===ST.currentSet?'current':''}"></div>`).join('')}</div>
 
-      ${(ex.isWarmup||ex.isCooldown)?`
-      <div class="card" style="padding:14px;background:${ex.isWarmup?'rgba(197,241,53,.04)':'rgba(167,139,250,.04)'};border-color:${ex.isWarmup?'var(--acc)':'var(--purp)'};">
-        <div style="font-size:12px;color:${ex.isWarmup?'var(--acc)':'var(--purp)'};font-weight:700;letter-spacing:1px;margin-bottom:4px;">${ex.isWarmup?'⏱ TEMPO STIMATO: '+ex.reps:'⏱ TEMPO STIMATO: '+ex.reps}</div>
-        <div style="font-size:12px;color:var(--mut);line-height:1.5;">${ex.isWarmup?'Nessun peso — esegui a corpo libero rispettando i tempi indicati':'Nessun peso — allungamento statico. Non forzare mai oltre la soglia del dolore.'}</div>
+      ${(ex.isWarmup||ex.isCooldown||(ex.t==='cardio' && ex.steps?.length))?`
+      <div class="card" style="padding:14px;background:${ex.isWarmup?'rgba(197,241,53,.04)':ex.isCooldown?'rgba(167,139,250,.04)':'rgba(255,68,68,.04)'};border-color:${ex.isWarmup?'var(--acc)':ex.isCooldown?'var(--purp)':'var(--red)'};">
+        <div style="font-size:12px;color:${ex.isWarmup?'var(--acc)':ex.isCooldown?'var(--purp)':'var(--red)'};font-weight:700;letter-spacing:1px;margin-bottom:8px;">⏱ TEMPO STIMATO: ${ex.reps}</div>
+
+        ${ex.steps?.length ? `
+        <!-- SESSIONE 29: steps visibili direttamente nella card durante esecuzione -->
+        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:8px;margin-top:6px;">📋 ESEGUI IN ORDINE:</div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">
+          ${ex.steps.map((s,i)=>`<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 10px;background:var(--surf);border-radius:8px;border-left:3px solid ${ex.isWarmup?'var(--acc)':ex.isCooldown?'var(--purp)':'var(--red)'};">
+            <div style="min-width:22px;height:22px;border-radius:50%;background:${ex.isWarmup?'var(--acc)':ex.isCooldown?'var(--purp)':'var(--red)'};color:${ex.isWarmup?'#000':'#fff'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;margin-top:1px;">${i+1}</div>
+            <div style="font-size:12px;line-height:1.4;color:var(--text);">${s}</div>
+          </div>`).join('')}
+        </div>` : ''}
+
+        ${ex.whatIs ? `
+        <details style="margin-top:8px;">
+          <summary style="cursor:pointer;font-size:11px;color:var(--blu);font-weight:700;letter-spacing:.5px;padding:6px 0;list-style:none;">❓ Cos'è e a cosa serve →</summary>
+          <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-top:6px;padding:8px 10px;background:rgba(96,165,250,.05);border-radius:8px;">${ex.whatIs}</div>
+        </details>` : ''}
+
+        <div style="font-size:11px;color:var(--mut);line-height:1.5;margin-top:8px;font-style:italic;">${ex.isWarmup?'💡 Nessun peso — esegui a corpo libero rispettando i tempi':ex.isCooldown?'💡 Nessun peso — allungamento statico, non forzare':'💡 Sforzo massimo nei picchi, recupero attivo negli intervalli'}</div>
       </div>`:`
       <!-- ── INPUT PESI/REPS IN ALTO (sessione 13) ── -->
       ${(()=>{
