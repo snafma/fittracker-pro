@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION30-KCAL-VARIANTS-DB-CLEANUP">
+<meta name="ft-version" content="build-SESSION32-FOOD-EXPANSION-COACH-TOOLS">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -478,7 +478,7 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
     <div class="spinner"></div>
     <div class="bebas" style="color:var(--text);font-size:28px;letter-spacing:3px;">SYSTEM BOOTING</div>
     <div style="color:var(--mut);font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:1px;">Connessione al Cloud Secure Database...</div>
-    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION30</div>
+    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION32</div>
   </div>
 </div>
 
@@ -3065,6 +3065,143 @@ window.FOOD_DB=[
   {id:'tisana_finocchio',name:'Tisana al finocchio',cat:'bevande',kcal:0,p:0,c:0,f:0},
   {id:'spremuta_pompelmo',name:'Spremuta di pompelmo',cat:'bevande',kcal:38,p:0.5,c:9,f:0.1},
   {id:'centrifuga_verdura',name:'Centrifugato di verdura',cat:'bevande',kcal:45,p:1.5,c:9,f:0.2},
+
+  // ═══════════════════════════════════════════════════════════════════
+  // SESSIONE 32 — ESPANSIONE MASSIVA (+110 cibi)
+  // ═══════════════════════════════════════════════════════════════════
+
+  // ─── FORMAGGI ITALIANI ───
+  {id:'scamorza_bianca',name:'Scamorza bianca',cat:'latticini',kcal:335,p:25,c:1,f:25},
+  {id:'casatella',name:'Casatella Trevigiana',cat:'latticini',kcal:285,p:14,c:2,f:24},
+  {id:'primo_sale',name:'Primo sale',cat:'latticini',kcal:255,p:21,c:1,f:18},
+  {id:'ricotta_salata',name:'Ricotta salata',cat:'latticini',kcal:265,p:18,c:3,f:20},
+  {id:'pecorino_toscano',name:'Pecorino Toscano DOP',cat:'latticini',kcal:380,p:26,c:1,f:30},
+  {id:'cacioricotta',name:'Cacioricotta',cat:'latticini',kcal:290,p:22,c:3,f:22},
+  {id:'feta_greca',name:'Feta greca DOP',cat:'latticini',kcal:265,p:14,c:4,f:21},
+  {id:'halloumi',name:'Halloumi (cipriota)',cat:'latticini',kcal:320,p:21,c:2,f:25},
+  {id:'fior_di_latte',name:'Fior di latte (mozzarella vacc.)',cat:'latticini',kcal:255,p:20,c:1,f:19},
+
+  // ─── SALUMI ITALIANI ───
+  {id:'coppa_piacentina',name:'Coppa Piacentina DOP',cat:'carne',kcal:380,p:25,c:0,f:31},
+  {id:'pancetta_tesa',name:'Pancetta tesa',cat:'carne',kcal:460,p:14,c:0,f:45},
+  {id:'soppressa_veneta',name:'Soppressa veneta',cat:'carne',kcal:410,p:24,c:1,f:35},
+  {id:'salame_nostrano',name:'Salame nostrano',cat:'carne',kcal:415,p:24,c:0,f:36},
+  {id:'salsiccia_secca',name:'Salsiccia secca/stagionata',cat:'carne',kcal:410,p:25,c:0,f:35},
+  {id:'wurstel_tacchino',name:'Würstel di tacchino',cat:'carne',kcal:155,p:14,c:2,f:11},
+
+  // ─── PESCI E FRUTTI DI MARE ───
+  {id:'pesce_spada_fresco',name:'Pesce spada fresco',cat:'pesce',kcal:130,p:20,c:0,f:5},
+  {id:'pesce_spada_affumicato',name:'Pesce spada affumicato',cat:'pesce',kcal:140,p:21,c:0,f:6},
+  {id:'spigola',name:'Spigola/Branzino fresco',cat:'pesce',kcal:120,p:20,c:0,f:4},
+  {id:'sciabola',name:'Pesce sciabola',cat:'pesce',kcal:125,p:21,c:0,f:4},
+  {id:'tonno_olio_oliva',name:'Tonno sott\'olio d\'oliva',cat:'pesce',kcal:215,p:26,c:0,f:13},
+  {id:'acciughe_pasta',name:'Pasta di acciughe',cat:'pesce',kcal:175,p:23,c:1,f:9},
+  {id:'sushi_salmone',name:'Sushi salmone (nigiri 2 pz)',cat:'pesce',kcal:130,p:7,c:18,f:3,isPortion:true,refGrams:60},
+  {id:'sushi_tonno',name:'Sushi tonno (nigiri 2 pz)',cat:'pesce',kcal:115,p:9,c:17,f:1.5,isPortion:true,refGrams:60},
+  {id:'sushi_california',name:'California Roll (8 pezzi)',cat:'pesce',kcal:255,p:10,c:38,f:7,isPortion:true,refGrams:200},
+  {id:'tempura_gamberi',name:'Tempura di gamberi (5 pezzi)',cat:'pesce',kcal:280,p:18,c:25,f:13,isPortion:true,refGrams:150},
+  {id:'fritto_misto_pesce',name:'Fritto misto di pesce (porzione)',cat:'piatti_pronti',kcal:320,p:22,c:18,f:18},
+
+  // ─── VERDURE E LEGUMI MANCANTI ───
+  {id:'cavolfiore_cotto',name:'Cavolfiore cotto',cat:'verdure',kcal:23,p:1.9,c:4,f:0.3},
+  {id:'verza',name:'Verza',cat:'verdure',kcal:27,p:1.4,c:6,f:0.2},
+  {id:'cime_rapa',name:'Cime di rapa',cat:'verdure',kcal:30,p:2.9,c:3,f:0.5},
+  {id:'catalogna',name:'Catalogna/Cicoria',cat:'verdure',kcal:23,p:1.5,c:3,f:0.3},
+  {id:'tarassaco',name:'Tarassaco',cat:'verdure',kcal:45,p:2.7,c:9,f:0.7},
+  {id:'agretti',name:'Agretti/Barba di frate',cat:'verdure',kcal:17,p:2,c:2,f:0.1},
+  {id:'pastinaca',name:'Pastinaca',cat:'verdure',kcal:75,p:1.2,c:18,f:0.3},
+  {id:'rapa_bianca',name:'Rapa bianca',cat:'verdure',kcal:28,p:0.9,c:6,f:0.1},
+  {id:'cipollotti',name:'Cipollotti freschi',cat:'verdure',kcal:32,p:1.8,c:7,f:0.2},
+  {id:'scalogno',name:'Scalogno',cat:'verdure',kcal:72,p:2.5,c:17,f:0.1},
+
+  // ─── LEGUMI COTTI MANCANTI ───
+  {id:'fagioli_neri',name:'Fagioli neri cotti',cat:'legumi',kcal:130,p:9,c:24,f:0.5},
+  {id:'fagioli_azuki',name:'Fagioli azuki cotti',cat:'legumi',kcal:130,p:8,c:25,f:0.2},
+  {id:'fagioli_corona',name:'Fagioli corona cotti',cat:'legumi',kcal:110,p:7,c:20,f:0.4},
+  {id:'lupini',name:'Lupini in salamoia',cat:'legumi',kcal:115,p:16,c:9,f:2.5},
+
+  // ─── FRUTTA MANCANTE ───
+  {id:'avocado_intero',name:'Avocado intero (1 medio)',cat:'frutta',kcal:240,p:3,c:12,f:22,isPortion:true,refGrams:150},
+  {id:'frutto_passione',name:'Frutto della passione (maracuja)',cat:'frutta',kcal:95,p:2.2,c:23,f:0.7},
+  {id:'lichi',name:'Lychee',cat:'frutta',kcal:65,p:0.8,c:16,f:0.4},
+  {id:'cocco_polpa',name:'Cocco fresco (polpa)',cat:'frutta',kcal:355,p:3.5,c:15,f:33},
+  {id:'guava',name:'Guava',cat:'frutta',kcal:70,p:2.6,c:14,f:1},
+  {id:'mirtilli_rossi',name:'Mirtilli rossi (cranberry)',cat:'frutta',kcal:47,p:0.4,c:12,f:0.1},
+  {id:'uvetta',name:'Uvetta/Uva passa',cat:'frutta',kcal:300,p:3,c:79,f:0.5},
+
+  // ─── CEREALI E FARINE ───
+  {id:'amaranto',name:'Amaranto (crudo)',cat:'cereali',kcal:370,p:14,c:65,f:7},
+  {id:'miglio',name:'Miglio (crudo)',cat:'cereali',kcal:355,p:11,c:73,f:4},
+  {id:'grano_saraceno',name:'Grano saraceno (crudo)',cat:'cereali',kcal:340,p:13,c:72,f:3},
+  {id:'bulgur',name:'Bulgur (crudo)',cat:'cereali',kcal:340,p:12,c:76,f:1.3},
+  {id:'crusca_avena',name:'Crusca di avena',cat:'cereali',kcal:245,p:17,c:65,f:7},
+  {id:'pane_di_segale',name:'Pane di segale',cat:'cereali',kcal:260,p:9,c:50,f:1.5},
+  {id:'piadina_romagnola',name:'Piadina romagnola (1 pezzo)',cat:'cereali',kcal:300,p:8,c:50,f:8,isPortion:true,refGrams:100},
+  {id:'pita',name:'Pane Pita (1 pezzo)',cat:'cereali',kcal:275,p:9,c:55,f:1.5,isPortion:true,refGrams:100},
+  {id:'naan',name:'Pane Naan indiano (1 pezzo)',cat:'cereali',kcal:310,p:9,c:50,f:8,isPortion:true,refGrams:120},
+  {id:'tortilla_grano',name:'Tortilla di grano (1 pezzo)',cat:'cereali',kcal:155,p:4,c:24,f:4,isPortion:true,refGrams:50},
+  {id:'tortilla_mais',name:'Tortilla di mais (1 pezzo)',cat:'cereali',kcal:115,p:3,c:22,f:1.5,isPortion:true,refGrams:50},
+
+  // ─── PIATTI ETNICI ───
+  {id:'curry_pollo',name:'Curry di pollo (porzione)',cat:'piatti_pronti',kcal:320,p:22,c:18,f:18},
+  {id:'curry_verdure',name:'Curry di verdure',cat:'piatti_pronti',kcal:185,p:6,c:22,f:8},
+  {id:'burrito_pollo',name:'Burrito di pollo',cat:'piatti_pronti',kcal:540,p:24,c:62,f:20,isPortion:true,refGrams:280},
+  {id:'fajitas_pollo',name:'Fajitas di pollo (porzione)',cat:'piatti_pronti',kcal:380,p:25,c:32,f:14},
+  {id:'shawarma_pollo',name:'Shawarma di pollo',cat:'piatti_pronti',kcal:380,p:25,c:30,f:16,isPortion:true,refGrams:250},
+  {id:'samosa',name:'Samosa indiano (1 pezzo)',cat:'piatti_pronti',kcal:135,p:3,c:14,f:8,isPortion:true,refGrams:60},
+  {id:'pollo_mandorle',name:'Pollo alle mandorle (cinese)',cat:'piatti_pronti',kcal:265,p:18,c:18,f:14},
+  {id:'manzo_funghi',name:'Manzo con funghi (cinese)',cat:'piatti_pronti',kcal:240,p:18,c:8,f:15},
+
+  // ─── DOLCI E SNACK MANCANTI ───
+  {id:'plumcake_classico',name:'Plumcake (1 fetta)',cat:'dolci',kcal:185,p:3,c:23,f:9,isPortion:true,refGrams:50},
+  {id:'crostatina_marmellata',name:'Crostatina marmellata (1 pz)',cat:'bar',kcal:175,p:2.5,c:26,f:7,isPortion:true,refGrams:40},
+  {id:'biscotti_integrali',name:'Biscotti integrali',cat:'bar',kcal:430,p:7,c:70,f:14},
+  {id:'biscotti_grancereale',name:'Biscotti tipo Grancereale',cat:'bar',kcal:440,p:9,c:68,f:14},
+  {id:'pancake_nutella',name:'Pancake con Nutella (3 pezzi)',cat:'bar',kcal:520,p:9,c:65,f:24,isPortion:true,refGrams:200},
+  {id:'waffle_classico',name:'Waffle classico (1 pezzo)',cat:'bar',kcal:290,p:6,c:33,f:14,isPortion:true,refGrams:80},
+  {id:'crepe_nutella',name:'Crêpe con Nutella',cat:'dolci',kcal:380,p:7,c:48,f:18,isPortion:true,refGrams:150},
+  {id:'crepe_marmellata',name:'Crêpe con marmellata',cat:'dolci',kcal:280,p:6,c:48,f:7,isPortion:true,refGrams:150},
+
+  // ─── BEVANDE MANCANTI ───
+  {id:'aperol',name:'Aperol liscio (1 bicchiere)',cat:'bevande',kcal:115,p:0,c:13,f:0,isPortion:true,refGrams:60},
+  {id:'campari',name:'Campari (1 bicchiere)',cat:'bevande',kcal:120,p:0,c:12,f:0,isPortion:true,refGrams:60},
+  {id:'amaro_dopo_pasto',name:'Amaro digestivo (1 bicchierino)',cat:'bevande',kcal:70,p:0,c:8,f:0,isPortion:true,refGrams:30},
+  {id:'caffe_corretto',name:'Caffè corretto sambuca/grappa',cat:'bevande',kcal:55,p:0,c:1,f:0,isPortion:true,refGrams:50},
+  {id:'tisana_zenzero',name:'Tisana zenzero limone',cat:'bevande',kcal:5,p:0,c:1,f:0,isPortion:true,refGrams:250},
+  {id:'frullato_proteico',name:'Frullato proteico (250ml)',cat:'bevande',kcal:215,p:25,c:18,f:5,isPortion:true,refGrams:250},
+  {id:'cocco_acqua',name:'Acqua di cocco',cat:'bevande',kcal:19,p:0.7,c:4,f:0.2},
+  {id:'matcha_latte',name:'Matcha latte (250ml)',cat:'bevande',kcal:90,p:5,c:11,f:3,isPortion:true,refGrams:250},
+
+  // ─── INTEGRATORI / FITNESS ───
+  {id:'barretta_proteica',name:'Barretta proteica generica',cat:'snack',kcal:215,p:20,c:18,f:7,isPortion:true,refGrams:60},
+  {id:'barretta_energetica',name:'Barretta energetica',cat:'snack',kcal:230,p:6,c:34,f:8,isPortion:true,refGrams:60},
+  {id:'whey_protein_polvere',name:'Whey protein (1 scoop 30g)',cat:'snack',kcal:115,p:24,c:3,f:1.5,isPortion:true,refGrams:30},
+  {id:'isolate_protein',name:'Isolate protein (1 scoop 30g)',cat:'snack',kcal:110,p:27,c:1,f:0.5,isPortion:true,refGrams:30},
+  {id:'casein_protein',name:'Caseina (1 scoop 30g)',cat:'snack',kcal:115,p:24,c:3,f:1,isPortion:true,refGrams:30},
+  {id:'creatina_polvere',name:'Creatina monoidrato (5g)',cat:'snack',kcal:0,p:0,c:0,f:0,isPortion:true,refGrams:5},
+  {id:'maltodestrine',name:'Maltodestrine (20g)',cat:'snack',kcal:80,p:0,c:20,f:0,isPortion:true,refGrams:20},
+
+  // ─── PRODOTTI PRONTI / MARCHE COMUNI (generici) ───
+  {id:'crackers_integrali',name:'Crackers integrali (1 confezione)',cat:'snack',kcal:120,p:3,c:18,f:4,isPortion:true,refGrams:30},
+  {id:'patatine_chips',name:'Patatine chips (1 sacchetto)',cat:'snack',kcal:155,p:2,c:14,f:10,isPortion:true,refGrams:30},
+
+  // ─── INSALATE COMPOSTE EXTRA ───
+  {id:'insalata_pollo_avocado',name:'Insalata pollo, avocado e quinoa',cat:'piatti_pronti',kcal:340,p:25,c:22,f:16},
+  {id:'insalata_salmone_avocado',name:'Insalata salmone e avocado',cat:'piatti_pronti',kcal:315,p:22,c:8,f:22},
+  {id:'insalata_uova_sode',name:'Insalata con uova sode',cat:'piatti_pronti',kcal:175,p:13,c:6,f:11},
+  {id:'insalata_mozzarella',name:'Insalata mozzarella e pomodorini',cat:'piatti_pronti',kcal:215,p:12,c:5,f:17},
+
+  // ─── PIATTI MANCANTI ───
+  {id:'frittata_verdure',name:'Frittata di verdure (porzione)',cat:'piatti_pronti',kcal:195,p:13,c:5,f:14},
+  {id:'omelette_formaggio',name:'Omelette al formaggio',cat:'piatti_pronti',kcal:240,p:18,c:2,f:18},
+  {id:'uova_strapazzate_bacon',name:'Uova strapazzate con bacon',cat:'uova',kcal:295,p:18,c:1,f:24,isPortion:true,refGrams:150},
+  {id:'polpette_carne',name:'Polpette di carne al sugo (4 pz)',cat:'piatti_pronti',kcal:280,p:22,c:8,f:18,isPortion:true,refGrams:200},
+  {id:'polpette_lenticchie',name:'Polpette di lenticchie (4 pz)',cat:'piatti_pronti',kcal:215,p:10,c:25,f:8,isPortion:true,refGrams:200},
+  {id:'pollo_grigliato',name:'Pollo grigliato (petto, porzione)',cat:'piatti_pronti',kcal:180,p:30,c:0,f:6},
+  {id:'osso_buco',name:'Osso buco con risotto',cat:'piatti_pronti',kcal:280,p:18,c:22,f:13},
+  {id:'spezzatino_manzo',name:'Spezzatino di manzo con patate',cat:'piatti_pronti',kcal:225,p:18,c:12,f:11},
+  {id:'pesto_trapanese',name:'Pesto trapanese (porzione su pasta)',cat:'piatti_pronti',kcal:195,p:6,c:24,f:8},
+  {id:'caprese_classica',name:'Caprese classica (porzione)',cat:'piatti_pronti',kcal:255,p:14,c:5,f:20},
 
 ];
 
@@ -5797,6 +5934,10 @@ window.defST=function(){
     // ── Sessione 27 ──
     plannedDays:{},              // override manuale train/rest: {'2026-05-22':'rest', '2026-05-23':'train'}
     // Ha priorità sul pattern auto basato su sessions
+    // ── Sessione 31 ──
+    userRecipes:[],              // [{id, name, kcal, prot, carb, fat, ingredients:[], steps:[], emoji, slotPref}]
+    shareRecipesToCommunity:false, // opt-in condivisione ricette
+    healthSyncLog:{lastExportWorkouts:null, lastExportWeight:null, lastImport:null}, // log Apple Health sync
     shoppingState:{removed:[], extras:[], checked:[], lastGenWeek:null}, // stato lista spesa
     // ── Campi sessione 13 ──
     workoutSecOpen:{steps:false, tips:false, muscle:false, mistakes:false, breath:false}, // sezioni espandibili runtime workout
@@ -5839,6 +5980,10 @@ window.saveU=async function(){
       cartFavorites:ST.cartFavorites,
       vacationMode:ST.vacationMode,
       plannedDays:ST.plannedDays,
+      // ── Sessione 31 ──
+      userRecipes:ST.userRecipes,
+      shareRecipesToCommunity:ST.shareRecipesToCommunity,
+      healthSyncLog:ST.healthSyncLog,
       theme:ST.theme,
       injuries:ST.injuries,
       onboardingDone:ST.onboardingDone,
@@ -7247,6 +7392,337 @@ window.testNotification = function() {
     });
   } catch(e) { alert('Errore: ' + e.message); }
 };
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SESSIONE 31 — APPLE HEALTH SYNC (export/import via file)
+// PWA non può chiamare HealthKit direttamente.
+// Soluzione pratica:
+//  - EXPORT workout → file .ics che l'utente importa nel Calendar
+//    (Apple Health legge il calendario)
+//  - EXPORT peso → file .csv con date e valori
+//  - IMPORT da export.xml di Apple Health → legge peso/passi/sonno e importa
+// Tutto via download/upload file, niente API native richieste.
+// ═══════════════════════════════════════════════════════════════════════════
+
+// EXPORT 1: workout fatti → file .ics
+window.exportWorkoutsToCalendar = function() {
+  if (!ST.wLog || ST.wLog.length === 0) return alert('Nessun workout da esportare.');
+  // Filtra ultimi 90 giorni
+  const cutoff = new Date(Date.now() - 90*86400000).toISOString().slice(0,10);
+  const workouts = ST.wLog.filter(w => w.d >= cutoff && !w.isRest);
+  if (workouts.length === 0) return alert('Nessun workout negli ultimi 90 giorni.');
+  // Genera ICS
+  const nowUtc = new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+  let ics = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//FitTracker PRO//Workout Export//IT
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:FitTracker PRO - Workout
+X-WR-TIMEZONE:Europe/Rome
+`;
+  workouts.forEach((w, i) => {
+    // Start: 18:00 del giorno (default)
+    const d = new Date(w.d + 'T18:00:00');
+    const dur = w.dur || 60;
+    const end = new Date(d.getTime() + dur*60000);
+    const fmt = (dt) => dt.toISOString().replace(/[-:]/g,'').split('.')[0];
+    const uid = `ft-${w.d}-${i}@fittracker.app`;
+    const summary = `💪 ${w.t || 'Allenamento'}`;
+    const desc = [
+      `Durata: ${dur} min`,
+      w.vol ? `Volume: ${w.vol} kg` : '',
+      w.kcal ? `Calorie: ${w.kcal} kcal` : '',
+      ''
+    ].filter(Boolean).join('\\n');
+    ics += `BEGIN:VEVENT
+UID:${uid}
+DTSTAMP:${nowUtc}
+DTSTART:${fmt(d)}
+DTEND:${fmt(end)}
+SUMMARY:${summary}
+DESCRIPTION:${desc}
+CATEGORIES:Fitness,Workout
+END:VEVENT
+`;
+  });
+  ics += 'END:VCALENDAR\n';
+  // Download
+  const blob = new Blob([ics], {type: 'text/calendar;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `fittracker-workouts-${new Date().toISOString().slice(0,10)}.ics`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  // Log
+  if (!ST.healthSyncLog) ST.healthSyncLog = {};
+  ST.healthSyncLog.lastExportWorkouts = new Date().toISOString();
+  save();
+  alert(`✅ ${workouts.length} workout esportati.\n\nApri il file scaricato per importarlo nel Calendar. Apple Health leggerà automaticamente i tuoi allenamenti dal calendario.`);
+};
+
+// EXPORT 2: peso → file CSV (importabile manualmente in Salute o tracker peso)
+window.exportWeightToCSV = function() {
+  if (!ST.h || ST.h.length === 0) return alert('Nessuna pesata da esportare.');
+  let csv = 'Data,Peso (kg)\n';
+  ST.h.forEach(h => { csv += `${h.d},${h.w}\n`; });
+  const blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `fittracker-peso-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  if (!ST.healthSyncLog) ST.healthSyncLog = {};
+  ST.healthSyncLog.lastExportWeight = new Date().toISOString();
+  save();
+  alert(`✅ ${ST.h.length} pesate esportate in CSV.\n\nIl file è scaricato. Puoi importarlo in Numbers/Excel o in app come Apple Health (tramite app terze).`);
+};
+
+// IMPORT: parser export.xml di Apple Health
+// L'utente apre Salute → profilo (in alto a destra) → "Esporta tutti i dati Salute"
+// Riceve uno zip con dentro export.xml. Lo seleziona col file picker qui.
+window.importFromAppleHealth = function() {
+  // Crea input file dinamico
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = '.xml,application/xml,text/xml';
+  inp.style.display = 'none';
+  inp.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 80 * 1024 * 1024) {
+      return alert('File troppo grande (max 80 MB). Apple Health export.xml dovrebbe essere sotto questa soglia.');
+    }
+    try {
+      const txt = await file.text();
+      // Parser semplificato: leggo solo i record con type HKQuantityTypeIdentifierBodyMass
+      // Format: <Record type="HKQuantityTypeIdentifierBodyMass" ... value="75.3" startDate="2024-01-15 ..."/>
+      const weightRe = /<Record\s+type="HKQuantityTypeIdentifierBodyMass"[^>]*value="([^"]+)"[^>]*startDate="([^"]+)"/g;
+      const sleepRe = /<Record\s+type="HKCategoryTypeIdentifierSleepAnalysis"[^>]*startDate="([^"]+)"[^>]*endDate="([^"]+)"/g;
+      const stepRe = /<Record\s+type="HKQuantityTypeIdentifierStepCount"[^>]*value="([^"]+)"[^>]*startDate="([^"]+)"/g;
+      // Pesate
+      const weightByDay = new Map();
+      let m;
+      while ((m = weightRe.exec(txt)) !== null) {
+        const val = parseFloat(m[1]);
+        const dateStr = m[2].slice(0,10);
+        if (!val || val < 30 || val > 250) continue;
+        // Tengo l'ultima del giorno
+        weightByDay.set(dateStr, val);
+      }
+      // Step per giorno (somma)
+      const stepsByDay = new Map();
+      while ((m = stepRe.exec(txt)) !== null) {
+        const val = parseInt(m[1]);
+        const dateStr = m[2].slice(0,10);
+        if (!val) continue;
+        stepsByDay.set(dateStr, (stepsByDay.get(dateStr) || 0) + val);
+      }
+      // Sonno per giorno (durata totale in ore)
+      const sleepByDay = new Map();
+      while ((m = sleepRe.exec(txt)) !== null) {
+        const start = new Date(m[1]);
+        const end = new Date(m[2]);
+        if (isNaN(start) || isNaN(end)) continue;
+        const hours = (end - start) / 3600000;
+        if (hours < 0.5 || hours > 14) continue;
+        // Attribuisco al giorno di fine (mattino del risveglio)
+        const dateStr = end.toISOString().slice(0,10);
+        sleepByDay.set(dateStr, (sleepByDay.get(dateStr) || 0) + hours);
+      }
+      // Importo le pesate (sovrascrive se data uguale)
+      let addedW = 0, updatedW = 0;
+      const existing = new Map((ST.h || []).map(h => [h.d, h]));
+      weightByDay.forEach((val, dateStr) => {
+        if (existing.has(dateStr)) {
+          if (Math.abs(existing.get(dateStr).w - val) > 0.05) {
+            existing.get(dateStr).w = val;
+            updatedW++;
+          }
+        } else {
+          existing.set(dateStr, {d: dateStr, w: val});
+          addedW++;
+        }
+      });
+      ST.h = Array.from(existing.values()).sort((a,b) => a.d.localeCompare(b.d));
+      // Importo passi e sonno in ST.life
+      if (!ST.life) ST.life = {};
+      let addedSteps = 0, addedSleep = 0;
+      stepsByDay.forEach((val, dateStr) => {
+        if (!ST.life[dateStr]) ST.life[dateStr] = {};
+        ST.life[dateStr].steps = val;
+        addedSteps++;
+      });
+      sleepByDay.forEach((val, dateStr) => {
+        if (!ST.life[dateStr]) ST.life[dateStr] = {};
+        ST.life[dateStr].sleep = Math.round(val * 2) / 2; // arrotondo a 0.5h
+        addedSleep++;
+      });
+      ST.healthSyncLog = ST.healthSyncLog || {};
+      ST.healthSyncLog.lastImport = new Date().toISOString();
+      await save();
+      render();
+      alert(`✅ Importazione completata da Apple Health:\n\n` +
+            `⚖️ Pesate: ${addedW} nuove, ${updatedW} aggiornate\n` +
+            `👟 Passi: ${addedSteps} giorni\n` +
+            `😴 Sonno: ${addedSleep} giorni\n\n` +
+            `Vai in tab Body per vedere il grafico aggiornato.`);
+    } catch(err) {
+      console.error('Apple Health import error:', err);
+      alert('❌ Errore durante import: ' + err.message + '\n\nVerifica che il file sia export.xml di Apple Health.');
+    }
+  });
+  document.body.appendChild(inp);
+  inp.click();
+  setTimeout(() => document.body.removeChild(inp), 1000);
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SESSIONE 31 — RICETTE PERSONALI
+// L'utente crea proprie ricette (nome, kcal, macro, ingredienti, steps).
+// Possono essere usate come pasto (sostituiscono colazione/pranzo/cena).
+// Se condivisione attiva → finiscono nel DB community per gli altri utenti.
+// ═══════════════════════════════════════════════════════════════════════════
+
+window.addUserRecipe = async function(recipe) {
+  if (!ST.userRecipes) ST.userRecipes = [];
+  const id = 'ur_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
+  const newRecipe = {
+    id,
+    name: recipe.name || 'Ricetta senza nome',
+    emoji: recipe.emoji || '🍽️',
+    kcal: parseInt(recipe.kcal) || 0,
+    prot: parseInt(recipe.prot) || 0,
+    carb: parseInt(recipe.carb) || 0,
+    fat: parseInt(recipe.fat) || 0,
+    slotPref: recipe.slotPref || 'pra', // col/sp1/pra/sp2/cen
+    ingredients: Array.isArray(recipe.ingredients) ? recipe.ingredients.filter(i=>i.trim()) : [],
+    steps: Array.isArray(recipe.steps) ? recipe.steps.filter(s=>s.trim()) : [],
+    createdAt: Date.now()
+  };
+  ST.userRecipes.push(newRecipe);
+  // Se opt-in community, condivido anche
+  if (ST.shareRecipesToCommunity && window.RecipesCommunityDB?.submit) {
+    try { await window.RecipesCommunityDB.submit({...newRecipe}); } catch(e) { console.warn('Recipe share fail:', e); }
+  }
+  await save();
+  return newRecipe;
+};
+
+window.deleteUserRecipe = async function(id) {
+  if (!ST.userRecipes) return;
+  const r = ST.userRecipes.find(x => x.id === id);
+  if (!r) return;
+  if (!confirm(`Eliminare la ricetta "${r.name}"?`)) return;
+  ST.userRecipes = ST.userRecipes.filter(x => x.id !== id);
+  await save();
+  render();
+};
+
+window.useRecipeAsMeal = async function(recipeId, mealSlot) {
+  const r = (ST.userRecipes || []).find(x => x.id === recipeId);
+  if (!r) return alert('Ricetta non trovata');
+  if (!ST.p) ST.p = {};
+  if (!ST.p.customMeals) ST.p.customMeals = {};
+  // Genero "items" sintetici dagli ingredienti
+  const items = (r.ingredients || []).map(name => ({
+    name,
+    grams: 100,
+    kcal: Math.round(r.kcal / Math.max(1, r.ingredients.length)),
+    p: Math.round(r.prot / Math.max(1, r.ingredients.length)),
+    c: Math.round(r.carb / Math.max(1, r.ingredients.length)),
+    f: Math.round(r.fat / Math.max(1, r.ingredients.length))
+  }));
+  ST.p.customMeals[mealSlot] = items;
+  await save();
+  render();
+  alert(`✅ Ricetta "${r.name}" impostata come ${mealSlot.toUpperCase()}.`);
+};
+
+window.openAddRecipeSheet = function(editId) {
+  ST.sheet = 'addRecipe';
+  if (editId) {
+    const r = (ST.userRecipes||[]).find(x => x.id === editId);
+    ST.sheetData = { editId, ...r, ingredients: (r.ingredients||[]).join('\n'), steps: (r.steps||[]).join('\n') };
+  } else {
+    ST.sheetData = { name:'', emoji:'🍽️', kcal:'', prot:'', carb:'', fat:'', slotPref:'pra', ingredients:'', steps:'' };
+  }
+  render();
+};
+
+window.openMyRecipesSheet = function() {
+  ST.sheet = 'myRecipes';
+  ST.sheetData = {};
+  render();
+};
+
+window.submitRecipeForm = async function() {
+  const d = ST.sheetData || {};
+  if (!d.name?.trim()) return alert('Inserisci un nome per la ricetta');
+  if (!d.kcal || parseInt(d.kcal) < 50) return alert('Inserisci le kcal totali (min 50)');
+  const recipe = {
+    name: d.name.trim(),
+    emoji: d.emoji || '🍽️',
+    kcal: parseInt(d.kcal),
+    prot: parseInt(d.prot) || 0,
+    carb: parseInt(d.carb) || 0,
+    fat: parseInt(d.fat) || 0,
+    slotPref: d.slotPref || 'pra',
+    ingredients: (d.ingredients || '').split('\n').map(s=>s.trim()).filter(Boolean),
+    steps: (d.steps || '').split('\n').map(s=>s.trim()).filter(Boolean)
+  };
+  if (d.editId) {
+    // Update
+    const r = (ST.userRecipes||[]).find(x => x.id === d.editId);
+    if (r) Object.assign(r, recipe);
+    await save();
+  } else {
+    await addUserRecipe(recipe);
+  }
+  ST.sheet = null;
+  ST.sheetData = null;
+  render();
+};
+
+window.setShareRecipesCommunity = async function(val) {
+  ST.shareRecipesToCommunity = !!val;
+  await save();
+  render();
+};
+
+// SESSIONE 31 — Community Recipes DB (estensione di FoodsCommunity)
+window.RecipesCommunityDB = (() => {
+  const storage = window.firebase?.storage;
+  // Riusa il pattern di FoodsCommunityDB se presente; se non c'è Firestore va in no-op
+  return {
+    submit: async (recipe) => {
+      try {
+        if (typeof window.firestoreSetDoc === 'function') {
+          await window.firestoreSetDoc('fittracker_recipes_community', recipe.id, {
+            ...recipe,
+            addedAt: Date.now()
+          });
+          return true;
+        }
+      } catch(e) { console.warn('Recipe community submit fail:', e?.code||e); }
+      return false;
+    },
+    fetch: async () => {
+      try {
+        if (typeof window.firestoreGetAll === 'function') {
+          return await window.firestoreGetAll('fittracker_recipes_community');
+        }
+      } catch(e) { console.warn('Recipe community fetch fail:', e?.code||e); }
+      return [];
+    }
+  };
+})();
 
 // ── SCHEDULER NOTIFICHE ──
 // Pianifica notifiche basate sulle preferenze utente per la giornata corrente
@@ -13403,7 +13879,69 @@ window.renderCoachTools = function() {
     {id:'ankle', emo:'🦶', lbl:'Caviglia'},
     {id:'elbow', emo:'💪', lbl:'Gomito'}
   ];
+  // SESSIONE 32: card modalità trasferta + vacanza (spostate da Configurazione)
+  const tm = ST.travelMode || {};
+  const isTravelActive = tm.active && tm.endD && new Date(tm.endD).getTime() >= Date.now() - 86400000;
+  const vm = ST.vacationMode || {};
+  const isVacOn = typeof window.isVacationActive === 'function' && window.isVacationActive();
   return `
+  <!-- ── MODALITÀ TRASFERTA (sessione 32: spostata da Configurazione) ── -->
+  <div class="card" style="border-color:${isTravelActive?'var(--ora)':'var(--bord)'};${isTravelActive?'background:linear-gradient(135deg,rgba(255,104,53,.06),transparent);':''}">
+    <div class="bebas" style="font-size:18px;color:${isTravelActive?'var(--ora)':'var(--text)'};margin-bottom:6px;">✈️ MODALITÀ TRASFERTA ${isTravelActive?'(ATTIVA)':''}</div>
+    ${isTravelActive ? `
+      <div style="background:rgba(255,104,53,.08);border:1px solid var(--ora);border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;line-height:1.6;">
+        <div style="font-weight:700;color:var(--ora);margin-bottom:4px;">🌴 Sei in trasferta fino al ${new Date(tm.endD+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'long'})}</div>
+        <div style="color:var(--text);">
+          ${tm.hasGym ? '🏋️ Hai accesso a una <strong>palestra</strong>' : '🏠 Allenamento <strong>senza attrezzi</strong> (bodyweight)'}<br>
+          📅 ${tm.sessions || 3} sessioni/settimana × ${tm.dur || 30} minuti<br>
+          🍽️ Dieta semplificata: pasti adatti a hotel/ristorante
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-s" style="flex:1;padding:10px;font-size:12px;background:var(--surf);border:1px solid var(--bord);color:var(--text);font-weight:600;border-radius:8px;cursor:pointer;" onclick="openTravelMode()">✏️ MODIFICA</button>
+        <button class="btn-s" style="flex:1;padding:10px;font-size:12px;background:var(--surf);border:1px solid var(--red);color:var(--red);font-weight:600;border-radius:8px;cursor:pointer;" onclick="endTravelMode()">✓ TORNATO A CASA</button>
+      </div>
+    ` : `
+      <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:12px;">
+        Stai per partire? Attiva la modalità trasferta. L'app adatta automaticamente esercizi e dieta in base a:
+        <ul style="margin-top:8px;margin-left:20px;font-size:12px;">
+          <li>Disponibilità di una palestra (sì/no)</li>
+          <li>Tempo che hai a disposizione</li>
+          <li>Numero di sessioni possibili</li>
+        </ul>
+      </div>
+      <button class="btn-s" style="width:100%;padding:11px;font-size:13px;background:rgba(255,104,53,.1);border:1px solid var(--ora);color:var(--ora);font-weight:600;border-radius:8px;cursor:pointer;" onclick="openTravelMode()">✈️ ATTIVA MODALITÀ TRASFERTA</button>
+    `}
+  </div>
+
+  <!-- ── MODALITÀ VACANZA (sessione 32: spostata da Configurazione) ── -->
+  <div class="card" style="border-color:${isVacOn?'var(--blu)':'var(--bord)'};${isVacOn?'background:linear-gradient(135deg,rgba(96,165,250,.06),transparent);':''}">
+    <div class="bebas" style="font-size:18px;color:${isVacOn?'var(--blu)':'var(--text)'};margin-bottom:6px;">🏖️ MODALITÀ VACANZA ${isVacOn?'(ATTIVA)':''}</div>
+    ${isVacOn ? `
+      <div style="background:rgba(96,165,250,.08);border:1px solid var(--blu);border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;line-height:1.6;">
+        <div style="font-weight:700;color:var(--blu);margin-bottom:4px;">🌴 In vacanza fino al ${new Date(vm.endD+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'long'})}</div>
+        <div style="color:var(--text);">
+          🏝️ Allenamento e dieta <strong>opzionali</strong><br>
+          😌 Nessun banner deficit/sgarro<br>
+          🔥 Streak preservato — niente pressione<br>
+          📊 Tracking comunque attivo
+        </div>
+      </div>
+      <button class="btn-s" style="width:100%;padding:10px;font-size:12px;background:var(--surf);border:1px solid var(--red);color:var(--red);font-weight:600;border-radius:8px;cursor:pointer;" onclick="endVacation()">✓ TORNATO DALLA VACANZA</button>
+    ` : `
+      <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:12px;">
+        Stacchi per qualche giorno? Attiva la modalità vacanza per:
+        <ul style="margin-top:8px;margin-left:20px;font-size:12px;">
+          <li>Sospendere alert deficit/sgarro</li>
+          <li>Mantenere lo streak senza pressione</li>
+          <li>Allenarti solo se vuoi (niente obblighi)</li>
+          <li>Continuare a tracciare per analisi future</li>
+        </ul>
+      </div>
+      <button class="btn-s" style="width:100%;padding:11px;font-size:13px;background:rgba(96,165,250,.1);border:1px solid var(--blu);color:var(--blu);font-weight:600;border-radius:8px;cursor:pointer;" onclick="startVacation()">🏖️ ATTIVA MODALITÀ VACANZA</button>
+    `}
+  </div>
+
   <div class="card" style="border-color:var(--red);">
     <div style="font-size:11px;color:var(--red);font-weight:700;letter-spacing:1.5px;margin-bottom:6px;">🤕 INFORTUNI</div>
     <div style="font-size:11px;color:var(--mut);margin-bottom:10px;">Esclude esercizi che coinvolgono la zona.</div>
@@ -13827,13 +14365,33 @@ window.renderSettings = function(mac){
     <button class="btn" style="width:100%;padding:14px;background:var(--blu);color:#fff;font-size:15px;font-weight:700;letter-spacing:1px;border-radius:12px;border:none;cursor:pointer;margin-top:0;" onclick="updateFavs()">SALVA PREFERITI</button>
   </div>
 
-  <!-- ════ CONDIVISIONE COMMUNITY CIBI (sessione 23) ════ -->
+  <!-- ════ RICETTE PERSONALI (sessione 31) ════ -->
+  <div class="card" style="border-color:var(--purp);">
+    <div class="bebas" style="font-size:20px;color:var(--purp);margin-bottom:6px;">📖 LE TUE RICETTE</div>
+    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:12px;">Crea le tue ricette personali con macro e ingredienti. Puoi usarle come pasto sostitutivo e (se attivi la condivisione) renderle disponibili agli altri utenti.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+      <button class="btn-s btn-action" style="padding:12px 8px;font-size:12px;font-weight:700;background:var(--purp);color:#fff;border:none;cursor:pointer;letter-spacing:.5px;" onclick="openAddRecipeSheet()">➕ NUOVA RICETTA</button>
+      <button class="btn-s" style="padding:12px 8px;font-size:12px;font-weight:700;background:var(--surf);color:var(--purp);border:1.5px solid var(--purp);cursor:pointer;letter-spacing:.5px;" onclick="openMyRecipesSheet()">📚 LE MIE (${(ST.userRecipes||[]).length})</button>
+    </div>
+  </div>
+
+  <!-- ════ CONDIVISIONE COMMUNITY CIBI + RICETTE (sessione 23 + 31) ════ -->
   <div class="card" style="border-color:var(--blu);">
     <div class="bebas" style="font-size:20px;color:var(--blu);margin-bottom:6px;">🌐 CONDIVISIONE COMMUNITY</div>
-    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:12px;">Quando aggiungi un cibo nuovo (manualmente o via barcode), lo condividiamo nel database FitTracker così altri utenti possono trovarlo subito. Non condividiamo il tuo username, solo il cibo.</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:12px;">Cibi e ricette che crei contribuiscono al database condiviso di tutti gli utenti FitTracker. Non condividiamo il tuo username — solo i dati nutrizionali e le ricette.</div>
+
+    <!-- Toggle cibi -->
+    <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:.5px;margin-bottom:6px;">🥕 I MIEI CIBI</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">
       ${[{id:true,icon:'✓',lbl:'Sì, condividi'},{id:false,icon:'🔒',lbl:'No, solo io'}].map(o=>{const isOn=(ST.shareFoodsToCommunity===true)===o.id;return`<button class="btn-s" style="padding:11px 4px;border-radius:10px;border:2px solid ${isOn?'var(--blu)':'var(--bord)'};background:${isOn?'rgba(96,165,250,.08)':'var(--surf)'};color:${isOn?'var(--blu)':'var(--text)'};font-weight:700;font-size:11px;cursor:pointer;" onclick="setShareFoodsCommunity(${o.id})"><div style="font-size:18px;margin-bottom:2px;">${o.icon}</div>${o.lbl}</button>`;}).join('')}
     </div>
+
+    <!-- Toggle ricette -->
+    <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:.5px;margin-bottom:6px;">📖 LE MIE RICETTE</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
+      ${[{id:true,icon:'✓',lbl:'Sì, condividi'},{id:false,icon:'🔒',lbl:'No, solo io'}].map(o=>{const isOn=(ST.shareRecipesToCommunity===true)===o.id;return`<button class="btn-s" style="padding:11px 4px;border-radius:10px;border:2px solid ${isOn?'var(--purp)':'var(--bord)'};background:${isOn?'rgba(167,139,250,.08)':'var(--surf)'};color:${isOn?'var(--purp)':'var(--text)'};font-weight:700;font-size:11px;cursor:pointer;" onclick="setShareRecipesCommunity(${o.id})"><div style="font-size:18px;margin-bottom:2px;">${o.icon}</div>${o.lbl}</button>`;}).join('')}
+    </div>
+
     ${window.__communityFoodsCache?.length > 0 ? `<div style="font-size:10px;color:var(--gre);margin-top:8px;text-align:center;">📦 ${window.__communityFoodsCache.length} cibi community disponibili nelle ricerche</div>` : ''}
   </div>
 
@@ -13936,70 +14494,13 @@ window.renderSettings = function(mac){
     <button class="btn ${window.aiPlanLoading?'':'btn-action'}" style="${window.aiPlanLoading?'opacity:.6;pointer-events:none;':''}" onclick="aiRecalculatePlan()">${window.aiPlanLoading?'🔍 ANALISI IN CORSO...':'🧠 GENERA NUOVO CONSIGLIO'}</button>
   </div>
 
-  <!-- ── MODALITÀ TRASFERTA (sessione 7) ── -->
-  ${(() => {
-    const tm = ST.travelMode || {};
-    const isActive = tm.active && tm.endD && new Date(tm.endD).getTime() >= Date.now() - 86400000;
-    return `<div class="card" style="border-color:${isActive?'var(--ora)':'var(--bord)'};${isActive?'background:linear-gradient(135deg,rgba(255,104,53,.06),transparent);':''}">
-      <div class="bebas" style="font-size:18px;color:${isActive?'var(--ora)':'var(--text)'};margin-bottom:6px;">✈️ MODALITÀ TRASFERTA ${isActive?'(ATTIVA)':''}</div>
-      ${isActive ? `
-        <div style="background:rgba(255,104,53,.08);border:1px solid var(--ora);border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;line-height:1.6;">
-          <div style="font-weight:700;color:var(--ora);margin-bottom:4px;">🌴 Sei in trasferta fino al ${new Date(tm.endD+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'long'})}</div>
-          <div style="color:var(--text);">
-            ${tm.hasGym ? '🏋️ Hai accesso a una <strong>palestra</strong>' : '🏠 Allenamento <strong>senza attrezzi</strong> (bodyweight)'}<br>
-            📅 ${tm.sessions || 3} sessioni/settimana × ${tm.dur || 30} minuti<br>
-            🍽️ Dieta semplificata: pasti adatti a hotel/ristorante
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button class="btn-s" style="flex:1;padding:10px;font-size:12px;background:var(--surf);border:1px solid var(--bord);color:var(--text);font-weight:600;border-radius:8px;cursor:pointer;" onclick="openTravelMode()">✏️ MODIFICA</button>
-          <button class="btn-s" style="flex:1;padding:10px;font-size:12px;background:var(--surf);border:1px solid var(--red);color:var(--red);font-weight:600;border-radius:8px;cursor:pointer;" onclick="endTravelMode()">✓ TORNATO A CASA</button>
-        </div>
-      ` : `
-        <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:12px;">
-          Stai per partire? Attiva la modalità trasferta. L'app adatta automaticamente esercizi e dieta in base a:
-          <ul style="margin-top:8px;margin-left:20px;font-size:12px;">
-            <li>Disponibilità di una palestra (sì/no)</li>
-            <li>Tempo che hai a disposizione</li>
-            <li>Numero di sessioni possibili</li>
-          </ul>
-        </div>
-        <button class="btn-s" style="width:100%;padding:11px;font-size:13px;background:rgba(255,104,53,.1);border:1px solid var(--ora);color:var(--ora);font-weight:600;border-radius:8px;cursor:pointer;" onclick="openTravelMode()">✈️ ATTIVA MODALITÀ TRASFERTA</button>
-      `}
-    </div>`;
-  })()}
-
-  <!-- ── MODALITÀ VACANZA (sessione 25) ── -->
-  ${(() => {
-    const vm = ST.vacationMode || {};
-    const isVacOn = typeof window.isVacationActive === 'function' && window.isVacationActive();
-    return `<div class="card" style="border-color:${isVacOn?'var(--blu)':'var(--bord)'};${isVacOn?'background:linear-gradient(135deg,rgba(96,165,250,.06),transparent);':''}">
-      <div class="bebas" style="font-size:18px;color:${isVacOn?'var(--blu)':'var(--text)'};margin-bottom:6px;">🏖️ MODALITÀ VACANZA ${isVacOn?'(ATTIVA)':''}</div>
-      ${isVacOn ? `
-        <div style="background:rgba(96,165,250,.08);border:1px solid var(--blu);border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;line-height:1.6;">
-          <div style="font-weight:700;color:var(--blu);margin-bottom:4px;">🌴 In vacanza fino al ${new Date(vm.endD+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'long'})}</div>
-          <div style="color:var(--text);">
-            🏝️ Allenamento e dieta <strong>opzionali</strong><br>
-            😌 Nessun banner deficit/sgarro<br>
-            🔥 Streak preservato — niente pressione<br>
-            📊 Tracking comunque attivo
-          </div>
-        </div>
-        <button class="btn-s" style="width:100%;padding:10px;font-size:12px;background:var(--surf);border:1px solid var(--red);color:var(--red);font-weight:600;border-radius:8px;cursor:pointer;" onclick="endVacation()">✓ TORNATO DALLA VACANZA</button>
-      ` : `
-        <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:12px;">
-          Stacchi per qualche giorno? Attiva la modalità vacanza per:
-          <ul style="margin-top:8px;margin-left:20px;font-size:12px;">
-            <li>Sospendere alert deficit/sgarro</li>
-            <li>Mantenere lo streak senza pressione</li>
-            <li>Allenarti solo se vuoi (niente obblighi)</li>
-            <li>Continuare a tracciare per analisi future</li>
-          </ul>
-        </div>
-        <button class="btn-s" style="width:100%;padding:11px;font-size:13px;background:rgba(96,165,250,.1);border:1px solid var(--blu);color:var(--blu);font-weight:600;border-radius:8px;cursor:pointer;" onclick="startVacation()">🏖️ ATTIVA MODALITÀ VACANZA</button>
-      `}
-    </div>`;
-  })()}
+  <!-- SESSIONE 32: Modalità trasferta e vacanza spostate in AI Coach → Strumenti.
+       Vai a tab Coach → Strumenti per gestirle. -->
+  <div class="card" style="border-color:var(--blu);background:rgba(96,165,250,.04);">
+    <div style="font-size:11px;color:var(--blu);font-weight:700;letter-spacing:1px;margin-bottom:4px;">✈️🏖️ MODALITÀ TRASFERTA & VACANZA</div>
+    <div style="font-size:11px;color:var(--mut);line-height:1.5;margin-bottom:8px;">Spostate nella tab <strong>🤖 AI Coach → Strumenti</strong> insieme alla gestione infortuni.</div>
+    <button class="btn-s" style="width:100%;padding:9px;font-size:11px;background:var(--surf);border:1px solid var(--blu);color:var(--blu);font-weight:700;border-radius:8px;cursor:pointer;" onclick="ST.tab='coach';ST.coachView='tools';render()">→ APRI STRUMENTI AI COACH</button>
+  </div>
 
   ${sectionTitle('sec-notifications', '🔔', 'NOTIFICHE & TUTORIAL', 'var(--ora)')}
 
@@ -14076,6 +14577,70 @@ window.renderSettings = function(mac){
       ${!noPerm && !allOff ? `<button class="btn-s" style="width:100%;padding:8px;font-size:11px;background:var(--surf);border:1px solid var(--bord);color:var(--mut);font-weight:600;border-radius:8px;cursor:pointer;" onclick="testNotification()">🧪 INVIA NOTIFICA DI TEST</button>` : ''}
       `;
     })()}
+  </div>
+
+  <!-- ── SESSIONE 31: APPLE HEALTH SYNC ── -->
+  <div class="card" style="border-color:#ff2d55;">
+    <div class="bebas" style="font-size:18px;color:#ff2d55;margin-bottom:6px;">❤️ APPLE HEALTH SYNC</div>
+    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:12px;">Sincronizza dati con l'app Salute di Apple. Export e import avvengono tramite file (no API native).</div>
+
+    <!-- EXPORT WORKOUT → ICS -->
+    <button onclick="exportWorkoutsToCalendar()" style="width:100%;padding:13px;margin-bottom:8px;background:var(--surf);border:1.5px solid #ff2d55;border-radius:10px;color:var(--text);cursor:pointer;text-align:left;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="font-size:22px;">📅</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:700;color:#ff2d55;">Esporta workout → Calendar</div>
+          <div style="font-size:10px;color:var(--mut);margin-top:2px;line-height:1.3;">Genera un .ics con gli ultimi 90 giorni di allenamenti. Apri il file, importalo nel Calendar — Apple Health lo vedrà automaticamente.</div>
+        </div>
+      </div>
+    </button>
+
+    <!-- EXPORT PESO → CSV -->
+    <button onclick="exportWeightToCSV()" style="width:100%;padding:13px;margin-bottom:8px;background:var(--surf);border:1.5px solid #ff2d55;border-radius:10px;color:var(--text);cursor:pointer;text-align:left;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="font-size:22px;">⚖️</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:700;color:#ff2d55;">Esporta storico peso → CSV</div>
+          <div style="font-size:10px;color:var(--mut);margin-top:2px;line-height:1.3;">Genera un file CSV con tutte le tue pesate. Importabile in Numbers, Excel o tracker peso.</div>
+        </div>
+      </div>
+    </button>
+
+    <!-- IMPORT FROM HEALTH -->
+    <button onclick="importFromAppleHealth()" style="width:100%;padding:13px;margin-bottom:10px;background:rgba(255,45,85,.05);border:1.5px dashed #ff2d55;border-radius:10px;color:var(--text);cursor:pointer;text-align:left;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="font-size:22px;">📥</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:700;color:#ff2d55;">Importa dati da Salute (export.xml)</div>
+          <div style="font-size:10px;color:var(--mut);margin-top:2px;line-height:1.3;">Importa pesate, passi e ore di sonno dall'export di Apple Health.</div>
+        </div>
+      </div>
+    </button>
+
+    <!-- HOW TO -->
+    <details style="font-size:11px;">
+      <summary style="cursor:pointer;color:#ff2d55;font-weight:700;padding:6px 0;list-style:none;">❓ Come esportare i dati da Salute →</summary>
+      <div style="font-size:11px;color:var(--mut);line-height:1.6;padding:10px;background:var(--surf);border-radius:8px;margin-top:6px;">
+        <strong style="color:var(--text);">Per importare:</strong><br>
+        1. Apri l'app <strong>Salute</strong> su iPhone<br>
+        2. Tocca la <strong>tua foto profilo</strong> in alto a destra<br>
+        3. Scorri in fondo, tocca <strong>"Esporta tutti i dati Salute"</strong><br>
+        4. Aspetta che generi il file (può richiedere alcuni minuti)<br>
+        5. Quando appare il foglio di condivisione, scegli <strong>"Salva in File"</strong><br>
+        6. Estrai lo zip (apri il file e tocca "Estrai")<br>
+        7. Torna qui e tocca <strong>"Importa dati da Salute"</strong>, seleziona <code>export.xml</code><br><br>
+        <strong style="color:var(--text);">Per esportare verso Salute:</strong><br>
+        Scarica il file .ics dai workout, aprilo dall'iPhone e tocca "Aggiungi al Calendar". Apple Health legge automaticamente i workout dal Calendar nelle ultime 24h.
+      </div>
+    </details>
+
+    ${ST.healthSyncLog?.lastImport || ST.healthSyncLog?.lastExportWorkouts || ST.healthSyncLog?.lastExportWeight ? `
+    <div style="margin-top:10px;padding:8px 10px;background:var(--surf);border-radius:8px;font-size:10px;color:var(--mut);line-height:1.5;">
+      <strong style="color:var(--text);">📊 Ultimo sync:</strong><br>
+      ${ST.healthSyncLog.lastExportWorkouts ? `📅 Export workout: ${new Date(ST.healthSyncLog.lastExportWorkouts).toLocaleString('it-IT', {dateStyle:'short', timeStyle:'short'})}<br>` : ''}
+      ${ST.healthSyncLog.lastExportWeight ? `⚖️ Export peso: ${new Date(ST.healthSyncLog.lastExportWeight).toLocaleString('it-IT', {dateStyle:'short', timeStyle:'short'})}<br>` : ''}
+      ${ST.healthSyncLog.lastImport ? `📥 Import salute: ${new Date(ST.healthSyncLog.lastImport).toLocaleString('it-IT', {dateStyle:'short', timeStyle:'short'})}` : ''}
+    </div>` : ''}
   </div>
 
   <!-- TUTORIAL APP (sessione 17: spostato qui da Coaching) -->
@@ -14930,6 +15495,113 @@ window.render = function() {
         <button class="btn btn-action" style="flex:1;padding:12px;" onclick="closeSheet()">ANNULLA</button>
         <button class="btn" style="flex:2;padding:12px;background:var(--red);color:#fff;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;" onclick="confirmInjury()">✓ CONFERMA</button>
       </div>
+    </div></div>`;
+  })():
+  // ── SESSIONE 31: SHEET ADDRECIPE ──
+  ST.sheet==='addRecipe'&&ST.sheetData?(()=>{
+    const d = ST.sheetData;
+    const slots = [
+      {id:'col', lbl:'🌅 Colazione'},
+      {id:'sp1', lbl:'🍎 Spuntino mattina'},
+      {id:'pra', lbl:'🍽️ Pranzo'},
+      {id:'sp2', lbl:'🍌 Spuntino pomeriggio'},
+      {id:'cen', lbl:'🌙 Cena'}
+    ];
+    const upd = (k, v) => { ST.sheetData[k] = v; };
+    return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh" style="max-height:90vh;overflow-y:auto;">
+      <div class="sh-h"></div>
+      <div class="bebas" style="font-size:24px;color:var(--purp);margin-bottom:4px;letter-spacing:1px;">📖 ${d.editId ? 'MODIFICA' : 'NUOVA'} RICETTA</div>
+      <div style="font-size:11px;color:var(--mut);margin-bottom:14px;">Crea una tua ricetta personalizzata. Le macro sono per la porzione intera.</div>
+
+      <div style="display:grid;grid-template-columns:1fr 4fr;gap:8px;margin-bottom:10px;">
+        <div>
+          <div style="font-size:10px;color:var(--mut);font-weight:700;margin-bottom:4px;">EMOJI</div>
+          <input type="text" maxlength="3" value="${d.emoji||'🍽️'}" oninput="ST.sheetData.emoji=this.value" style="width:100%;padding:10px;font-size:18px;text-align:center;background:var(--surf);border:1px solid var(--bord);border-radius:8px;color:var(--text);">
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--mut);font-weight:700;margin-bottom:4px;">NOME RICETTA *</div>
+          <input type="text" maxlength="60" value="${escapeHtml(d.name||'')}" oninput="ST.sheetData.name=this.value" placeholder="Es. Pasta della nonna" style="width:100%;padding:10px;font-size:14px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;color:var(--text);">
+        </div>
+      </div>
+
+      <div style="font-size:10px;color:var(--mut);font-weight:700;margin-bottom:6px;">MACRO TOTALI DELLA PORZIONE</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:12px;">
+        <div>
+          <input type="number" inputmode="numeric" min="0" max="2500" value="${d.kcal||''}" oninput="ST.sheetData.kcal=this.value" placeholder="kcal" style="width:100%;padding:10px 4px;font-size:14px;text-align:center;background:var(--surf);border:1.5px solid var(--ora);border-radius:8px;color:var(--ora);font-weight:700;">
+          <div style="font-size:9px;color:var(--ora);text-align:center;margin-top:2px;font-weight:700;">KCAL *</div>
+        </div>
+        <div>
+          <input type="number" inputmode="numeric" min="0" max="200" value="${d.prot||''}" oninput="ST.sheetData.prot=this.value" placeholder="g" style="width:100%;padding:10px 4px;font-size:14px;text-align:center;background:var(--surf);border:1px solid var(--bord);border-radius:8px;color:var(--text);">
+          <div style="font-size:9px;color:var(--mut);text-align:center;margin-top:2px;">PROT g</div>
+        </div>
+        <div>
+          <input type="number" inputmode="numeric" min="0" max="400" value="${d.carb||''}" oninput="ST.sheetData.carb=this.value" placeholder="g" style="width:100%;padding:10px 4px;font-size:14px;text-align:center;background:var(--surf);border:1px solid var(--bord);border-radius:8px;color:var(--text);">
+          <div style="font-size:9px;color:var(--mut);text-align:center;margin-top:2px;">CARB g</div>
+        </div>
+        <div>
+          <input type="number" inputmode="numeric" min="0" max="200" value="${d.fat||''}" oninput="ST.sheetData.fat=this.value" placeholder="g" style="width:100%;padding:10px 4px;font-size:14px;text-align:center;background:var(--surf);border:1px solid var(--bord);border-radius:8px;color:var(--text);">
+          <div style="font-size:9px;color:var(--mut);text-align:center;margin-top:2px;">FAT g</div>
+        </div>
+      </div>
+
+      <div style="font-size:10px;color:var(--mut);font-weight:700;margin-bottom:4px;">PASTO PREFERITO</div>
+      <select onchange="ST.sheetData.slotPref=this.value" style="width:100%;padding:10px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;color:var(--text);font-size:13px;margin-bottom:12px;">
+        ${slots.map(s => `<option value="${s.id}" ${d.slotPref===s.id?'selected':''}>${s.lbl}</option>`).join('')}
+      </select>
+
+      <div style="font-size:10px;color:var(--mut);font-weight:700;margin-bottom:4px;">INGREDIENTI (uno per riga)</div>
+      <textarea oninput="ST.sheetData.ingredients=this.value" rows="4" placeholder="100g pasta&#10;200g pomodorini&#10;1 spicchio aglio&#10;Olio EVO q.b." style="width:100%;padding:10px;font-size:13px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;color:var(--text);margin-bottom:10px;font-family:inherit;resize:vertical;">${escapeHtml(d.ingredients||'')}</textarea>
+
+      <div style="font-size:10px;color:var(--mut);font-weight:700;margin-bottom:4px;">PROCEDIMENTO (uno step per riga)</div>
+      <textarea oninput="ST.sheetData.steps=this.value" rows="4" placeholder="Cuoci la pasta al dente&#10;In padella scalda aglio e olio&#10;Aggiungi i pomodorini..." style="width:100%;padding:10px;font-size:13px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;color:var(--text);margin-bottom:14px;font-family:inherit;resize:vertical;">${escapeHtml(d.steps||'')}</textarea>
+
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-action" style="flex:1;padding:14px;" onclick="closeSheet()">ANNULLA</button>
+        <button class="btn" style="flex:2;padding:14px;background:var(--purp);color:#fff;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;border:none;border-radius:12px;" onclick="submitRecipeForm()">${d.editId?'✓ AGGIORNA':'✓ SALVA RICETTA'}</button>
+      </div>
+    </div></div>`;
+  })():
+  ST.sheet==='myRecipes'?(()=>{
+    const list = ST.userRecipes || [];
+    const slotLabels = {col:'🌅 Col', sp1:'🍎 Sp1', pra:'🍽️ Pra', sp2:'🍌 Sp2', cen:'🌙 Cen'};
+    return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh" style="max-height:88vh;overflow-y:auto;">
+      <div class="sh-h"></div>
+      <div class="bebas" style="font-size:24px;color:var(--purp);margin-bottom:4px;letter-spacing:1px;">📚 LE MIE RICETTE</div>
+      <div style="font-size:11px;color:var(--mut);margin-bottom:14px;">${list.length} ricette salvate. Tocca per usarla come pasto o modificarla.</div>
+
+      ${list.length === 0 ? `
+        <div style="text-align:center;padding:28px 16px;color:var(--mut);">
+          <div style="font-size:42px;margin-bottom:10px;">📝</div>
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px;">Nessuna ricetta ancora</div>
+          <div style="font-size:11px;line-height:1.4;">Crea la tua prima ricetta personale.<br>Apparirà qui pronta da usare come pasto.</div>
+        </div>
+        <button class="btn" style="width:100%;padding:14px;background:var(--purp);color:#fff;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;border:none;border-radius:12px;margin-top:14px;" onclick="closeSheet();openAddRecipeSheet()">➕ CREA LA PRIMA RICETTA</button>
+      ` : `
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+          ${list.map(r => `<div style="background:var(--surf);border:1px solid var(--bord);border-radius:12px;padding:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px;">
+              <div style="flex:1;min-width:0;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+                  <span style="font-size:20px;">${r.emoji||'🍽️'}</span>
+                  <span style="font-size:14px;font-weight:700;color:var(--text);">${escapeHtml(r.name)}</span>
+                </div>
+                <div style="font-size:10px;color:var(--mut);line-height:1.4;">${r.kcal} kcal · ${r.prot||0}P · ${r.carb||0}C · ${r.fat||0}F · ${slotLabels[r.slotPref]||''}</div>
+              </div>
+              <div style="display:flex;gap:4px;">
+                <button onclick="closeSheet();openAddRecipeSheet('${r.id}')" style="background:var(--surf);border:1px solid var(--bord);color:var(--mut);border-radius:6px;padding:5px 7px;font-size:10px;cursor:pointer;">✏️</button>
+                <button onclick="deleteUserRecipe('${r.id}')" style="background:var(--surf);border:1px solid var(--red);color:var(--red);border-radius:6px;padding:5px 7px;font-size:10px;cursor:pointer;">🗑️</button>
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button onclick="useRecipeAsMeal('${r.id}','${r.slotPref||'pra'}')" style="flex:1;background:rgba(167,139,250,.1);border:1px solid var(--purp);color:var(--purp);border-radius:8px;padding:7px 8px;font-size:11px;font-weight:700;cursor:pointer;">📌 USA COME ${slotLabels[r.slotPref||'pra']||'PASTO'}</button>
+            </div>
+          </div>`).join('')}
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-action" style="flex:1;padding:13px;" onclick="closeSheet()">CHIUDI</button>
+          <button class="btn" style="flex:1;padding:13px;background:var(--purp);color:#fff;font-family:'Bebas Neue';font-size:15px;letter-spacing:1px;border:none;border-radius:12px;" onclick="closeSheet();openAddRecipeSheet()">➕ NUOVA</button>
+        </div>
+      `}
     </div></div>`;
   })():
   ST.sheet==='plannedDay'&&ST.sheetData?(()=>{
