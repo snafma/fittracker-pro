@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION32-FOOD-EXPANSION-COACH-TOOLS">
+<meta name="ft-version" content="build-SESSION33-TRAVEL-DIETONLY">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -478,7 +478,7 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
     <div class="spinner"></div>
     <div class="bebas" style="color:var(--text);font-size:28px;letter-spacing:3px;">SYSTEM BOOTING</div>
     <div style="color:var(--mut);font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:1px;">Connessione al Cloud Secure Database...</div>
-    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION32</div>
+    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION33</div>
   </div>
 </div>
 
@@ -3658,7 +3658,9 @@ window.startVacation = async function() {
   if (!endStr) return;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(endStr)) return alert('Formato data non valido');
   if (endStr < startStr) return alert('La data fine non può essere prima della data inizio');
-  ST.vacationMode = { active: true, startD: startStr, endD: endStr };
+  // SESSIONE 33: chiedo se vuole comunque allenamenti opzionali o solo dieta (zero workout)
+  const dietOnly = !confirm('Vuoi che ti proponga comunque gli allenamenti (in forma opzionale)?\n\n• OK = sì, mostrami i workout (facoltativi)\n• Annulla = no, solo dieta — segna tutti i giorni come riposo');
+  ST.vacationMode = { active: true, startD: startStr, endD: endStr, dietOnly };
   await save();
   render();
 };
@@ -3707,6 +3709,16 @@ window.detectCheatPattern = function() {
 // ═══════════════════════════════════════════════════════════
 window.isRestDayFor = function(dateStr) {
   if (!ST.p?.sessions) return false;
+  // SESSIONE 33: se trasferta "solo dieta" attiva in quella data → sempre riposo
+  const tm = ST.travelMode;
+  if (tm?.active && tm.dietOnly && tm.startD && tm.endD && dateStr >= tm.startD && dateStr <= tm.endD) {
+    return true;
+  }
+  // SESSIONE 33: se vacanza "solo dieta" attiva in quella data → sempre riposo
+  const vm = ST.vacationMode;
+  if (vm?.active && vm.dietOnly && vm.startD && vm.endD && dateStr >= vm.startD && dateStr <= vm.endD) {
+    return true;
+  }
   // SESSIONE 27: prima priorità — override manuale dell'utente
   const planned = ST.plannedDays?.[dateStr];
   if (planned === 'rest') return true;
@@ -7145,9 +7157,16 @@ window.openTravelMode = function() {
   const today = new Date().toISOString().slice(0, 10);
   const in7 = new Date(Date.now() + 7*86400000).toISOString().slice(0, 10);
   ST.sheet = 'travelMode';
+  // SESSIONE 33: trainMode = 'gym' | 'bodyweight' | 'dietonly'
+  // Derivo lo stato iniziale: se esiste dietOnly lo uso, altrimenti da hasGym
+  let trainMode = tm.trainMode;
+  if (!trainMode) {
+    trainMode = tm.dietOnly ? 'dietonly' : (tm.hasGym ? 'gym' : 'bodyweight');
+  }
   ST.sheetData = {
     startD: tm.startD || today,
     endD: tm.endD || in7,
+    trainMode,
     hasGym: tm.hasGym !== undefined ? tm.hasGym : false,
     sessions: tm.sessions || 3,
     dur: tm.dur || 30
@@ -7160,18 +7179,24 @@ window.confirmTravelMode = function() {
   if (!d) return;
   if (!d.startD || !d.endD) return alert('Inserisci date inizio e fine.');
   if (new Date(d.endD) < new Date(d.startD)) return alert('Data fine non può essere precedente all\'inizio.');
+  const dietOnly = d.trainMode === 'dietonly';
   ST.travelMode = {
     active: true,
     startD: d.startD,
     endD: d.endD,
-    hasGym: !!d.hasGym,
-    sessions: d.sessions,
-    dur: d.dur
+    trainMode: d.trainMode || 'bodyweight',
+    dietOnly,                 // SESSIONE 33: solo dieta, niente allenamento
+    hasGym: dietOnly ? false : !!d.hasGym,
+    sessions: dietOnly ? 0 : d.sessions,
+    dur: dietOnly ? 0 : d.dur
   };
   ST.sheet = null;
   ST.sheetData = null;
   save();
-  alert('✓ Modalità trasferta attivata!\n\nL\'app adatterà automaticamente i tuoi allenamenti e suggerimenti pasto fino al ' + new Date(d.endD+'T12:00:00').toLocaleDateString('it-IT'));
+  const endLbl = new Date(d.endD+'T12:00:00').toLocaleDateString('it-IT');
+  alert(dietOnly
+    ? `✓ Modalità trasferta (solo dieta) attivata!\n\nNiente allenamenti programmati fino al ${endLbl}. Adatterò solo i pasti.`
+    : `✓ Modalità trasferta attivata!\n\nL'app adatterà automaticamente i tuoi allenamenti e suggerimenti pasto fino al ${endLbl}`);
 };
 
 window.endTravelMode = function() {
@@ -10986,7 +11011,7 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
         <div style="font-size:24px;">✈️</div>
         <div style="flex:1;">
           <div style="font-size:11px;font-weight:800;color:var(--ora);letter-spacing:2px;">MODALITÀ TRASFERTA ATTIVA</div>
-          <div style="font-size:11px;color:var(--text);">Fino al ${new Date(ST.travelMode.endD+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'long'})} · ${ST.travelMode.hasGym?'palestra':'bodyweight'} · ${ST.travelMode.sessions||3}× ${ST.travelMode.dur||30}min</div>
+          <div style="font-size:11px;color:var(--text);">Fino al ${new Date(ST.travelMode.endD+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'long'})} · ${ST.travelMode.dietOnly?'solo dieta':(ST.travelMode.hasGym?'palestra':'bodyweight')}${ST.travelMode.dietOnly?'':` · ${ST.travelMode.sessions||3}× ${ST.travelMode.dur||30}min`}</div>
         </div>
       </div>
     </div>` : ''}
@@ -11061,7 +11086,17 @@ window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,to
   // ── BANNER TRASFERTA (sessione 7+8) ──
   // Se in trasferta + bodyweight, lo segnaliamo in cima alla tab. Gli esercizi
   // del programma normale rimangono visibili ma con suggerimento alternative.
-  const travelBanner = (typeof isInTravelMode === 'function' && isInTravelMode()) ? `
+  const travelBanner = (typeof isInTravelMode === 'function' && isInTravelMode()) ? (
+    ST.travelMode.dietOnly ? `
+    <div style="background:linear-gradient(135deg,rgba(96,165,250,.15),rgba(96,165,250,.04));border:2px solid var(--blu);border-radius:14px;padding:12px 14px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="font-size:22px;">✈️🍽️</div>
+        <div style="flex:1;">
+          <div style="font-size:11px;font-weight:800;color:var(--blu);letter-spacing:1.5px;">TRASFERTA · SOLO DIETA</div>
+          <div style="font-size:11px;color:var(--text);">Fino al ${new Date(ST.travelMode.endD+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'long'})} · niente allenamenti, gestiamo i pasti</div>
+        </div>
+      </div>
+    </div>` : `
     <div style="background:linear-gradient(135deg,rgba(255,104,53,.15),rgba(255,104,53,.04));border:2px solid var(--ora);border-radius:14px;padding:12px 14px;margin-bottom:12px;">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
         <div style="font-size:22px;">✈️</div>
@@ -11080,7 +11115,7 @@ window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,to
           💡 <strong>Adattamento palestra in trasferta</strong>: mantieni il programma normale ma riduci serie/peso del 20-30% se la palestra è meno attrezzata. Privilegia esercizi multi-articolari (squat, panca, stacchi, lat machine) e salta gli isolamenti.
         </div>
       `}
-    </div>` : '';
+    </div>`) : '';
 
   // PUNTO 14: rendering specifico per "solo passi" (sessions===0)
   if(ST.p.sessions===0){
@@ -13892,9 +13927,7 @@ window.renderCoachTools = function() {
       <div style="background:rgba(255,104,53,.08);border:1px solid var(--ora);border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;line-height:1.6;">
         <div style="font-weight:700;color:var(--ora);margin-bottom:4px;">🌴 Sei in trasferta fino al ${new Date(tm.endD+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'long'})}</div>
         <div style="color:var(--text);">
-          ${tm.hasGym ? '🏋️ Hai accesso a una <strong>palestra</strong>' : '🏠 Allenamento <strong>senza attrezzi</strong> (bodyweight)'}<br>
-          📅 ${tm.sessions || 3} sessioni/settimana × ${tm.dur || 30} minuti<br>
-          🍽️ Dieta semplificata: pasti adatti a hotel/ristorante
+          ${tm.dietOnly ? '🍽️ <strong>Solo dieta</strong> — niente allenamenti programmati<br>😌 Tutti i giorni sono di riposo<br>🍴 Pasti adatti a hotel/ristorante' : `${tm.hasGym ? '🏋️ Hai accesso a una <strong>palestra</strong>' : '🏠 Allenamento <strong>senza attrezzi</strong> (bodyweight)'}<br>📅 ${tm.sessions || 3} sessioni/settimana × ${tm.dur || 30} minuti<br>🍽️ Dieta semplificata: pasti adatti a hotel/ristorante`}
         </div>
       </div>
       <div style="display:flex;gap:8px;">
@@ -13921,7 +13954,7 @@ window.renderCoachTools = function() {
       <div style="background:rgba(96,165,250,.08);border:1px solid var(--blu);border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;line-height:1.6;">
         <div style="font-weight:700;color:var(--blu);margin-bottom:4px;">🌴 In vacanza fino al ${new Date(vm.endD+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'long'})}</div>
         <div style="color:var(--text);">
-          🏝️ Allenamento e dieta <strong>opzionali</strong><br>
+          ${vm.dietOnly ? '🍽️ <strong>Solo dieta</strong> — niente workout<br>😌 Tutti i giorni di riposo' : '🏝️ Allenamento e dieta <strong>opzionali</strong>'}<br>
           😌 Nessun banner deficit/sgarro<br>
           🔥 Streak preservato — niente pressione<br>
           📊 Tracking comunque attivo
@@ -15380,16 +15413,18 @@ window.render = function() {
         </div>
       </div>
 
-      <!-- Hai palestra? -->
+      <!-- Tipo allenamento: palestra / bodyweight / solo dieta -->
       <div style="background:var(--surf);border-radius:10px;padding:12px;margin-bottom:10px;">
-        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:8px;">🏋️ HAI ACCESSO A UNA PALESTRA?</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-          <button class="btn-s" style="padding:12px;font-size:13px;background:${d.hasGym?'var(--acc)':'var(--surf)'};color:${d.hasGym?'#000':'var(--mut)'};border:1px solid ${d.hasGym?'var(--acc)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;" onclick="ST.sheetData.hasGym=true;render()">✓ SÌ, PALESTRA</button>
-          <button class="btn-s" style="padding:12px;font-size:13px;background:${!d.hasGym?'var(--ora)':'var(--surf)'};color:${!d.hasGym?'#fff':'var(--mut)'};border:1px solid ${!d.hasGym?'var(--ora)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;" onclick="ST.sheetData.hasGym=false;render()">🏠 NO, BODYWEIGHT</button>
+        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:8px;">🏋️ COME TI ALLENI IN TRASFERTA?</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <button class="btn-s" style="padding:12px;font-size:13px;background:${d.trainMode==='gym'?'var(--acc)':'var(--surf)'};color:${d.trainMode==='gym'?'#000':'var(--text)'};border:1.5px solid ${d.trainMode==='gym'?'var(--acc)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;text-align:left;" onclick="ST.sheetData.trainMode='gym';ST.sheetData.hasGym=true;render()">🏋️ Ho una palestra</button>
+          <button class="btn-s" style="padding:12px;font-size:13px;background:${d.trainMode==='bodyweight'?'var(--ora)':'var(--surf)'};color:${d.trainMode==='bodyweight'?'#fff':'var(--text)'};border:1.5px solid ${d.trainMode==='bodyweight'?'var(--ora)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;text-align:left;" onclick="ST.sheetData.trainMode='bodyweight';ST.sheetData.hasGym=false;render()">🏠 Solo corpo libero (stanza/hotel)</button>
+          <button class="btn-s" style="padding:12px;font-size:13px;background:${d.trainMode==='dietonly'?'var(--blu)':'var(--surf)'};color:${d.trainMode==='dietonly'?'#fff':'var(--text)'};border:1.5px solid ${d.trainMode==='dietonly'?'var(--blu)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;text-align:left;" onclick="ST.sheetData.trainMode='dietonly';ST.sheetData.hasGym=false;render()">🍽️ Niente allenamento, solo dieta</button>
         </div>
-        <div style="font-size:10px;color:var(--mut);margin-top:8px;font-style:italic;">${d.hasGym?'Programma normale ridotto.':'Esercizi a corpo libero in stanza/hotel: push-up, squat, plank, burpees, ecc.'}</div>
+        <div style="font-size:10px;color:var(--mut);margin-top:8px;font-style:italic;line-height:1.4;">${d.trainMode==='gym'?'Programma normale ridotto in durata.':d.trainMode==='bodyweight'?'Esercizi a corpo libero: push-up, squat, plank, burpees, ecc.':'Nessun allenamento programmato. Adatto solo la dieta (porzioni da viaggio, pasti fuori). I giorni saranno tutti di riposo.'}</div>
       </div>
 
+      ${d.trainMode!=='dietonly' ? `
       <!-- Sessioni / settimana -->
       <div style="background:var(--surf);border-radius:10px;padding:12px;margin-bottom:10px;">
         <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:8px;">📅 SESSIONI A SETTIMANA</div>
@@ -15405,6 +15440,11 @@ window.render = function() {
           ${[15,30,45,60].map(n => `<button class="btn-s" style="flex:1;padding:10px;font-size:13px;background:${d.dur===n?'var(--purp)':'var(--surf)'};color:${d.dur===n?'#fff':'var(--mut)'};border:1px solid ${d.dur===n?'var(--purp)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;" onclick="ST.sheetData.dur=${n};render()">${n}'</button>`).join('')}
         </div>
       </div>
+      ` : `
+      <div style="background:rgba(96,165,250,.06);border:1px solid var(--blu);border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--text);line-height:1.5;">
+        🍽️ <strong>Modalità solo dieta</strong>: durante la trasferta non ti programmeremo allenamenti. Gestiremo solo i pasti con porzioni adatte a viaggio e ristorante. Tutti i giorni saranno di riposo (kcal da rest day).
+      </div>
+      `}
 
       <div style="display:flex;gap:6px;">
         <button class="btn btn-action" style="flex:1;padding:12px;" onclick="closeSheet()">ANNULLA</button>
