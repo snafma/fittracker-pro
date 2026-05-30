@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION33-TRAVEL-DIETONLY">
+<meta name="ft-version" content="build-SESSION34-LOGIN-SPLASH">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -478,7 +478,7 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
     <div class="spinner"></div>
     <div class="bebas" style="color:var(--text);font-size:28px;letter-spacing:3px;">SYSTEM BOOTING</div>
     <div style="color:var(--mut);font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:1px;">Connessione al Cloud Secure Database...</div>
-    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION33</div>
+    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION34</div>
   </div>
 </div>
 
@@ -6266,7 +6266,10 @@ window.doReg=async function(){
       profile:{un,email,ht,ag,sx,created:today}
     };
     await window.DB.s('ft_u_'+un,initialData);
+    // SESSIONE 34: splash full-screen tra signUp ok e onAuthStateChanged
+    AU.loggingIn = true;
     AU.msg='';
+    render();
   }catch(e){setMsg(__fbErr(e));}
 };
 
@@ -6287,12 +6290,25 @@ window.doLogin=async function(){
     if (isEmail) {
       try {
         await window.FBAuth.signIn(ident, pw2);
-        return; // loggato, onAuthStateChanged farà il resto
+        // SESSIONE 34: splash full-screen tra signIn ok e onAuthStateChanged.
+        // Senza, l'utente vede ancora la form di login per 1-2s pensando di non essere entrato.
+        AU.loggingIn = true;
+        AU.msg = '';
+        render();
+        // Safety timeout: se dopo 10s il listener non ha tolto il flag, lo tolgo io e mostro errore
+        setTimeout(() => {
+          if (AU.loggingIn) {
+            AU.loggingIn = false;
+            setMsg('⚠️ Connessione lenta. Riprova.');
+            render();
+          }
+        }, 10000);
+        return; // loggato, onAuthStateChanged farà il resto e toglierà loggingIn
       } catch(e) {
         // Se credenziali errate, prova auto-migrazione (caso: email conosciuta, ma in ft_reg)
         if (e?.code === 'auth/user-not-found' || e?.code === 'auth/invalid-credential' || e?.code === 'auth/wrong-password') {
           const mig = await window.__tryLegacyMigration(ident, pw2);
-          if (mig.ok) return;
+          if (mig.ok) { AU.loggingIn = true; AU.msg = ''; render(); return; }
           return setMsg('❌ Credenziali errate.');
         }
         return setMsg(__fbErr(e));
@@ -6300,7 +6316,7 @@ window.doLogin=async function(){
     } else {
       // Login con username → tenta SOLO auto-migrazione legacy
       const mig = await window.__tryLegacyMigration(ident, pw2);
-      if (mig.ok) return;
+      if (mig.ok) { AU.loggingIn = true; AU.msg = ''; render(); return; }
       if (mig.msg === 'not-found') return setMsg('❌ Account non trovato. Se ti sei registrato dopo l\'aggiornamento, usa l\'email.');
       if (mig.msg === 'wrong-pw') return setMsg('❌ Credenziali errate.');
       return setMsg(mig.msg || '❌ Credenziali errate.');
@@ -6600,6 +6616,8 @@ window.__initAuthListener=function(){
     } catch(err) {
       console.error("Auth callback error:", err);
     }
+    // SESSIONE 34: rimuovo flag splash login una volta che la callback ha lavorato
+    AU.loggingIn = false;
     // Render in try/catch + fallback ad auth screen se crash
     try {
       render();
@@ -10267,6 +10285,22 @@ window.svg=function(data,key,col,H,goal){
 // RENDERERS
 window.renderAuth = function(root){
   let content='';
+  // ── SESSIONE 34: splash dopo signIn ──
+  // Tra signIn() ok e onAuthStateChanged callback ci sono 1-2s di propagazione token
+  // + lettura DB. Senza splash l'utente vede ancora la form di login e pensa che non sia entrato.
+  if (AU.loggingIn) {
+    content = `<div class="card" style="text-align:center;padding:36px 20px;">
+      <div style="font-size:48px;margin-bottom:14px;">🔐</div>
+      <div class="bebas" style="font-size:22px;color:var(--acc);letter-spacing:1.5px;margin-bottom:8px;">ACCESSO IN CORSO</div>
+      <div style="font-size:13px;color:var(--mut);line-height:1.5;margin-bottom:18px;">Sto caricando i tuoi dati dal cloud…</div>
+      <div style="width:100%;height:4px;background:var(--surf);border-radius:99px;overflow:hidden;position:relative;">
+        <div style="position:absolute;top:0;left:-30%;width:30%;height:4px;background:var(--acc);border-radius:99px;animation:authLoad 1.1s ease-in-out infinite;"></div>
+      </div>
+      <style>@keyframes authLoad { 0%{left:-30%} 100%{left:100%} }</style>
+    </div>`;
+    root.innerHTML = `<div style="max-width:500px;margin:60px auto 0;padding:0 20px;">${content}</div>`;
+    return;
+  }
   if(AU.tab==='forgot'){
     content=`<div class="card"><div class="bebas" style="font-size:20px;color:var(--ora);margin-bottom:8px;">🔑 RECUPERA PASSWORD</div><div style="font-size:13px;color:var(--mut);margin-bottom:14px;">Inserisci l'email del tuo account. Ti invieremo un link per reimpostare la password.</div><span class="lbl">LA TUA EMAIL</span><input id="fgE" type="email" autocomplete="email" placeholder="es. mario@email.it"><button class="btn" onclick="doForgotStep1()">INVIA LINK DI RESET ▸</button><div style="text-align:center;margin-top:12px;"><span onclick="AU.tab='login';AU.msg='';render()" style="font-size:13px;color:var(--mut);cursor:pointer;text-decoration:underline;">← Torna al Login</span></div></div>`;
   } else {
