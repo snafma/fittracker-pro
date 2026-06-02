@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION37-FOODDB-SPLIT">
+<meta name="ft-version" content="build-SESSION39-AUTOSYNC-I18N2">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -367,6 +367,48 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
   };
   console.log("[FB-INIT] window.FoodsCommunityDB esposto");
 
+  // ── FOODS SYNC META (sessione 39) ──
+  // Documento singolo che traccia se ci sono cibi nuovi da consolidare nel food_db.js base.
+  // Path: fittracker_meta/foods_sync  →  { pending:true/false, pendingCount:N, lastConsolidated:<ts>, lastChange:<ts> }
+  // Il flag "pending" si alza quando un utente aggiunge un cibo; si azzera quando si consolida.
+  window.FoodsSyncMeta = {
+    async read() {
+      if (!firestore) return null;
+      try {
+        const snap = await getDoc(doc(firestore, "fittracker_meta", "foods_sync"));
+        return snap.exists() ? snap.data() : { pending:false, pendingCount:0, lastConsolidated:null, lastChange:null };
+      } catch(e) { console.warn('FoodsSyncMeta read fail:', e?.code||e); return null; }
+    },
+    // Marca che c'è una nuova aggiunta da consolidare (alza il flag, incrementa contatore)
+    async markPending() {
+      if (!firestore) return false;
+      try {
+        const cur = await this.read() || { pendingCount:0 };
+        await setDoc(doc(firestore, "fittracker_meta", "foods_sync"), {
+          pending: true,
+          pendingCount: (cur.pendingCount || 0) + 1,
+          lastChange: Date.now(),
+          lastConsolidated: cur.lastConsolidated || null
+        });
+        return true;
+      } catch(e) { console.warn('FoodsSyncMeta markPending fail:', e?.code||e); return false; }
+    },
+    // Azzera il flag dopo che hai consolidato (scaricato e caricato il nuovo food_db.js)
+    async markConsolidated() {
+      if (!firestore) return false;
+      try {
+        await setDoc(doc(firestore, "fittracker_meta", "foods_sync"), {
+          pending: false,
+          pendingCount: 0,
+          lastChange: Date.now(),
+          lastConsolidated: Date.now()
+        });
+        return true;
+      } catch(e) { console.warn('FoodsSyncMeta markConsolidated fail:', e?.code||e); return false; }
+    }
+  };
+  console.log("[FB-INIT] window.FoodsSyncMeta esposto");
+
   // ── LEGACY DB: accesso SENZA Auth alle vecchie chiavi (ft_reg, ft_u_<username>)
   //    Serve SOLO per l'auto-migrazione. Le Rules devono permetterlo finché la
   //    migrazione non è finita per tutti i 4 utenti. Dopo, disattiveremo.
@@ -478,7 +520,7 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
     <div class="spinner"></div>
     <div class="bebas" style="color:var(--text);font-size:28px;letter-spacing:3px;">SYSTEM BOOTING</div>
     <div style="color:var(--mut);font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:1px;">Connessione al Cloud Secure Database...</div>
-    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION37</div>
+    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION39</div>
   </div>
 </div>
 
@@ -2255,6 +2297,86 @@ window.__loadCommunityFoods = async function() {
     console.warn('Community foods load fail:', e);
   }
 };
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SESSIONE 38 — ESPORTAZIONE DATABASE CIBI
+// Un file statico (food_db.js) non può essere modificato dall'app in esecuzione.
+// Questa funzione genera un nuovo food_db.js che include:
+//   - i cibi di base (window.FOOD_DB)
+//   - i cibi personalizzati dell'utente (ST.customFoods)
+//   - i cibi della community (__communityFoodsCache)
+// Dedup per id. L'utente scarica il file e lo carica su GitHub per renderli permanenti.
+// ═══════════════════════════════════════════════════════════════════════════
+window.exportFoodDb = function() {
+  const std = window.FOOD_DB || [];
+  const custom = (window.ST?.customFoods || []);
+  const community = (window.__communityFoodsCache || []);
+  // Unisco con dedup per id: base prima (mantiene ordine), poi i nuovi non già presenti
+  const seen = new Set();
+  const merged = [];
+  let countBase = 0, countCustom = 0, countCommunity = 0;
+  // 1) base
+  for (const f of std) {
+    if (f && f.id && !seen.has(f.id)) { seen.add(f.id); merged.push({src:'base', f}); countBase++; }
+  }
+  // 2) community (cibi condivisi non già nel base)
+  for (const f of community) {
+    if (f && f.id && !seen.has(f.id)) { seen.add(f.id); merged.push({src:'community', f}); countCommunity++; }
+  }
+  // 3) custom dell'utente (non già presenti)
+  for (const f of custom) {
+    if (f && f.id && !seen.has(f.id)) { seen.add(f.id); merged.push({src:'custom', f}); countCustom++; }
+  }
+  // Pulisco i campi tecnici (isCustom/isCommunity) prima di scrivere
+  const cleanFood = (f) => {
+    const o = {id:f.id, name:f.name, cat:f.cat||'piatti_pronti', kcal:Math.round(f.kcal)||0, p:f.p||0, c:f.c||0, f:f.f||0};
+    if (f.isPortion) { o.isPortion = true; if (f.refGrams) o.refGrams = f.refGrams; }
+    return o;
+  };
+  // Costruisco il testo del file
+  const lines = merged.map(({f}) => {
+    const o = cleanFood(f);
+    let s = `  {id:'${o.id}',name:'${(o.name||'').replace(/'/g, "\\'")}',cat:'${o.cat}',kcal:${o.kcal},p:${o.p},c:${o.c},f:${o.f}`;
+    if (o.isPortion) { s += `,isPortion:true`; if (o.refGrams) s += `,refGrams:${o.refGrams}`; }
+    s += `},`;
+    return s;
+  });
+  // Rimuovo l'ultima virgola
+  if (lines.length) lines[lines.length-1] = lines[lines.length-1].replace(/,$/, '');
+  const today = new Date().toISOString().slice(0,10);
+  const header = `// ═══════════════════════════════════════════════════════════════════
+// FitTracker PRO — DATABASE CIBI (generato il ${today})
+// Totale: ${merged.length} cibi (${countBase} base + ${countCommunity} community + ${countCustom} personalizzati)
+// Caricato da index.html PRIMA dello script principale.
+// Per aggiungere cibi: inserisci nuove righe prima della riga "];" finale.
+// ═══════════════════════════════════════════════════════════════════
+window.FOOD_DB=[
+`;
+  const content = header + lines.join('\n') + '\n];\n';
+  // Download
+  const blob = new Blob([content], {type:'text/javascript;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'food_db.js';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  alert(`✅ Database esportato: food_db.js\n\n` +
+        `📦 ${merged.length} cibi totali\n` +
+        `   • ${countBase} di base\n` +
+        `   • ${countCommunity} dalla community\n` +
+        `   • ${countCustom} personalizzati tuoi\n\n` +
+        `Carica questo file su GitHub (stessa cartella di index.html) per rendere permanenti i nuovi cibi per tutti gli utenti.`);
+  // SESSIONE 39: azzero il flag pending — i cibi sono stati consolidati nel file
+  if (window.FoodsSyncMeta) {
+    window.FoodsSyncMeta.markConsolidated().then(() => {
+      window.__foodsSyncState = { pending:false, pendingCount:0 };
+    }).catch(_=>{});
+  }
+};
+
 
 // Ricerca testuale fuzzy: case-insensitive, accenti-insensitive, parole multiple in qualsiasi ordine
 window.foodSearch=function(query, maxResults){
@@ -4840,7 +4962,29 @@ window.I18N = {
   // ── Misure / Shopping / Social ──
   m_title:{it:'MISURE',en:'MEASUREMENTS'}, sh_title:{it:'LISTA SPESA',en:'SHOPPING LIST'},
   so_title:{it:'CLASSIFICA',en:'LEADERBOARD'}, bo_title:{it:'PROGRESSI',en:'PROGRESS'},
-  st_title:{it:'STATISTICHE PRO',en:'PRO STATS'}
+  st_title:{it:'STATISTICHE PRO',en:'PRO STATS'},
+  // ── Fase 2 (sessione 39): più voci UI ──
+  w_today_session:{it:'SESSIONE DI OGGI',en:"TODAY'S SESSION"}, w_warmup:{it:'RISCALDAMENTO',en:'WARM-UP'},
+  w_cooldown:{it:'DEFATICAMENTO',en:'COOL-DOWN'}, w_series:{it:'serie',en:'sets'}, w_rep:{it:'rip',en:'reps'},
+  w_rest_timer:{it:'RECUPERO',en:'REST'}, w_finish:{it:'TERMINA ALLENAMENTO',en:'FINISH WORKOUT'},
+  w_done_title:{it:'ALLENAMENTO FINITO!',en:'WORKOUT COMPLETE!'}, w_volume:{it:'Volume',en:'Volume'},
+  w_duration:{it:'Durata',en:'Duration'}, w_exercises:{it:'Esercizi',en:'Exercises'},
+  m_add:{it:'AGGIUNGI MISURA',en:'ADD MEASUREMENT'}, m_waist:{it:'Vita',en:'Waist'}, m_chest:{it:'Petto',en:'Chest'},
+  m_arms:{it:'Braccia',en:'Arms'}, m_thighs:{it:'Cosce',en:'Thighs'}, m_hips:{it:'Fianchi',en:'Hips'},
+  m_neck:{it:'Collo',en:'Neck'}, m_calves:{it:'Polpacci',en:'Calves'}, m_first:{it:'Prima misurazione',en:'First measurement'},
+  so_ranking:{it:'CLASSIFICA AMICI',en:'FRIENDS RANKING'}, so_you:{it:'Tu',en:'You'}, so_pts:{it:'punti',en:'points'},
+  so_add_friend:{it:'AGGIUNGI AMICO',en:'ADD FRIEND'}, so_no_friends:{it:'Nessun amico ancora',en:'No friends yet'},
+  bo_weight_trend:{it:'ANDAMENTO PESO',en:'WEIGHT TREND'}, bo_photos:{it:'FOTO PROGRESSI',en:'PROGRESS PHOTOS'},
+  bo_measurements:{it:'MISURE CORPOREE',en:'BODY MEASUREMENTS'},
+  sh_generate:{it:'GENERA LISTA',en:'GENERATE LIST'}, sh_clear:{it:'SVUOTA',en:'CLEAR'},
+  sh_add_item:{it:'Aggiungi articolo',en:'Add item'}, sh_empty:{it:'Lista vuota',en:'Empty list'},
+  co_generate:{it:'GENERA NUOVO CONSIGLIO',en:'GENERATE NEW TIP'}, co_analyzing:{it:'ANALISI IN CORSO...',en:'ANALYZING...'},
+  co_ask:{it:'Chiedi al coach...',en:'Ask the coach...'}, co_send:{it:'Invia',en:'Send'},
+  p_email:{it:'Email',en:'Email'}, p_username:{it:'Username',en:'Username'}, p_height:{it:'Altezza',en:'Height'},
+  p_age:{it:'Età',en:'Age'}, p_change_pw:{it:'Cambia password',en:'Change password'}, p_delete_account:{it:'Elimina account',en:'Delete account'},
+  rec_my_recipes:{it:'LE MIE RICETTE',en:'MY RECIPES'}, rec_new:{it:'NUOVA RICETTA',en:'NEW RECIPE'},
+  rec_name:{it:'Nome ricetta',en:'Recipe name'}, rec_ingredients:{it:'Ingredienti',en:'Ingredients'},
+  rec_steps:{it:'Procedimento',en:'Steps'}, rec_use:{it:'USA COME PASTO',en:'USE AS MEAL'}
 };
 window.t = function(key){ const e=window.I18N[key]; if(!e) return key; const l=(window.ST&&ST.lang)?ST.lang:'it'; return e[l]||e.it||key; };
 window.setLang = async function(lang){ if(lang!=='it'&&lang!=='en') return; ST.lang=lang; ST.langChosen=true; if(typeof save==='function') await save(); render(); };
@@ -5503,6 +5647,14 @@ window.__initAuthListener=function(){
             // Carico in background i cibi aggiunti dagli utenti, non blocco UI
             if (typeof window.__loadCommunityFoods === 'function') {
               setTimeout(() => window.__loadCommunityFoods(), 1500);
+            }
+            // SESSIONE 39: carico lo stato del flag "cibi da consolidare" (per il badge in Config)
+            if (window.FoodsSyncMeta) {
+              setTimeout(() => {
+                window.FoodsSyncMeta.read().then(meta => {
+                  if (meta) { window.__foodsSyncState = meta; }
+                }).catch(_=>{});
+              }, 1800);
             }
           } catch(mergeErr) {
             console.error("ST merge fallito:", mergeErr);
@@ -7336,6 +7488,8 @@ window.confirmCustomFood = function() {
       if (ok && Array.isArray(window.__communityFoodsCache)) {
         // Aggiorno cache locale
         window.__communityFoodsCache.push(communityFood);
+        // SESSIONE 39: alzo il flag globale "ci sono cibi nuovi da consolidare nel file base"
+        if (window.FoodsSyncMeta) window.FoodsSyncMeta.markPending().catch(_=>{});
       }
     }).catch(_ => {});
   }
@@ -13343,6 +13497,23 @@ window.renderSettings = function(mac){
     ${window.__communityFoodsCache?.length > 0 ? `<div style="font-size:10px;color:var(--gre);margin-top:8px;text-align:center;">📦 ${window.__communityFoodsCache.length} cibi community disponibili nelle ricerche</div>` : ''}
   </div>
 
+  <!-- ════ ESPORTA DATABASE CIBI (sessione 38) ════ -->
+  <div class="card" style="border-color:var(--gre);">
+    <div class="bebas" style="font-size:20px;color:var(--gre);margin-bottom:6px;">💾 ESPORTA DATABASE CIBI</div>
+    ${window.__foodsSyncState?.pending ? `
+    <div style="background:rgba(255,184,0,.1);border:1px solid #ffb800;border-radius:10px;padding:10px 12px;margin-bottom:10px;">
+      <div style="font-size:12px;color:#ffb800;font-weight:700;margin-bottom:3px;">🔔 ${window.__foodsSyncState.pendingCount||'Alcuni'} cibi nuovi da consolidare</div>
+      <div style="font-size:11px;color:var(--mut);line-height:1.4;">Gli utenti hanno aggiunto cibi nuovi (già visibili a tutti tramite community). Per fissarli nel file base, esporta e carica su GitHub.</div>
+    </div>` : `
+    <div style="font-size:11px;color:var(--gre);margin-bottom:10px;">✓ Database allineato${window.__foodsSyncState?.lastConsolidated ? ` · ultimo consolidamento ${new Date(window.__foodsSyncState.lastConsolidated).toLocaleDateString('it-IT')}` : ''}</div>`}
+    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:12px;">
+      Genera un file <code style="background:var(--surf);padding:1px 5px;border-radius:4px;">food_db.js</code> aggiornato che include i cibi di base + i cibi personalizzati + quelli della community. Caricalo su GitHub per renderli permanenti per tutti gli utenti.
+      <br><br>
+      <strong style="color:var(--text);">Cibi attuali:</strong> ${(window.FOOD_DB||[]).length} base${(ST.customFoods||[]).length ? ` + ${ST.customFoods.length} tuoi` : ''}${window.__communityFoodsCache?.length ? ` + ${window.__communityFoodsCache.length} community` : ''}
+    </div>
+    <button class="btn-s" style="width:100%;padding:12px;font-size:13px;background:rgba(74,222,128,.1);border:1.5px solid var(--gre);color:var(--gre);font-weight:700;border-radius:8px;cursor:pointer;" onclick="exportFoodDb()">💾 SCARICA food_db.js AGGIORNATO</button>
+  </div>
+
   ${sectionTitle('sec-training', '💪', 'ALLENAMENTO', 'var(--ora)')}
 
   <!-- ════ FOCUS ALLENAMENTO ════ -->
@@ -13439,7 +13610,7 @@ window.renderSettings = function(mac){
       </div>
       <div style="font-size:12px;color:var(--text);line-height:1.55;white-space:pre-wrap;">${(ST.aiPlan.advice||'').replace(/</g,'&lt;')}</div>
     </div>`:''}
-    <button class="btn ${window.aiPlanLoading?'':'btn-action'}" style="${window.aiPlanLoading?'opacity:.6;pointer-events:none;':''}" onclick="aiRecalculatePlan()">${window.aiPlanLoading?'🔍 ANALISI IN CORSO...':'🧠 GENERA NUOVO CONSIGLIO'}</button>
+    <button class="btn ${window.aiPlanLoading?'':'btn-action'}" style="${window.aiPlanLoading?'opacity:.6;pointer-events:none;':''}" onclick="aiRecalculatePlan()">${window.aiPlanLoading?'🔍 '+t("co_analyzing"):'🧠 '+t("co_generate")}</button>
   </div>
 
   <!-- SESSIONE 32: Modalità trasferta e vacanza spostate in AI Coach → Strumenti.
@@ -13806,7 +13977,7 @@ window.render = function() {
       <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;">
         <div style="font-size:48px;margin-bottom:12px;">💪</div><div class="bebas" style="font-size:32px;color:var(--acc);line-height:1;margin-bottom:6px;">${escapeHtml(ex.name.split('—')[0].trim())}</div><div style="font-size:14px;color:var(--mut);margin-bottom:20px;">${totalSets} serie completate</div>
         <div style="display:flex;gap:10px;margin-bottom:28px;">${Array(totalSets).fill(0).map(()=>'<div class="set-dot done"></div>').join('')}</div>
-        ${isLastEx?`<div class="card" style="width:100%;padding:20px;text-align:center;"><div class="bebas" style="font-size:28px;color:var(--acc);margin-bottom:4px;">🏆 ALLENAMENTO FINITO!</div></div>`:`<div class="card" style="width:100%;padding:16px;"><div style="font-size:11px;color:var(--mut);margin-bottom:8px;font-weight:700;letter-spacing:1px;">PROSSIMO ESERCIZIO</div><div class="bebas" style="font-size:22px;color:var(--text);">${escapeHtml(nextEx?.name||'')}</div></div>`}
+        ${isLastEx?`<div class="card" style="width:100%;padding:20px;text-align:center;"><div class="bebas" style="font-size:28px;color:var(--acc);margin-bottom:4px;">🏆 ${t('w_done_title')}</div></div>`:`<div class="card" style="width:100%;padding:16px;"><div style="font-size:11px;color:var(--mut);margin-bottom:8px;font-weight:700;letter-spacing:1px;">PROSSIMO ESERCIZIO</div><div class="bebas" style="font-size:22px;color:var(--text);">${escapeHtml(nextEx?.name||'')}</div></div>`}
       </div>
       <div style="padding:14px;border-top:1px solid var(--bord);"><button class="btn" style="height:68px;font-size:22px;background:${isLastEx?'var(--gre)':wo.col||'var(--acc)'};" onclick="advanceExercise()">${isLastEx?'🏁 SALVA E TERMINA':'➡️ PROSSIMO'}</button></div></div>`;return;
     }
