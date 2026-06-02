@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION40-I18N3">
+<meta name="ft-version" content="build-SESSION41-I18N4">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -520,7 +520,7 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
     <div class="spinner"></div>
     <div class="bebas" style="color:var(--text);font-size:28px;letter-spacing:3px;">SYSTEM BOOTING</div>
     <div style="color:var(--mut);font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:1px;">Connessione al Cloud Secure Database...</div>
-    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION40</div>
+    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION41</div>
   </div>
 </div>
 
@@ -4988,7 +4988,21 @@ window.I18N = {
   // ── Sezioni Configurazione (sessione 40) ──
   sec_program:{it:'PROGRAMMA & OBIETTIVI',en:'PROGRAM & GOALS'}, sec_nutrition:{it:'ALIMENTAZIONE',en:'NUTRITION'},
   sec_training:{it:'ALLENAMENTO',en:'WORKOUT'}, sec_coaching:{it:'COACHING',en:'COACHING'},
-  sec_notif_tut:{it:'NOTIFICHE & TUTORIAL',en:'NOTIFICATIONS & TUTORIAL'}, sec_advanced:{it:'AVANZATE',en:'ADVANCED'}
+  sec_notif_tut:{it:'NOTIFICHE & TUTORIAL',en:'NOTIFICATIONS & TUTORIAL'}, sec_advanced:{it:'AVANZATE',en:'ADVANCED'},
+  // ── Workout in esecuzione (sessione 41) ──
+  wo_skip:{it:'SALTA',en:'SKIP'}, wo_skip_rest:{it:'⏭ SALTA RECUPERO',en:'⏭ SKIP REST'},
+  wo_next_set:{it:'PROSSIMA SERIE',en:'NEXT SET'}, wo_set_of:{it:'SERIE',en:'SET'}, wo_of:{it:'DI',en:'OF'},
+  wo_in_progress:{it:'🟢 IN CORSO',en:'🟢 IN PROGRESS'}, wo_rest_active:{it:'RECUPERO ATTIVO',en:'ACTIVE REST'},
+  wo_steps_today:{it:'OGGI TOCCA AI PASSI',en:'TODAY IS ABOUT STEPS'}, wo_rest_pause:{it:'⏸ RECUPERO',en:'⏸ REST'},
+  wo_complete_set:{it:'COMPLETA SERIE',en:'COMPLETE SET'}, wo_log_set:{it:'REGISTRA SERIE',en:'LOG SET'},
+  wo_finish_session:{it:'TERMINA SESSIONE',en:'FINISH SESSION'},
+  // ── Inserimento cibo (sessione 41) ──
+  fd_search:{it:'Cerca un cibo...',en:'Search a food...'}, fd_quantity:{it:'QUANTITÀ',en:'QUANTITY'},
+  fd_grams:{it:'grammi',en:'grams'}, fd_portion:{it:'porzione',en:'portion'}, fd_add_diary:{it:'AGGIUNGI AL DIARIO',en:'ADD TO DIARY'},
+  fd_portions:{it:'porzioni',en:'portions'}, fd_create_custom:{it:'+ Crea cibo personalizzato',en:'+ Create custom food'},
+  // ── Generici extra ──
+  c_total:{it:'Totale',en:'Total'}, c_target2:{it:'Obiettivo',en:'Target'}, c_remaining:{it:'Rimanenti',en:'Remaining'},
+  c_completed:{it:'Completato',en:'Completed'}, c_optional:{it:'opzionale',en:'optional'}
 };
 window.t = function(key){ const e=window.I18N[key]; if(!e) return key; const l=(window.ST&&ST.lang)?ST.lang:'it'; return e[l]||e.it||key; };
 window.setLang = async function(lang){ if(lang!=='it'&&lang!=='en') return; ST.lang=lang; ST.langChosen=true; if(typeof save==='function') await save(); render(); };
@@ -9743,7 +9757,7 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
           <div style="font-size:40px;line-height:1;">${noTraining?'🚶':'😌'}</div>
           <div style="flex:1;min-width:0;">
-            <div class="bebas" style="font-size:22px;line-height:1.05;color:var(--blu);">${noTraining?'OGGI TOCCA AI PASSI':'RECUPERO ATTIVO'}</div>
+            <div class="bebas" style="font-size:22px;line-height:1.05;color:var(--blu);">${noTraining?t('wo_steps_today'):t('wo_rest_active')}</div>
             <div style="font-size:12px;color:var(--mut);margin-top:3px;line-height:1.4;">${noTraining?`Obiettivo: ${stepsGoal.toLocaleString('it-IT')} passi`:'Stretching, camminata, 7-8h di sonno'}</div>
           </div>
         </div>
@@ -13965,14 +13979,14 @@ window.render = function() {
     const exUnit = getExerciseUnit(ex);  // PUNTO 7: kg/sec/reps
     const sug=getSuggest(ex.id,ST.wHistory||{},exUnit);
     if(ST.woPhase==='rest'){
-      root.innerHTML=`<div class="wo"><div class="wo-head"><div><div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;text-transform:uppercase;">${escapeHtml(wo.name)} · Es. ${ST.step+1}/${wo.exercises.length}</div><div class="bebas" style="font-size:18px;color:var(--blu);">⏸ RECUPERO — SERIE ${ST.currentSet}/${totalSets}</div></div><button class="btn-s btn-action" onclick="skipRest()">SALTA ▸</button></div>
+      root.innerHTML=`<div class="wo"><div class="wo-head"><div><div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;text-transform:uppercase;">${escapeHtml(wo.name)} · Es. ${ST.step+1}/${wo.exercises.length}</div><div class="bebas" style="font-size:18px;color:var(--blu);">${t('wo_rest_pause')} — ${t('wo_set_of')} ${ST.currentSet}/${totalSets}</div></div><button class="btn-s btn-action" onclick="skipRest()">${t('wo_skip')} ▸</button></div>
       <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;">
         ${window.__lastPRMsg?`<div style="background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#000;padding:12px 18px;border-radius:14px;font-weight:800;font-size:14px;letter-spacing:.5px;margin-bottom:18px;box-shadow:0 4px 24px rgba(251,191,36,.4);text-align:center;animation:prPulse 1.5s ease-out;max-width:90%;">${escapeHtml(window.__lastPRMsg)}</div><style>@keyframes prPulse{0%{transform:scale(.5);opacity:0}50%{transform:scale(1.1);opacity:1}100%{transform:scale(1);opacity:1}}</style>`:''}
         <div class="tmr-ring tmr-ring-rest"><div id="tmrUI" style="font-size:78px;font-family:monospace;font-weight:700;color:var(--blu);">${ST.tmr}</div><div style="font-size:12px;color:var(--mut);">secondi</div></div>
-        <div style="margin-top:24px;text-align:center;"><div style="font-size:13px;color:var(--mut);margin-bottom:6px;">PROSSIMA SERIE:</div><div class="bebas" style="font-size:28px;color:var(--text);">SERIE ${ST.currentSet+1} DI ${totalSets}</div><div style="font-size:14px;color:${wo.col||'var(--acc)'};margin-top:4px;font-weight:700;">${escapeHtml(ex.name)}</div></div>
+        <div style="margin-top:24px;text-align:center;"><div style="font-size:13px;color:var(--mut);margin-bottom:6px;">${t('wo_next_set')}:</div><div class="bebas" style="font-size:28px;color:var(--text);">${t('wo_set_of')} ${ST.currentSet+1} ${t('wo_of')} ${totalSets}</div><div style="font-size:14px;color:${wo.col||'var(--acc)'};margin-top:4px;font-weight:700;">${escapeHtml(ex.name)}</div></div>
         <div style="display:flex;gap:10px;margin-top:20px;">${Array(totalSets).fill(0).map((_,i)=>`<div class="set-dot ${i<ST.currentSet?'done':i===ST.currentSet?'current':''}"></div>`).join('')}</div>
       </div>
-      <div style="padding:14px;border-top:1px solid var(--bord);"><button class="btn btn-action" style="width:100%;height:60px;font-size:18px;" onclick="skipRest()">⏭ SALTA RECUPERO</button></div></div>`;return;
+      <div style="padding:14px;border-top:1px solid var(--bord);"><button class="btn btn-action" style="width:100%;height:60px;font-size:18px;" onclick="skipRest()">${t('wo_skip_rest')}</button></div></div>`;return;
     }
     if(ST.woPhase==='exercise_done'){
       const isLastEx=ST.step>=wo.exercises.length-1;
@@ -14000,7 +14014,7 @@ window.render = function() {
     <div style="padding:16px;flex:1;overflow-y:auto;padding-bottom:100px;">
       <!-- Card serie corrente -->
       <div style="background:${isActive?'rgba(74,222,128,.07)':'rgba(197,241,53,.05)'};border:1.5px solid ${isActive?'var(--gre)':wo.col||'var(--acc)'};border-radius:14px;padding:18px;margin-bottom:14px;text-align:center;box-shadow:${isActive?'0 0 20px rgba(74,222,128,0.2)':'none'};transition:0.3s;">
-        <div style="font-size:12px;color:var(--mut);font-weight:700;letter-spacing:2px;margin-bottom:6px;">${isActive?'🟢 IN CORSO':'PROSSIMA SERIE'}</div>
+        <div style="font-size:12px;color:var(--mut);font-weight:700;letter-spacing:2px;margin-bottom:6px;">${isActive?t('wo_in_progress'):t('wo_next_set')}</div>
         <div class="bebas" style="font-size:52px;line-height:1;color:${isActive?'var(--gre)':wo.col||'var(--acc)'};">${ST.currentSet+1}<span style="font-size:20px;color:var(--mut);"> / ${totalSets}</span></div>
         <div class="bebas" style="font-size:28px;color:var(--text);margin-top:4px;">${ex.reps} <span style="font-size:14px;color:var(--mut);">reps${isTimeExercise?' (o sec)':''}</span></div>
         ${ex.rest?`<div style="font-size:12px;color:var(--blu);margin-top:6px;">⏱ Riposo dopo: ${ex.rest}s (automatico)</div>`:''}
