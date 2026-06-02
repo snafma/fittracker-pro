@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION34-LOGIN-SPLASH">
+<meta name="ft-version" content="build-SESSION37-FOODDB-SPLIT">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -478,7 +478,7 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
     <div class="spinner"></div>
     <div class="bebas" style="color:var(--text);font-size:28px;letter-spacing:3px;">SYSTEM BOOTING</div>
     <div style="color:var(--mut);font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:1px;">Connessione al Cloud Secure Database...</div>
-    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION34</div>
+    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION37</div>
   </div>
 </div>
 
@@ -662,6 +662,9 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
   window.isPwaInstalled = function() { return isStandalone; };
 })();
 </script>
+
+<!-- SESSIONE 37: database cibi caricato da file esterno per velocizzare il boot -->
+<script src="food_db.js"></script>
 
 <script>
 'use strict';
@@ -2052,1158 +2055,7 @@ window.buildWeeklyPlanWithCardio=function(sessions,cardioLevel,analysis){
 // Inserito al turno 9 — vedi /db/food_db_combined.js per fonte
 // ═══════════════════════════════════════════════════════════════════
 // ─── § 7. FOOD_DB (462 cibi italiani) ──────────────────────────────────────
-window.FOOD_DB=[
-  {id:'pasta_secca',name:'Pasta di semola (crudo)',cat:'cereali',kcal:360,p:12,c:73,f:1.5},
-  {id:'pasta_integrale',name:'Pasta integrale (crudo)',cat:'cereali',kcal:340,p:13,c:67,f:2.5},
-  {id:'pasta_riso',name:'Pasta di riso (crudo)',cat:'cereali',kcal:355,p:7,c:80,f:1},
-  {id:'pasta_legumi',name:'Pasta di legumi (crudo)',cat:'cereali',kcal:340,p:24,c:55,f:3},
-  {id:'pasta_cotta',name:'Pasta cotta (cotto)',cat:'cereali',kcal:130,p:5,c:25,f:0.5},
-  {id:'gnocchi',name:'Gnocchi di patate',cat:'cereali',kcal:160,p:3,c:33,f:1},
-  {id:'tortellini',name:'Tortellini (con ripieno)',cat:'cereali',kcal:290,p:13,c:42,f:8},
-  {id:'lasagne_sfoglia',name:'Sfoglia per lasagne',cat:'cereali',kcal:355,p:12,c:72,f:1.5},
-  {id:'cous_cous',name:'Couscous (crudo)',cat:'cereali',kcal:370,p:13,c:74,f:1},
-  {id:'cous_cous_cotto',name:'Couscous cotto',cat:'cereali',kcal:115,p:4,c:23,f:0.2},
-  {id:'riso_bianco',name:'Riso bianco (crudo)',cat:'cereali',kcal:355,p:7,c:80,f:0.5},
-  {id:'riso_integrale',name:'Riso integrale (crudo)',cat:'cereali',kcal:340,p:7.5,c:72,f:2.5},
-  {id:'riso_basmati',name:'Riso basmati (crudo)',cat:'cereali',kcal:350,p:8,c:78,f:1},
-  {id:'riso_venere',name:'Riso venere (crudo)',cat:'cereali',kcal:355,p:7,c:75,f:2.5},
-  {id:'riso_rosso',name:'Riso rosso integrale (crudo)',cat:'cereali',kcal:350,p:8,c:74,f:2.5},
-  {id:'riso_cotto',name:'Riso cotto',cat:'cereali',kcal:130,p:2.5,c:28,f:0.3},
-  {id:'risotto_zafferano',name:'Risotto allo zafferano (cotto)',cat:'cereali',kcal:160,p:4,c:25,f:5},
-  {id:'farro_perlato',name:'Farro perlato (crudo)',cat:'cereali',kcal:340,p:15,c:67,f:2.5},
-  {id:'farro_cotto',name:'Farro cotto',cat:'cereali',kcal:120,p:5,c:23,f:1},
-  {id:'orzo_perlato',name:'Orzo perlato (crudo)',cat:'cereali',kcal:320,p:10,c:71,f:1.5},
-  {id:'quinoa',name:'Quinoa (crudo)',cat:'cereali',kcal:370,p:14,c:64,f:6},
-  {id:'quinoa_cotta',name:'Quinoa cotta',cat:'cereali',kcal:120,p:4.5,c:21,f:2},
-  {id:'avena_fiocchi',name:'Avena - Fiocchi (crudi)',cat:'cereali',kcal:380,p:13,c:67,f:7},
-  {id:'avena_porridge',name:'Porridge avena cotto (con acqua)',cat:'cereali',kcal:75,p:2.5,c:13,f:1.5},
-  {id:'mais_cotto',name:'Mais cotto (chicchi)',cat:'cereali',kcal:96,p:3.5,c:21,f:1.5},
-  {id:'polenta_cruda',name:'Farina di mais (cruda)',cat:'cereali',kcal:355,p:8,c:78,f:1.5},
-  {id:'polenta_cotta',name:'Polenta cotta',cat:'cereali',kcal:80,p:2,c:18,f:0.4},
-  {id:'pane_bianco',name:'Pane bianco',cat:'cereali',kcal:265,p:9,c:54,f:1.5},
-  {id:'pane_integrale',name:'Pane integrale',cat:'cereali',kcal:240,p:10,c:48,f:2},
-  {id:'pane_segale',name:'Pane di segale',cat:'cereali',kcal:250,p:9,c:50,f:1.5},
-  {id:'pane_carasau',name:'Pane carasau',cat:'cereali',kcal:380,p:12,c:75,f:3},
-  {id:'pane_azzimo',name:'Pane azzimo',cat:'cereali',kcal:370,p:11,c:75,f:3},
-  {id:'piadina',name:'Piadina romagnola',cat:'cereali',kcal:300,p:8,c:53,f:6},
-  {id:'focaccia',name:'Focaccia',cat:'cereali',kcal:295,p:7,c:52,f:7},
-  {id:'fette_biscottate',name:'Fette biscottate',cat:'cereali',kcal:400,p:11,c:78,f:5},
-  {id:'crackers',name:'Crackers',cat:'cereali',kcal:430,p:10,c:70,f:11},
-  {id:'grissini',name:'Grissini',cat:'cereali',kcal:430,p:11,c:71,f:10},
-  {id:'gallette_riso',name:'Gallette di riso',cat:'cereali',kcal:380,p:8,c:82,f:1},
-  {id:'gallette_mais',name:'Gallette di mais',cat:'cereali',kcal:385,p:7,c:83,f:1.5},
-  {id:'cornflakes',name:'Cornflakes',cat:'cereali',kcal:380,p:8,c:84,f:1},
-  {id:'muesli',name:'Muesli',cat:'cereali',kcal:370,p:10,c:65,f:8},
-  {id:'cereali_cioccolato',name:'Cereali al cioccolato',cat:'cereali',kcal:400,p:7,c:78,f:7},
-  {id:'farina_00',name:'Farina 00',cat:'cereali',kcal:340,p:10,c:75,f:1},
-  {id:'farina_integrale',name:'Farina integrale',cat:'cereali',kcal:320,p:13,c:65,f:2.5},
-  {id:'farina_mandorle',name:'Farina di mandorle',cat:'cereali',kcal:580,p:21,c:20,f:50},
-  {id:'farina_cocco',name:'Farina di cocco',cat:'cereali',kcal:400,p:18,c:21,f:14},
-  {id:'farina_avena',name:'Farina di avena',cat:'cereali',kcal:380,p:14,c:65,f:7},
-  {id:'pancake_misc',name:'Pancake (1 pezzo medio)',cat:'cereali',kcal:230,p:6,c:30,f:9},
-  {id:'crepes',name:'Crepes',cat:'cereali',kcal:170,p:6,c:23,f:6},
-  {id:'brioche_vuota',name:'Brioche vuota',cat:'cereali',kcal:380,p:9,c:50,f:16},
-  {id:'biscotti_secchi',name:'Biscotti secchi',cat:'cereali',kcal:430,p:8,c:75,f:11},
-  {id:'biscotti_frollini',name:'Biscotti frollini',cat:'cereali',kcal:475,p:6,c:67,f:21},
-  {id:'wafer',name:'Wafer',cat:'cereali',kcal:520,p:6,c:65,f:26},
-  {id:'merendine',name:'Merendine farcite',cat:'cereali',kcal:420,p:6,c:55,f:20},
-  {id:'taralli',name:'Taralli',cat:'cereali',kcal:430,p:9,c:62,f:16},
-  {id:'piadina_integrale',name:'Piadina integrale',cat:'cereali',kcal:280,p:9,c:50,f:5},
-  {id:'pollo_petto',name:'Pollo petto (senza pelle)',cat:'carne',kcal:110,p:23,c:0,f:1.5},
-  {id:'pollo_coscia',name:'Pollo coscia (con pelle)',cat:'carne',kcal:200,p:18,c:0,f:14},
-  {id:'pollo_alette',name:'Pollo alette',cat:'carne',kcal:215,p:20,c:0,f:15},
-  {id:'pollo_intero',name:'Pollo intero (con pelle)',cat:'carne',kcal:170,p:20,c:0,f:10},
-  {id:'tacchino_petto',name:'Tacchino petto',cat:'carne',kcal:107,p:24,c:0,f:1},
-  {id:'tacchino_fesa',name:'Tacchino fesa',cat:'carne',kcal:108,p:24,c:0,f:1},
-  {id:'manzo_filetto',name:'Manzo filetto',cat:'carne',kcal:130,p:21,c:0,f:5},
-  {id:'manzo_controfiletto',name:'Manzo controfiletto',cat:'carne',kcal:170,p:21,c:0,f:9},
-  {id:'manzo_macinato_magro',name:'Manzo macinato magro 5%',cat:'carne',kcal:135,p:22,c:0,f:5},
-  {id:'manzo_macinato',name:'Manzo macinato 15%',cat:'carne',kcal:215,p:18,c:0,f:15},
-  {id:'manzo_costata',name:'Manzo costata',cat:'carne',kcal:235,p:20,c:0,f:17},
-  {id:'manzo_brasato',name:'Manzo brasato (cotto)',cat:'carne',kcal:215,p:28,c:0,f:11},
-  {id:'manzo_tagliata',name:'Manzo tagliata',cat:'carne',kcal:170,p:26,c:0,f:7},
-  {id:'vitello_scaloppine',name:'Vitello fettine',cat:'carne',kcal:115,p:21,c:0,f:3},
-  {id:'vitello_arrosto',name:'Vitello arrosto',cat:'carne',kcal:155,p:25,c:0,f:6},
-  {id:'maiale_filetto',name:'Maiale filetto',cat:'carne',kcal:140,p:22,c:0,f:5},
-  {id:'maiale_lonza',name:'Maiale lonza',cat:'carne',kcal:160,p:23,c:0,f:7},
-  {id:'maiale_costine',name:'Maiale costine',cat:'carne',kcal:295,p:18,c:0,f:25},
-  {id:'maiale_braciola',name:'Maiale braciola',cat:'carne',kcal:230,p:25,c:0,f:14},
-  {id:'agnello_costoletta',name:'Agnello costoletta',cat:'carne',kcal:265,p:18,c:0,f:21},
-  {id:'agnello_coscio',name:'Agnello coscio',cat:'carne',kcal:200,p:20,c:0,f:13},
-  {id:'coniglio',name:'Coniglio',cat:'carne',kcal:120,p:22,c:0,f:3},
-  {id:'cinghiale',name:'Cinghiale',cat:'carne',kcal:120,p:21,c:0,f:3.5},
-  {id:'anatra_petto',name:'Anatra petto (senza pelle)',cat:'carne',kcal:135,p:24,c:0,f:4},
-  {id:'cavallo_carne',name:'Cavallo carne',cat:'carne',kcal:115,p:21,c:0,f:3},
-  {id:'castrato',name:'Castrato (montone)',cat:'carne',kcal:240,p:18,c:0,f:18},
-  {id:'pecora',name:'Pecora (carne)',cat:'carne',kcal:230,p:18,c:0,f:17},
-  {id:'capretto',name:'Capretto',cat:'carne',kcal:155,p:20,c:0,f:8},
-  {id:'capra',name:'Carne di capra',cat:'carne',kcal:165,p:21,c:0,f:9},
-  {id:'cervo',name:'Cervo (carne)',cat:'carne',kcal:120,p:23,c:0,f:3},
-  {id:'lepre',name:'Lepre',cat:'carne',kcal:130,p:23,c:0,f:4},
-  {id:'fagiano',name:'Fagiano',cat:'carne',kcal:135,p:23,c:0,f:4},
-  {id:'quaglia',name:'Quaglia',cat:'carne',kcal:160,p:22,c:0,f:8},
-  {id:'anatra',name:'Anatra',cat:'carne',kcal:215,p:18,c:0,f:16},
-  {id:'oca',name:'Oca',cat:'carne',kcal:340,p:16,c:0,f:30},
-  {id:'faraona',name:'Faraona',cat:'carne',kcal:160,p:25,c:0,f:7},
-  {id:'tacchino_coscia',name:'Coscia di tacchino',cat:'carne',kcal:160,p:20,c:0,f:8},
-  {id:'fegato_vitello',name:'Fegato di vitello',cat:'carne',kcal:135,p:21,c:5,f:3.5},
-  {id:'prosciutto_crudo',name:'Prosciutto crudo (sgrassato)',cat:'carne',kcal:225,p:30,c:0,f:12},
-  {id:'prosciutto_cotto',name:'Prosciutto cotto',cat:'carne',kcal:160,p:20,c:1,f:9},
-  {id:'prosciutto_cotto_alta_q',name:'Prosciutto cotto alta qualità',cat:'carne',kcal:140,p:21,c:0,f:6},
-  {id:'bresaola',name:'Bresaola della Valtellina',cat:'carne',kcal:150,p:32,c:0,f:2},
-  {id:'speck',name:'Speck',cat:'carne',kcal:300,p:28,c:0,f:21},
-  {id:'salame',name:'Salame',cat:'carne',kcal:425,p:24,c:1,f:36},
-  {id:'salame_milano',name:'Salame Milano',cat:'carne',kcal:400,p:24,c:1,f:34},
-  {id:'mortadella',name:'Mortadella',cat:'carne',kcal:315,p:14,c:1,f:29},
-  {id:'pancetta',name:'Pancetta',cat:'carne',kcal:430,p:14,c:0,f:42},
-  {id:'guanciale',name:'Guanciale',cat:'carne',kcal:495,p:11,c:0,f:50},
-  {id:'lardo',name:'Lardo',cat:'carne',kcal:680,p:7,c:0,f:71},
-  {id:'wurstel',name:'Würstel',cat:'carne',kcal:295,p:13,c:1,f:27},
-  {id:'wurstel_pollo',name:'Würstel di pollo',cat:'carne',kcal:165,p:14,c:1,f:12},
-  {id:'salsiccia',name:'Salsiccia di maiale',cat:'carne',kcal:330,p:16,c:1,f:30},
-  {id:'cotechino',name:'Cotechino cotto',cat:'carne',kcal:355,p:18,c:1,f:32},
-  {id:'zampone',name:'Zampone cotto',cat:'carne',kcal:340,p:17,c:1,f:31},
-  {id:'porchetta',name:'Porchetta',cat:'carne',kcal:280,p:23,c:0,f:21},
-  {id:'arrosto_tacchino',name:'Arrosto di tacchino (affettato)',cat:'carne',kcal:115,p:21,c:1,f:3},
-  {id:'pollo_arrosto_aff',name:'Petto di pollo (affettato)',cat:'carne',kcal:110,p:22,c:1,f:2},
-  {id:'roast_beef',name:'Roast beef',cat:'carne',kcal:160,p:25,c:0,f:7},
-  {id:'pancetta_affumicata',name:'Pancetta affumicata',cat:'carne',kcal:430,p:14,c:0,f:42},
-  {id:'salame_finocchio',name:'Finocchiona',cat:'carne',kcal:430,p:23,c:1,f:38},
-  {id:'pollo_milanese',name:'Pollo alla milanese (cotto)',cat:'carne',kcal:240,p:20,c:13,f:13},
-  {id:'cotoletta_vitello',name:'Cotoletta di vitello (cotta)',cat:'carne',kcal:260,p:22,c:14,f:13},
-  {id:'polpette_manzo',name:'Polpette di manzo (cotte)',cat:'carne',kcal:220,p:18,c:6,f:14},
-  {id:'hamburger_manzo',name:'Hamburger di manzo (cotto)',cat:'carne',kcal:240,p:22,c:0,f:17},
-  {id:'hamburger_pollo',name:'Hamburger di pollo (cotto)',cat:'carne',kcal:165,p:22,c:0,f:8},
-  {id:'kebab',name:'Kebab di pollo (carne)',cat:'carne',kcal:215,p:25,c:1,f:12},
-  {id:'tacchino_macinato',name:'Tacchino macinato',cat:'carne',kcal:120,p:23,c:0,f:3},
-  {id:'tonno_naturale',name:'Tonno al naturale (sgocciolato)',cat:'pesce',kcal:115,p:25,c:0,f:1},
-  {id:'tonno_olio',name:'Tonno sott\'olio (sgocciolato)',cat:'pesce',kcal:190,p:25,c:0,f:10},
-  {id:'tonno_fresco',name:'Tonno fresco',cat:'pesce',kcal:145,p:24,c:0,f:5},
-  {id:'salmone_fresco',name:'Salmone fresco',cat:'pesce',kcal:185,p:20,c:0,f:12},
-  {id:'salmone_affumicato',name:'Salmone affumicato',cat:'pesce',kcal:160,p:23,c:0,f:7},
-  {id:'merluzzo',name:'Merluzzo',cat:'pesce',kcal:75,p:17,c:0,f:0.5},
-  {id:'merluzzo_surgelato',name:'Filetto di merluzzo surgelato',cat:'pesce',kcal:75,p:17,c:0,f:0.5},
-  {id:'baccala',name:'Baccalà ammollato',cat:'pesce',kcal:135,p:30,c:0,f:1},
-  {id:'orata',name:'Orata',cat:'pesce',kcal:120,p:20,c:0,f:4},
-  {id:'dentice',name:'Dentice',cat:'pesce',kcal:110,p:19,c:0,f:3.5},
-  {id:'cernia',name:'Cernia',cat:'pesce',kcal:90,p:18,c:0,f:1.5},
-  {id:'pagello',name:'Pagello',cat:'pesce',kcal:95,p:18,c:0,f:2.5},
-  {id:'ricciola',name:'Ricciola',cat:'pesce',kcal:140,p:21,c:0,f:6},
-  {id:'palamita',name:'Palamita',cat:'pesce',kcal:160,p:22,c:0,f:8},
-  {id:'cefalo_muggine',name:'Cefalo (muggine)',cat:'pesce',kcal:150,p:18,c:0,f:8},
-  {id:'razza',name:'Razza',cat:'pesce',kcal:90,p:21,c:0,f:0.5},
-  {id:'branzino',name:'Branzino (spigola)',cat:'pesce',kcal:115,p:18,c:0,f:5},
-  {id:'sogliola',name:'Sogliola',cat:'pesce',kcal:85,p:17,c:0,f:1.5},
-  {id:'platessa',name:'Platessa',cat:'pesce',kcal:80,p:17,c:0,f:1},
-  {id:'nasello',name:'Nasello (merluzzo)',cat:'pesce',kcal:75,p:17,c:0,f:0.5},
-  {id:'rana_pescatrice',name:'Rana pescatrice (coda di rospo)',cat:'pesce',kcal:75,p:17,c:0,f:0.5},
-  {id:'pesce_spada',name:'Pesce spada',cat:'pesce',kcal:135,p:23,c:0,f:5},
-  {id:'sgombro',name:'Sgombro fresco',cat:'pesce',kcal:170,p:18,c:0,f:11},
-  {id:'sgombro_naturale',name:'Sgombro al naturale (in scatola)',cat:'pesce',kcal:175,p:24,c:0,f:9},
-  {id:'sardine_olio',name:'Sardine sott\'olio (sgocciolate)',cat:'pesce',kcal:215,p:25,c:0,f:13},
-  {id:'sardine_fresche',name:'Sardine fresche',cat:'pesce',kcal:130,p:21,c:0,f:5},
-  {id:'alici_marinate',name:'Alici marinate',cat:'pesce',kcal:155,p:20,c:1,f:8},
-  {id:'alici_olio',name:'Alici sott\'olio',cat:'pesce',kcal:210,p:25,c:0,f:12},
-  {id:'trota',name:'Trota',cat:'pesce',kcal:130,p:21,c:0,f:5},
-  {id:'trota_salmonata',name:'Trota salmonata',cat:'pesce',kcal:170,p:20,c:0,f:10},
-  {id:'pesce_persico',name:'Pesce persico',cat:'pesce',kcal:90,p:19,c:0,f:1},
-  {id:'rombo',name:'Rombo',cat:'pesce',kcal:80,p:17,c:0,f:1},
-  {id:'cefalo',name:'Cefalo',cat:'pesce',kcal:130,p:18,c:0,f:6},
-  {id:'aringa_marinata',name:'Aringa marinata',cat:'pesce',kcal:230,p:18,c:0,f:18},
-  {id:'gamberi',name:'Gamberi',cat:'pesce',kcal:75,p:17,c:0,f:0.5},
-  {id:'gamberetti',name:'Gamberetti sgusciati',cat:'pesce',kcal:75,p:18,c:0,f:0.5},
-  {id:'mazzancolle',name:'Mazzancolle',cat:'pesce',kcal:80,p:17,c:0,f:1},
-  {id:'scampi',name:'Scampi',cat:'pesce',kcal:75,p:17,c:0,f:0.5},
-  {id:'aragosta',name:'Aragosta',cat:'pesce',kcal:85,p:18,c:0,f:1},
-  {id:'astice',name:'Astice',cat:'pesce',kcal:90,p:20,c:0,f:1},
-  {id:'granchio',name:'Granchio (polpa)',cat:'pesce',kcal:85,p:18,c:0,f:1},
-  {id:'calamari',name:'Calamari',cat:'pesce',kcal:75,p:13,c:1.5,f:1.5},
-  {id:'totani',name:'Totani',cat:'pesce',kcal:80,p:14,c:1.5,f:1.5},
-  {id:'seppie',name:'Seppie',cat:'pesce',kcal:80,p:14,c:1.5,f:1.5},
-  {id:'polpo',name:'Polpo',cat:'pesce',kcal:80,p:15,c:2,f:1},
-  {id:'cozze',name:'Cozze sgusciate',cat:'pesce',kcal:85,p:12,c:3.5,f:2},
-  {id:'vongole',name:'Vongole sgusciate',cat:'pesce',kcal:75,p:12,c:2.5,f:1.5},
-  {id:'ostriche',name:'Ostriche',cat:'pesce',kcal:70,p:9,c:5,f:2},
-  {id:'capesante',name:'Capesante',cat:'pesce',kcal:75,p:15,c:3,f:0.5},
-  {id:'tonno_pinne_gialle',name:'Tonno pinne gialle (filetto)',cat:'pesce',kcal:110,p:25,c:0,f:1},
-  {id:'pesce_pangasio',name:'Pangasio (filetto)',cat:'pesce',kcal:90,p:15,c:0,f:3},
-  {id:'pesce_persico_filetto',name:'Persico filetto surgelato',cat:'pesce',kcal:80,p:18,c:0,f:1},
-  {id:'bastoncini_pesce',name:'Bastoncini di pesce (impanati)',cat:'pesce',kcal:200,p:13,c:18,f:9},
-  {id:'paella_misc',name:'Paella di pesce',cat:'pesce',kcal:165,p:9,c:23,f:4},
-  {id:'sushi_misc',name:'Sushi (nigiri/maki misti)',cat:'pesce',kcal:155,p:6,c:30,f:1},
-  {id:'latte_intero',name:'Latte vaccino intero',cat:'latticini',kcal:65,p:3.3,c:5,f:3.6},
-  {id:'latte_parz',name:'Latte parzialmente scremato',cat:'latticini',kcal:48,p:3.5,c:5,f:1.6},
-  {id:'latte_scremato',name:'Latte scremato',cat:'latticini',kcal:36,p:3.6,c:5,f:0.2},
-  {id:'latte_lattosio_free',name:'Latte senza lattosio (parz scremato)',cat:'latticini',kcal:48,p:3.5,c:5,f:1.6},
-  {id:'panna_fresca',name:'Panna fresca da cucina',cat:'latticini',kcal:300,p:2.5,c:3,f:30},
-  {id:'panna_montare',name:'Panna da montare 35%',cat:'latticini',kcal:340,p:2.5,c:3,f:35},
-  {id:'yogurt_intero',name:'Yogurt bianco intero',cat:'latticini',kcal:65,p:4,c:4,f:3.5},
-  {id:'yogurt_magro',name:'Yogurt bianco magro 0,1%',cat:'latticini',kcal:35,p:4,c:5,f:0.1},
-  {id:'yogurt_greco_0',name:'Yogurt greco 0% grassi',cat:'latticini',kcal:60,p:10,c:4,f:0.2},
-  {id:'yogurt_greco_2',name:'Yogurt greco 2% grassi',cat:'latticini',kcal:75,p:10,c:4,f:2},
-  {id:'yogurt_greco_intero',name:'Yogurt greco intero 5%',cat:'latticini',kcal:100,p:9,c:4,f:5},
-  {id:'yogurt_frutta',name:'Yogurt alla frutta intero',cat:'latticini',kcal:90,p:3,c:14,f:3},
-  {id:'kefir',name:'Kefir',cat:'latticini',kcal:55,p:3.5,c:5,f:2},
-  {id:'mozzarella_vaccina',name:'Mozzarella vaccina',cat:'latticini',kcal:255,p:18,c:1,f:20},
-  {id:'mozzarella_bufala',name:'Mozzarella di bufala',cat:'latticini',kcal:290,p:17,c:0.5,f:24},
-  {id:'mozzarella_light',name:'Mozzarella light',cat:'latticini',kcal:175,p:21,c:1,f:9},
-  {id:'fiordilatte',name:'Fior di latte',cat:'latticini',kcal:255,p:18,c:1,f:20},
-  {id:'burrata',name:'Burrata',cat:'latticini',kcal:330,p:14,c:2,f:30},
-  {id:'stracciatella',name:'Stracciatella',cat:'latticini',kcal:340,p:13,c:3,f:31},
-  {id:'ricotta_vaccina',name:'Ricotta vaccina',cat:'latticini',kcal:145,p:10,c:4,f:10},
-  {id:'ricotta_pecora',name:'Ricotta di pecora',cat:'latticini',kcal:155,p:11,c:3.5,f:11},
-  {id:'ricotta_light',name:'Ricotta light',cat:'latticini',kcal:90,p:12,c:4,f:3},
-  {id:'fiocchi_latte',name:'Fiocchi di latte (cottage cheese)',cat:'latticini',kcal:95,p:13,c:4,f:3.5},
-  {id:'philadelphia',name:'Formaggio fresco spalmabile',cat:'latticini',kcal:240,p:6,c:3,f:23},
-  {id:'philadelphia_light',name:'Formaggio fresco spalmabile light',cat:'latticini',kcal:170,p:8,c:4,f:14},
-  {id:'crescenza',name:'Crescenza/Stracchino',cat:'latticini',kcal:270,p:15,c:1,f:23},
-  {id:'caprino_fresco',name:'Caprino fresco',cat:'latticini',kcal:235,p:16,c:1,f:19},
-  {id:'feta',name:'Feta',cat:'latticini',kcal:265,p:14,c:4,f:21},
-  {id:'parmigiano',name:'Parmigiano Reggiano',cat:'latticini',kcal:390,p:33,c:0,f:28},
-  {id:'grana_padano',name:'Grana Padano',cat:'latticini',kcal:385,p:33,c:0,f:28},
-  {id:'pecorino_romano',name:'Pecorino Romano',cat:'latticini',kcal:390,p:26,c:1,f:32},
-  {id:'pecorino_sardo',name:'Pecorino Sardo',cat:'latticini',kcal:380,p:25,c:1,f:31},
-  {id:'asiago',name:'Asiago',cat:'latticini',kcal:380,p:24,c:1,f:31},
-  {id:'fontina',name:'Fontina',cat:'latticini',kcal:343,p:25,c:1,f:27},
-  {id:'taleggio',name:'Taleggio',cat:'latticini',kcal:330,p:19,c:0,f:28},
-  {id:'gorgonzola_dolce',name:'Gorgonzola dolce',cat:'latticini',kcal:330,p:19,c:0,f:28},
-  {id:'gorgonzola_piccante',name:'Gorgonzola piccante',cat:'latticini',kcal:355,p:21,c:0,f:30},
-  {id:'mascarpone',name:'Mascarpone',cat:'latticini',kcal:455,p:5,c:5,f:46},
-  {id:'emmental',name:'Emmental',cat:'latticini',kcal:380,p:28,c:0,f:30},
-  {id:'gruyere',name:'Gruyère',cat:'latticini',kcal:415,p:30,c:0,f:32},
-  {id:'cheddar',name:'Cheddar',cat:'latticini',kcal:405,p:25,c:1,f:33},
-  {id:'edamer',name:'Edamer',cat:'latticini',kcal:355,p:25,c:0,f:28},
-  {id:'provolone_dolce',name:'Provolone dolce',cat:'latticini',kcal:355,p:26,c:1,f:27},
-  {id:'caciocavallo',name:'Caciocavallo',cat:'latticini',kcal:380,p:28,c:1,f:30},
-  {id:'scamorza',name:'Scamorza',cat:'latticini',kcal:335,p:24,c:1,f:26},
-  {id:'scamorza_affumicata',name:'Scamorza affumicata',cat:'latticini',kcal:335,p:24,c:1,f:26},
-  {id:'tomino',name:'Tomino',cat:'latticini',kcal:280,p:18,c:1,f:23},
-  {id:'robiola',name:'Robiola',cat:'latticini',kcal:330,p:14,c:1,f:30},
-  {id:'brie',name:'Brie',cat:'latticini',kcal:335,p:21,c:0,f:28},
-  {id:'camembert',name:'Camembert',cat:'latticini',kcal:300,p:20,c:0,f:24},
-  {id:'burro',name:'Burro',cat:'latticini',kcal:760,p:0.7,c:0.7,f:84},
-  {id:'uovo_intero',name:'Uovo intero gallina (medio ~55g)',cat:'uova',kcal:155,p:13,c:1,f:11},
-  {id:'uovo_albume',name:'Albume d\'uovo',cat:'uova',kcal:48,p:11,c:0.7,f:0.2},
-  {id:'uovo_tuorlo',name:'Tuorlo d\'uovo',cat:'uova',kcal:325,p:16,c:1,f:28},
-  {id:'frittata_2uova',name:'Frittata (2 uova senza condimento)',cat:'uova',kcal:155,p:13,c:1,f:11},
-  {id:'omelette_misc',name:'Omelette con formaggio (misc)',cat:'uova',kcal:200,p:14,c:1,f:15},
-  {id:'uova_strapazzate',name:'Uova strapazzate (con burro)',cat:'uova',kcal:200,p:13,c:1,f:16},
-  {id:'uova_quaglia',name:'Uova di quaglia (1 pezzo ~10g)',cat:'uova',kcal:160,p:13,c:0.5,f:11},
-  {id:'uova_anatra',name:'Uovo di anatra',cat:'uova',kcal:185,p:13,c:1,f:14},
-  {id:'albume_pastorizzato',name:'Albume pastorizzato',cat:'uova',kcal:50,p:11,c:0.5,f:0.3},
-  {id:'uova_sode',name:'Uova sode',cat:'uova',kcal:155,p:13,c:1,f:11},
-  {id:'fagioli_borlotti_secchi',name:'Fagioli borlotti secchi',cat:'legumi',kcal:295,p:23,c:51,f:1.5},
-  {id:'fagioli_borlotti_cotti',name:'Fagioli borlotti cotti',cat:'legumi',kcal:115,p:8,c:18,f:0.5},
-  {id:'fagioli_cannellini_secchi',name:'Fagioli cannellini secchi',cat:'legumi',kcal:290,p:22,c:50,f:1.5},
-  {id:'fagioli_cannellini_cotti',name:'Fagioli cannellini cotti',cat:'legumi',kcal:115,p:8,c:18,f:0.5},
-  {id:'fagioli_neri_cotti',name:'Fagioli neri cotti',cat:'legumi',kcal:115,p:8,c:20,f:0.5},
-  {id:'fagioli_rossi_cotti',name:'Fagioli rossi (red kidney) cotti',cat:'legumi',kcal:120,p:8,c:21,f:0.5},
-  {id:'fagiolini_lessi',name:'Fagiolini lessati',cat:'legumi',kcal:30,p:2,c:5,f:0.2},
-  {id:'ceci_secchi',name:'Ceci secchi',cat:'legumi',kcal:315,p:21,c:54,f:6},
-  {id:'ceci_cotti',name:'Ceci cotti',cat:'legumi',kcal:120,p:7,c:20,f:2},
-  {id:'farina_ceci',name:'Farina di ceci',cat:'legumi',kcal:340,p:22,c:55,f:6},
-  {id:'hummus',name:'Hummus',cat:'legumi',kcal:165,p:8,c:14,f:10},
-  {id:'lenticchie_secche',name:'Lenticchie secche',cat:'legumi',kcal:290,p:25,c:52,f:1},
-  {id:'lenticchie_cotte',name:'Lenticchie cotte',cat:'legumi',kcal:115,p:9,c:20,f:0.5},
-  {id:'lenticchie_rosse_cotte',name:'Lenticchie rosse cotte',cat:'legumi',kcal:115,p:9,c:20,f:0.5},
-  {id:'piselli_freschi',name:'Piselli freschi',cat:'legumi',kcal:80,p:5.5,c:13,f:0.5},
-  {id:'piselli_surgelati',name:'Piselli surgelati',cat:'legumi',kcal:75,p:5,c:12,f:0.5},
-  {id:'piselli_secchi',name:'Piselli secchi',cat:'legumi',kcal:285,p:22,c:50,f:1},
-  {id:'fave_fresche',name:'Fave fresche sgusciate',cat:'legumi',kcal:75,p:5,c:13,f:0.5},
-  {id:'fave_secche',name:'Fave secche',cat:'legumi',kcal:340,p:27,c:58,f:2},
-  {id:'soia_secca',name:'Soia secca',cat:'legumi',kcal:415,p:37,c:24,f:20},
-  {id:'edamame',name:'Edamame (soia verde)',cat:'legumi',kcal:120,p:11,c:9,f:5},
-  {id:'tofu_naturale',name:'Tofu naturale',cat:'legumi',kcal:120,p:13,c:2,f:7},
-  {id:'tofu_affumicato',name:'Tofu affumicato',cat:'legumi',kcal:140,p:16,c:2,f:8},
-  {id:'tempeh',name:'Tempeh',cat:'legumi',kcal:185,p:19,c:8,f:11},
-  {id:'seitan',name:'Seitan',cat:'legumi',kcal:120,p:24,c:5,f:1},
-  {id:'latte_soia',name:'Bevanda di soia',cat:'legumi',kcal:42,p:3.5,c:2.5,f:2},
-  {id:'yogurt_soia',name:'Yogurt di soia',cat:'legumi',kcal:55,p:4,c:5,f:2},
-  {id:'burger_soia',name:'Hamburger di soia (cotto)',cat:'legumi',kcal:160,p:18,c:8,f:6},
-  {id:'crocchette_legumi',name:'Crocchette di legumi',cat:'legumi',kcal:200,p:9,c:25,f:8},
-  {id:'falafel',name:'Falafel',cat:'legumi',kcal:330,p:13,c:32,f:18},
-  {id:'pomodori',name:'Pomodori freschi',cat:'verdure',kcal:18,p:1,c:3.5,f:0.2},
-  {id:'pomodori_ciliegino',name:'Pomodorini ciliegino',cat:'verdure',kcal:20,p:1,c:4,f:0.2},
-  {id:'pomodori_pelati',name:'Pomodori pelati (in scatola)',cat:'verdure',kcal:22,p:1,c:4.5,f:0.2},
-  {id:'passata_pomodoro',name:'Passata di pomodoro',cat:'verdure',kcal:30,p:1.5,c:6,f:0.2},
-  {id:'concentrato_pomodoro',name:'Concentrato di pomodoro',cat:'verdure',kcal:80,p:4,c:18,f:0.5},
-  {id:'cetrioli',name:'Cetrioli',cat:'verdure',kcal:14,p:0.7,c:3,f:0.1},
-  {id:'zucchine',name:'Zucchine',cat:'verdure',kcal:18,p:1.5,c:3,f:0.3},
-  {id:'melanzane',name:'Melanzane',cat:'verdure',kcal:24,p:1,c:5,f:0.2},
-  {id:'peperoni',name:'Peperoni',cat:'verdure',kcal:25,p:1,c:5,f:0.3},
-  {id:'peperoni_grigliati',name:'Peperoni grigliati',cat:'verdure',kcal:30,p:1,c:6,f:0.4},
-  {id:'lattuga',name:'Lattuga',cat:'verdure',kcal:14,p:1,c:2.5,f:0.2},
-  {id:'lattuga_iceberg',name:'Lattuga iceberg',cat:'verdure',kcal:13,p:0.9,c:2.5,f:0.1},
-  {id:'rucola',name:'Rucola',cat:'verdure',kcal:25,p:2.5,c:3,f:0.7},
-  {id:'spinaci_freschi',name:'Spinaci freschi',cat:'verdure',kcal:23,p:3,c:1.5,f:0.4},
-  {id:'spinaci_cotti',name:'Spinaci cotti',cat:'verdure',kcal:23,p:3,c:1.5,f:0.4},
-  {id:'spinaci_surgelati',name:'Spinaci surgelati',cat:'verdure',kcal:25,p:3,c:2,f:0.4},
-  {id:'bietola',name:'Bietola',cat:'verdure',kcal:20,p:2,c:2,f:0.3},
-  {id:'broccoli_freschi',name:'Broccoli freschi',cat:'verdure',kcal:35,p:3,c:5,f:0.4},
-  {id:'broccoli_cotti',name:'Broccoli cotti',cat:'verdure',kcal:30,p:3,c:4,f:0.4},
-  {id:'cavolfiore',name:'Cavolfiore',cat:'verdure',kcal:25,p:2,c:4,f:0.3},
-  {id:'cavolo_verza',name:'Verza',cat:'verdure',kcal:23,p:2,c:3,f:0.3},
-  {id:'cavolo_cappuccio',name:'Cavolo cappuccio',cat:'verdure',kcal:25,p:1.3,c:4.5,f:0.2},
-  {id:'cavolini_bruxelles',name:'Cavolini di Bruxelles',cat:'verdure',kcal:43,p:3.5,c:6,f:0.5},
-  {id:'cavolo_nero',name:'Cavolo nero',cat:'verdure',kcal:35,p:3,c:5,f:0.5},
-  {id:'cavolo_rosso',name:'Cavolo rosso',cat:'verdure',kcal:30,p:1.5,c:6,f:0.2},
-  {id:'finocchi',name:'Finocchi crudi',cat:'verdure',kcal:30,p:1.2,c:5,f:0.3},
-  {id:'sedano',name:'Sedano',cat:'verdure',kcal:16,p:0.7,c:3,f:0.2},
-  {id:'carote',name:'Carote',cat:'verdure',kcal:35,p:1,c:8,f:0.2},
-  {id:'cipolla',name:'Cipolla',cat:'verdure',kcal:26,p:1,c:5,f:0.1},
-  {id:'cipollotto',name:'Cipollotto',cat:'verdure',kcal:30,p:1.5,c:6,f:0.2},
-  {id:'aglio',name:'Aglio',cat:'verdure',kcal:140,p:6,c:30,f:0.5},
-  {id:'porro',name:'Porro',cat:'verdure',kcal:30,p:2,c:5,f:0.2},
-  {id:'asparagi',name:'Asparagi',cat:'verdure',kcal:25,p:3.5,c:3,f:0.2},
-  {id:'carciofi',name:'Carciofi',cat:'verdure',kcal:55,p:3,c:11,f:0.2},
-  {id:'cardi',name:'Cardi',cat:'verdure',kcal:17,p:0.6,c:3,f:0.1},
-  {id:'funghi_champignon',name:'Funghi champignon',cat:'verdure',kcal:25,p:4,c:0.5,f:0.5},
-  {id:'funghi_porcini',name:'Funghi porcini',cat:'verdure',kcal:25,p:3,c:1,f:0.4},
-  {id:'funghi_chiodini',name:'Funghi chiodini',cat:'verdure',kcal:23,p:2,c:1,f:0.4},
-  {id:'funghi_secchi',name:'Funghi porcini secchi',cat:'verdure',kcal:295,p:30,c:35,f:3},
-  {id:'patate',name:'Patate (cruda)',cat:'verdure',kcal:75,p:2,c:17,f:0.1},
-  {id:'patate_lesse',name:'Patate lesse',cat:'verdure',kcal:75,p:2,c:17,f:0.1},
-  {id:'patate_arrosto',name:'Patate arrosto',cat:'verdure',kcal:150,p:3,c:25,f:5},
-  {id:'patate_fritte',name:'Patate fritte (in olio)',cat:'verdure',kcal:300,p:4,c:36,f:15},
-  {id:'patate_dolci',name:'Patate dolci (americane)',cat:'verdure',kcal:90,p:1.5,c:21,f:0.1},
-  {id:'patate_chips',name:'Patatine chips',cat:'verdure',kcal:540,p:6,c:54,f:34},
-  {id:'rape',name:'Rape',cat:'verdure',kcal:18,p:1,c:3,f:0.1},
-  {id:'rape_rosse',name:'Barbabietole rosse',cat:'verdure',kcal:43,p:1.5,c:9,f:0.2},
-  {id:'ravanelli',name:'Ravanelli',cat:'verdure',kcal:13,p:0.8,c:2,f:0.1},
-  {id:'sedano_rapa',name:'Sedano rapa',cat:'verdure',kcal:25,p:1,c:5,f:0.2},
-  {id:'topinambur',name:'Topinambur',cat:'verdure',kcal:75,p:2,c:17,f:0.1},
-  {id:'zucca',name:'Zucca gialla',cat:'verdure',kcal:18,p:1,c:3.5,f:0.1},
-  {id:'germogli_soia',name:'Germogli di soia',cat:'verdure',kcal:50,p:6,c:2,f:1.5},
-  {id:'germogli_misti',name:'Germogli misti',cat:'verdure',kcal:30,p:3,c:4,f:0.5},
-  {id:'songino',name:'Soncino (valeriana)',cat:'verdure',kcal:21,p:2,c:2,f:0.4},
-  {id:'radicchio',name:'Radicchio rosso',cat:'verdure',kcal:13,p:1,c:1.5,f:0.2},
-  {id:'cicoria',name:'Cicoria',cat:'verdure',kcal:23,p:2,c:3,f:0.3},
-  {id:'indivia',name:'Indivia belga',cat:'verdure',kcal:17,p:1,c:3,f:0.1},
-  {id:'olive_verdi',name:'Olive verdi',cat:'verdure',kcal:145,p:1,c:1,f:15},
-  {id:'olive_nere',name:'Olive nere',cat:'verdure',kcal:235,p:1.8,c:1,f:25},
-  {id:'capperi',name:'Capperi sotto sale',cat:'verdure',kcal:25,p:2,c:4,f:0.5},
-  {id:'pomodori_secchi',name:'Pomodori secchi',cat:'verdure',kcal:260,p:14,c:55,f:3},
-  {id:'sottaceti',name:'Verdure sottaceto miste',cat:'verdure',kcal:30,p:1,c:6,f:0.2},
-  {id:'verdure_grigliate',name:'Verdure grigliate (zucchine, melanzane, peperoni)',cat:'verdure',kcal:35,p:1.5,c:5,f:1},
-  {id:'crauti',name:'Crauti',cat:'verdure',kcal:20,p:1,c:3.5,f:0.2},
-  {id:'curgette',name:'Zucchine (cotto)',cat:'verdure',kcal:18,p:1.5,c:3,f:0.3},
-  {id:'kale',name:'Cavolo riccio (kale)',cat:'verdure',kcal:35,p:3,c:4.5,f:0.5},
-  {id:'invidia_riccia',name:'Indivia riccia',cat:'verdure',kcal:17,p:1.3,c:3,f:0.2},
-  {id:'borlotti_freschi',name:'Borlotti freschi (sgranati)',cat:'verdure',kcal:130,p:9,c:23,f:0.5},
-  {id:'tartufo_nero',name:'Tartufo nero',cat:'verdure',kcal:30,p:6,c:0,f:0.5},
-  {id:'wakame',name:'Alga wakame (idratata)',cat:'verdure',kcal:45,p:3,c:9,f:0.6},
-  {id:'mela',name:'Mela',cat:'frutta',kcal:50,p:0.3,c:13,f:0.2},
-  {id:'pera',name:'Pera',cat:'frutta',kcal:55,p:0.4,c:14,f:0.2},
-  {id:'banana',name:'Banana',cat:'frutta',kcal:90,p:1.2,c:23,f:0.3},
-  {id:'arancia',name:'Arancia',cat:'frutta',kcal:42,p:1,c:9,f:0.2},
-  {id:'mandarino',name:'Mandarino',cat:'frutta',kcal:50,p:0.8,c:11,f:0.3},
-  {id:'clementina',name:'Clementina',cat:'frutta',kcal:50,p:0.9,c:12,f:0.2},
-  {id:'limone',name:'Limone',cat:'frutta',kcal:30,p:1,c:8,f:0.3},
-  {id:'pompelmo',name:'Pompelmo',cat:'frutta',kcal:35,p:0.6,c:7,f:0.1},
-  {id:'kiwi',name:'Kiwi',cat:'frutta',kcal:60,p:1,c:14,f:0.4},
-  {id:'fragole',name:'Fragole',cat:'frutta',kcal:30,p:0.7,c:7,f:0.3},
-  {id:'lamponi',name:'Lamponi',cat:'frutta',kcal:35,p:1,c:8,f:0.4},
-  {id:'mirtilli',name:'Mirtilli',cat:'frutta',kcal:45,p:0.7,c:11,f:0.3},
-  {id:'more',name:'More',cat:'frutta',kcal:43,p:1.4,c:10,f:0.5},
-  {id:'ribes',name:'Ribes',cat:'frutta',kcal:33,p:0.9,c:7,f:0.2},
-  {id:'frutti_bosco_misti',name:'Frutti di bosco misti',cat:'frutta',kcal:40,p:1,c:9,f:0.3},
-  {id:'uva',name:'Uva',cat:'frutta',kcal:62,p:0.5,c:16,f:0.2},
-  {id:'uva_passa',name:'Uvetta passa',cat:'frutta',kcal:300,p:3,c:75,f:0.5},
-  {id:'pesca',name:'Pesca',cat:'frutta',kcal:40,p:0.9,c:9,f:0.3},
-  {id:'nettarina',name:'Nettarina',cat:'frutta',kcal:43,p:1,c:10,f:0.3},
-  {id:'albicocca',name:'Albicocca',cat:'frutta',kcal:48,p:1,c:11,f:0.4},
-  {id:'albicocche_secche',name:'Albicocche secche',cat:'frutta',kcal:240,p:3.5,c:60,f:0.5},
-  {id:'prugna',name:'Prugna',cat:'frutta',kcal:46,p:0.8,c:11,f:0.3},
-  {id:'prugne_secche',name:'Prugne secche',cat:'frutta',kcal:240,p:2,c:60,f:0.5},
-  {id:'ciliegie',name:'Ciliegie',cat:'frutta',kcal:60,p:1,c:14,f:0.3},
-  {id:'cocomero',name:'Anguria (cocomero)',cat:'frutta',kcal:30,p:0.6,c:7,f:0.2},
-  {id:'melone_giallo',name:'Melone giallo',cat:'frutta',kcal:35,p:0.7,c:8,f:0.2},
-  {id:'melone_rosso',name:'Melone rosso (cantalupo)',cat:'frutta',kcal:33,p:0.8,c:7.5,f:0.2},
-  {id:'ananas',name:'Ananas',cat:'frutta',kcal:50,p:0.5,c:13,f:0.1},
-  {id:'mango',name:'Mango',cat:'frutta',kcal:60,p:0.8,c:15,f:0.4},
-  {id:'papaya',name:'Papaya',cat:'frutta',kcal:43,p:0.5,c:11,f:0.3},
-  {id:'avocado',name:'Avocado',cat:'frutta',kcal:160,p:2,c:9,f:15},
-  {id:'cocco_fresco',name:'Cocco fresco',cat:'frutta',kcal:355,p:3.5,c:15,f:33},
-  {id:'datteri',name:'Datteri',cat:'frutta',kcal:280,p:2.5,c:75,f:0.4},
-  {id:'fichi_freschi',name:'Fichi freschi',cat:'frutta',kcal:75,p:0.9,c:19,f:0.3},
-  {id:'fichi_secchi',name:'Fichi secchi',cat:'frutta',kcal:255,p:3.5,c:64,f:1},
-  {id:'cachi',name:'Cachi',cat:'frutta',kcal:65,p:0.6,c:16,f:0.2},
-  {id:'fichi_india',name:'Fichi d\'India',cat:'frutta',kcal:55,p:0.8,c:13,f:0.5},
-  {id:'melagrana',name:'Melograno (chicchi)',cat:'frutta',kcal:80,p:1.6,c:19,f:1},
-  {id:'noci',name:'Noci sgusciate',cat:'frutta',kcal:660,p:15,c:14,f:64},
-  {id:'mandorle',name:'Mandorle',cat:'frutta',kcal:580,p:21,c:22,f:50},
-  {id:'nocciole',name:'Nocciole',cat:'frutta',kcal:625,p:14,c:17,f:60},
-  {id:'pistacchi',name:'Pistacchi',cat:'frutta',kcal:560,p:21,c:28,f:45},
-  {id:'pinoli',name:'Pinoli',cat:'frutta',kcal:670,p:14,c:13,f:68},
-  {id:'noci_brasile',name:'Noci del Brasile',cat:'frutta',kcal:660,p:14,c:12,f:67},
-  {id:'noci_macadamia',name:'Noci di macadamia',cat:'frutta',kcal:720,p:8,c:14,f:76},
-  {id:'noci_pecan',name:'Noci pecan',cat:'frutta',kcal:690,p:9,c:14,f:72},
-  {id:'anacardi',name:'Anacardi',cat:'frutta',kcal:570,p:18,c:30,f:43},
-  {id:'arachidi',name:'Arachidi (con pelle)',cat:'frutta',kcal:600,p:26,c:16,f:50},
-  {id:'arachidi_tostate',name:'Arachidi tostate salate',cat:'frutta',kcal:625,p:27,c:18,f:50},
-  {id:'burro_arachidi',name:'Burro di arachidi (100% arachidi)',cat:'frutta',kcal:600,p:25,c:14,f:50},
-  {id:'burro_mandorle',name:'Burro di mandorle',cat:'frutta',kcal:615,p:21,c:19,f:55},
-  {id:'semi_lino',name:'Semi di lino',cat:'frutta',kcal:530,p:18,c:29,f:42},
-  {id:'semi_chia',name:'Semi di chia',cat:'frutta',kcal:485,p:17,c:42,f:31},
-  {id:'semi_zucca',name:'Semi di zucca',cat:'frutta',kcal:565,p:30,c:14,f:46},
-  {id:'semi_girasole',name:'Semi di girasole',cat:'frutta',kcal:585,p:21,c:20,f:51},
-  {id:'semi_sesamo',name:'Semi di sesamo',cat:'frutta',kcal:570,p:18,c:23,f:50},
-  {id:'semi_canapa',name:'Semi di canapa decorticati',cat:'frutta',kcal:560,p:32,c:9,f:48},
-  {id:'cocco_grattugiato',name:'Cocco essiccato grattugiato',cat:'frutta',kcal:660,p:7,c:23,f:65},
-  {id:'gelso',name:'Gelso bianco essiccato',cat:'frutta',kcal:340,p:10,c:70,f:2},
-  {id:'goji',name:'Bacche di goji essiccate',cat:'frutta',kcal:340,p:14,c:65,f:1},
-  {id:'mela_cotta',name:'Mela cotta (al forno senza zucchero)',cat:'frutta',kcal:55,p:0.4,c:14,f:0.2},
-  {id:'macedonia',name:'Macedonia di frutta fresca',cat:'frutta',kcal:50,p:0.8,c:13,f:0.2},
-  {id:'spremuta_arancia',name:'Spremuta d\'arancia fresca',cat:'frutta',kcal:42,p:0.7,c:9,f:0.2},
-  {id:'centrifuga_misc',name:'Centrifugato misto frutta+verdura',cat:'frutta',kcal:35,p:1,c:8,f:0.2},
-  {id:'frutta_sciroppo',name:'Frutta sciroppata (sgocciolata)',cat:'frutta',kcal:80,p:0.5,c:20,f:0.2},
-  {id:'mela_disidratata',name:'Chips di mela essiccata',cat:'frutta',kcal:330,p:1,c:80,f:0.5},
-  {id:'banana_essicc',name:'Banana essiccata',cat:'frutta',kcal:340,p:3.5,c:80,f:1.5},
-  {id:'frutta_secca_mix',name:'Mix frutta secca (noci, mandorle, nocciole)',cat:'frutta',kcal:620,p:18,c:18,f:55},
-  {id:'tropical_mix',name:'Mix frutta tropicale essiccata',cat:'frutta',kcal:340,p:3,c:75,f:1.5},
-  {id:'olio_evo',name:'Olio extravergine di oliva',cat:'condimenti',kcal:900,p:0,c:0,f:100},
-  {id:'olio_oliva',name:'Olio di oliva',cat:'condimenti',kcal:900,p:0,c:0,f:100},
-  {id:'olio_semi_girasole',name:'Olio di semi di girasole',cat:'condimenti',kcal:900,p:0,c:0,f:100},
-  {id:'olio_cocco',name:'Olio di cocco',cat:'condimenti',kcal:900,p:0,c:0,f:100},
-  {id:'olio_lino',name:'Olio di semi di lino',cat:'condimenti',kcal:900,p:0,c:0,f:100},
-  {id:'aceto_vino',name:'Aceto di vino',cat:'condimenti',kcal:20,p:0,c:1,f:0},
-  {id:'aceto_balsamico',name:'Aceto balsamico tradizionale',cat:'condimenti',kcal:90,p:0.5,c:17,f:0},
-  {id:'aceto_mele',name:'Aceto di mele',cat:'condimenti',kcal:22,p:0,c:0.9,f:0},
-  {id:'sale',name:'Sale',cat:'condimenti',kcal:0,p:0,c:0,f:0},
-  {id:'pepe_nero',name:'Pepe nero',cat:'condimenti',kcal:255,p:11,c:65,f:3},
-  {id:'maionese',name:'Maionese classica',cat:'condimenti',kcal:680,p:1,c:1,f:75},
-  {id:'maionese_light',name:'Maionese light',cat:'condimenti',kcal:300,p:1,c:7,f:30},
-  {id:'ketchup',name:'Ketchup',cat:'condimenti',kcal:100,p:1,c:24,f:0.2},
-  {id:'mostarda_senape',name:'Senape (mostarda)',cat:'condimenti',kcal:90,p:5,c:6,f:5},
-  {id:'salsa_soia',name:'Salsa di soia',cat:'condimenti',kcal:55,p:8,c:6,f:0.1},
-  {id:'pesto_genovese',name:'Pesto genovese',cat:'condimenti',kcal:435,p:6,c:5,f:43},
-  {id:'sugo_pomodoro',name:'Sugo di pomodoro pronto',cat:'condimenti',kcal:65,p:1.5,c:7,f:3},
-  {id:'sugo_arrabbiata',name:'Sugo arrabbiata',cat:'condimenti',kcal:75,p:1.5,c:8,f:4},
-  {id:'sugo_funghi',name:'Sugo ai funghi pronto',cat:'condimenti',kcal:80,p:2,c:6,f:5},
-  {id:'salsa_yogurt',name:'Salsa allo yogurt',cat:'condimenti',kcal:80,p:3,c:5,f:5},
-  {id:'tahina',name:'Tahina (crema di sesamo)',cat:'condimenti',kcal:600,p:17,c:21,f:53},
-  {id:'zucchero_bianco',name:'Zucchero semolato',cat:'condimenti',kcal:400,p:0,c:100,f:0},
-  {id:'zucchero_canna',name:'Zucchero di canna',cat:'condimenti',kcal:395,p:0,c:99,f:0},
-  {id:'miele',name:'Miele',cat:'condimenti',kcal:305,p:0.6,c:80,f:0},
-  {id:'sciroppo_acero',name:'Sciroppo d\'acero',cat:'condimenti',kcal:260,p:0,c:67,f:0},
-  {id:'marmellata_classica',name:'Marmellata di frutta',cat:'condimenti',kcal:240,p:0.5,c:60,f:0.1},
-  {id:'marmellata_zerozuccheri',name:'Marmellata 100% frutta',cat:'condimenti',kcal:170,p:0.5,c:42,f:0.1},
-  {id:'crema_nocciola',name:'Crema di nocciole spalmabile (Nutella stile)',cat:'condimenti',kcal:540,p:6,c:57,f:31},
-  {id:'cioccolato_fondente_70',name:'Cioccolato fondente 70%',cat:'condimenti',kcal:570,p:8,c:32,f:43},
-  {id:'cioccolato_fondente_85',name:'Cioccolato fondente 85%',cat:'condimenti',kcal:600,p:11,c:18,f:50},
-  {id:'cioccolato_latte',name:'Cioccolato al latte',cat:'condimenti',kcal:535,p:8,c:55,f:30},
-  {id:'cacao_amaro',name:'Cacao amaro in polvere',cat:'condimenti',kcal:230,p:20,c:14,f:14},
-  {id:'acqua',name:'Acqua',cat:'bevande',kcal:0,p:0,c:0,f:0},
-  {id:'acqua_frizzante',name:'Acqua frizzante',cat:'bevande',kcal:0,p:0,c:0,f:0},
-  {id:'caffe_espresso',name:'Caffè espresso (senza zucchero)',cat:'bevande',kcal:2,p:0.1,c:0.3,f:0},
-  {id:'caffe_americano',name:'Caffè americano',cat:'bevande',kcal:2,p:0.1,c:0,f:0},
-  {id:'macchiato',name:'Caffè macchiato',cat:'bevande',kcal:15,p:0.7,c:1,f:1},
-  {id:'orzo_solubile',name:'Orzo solubile (preparato)',cat:'bevande',kcal:5,p:0.2,c:1,f:0},
-  {id:'te_verde',name:'Tè verde',cat:'bevande',kcal:1,p:0,c:0,f:0},
-  {id:'te_nero',name:'Tè nero',cat:'bevande',kcal:1,p:0,c:0,f:0},
-  {id:'tisana',name:'Tisana (senza zucchero)',cat:'bevande',kcal:1,p:0,c:0,f:0},
-  {id:'spremuta_arancia_v2',name:'Succo d\'arancia confezionato',cat:'bevande',kcal:45,p:0.7,c:10,f:0.1},
-  {id:'succo_mela',name:'Succo di mela',cat:'bevande',kcal:50,p:0.1,c:12,f:0.1},
-  {id:'succo_ace',name:'Succo ACE',cat:'bevande',kcal:50,p:0.5,c:11,f:0.1},
-  {id:'coca_cola',name:'Coca Cola',cat:'bevande',kcal:42,p:0,c:11,f:0},
-  {id:'coca_cola_zero',name:'Coca Cola Zero',cat:'bevande',kcal:0.3,p:0,c:0,f:0},
-  {id:'limonata',name:'Limonata zuccherata',cat:'bevande',kcal:40,p:0,c:10,f:0},
-  {id:'gatorade',name:'Bevanda sportiva (Gatorade tipo)',cat:'bevande',kcal:25,p:0,c:6,f:0},
-  {id:'redbull',name:'Energy drink (Red Bull)',cat:'bevande',kcal:45,p:0,c:11,f:0},
-  {id:'birra_chiara',name:'Birra chiara (~5° alcol)',cat:'bevande',kcal:43,p:0.5,c:3.5,f:0},
-  {id:'birra_doppio_malto',name:'Birra doppio malto',cat:'bevande',kcal:60,p:0.5,c:5,f:0},
-  {id:'vino_rosso',name:'Vino rosso',cat:'bevande',kcal:80,p:0.1,c:2.5,f:0},
-  {id:'vino_bianco',name:'Vino bianco secco',cat:'bevande',kcal:80,p:0.1,c:0.6,f:0},
-  {id:'prosecco',name:'Prosecco/Spumante',cat:'bevande',kcal:80,p:0.1,c:1.5,f:0},
-  {id:'aperol_spritz',name:'Spritz (aperol+prosecco+soda)',cat:'bevande',kcal:130,p:0.1,c:14,f:0},
-  {id:'whey_isolate',name:'Whey isolate (in polvere)',cat:'bevande',kcal:380,p:88,c:5,f:3},
-  {id:'whey_concentrate',name:'Whey concentrate (in polvere)',cat:'bevande',kcal:400,p:80,c:8,f:6},
-  {id:'proteine_vegetali',name:'Proteine vegetali in polvere (pisello/riso)',cat:'bevande',kcal:380,p:78,c:10,f:3},
-  {id:'caseine',name:'Caseine in polvere',cat:'bevande',kcal:370,p:85,c:5,f:2},
-  {id:'creatina',name:'Creatina monoidrato (in polvere)',cat:'bevande',kcal:0,p:0,c:0,f:0},
-  {id:'bcaa',name:'BCAA in polvere (per dose 5g)',cat:'bevande',kcal:20,p:5,c:0,f:0},
-  {id:'latte_mandorla',name:'Bevanda di mandorla (non zuccherata)',cat:'bevande',kcal:15,p:0.5,c:0.4,f:1.2},
-  {id:'latte_avena',name:'Bevanda di avena',cat:'bevande',kcal:50,p:1,c:7,f:1.5},
-  {id:'latte_riso',name:'Bevanda di riso',cat:'bevande',kcal:50,p:0.3,c:10,f:1},
-  {id:'latte_cocco',name:'Bevanda di cocco (light)',cat:'bevande',kcal:25,p:0.2,c:3,f:1.2}
-  ,
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // FIX G — ESPANSIONE DB +200 CIBI (piatti regionali, pizze, dolci, gelati, fast food)
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  // ─── PIATTI ITALIANI TRADIZIONALI (primi cucinati) ───
-  {id:'pasta_carbonara',name:'Pasta alla carbonara (porzione)',cat:'piatti_pronti',kcal:175,p:8,c:18,f:8},
-  {id:'pasta_amatriciana',name:'Pasta all\'amatriciana',cat:'piatti_pronti',kcal:160,p:6,c:20,f:6},
-  {id:'pasta_cacio_pepe',name:'Pasta cacio e pepe',cat:'piatti_pronti',kcal:200,p:8,c:22,f:9},
-  {id:'pasta_pesto',name:'Pasta al pesto',cat:'piatti_pronti',kcal:180,p:6,c:22,f:8},
-  {id:'pasta_pomodoro',name:'Pasta al pomodoro (semplice)',cat:'piatti_pronti',kcal:130,p:4,c:25,f:2},
-  {id:'pasta_ragu',name:'Pasta al ragù (alla bolognese)',cat:'piatti_pronti',kcal:170,p:7,c:20,f:6},
-  {id:'pasta_arrabbiata',name:'Pasta all\'arrabbiata',cat:'piatti_pronti',kcal:140,p:5,c:24,f:3},
-  {id:'pasta_vongole',name:'Spaghetti alle vongole',cat:'piatti_pronti',kcal:155,p:8,c:22,f:4},
-  {id:'lasagne_forno',name:'Lasagne al forno (porzione)',cat:'piatti_pronti',kcal:180,p:9,c:15,f:9},
-  {id:'cannelloni',name:'Cannelloni al forno',cat:'piatti_pronti',kcal:170,p:8,c:16,f:8},
-  {id:'gnocchi_sugo',name:'Gnocchi al pomodoro',cat:'piatti_pronti',kcal:150,p:4,c:27,f:3},
-  {id:'gnocchi_gorgo',name:'Gnocchi al gorgonzola',cat:'piatti_pronti',kcal:210,p:7,c:22,f:11},
-  {id:'tortellini_brodo',name:'Tortellini in brodo',cat:'piatti_pronti',kcal:120,p:6,c:16,f:3},
-  {id:'tortellini_panna',name:'Tortellini panna e prosciutto',cat:'piatti_pronti',kcal:220,p:9,c:20,f:12},
-  {id:'ravioli_burro',name:'Ravioli burro e salvia',cat:'piatti_pronti',kcal:200,p:7,c:22,f:10},
-  {id:'risotto_milanese',name:'Risotto alla milanese',cat:'piatti_pronti',kcal:160,p:4,c:22,f:6},
-  {id:'risotto_funghi',name:'Risotto ai funghi porcini',cat:'piatti_pronti',kcal:155,p:4,c:23,f:5},
-  {id:'risotto_pesce',name:'Risotto ai frutti di mare',cat:'piatti_pronti',kcal:145,p:7,c:22,f:3},
-  {id:'orzotto',name:'Orzotto alle verdure',cat:'piatti_pronti',kcal:125,p:4,c:22,f:2},
-  {id:'minestrone',name:'Minestrone di verdure',cat:'piatti_pronti',kcal:60,p:3,c:10,f:1.5},
-  {id:'pasta_fagioli',name:'Pasta e fagioli',cat:'piatti_pronti',kcal:110,p:5,c:18,f:2},
-  {id:'pasta_ceci',name:'Pasta e ceci',cat:'piatti_pronti',kcal:115,p:5,c:19,f:2},
-  {id:'zuppa_lenticchie',name:'Zuppa di lenticchie',cat:'piatti_pronti',kcal:90,p:6,c:14,f:1},
-  {id:'minestra_riso',name:'Minestra di riso e patate',cat:'piatti_pronti',kcal:85,p:2,c:17,f:0.5},
-
-  // ─── SECONDI CUCINATI ───
-  {id:'cotoletta_milanese',name:'Cotoletta alla milanese (porzione)',cat:'piatti_pronti',kcal:290,p:22,c:12,f:17},
-  {id:'saltimbocca',name:'Saltimbocca alla romana',cat:'piatti_pronti',kcal:210,p:24,c:2,f:12},
-  {id:'scaloppine',name:'Scaloppine al limone',cat:'piatti_pronti',kcal:180,p:22,c:5,f:8},
-  {id:'ossobuco',name:'Ossobuco con gremolata',cat:'piatti_pronti',kcal:220,p:20,c:3,f:14},
-  {id:'pollo_arrosto',name:'Pollo arrosto (con pelle)',cat:'piatti_pronti',kcal:215,p:27,c:0,f:12},
-  {id:'pollo_parmigiana',name:'Pollo alla parmigiana',cat:'piatti_pronti',kcal:240,p:24,c:8,f:13},
-  {id:'polpette_sugo',name:'Polpette al sugo',cat:'piatti_pronti',kcal:200,p:15,c:8,f:12},
-  {id:'polpettone',name:'Polpettone al forno',cat:'piatti_pronti',kcal:230,p:18,c:10,f:13},
-  {id:'arrosto_vitello',name:'Arrosto di vitello',cat:'piatti_pronti',kcal:190,p:28,c:0,f:9},
-  {id:'brasato',name:'Brasato al vino',cat:'piatti_pronti',kcal:240,p:26,c:4,f:13},
-  {id:'parmigiana_melanzane',name:'Parmigiana di melanzane',cat:'piatti_pronti',kcal:180,p:8,c:10,f:13},
-  {id:'melanzane_forno',name:'Melanzane al funghetto',cat:'piatti_pronti',kcal:95,p:2,c:8,f:6},
-  {id:'caponata',name:'Caponata siciliana',cat:'piatti_pronti',kcal:130,p:2,c:12,f:8},
-  {id:'peperonata',name:'Peperonata',cat:'piatti_pronti',kcal:75,p:2,c:9,f:4},
-  {id:'frittata_patate',name:'Frittata di patate',cat:'piatti_pronti',kcal:180,p:9,c:12,f:11},
-  {id:'frittata_zucchine',name:'Frittata di zucchine',cat:'piatti_pronti',kcal:140,p:10,c:5,f:9},
-  {id:'fritto_misto',name:'Fritto misto di pesce',cat:'piatti_pronti',kcal:260,p:18,c:10,f:17},
-  {id:'insalata_mare',name:'Insalata di mare',cat:'piatti_pronti',kcal:120,p:15,c:5,f:4},
-  {id:'orata_forno',name:'Orata al forno con patate',cat:'piatti_pronti',kcal:145,p:18,c:10,f:4},
-
-  // ─── PIZZE (per porzione intera ~300g) ───
-  {id:'pizza_margherita',name:'Pizza margherita (intera)',cat:'pizze',kcal:270,p:10,c:34,f:10},
-  {id:'pizza_marinara',name:'Pizza marinara (intera)',cat:'pizze',kcal:220,p:7,c:38,f:5},
-  {id:'pizza_napoli',name:'Pizza napoli (acciughe, capperi)',cat:'pizze',kcal:255,p:11,c:33,f:9},
-  {id:'pizza_diavola',name:'Pizza diavola (salame piccante)',cat:'pizze',kcal:295,p:13,c:33,f:13},
-  {id:'pizza_quattro_stagioni',name:'Pizza quattro stagioni',cat:'pizze',kcal:275,p:12,c:32,f:11},
-  {id:'pizza_quattro_formaggi',name:'Pizza quattro formaggi',cat:'pizze',kcal:320,p:14,c:30,f:16},
-  {id:'pizza_capricciosa',name:'Pizza capricciosa',cat:'pizze',kcal:285,p:13,c:31,f:12},
-  {id:'pizza_prosciutto',name:'Pizza prosciutto cotto',cat:'pizze',kcal:260,p:12,c:32,f:10},
-  {id:'pizza_prosciutto_funghi',name:'Pizza prosciutto e funghi',cat:'pizze',kcal:270,p:13,c:31,f:11},
-  {id:'pizza_bufalina',name:'Pizza bufalina (bufala DOP)',cat:'pizze',kcal:290,p:13,c:30,f:13},
-  {id:'pizza_tonno_cipolla',name:'Pizza tonno e cipolla',cat:'pizze',kcal:260,p:14,c:32,f:9},
-  {id:'pizza_vegetariana',name:'Pizza vegetariana',cat:'pizze',kcal:245,p:9,c:33,f:9},
-  {id:'pizza_bianca',name:'Pizza bianca (focaccia)',cat:'pizze',kcal:265,p:7,c:42,f:8},
-  {id:'pizza_wurstel_patate',name:'Pizza wurstel e patatine',cat:'pizze',kcal:310,p:12,c:32,f:16},
-  {id:'pizza_trancio',name:'Trancio di pizza al taglio (100g)',cat:'pizze',kcal:250,p:9,c:32,f:10},
-  {id:'focaccia_ligure',name:'Focaccia con cipolle',cat:'pizze',kcal:275,p:7,c:40,f:10},
-  {id:'calzone',name:'Calzone (ripieno)',cat:'pizze',kcal:285,p:13,c:32,f:12},
-
-  // ─── DOLCI TRADIZIONALI ITALIANI ───
-  {id:'tiramisu_porzione',name:'Tiramisù (porzione)',cat:'dolci',kcal:290,p:6,c:30,f:16},
-  {id:'cannolo_siciliano',name:'Cannolo siciliano (1 pz)',cat:'dolci',kcal:210,p:4,c:22,f:12},
-  {id:'cassata',name:'Cassata siciliana (fetta)',cat:'dolci',kcal:310,p:6,c:45,f:12},
-  {id:'baba_rum',name:'Babà al rum (1 pz)',cat:'dolci',kcal:250,p:5,c:38,f:9},
-  {id:'sfogliatella',name:'Sfogliatella (1 pz)',cat:'dolci',kcal:280,p:5,c:35,f:13},
-  {id:'pastiera',name:'Pastiera napoletana (fetta)',cat:'dolci',kcal:310,p:7,c:38,f:14},
-  {id:'panettone',name:'Panettone (fetta 80g)',cat:'dolci',kcal:335,p:6,c:50,f:12},
-  {id:'pandoro',name:'Pandoro (fetta 80g)',cat:'dolci',kcal:370,p:6,c:45,f:18},
-  {id:'colomba',name:'Colomba pasquale (fetta)',cat:'dolci',kcal:340,p:6,c:50,f:13},
-  {id:'torta_nonna',name:'Torta della nonna (fetta)',cat:'dolci',kcal:300,p:6,c:35,f:15},
-  {id:'crostata_marmellata',name:'Crostata alla marmellata',cat:'dolci',kcal:340,p:5,c:50,f:13},
-  {id:'crostata_frutta',name:'Crostata di frutta',cat:'dolci',kcal:260,p:4,c:38,f:11},
-  {id:'torta_mele',name:'Torta di mele (fetta)',cat:'dolci',kcal:240,p:4,c:35,f:9},
-  {id:'torta_cioccolato',name:'Torta al cioccolato (fetta)',cat:'dolci',kcal:370,p:5,c:40,f:22},
-  {id:'millefoglie',name:'Millefoglie (1 pz)',cat:'dolci',kcal:380,p:5,c:38,f:24},
-  {id:'profiterole',name:'Profiteroles (porzione)',cat:'dolci',kcal:350,p:7,c:32,f:21},
-  {id:'zuppa_inglese',name:'Zuppa inglese (porzione)',cat:'dolci',kcal:270,p:7,c:35,f:10},
-  {id:'panna_cotta',name:'Panna cotta (porzione)',cat:'dolci',kcal:220,p:4,c:20,f:14},
-  {id:'creme_caramel',name:'Crème caramel (1 pz)',cat:'dolci',kcal:150,p:5,c:22,f:4},
-  {id:'mousse_cioccolato',name:'Mousse al cioccolato',cat:'dolci',kcal:280,p:5,c:25,f:18},
-  {id:'bignè',name:'Bignè con crema (1 pz)',cat:'dolci',kcal:110,p:2,c:10,f:7},
-  {id:'pasticcino',name:'Pasticcino mignon (1 pz)',cat:'dolci',kcal:90,p:1.5,c:10,f:5},
-  {id:'budino_cioccolato',name:'Budino al cioccolato (vasetto)',cat:'dolci',kcal:180,p:4,c:25,f:7},
-
-  // ─── GELATI ───
-  {id:'gelato_cono_1',name:'Cono gelato 1 gusto (piccolo)',cat:'gelati',kcal:130,p:3,c:18,f:5},
-  {id:'gelato_cono_2',name:'Cono gelato 2 gusti (medio)',cat:'gelati',kcal:260,p:5,c:36,f:10},
-  {id:'gelato_cono_3',name:'Cono gelato 3 gusti (grande)',cat:'gelati',kcal:390,p:7,c:54,f:15},
-  {id:'gelato_coppetta_piccola',name:'Coppetta gelato piccola (100g)',cat:'gelati',kcal:230,p:4,c:32,f:9},
-  {id:'gelato_coppetta_media',name:'Coppetta gelato media (200g)',cat:'gelati',kcal:460,p:8,c:64,f:18},
-  {id:'gelato_fior_latte',name:'Gelato fior di latte (100g)',cat:'gelati',kcal:220,p:4,c:25,f:11},
-  {id:'gelato_cioccolato',name:'Gelato al cioccolato (100g)',cat:'gelati',kcal:240,p:4,c:30,f:12},
-  {id:'gelato_pistacchio',name:'Gelato al pistacchio (100g)',cat:'gelati',kcal:250,p:5,c:25,f:14},
-  {id:'gelato_nocciola',name:'Gelato alla nocciola (100g)',cat:'gelati',kcal:245,p:5,c:25,f:14},
-  {id:'sorbetto_limone',name:'Sorbetto al limone (100g)',cat:'gelati',kcal:130,p:0.5,c:32,f:0},
-  {id:'ghiacciolo',name:'Ghiacciolo (1 stecco)',cat:'gelati',kcal:70,p:0,c:17,f:0},
-  {id:'cornetto_algida',name:'Cornetto Algida Classico (1 pz)',cat:'gelati',kcal:270,p:3,c:32,f:14},
-  {id:'magnum',name:'Magnum Classic (1 pz)',cat:'gelati',kcal:270,p:3,c:25,f:18},
-  {id:'magnum_mandorla',name:'Magnum alla mandorla (1 pz)',cat:'gelati',kcal:290,p:4,c:26,f:19},
-  {id:'calippo',name:'Calippo (1 stecco)',cat:'gelati',kcal:95,p:0,c:22,f:0},
-  {id:'cucciolone',name:'Cucciolone Algida (1 pz)',cat:'gelati',kcal:190,p:3,c:26,f:8},
-  {id:'mega_algida',name:'Mega Algida (1 pz)',cat:'gelati',kcal:175,p:2.5,c:20,f:9},
-  {id:'affogato',name:'Affogato al caffè',cat:'gelati',kcal:260,p:4,c:30,f:13},
-
-  // ─── FAST FOOD ───
-  {id:'big_mac',name:'Big Mac (McDonald\'s, 1 pz)',cat:'fast_food',kcal:510,p:25,c:45,f:26},
-  {id:'mcchicken',name:'McChicken (McDonald\'s, 1 pz)',cat:'fast_food',kcal:400,p:15,c:41,f:19},
-  {id:'mcrib',name:'McRib (McDonald\'s, 1 pz)',cat:'fast_food',kcal:480,p:22,c:44,f:24},
-  {id:'cheeseburger',name:'Cheeseburger semplice (1 pz)',cat:'fast_food',kcal:300,p:15,c:32,f:13},
-  {id:'hamburger_medio',name:'Hamburger medio con contorno',cat:'fast_food',kcal:540,p:28,c:45,f:28},
-  {id:'whopper',name:'Whopper (Burger King, 1 pz)',cat:'fast_food',kcal:660,p:28,c:49,f:40},
-  {id:'patatine_piccole',name:'Patatine fritte piccole (porzione)',cat:'fast_food',kcal:230,p:3,c:30,f:11},
-  {id:'patatine_medie',name:'Patatine fritte medie',cat:'fast_food',kcal:340,p:4,c:43,f:16},
-  {id:'patatine_grandi',name:'Patatine fritte grandi',cat:'fast_food',kcal:490,p:6,c:63,f:23},
-  {id:'chicken_nuggets_6',name:'Chicken nuggets 6 pezzi',cat:'fast_food',kcal:270,p:13,c:16,f:17},
-  {id:'chicken_nuggets_9',name:'Chicken nuggets 9 pezzi',cat:'fast_food',kcal:400,p:20,c:24,f:25},
-  {id:'mcmenu_medio',name:'McMenu medio (panino+patatine+bibita)',cat:'fast_food',kcal:1050,p:30,c:120,f:47},
-  {id:'kebab_panino',name:'Kebab in panino',cat:'fast_food',kcal:620,p:35,c:60,f:28},
-  {id:'kebab_piadina',name:'Kebab in piadina',cat:'fast_food',kcal:680,p:32,c:70,f:30},
-  {id:'piadina_nutella',name:'Piadina con Nutella',cat:'fast_food',kcal:540,p:9,c:75,f:22},
-  {id:'panino_salame',name:'Panino con salame',cat:'fast_food',kcal:430,p:18,c:40,f:22},
-  {id:'panino_prosciutto',name:'Panino prosciutto crudo e mozzarella',cat:'fast_food',kcal:430,p:22,c:40,f:20},
-  {id:'panino_porchetta',name:'Panino con porchetta',cat:'fast_food',kcal:520,p:22,c:42,f:27},
-  {id:'hotdog',name:'Hot dog',cat:'fast_food',kcal:290,p:10,c:24,f:18},
-  {id:'fishburger',name:'Fish burger',cat:'fast_food',kcal:370,p:15,c:38,f:17},
-
-  // ─── SNACK E JUNK FOOD ───
-  {id:'patatine_chips_bag',name:'Patatine chips busta piccola (25g)',cat:'snack',kcal:135,p:1.5,c:13,f:8},
-  {id:'patatine_chips_100',name:'Patatine chips (100g)',cat:'snack',kcal:540,p:6,c:50,f:34},
-  {id:'nachos',name:'Nachos con formaggio',cat:'snack',kcal:290,p:6,c:30,f:16},
-  {id:'popcorn_dolci',name:'Popcorn dolci (100g)',cat:'snack',kcal:480,p:8,c:70,f:19},
-  {id:'popcorn_salati',name:'Popcorn salati (100g)',cat:'snack',kcal:440,p:11,c:55,f:21},
-  {id:'kinder_bueno',name:'Kinder Bueno (1 barretta)',cat:'snack',kcal:110,p:2,c:10,f:7},
-  {id:'snickers',name:'Snickers (1 pz 50g)',cat:'snack',kcal:250,p:4,c:30,f:13},
-  {id:'mars',name:'Mars (1 pz 50g)',cat:'snack',kcal:230,p:2,c:32,f:9},
-  {id:'twix',name:'Twix (1 pz 50g)',cat:'snack',kcal:250,p:2,c:33,f:12},
-  {id:'kitkat',name:'KitKat (1 barretta 4 dita)',cat:'snack',kcal:210,p:3,c:26,f:11},
-  {id:'bounty',name:'Bounty (1 barretta)',cat:'snack',kcal:270,p:2,c:30,f:15},
-  {id:'ferrero_rocher',name:'Ferrero Rocher (1 pz)',cat:'snack',kcal:75,p:1,c:6,f:5},
-  {id:'m_and_m',name:'M&M\'s cioccolato (1 bustina 45g)',cat:'snack',kcal:220,p:2,c:30,f:10},
-  {id:'nutella_100g',name:'Nutella (100g)',cat:'snack',kcal:540,p:6,c:58,f:31},
-  {id:'cioccolato_latte_25g',name:'Cioccolato al latte (25g, 1 fila)',cat:'snack',kcal:140,p:2,c:14,f:8},
-  {id:'cioccolato_fond_25g',name:'Cioccolato fondente 70% (25g)',cat:'snack',kcal:145,p:2,c:10,f:10},
-  {id:'pringles_piccole',name:'Pringles busta piccola (40g)',cat:'snack',kcal:210,p:2,c:22,f:13},
-
-  // ─── COLAZIONE BAR / CAFFETTERIA ───
-  {id:'cappuccino',name:'Cappuccino (tazza)',cat:'bar',kcal:80,p:4,c:8,f:4},
-  {id:'caffe_latte',name:'Caffè latte (tazza)',cat:'bar',kcal:110,p:6,c:10,f:5},
-  {id:'latte_macchiato',name:'Latte macchiato',cat:'bar',kcal:100,p:5,c:9,f:5},
-  {id:'marocchino',name:'Marocchino',cat:'bar',kcal:90,p:2,c:10,f:5},
-  {id:'cornetto_vuoto',name:'Cornetto vuoto (1 pz)',cat:'bar',kcal:290,p:6,c:34,f:15},
-  {id:'cornetto_marmellata',name:'Cornetto alla marmellata',cat:'bar',kcal:330,p:6,c:42,f:14},
-  {id:'cornetto_crema',name:'Cornetto alla crema',cat:'bar',kcal:350,p:7,c:40,f:17},
-  {id:'cornetto_cioccolato',name:'Cornetto al cioccolato',cat:'bar',kcal:360,p:7,c:42,f:17},
-  {id:'cornetto_nutella',name:'Cornetto alla Nutella',cat:'bar',kcal:380,p:7,c:44,f:19},
-  {id:'brioche_crema',name:'Brioche con crema',cat:'bar',kcal:320,p:6,c:40,f:14},
-  {id:'veneziana',name:'Veneziana con glassa',cat:'bar',kcal:390,p:7,c:52,f:16},
-  {id:'ciambella_bar',name:'Ciambella al bar',cat:'bar',kcal:310,p:5,c:42,f:13},
-  {id:'pain_au_chocolat',name:'Pain au chocolat (1 pz)',cat:'bar',kcal:340,p:6,c:38,f:18},
-  {id:'trancio_torta_mele',name:'Trancio torta di mele bar',cat:'bar',kcal:280,p:4,c:38,f:12},
-  {id:'bomba_crema',name:'Bomba fritta alla crema',cat:'bar',kcal:370,p:6,c:45,f:18},
-  {id:'toast_prosciutto_form',name:'Toast prosciutto e formaggio',cat:'bar',kcal:360,p:18,c:32,f:17},
-  {id:'tramezzino_tonno',name:'Tramezzino tonno (1 pz)',cat:'bar',kcal:180,p:8,c:18,f:8},
-  {id:'tramezzino_prosciutto',name:'Tramezzino prosciutto (1 pz)',cat:'bar',kcal:170,p:8,c:18,f:7},
-  {id:'centrifuga_frutta',name:'Centrifuga frutta al bar',cat:'bar',kcal:120,p:1.5,c:28,f:0.3},
-
-  // ─── BIRRE E ALCOLICI (oltre quelli base) ───
-  {id:'birra_piccola',name:'Birra piccola (0.2L)',cat:'bevande',kcal:85,p:1,c:7,f:0},
-  {id:'birra_media',name:'Birra media (0.4L)',cat:'bevande',kcal:170,p:2,c:14,f:0},
-  {id:'birra_grande',name:'Birra grande (0.66L)',cat:'bevande',kcal:280,p:3,c:23,f:0},
-  {id:'vino_calice',name:'Vino (calice 150ml)',cat:'bevande',kcal:125,p:0,c:4,f:0},
-  {id:'vino_bicchiere',name:'Vino (bicchiere piccolo 100ml)',cat:'bevande',kcal:85,p:0,c:2.5,f:0},
-  {id:'spritz',name:'Spritz Aperol (aperitivo)',cat:'bevande',kcal:190,p:0,c:18,f:0},
-  {id:'negroni',name:'Negroni (cocktail)',cat:'bevande',kcal:220,p:0,c:14,f:0},
-  {id:'mojito',name:'Mojito',cat:'bevande',kcal:170,p:0,c:20,f:0},
-  {id:'amaro',name:'Amaro digestivo (40ml)',cat:'bevande',kcal:95,p:0,c:10,f:0},
-  {id:'grappa',name:'Grappa (30ml)',cat:'bevande',kcal:70,p:0,c:0,f:0},
-  {id:'prosecco_flute',name:'Prosecco flute (100ml)',cat:'bevande',kcal:80,p:0,c:3,f:0},
-
-  // ─── BIBITE E SUCCHI AGGIUNTIVI ───
-  {id:'cocacola_lattina',name:'Coca-Cola lattina (330ml)',cat:'bevande',kcal:140,p:0,c:35,f:0},
-  {id:'fanta_lattina',name:'Fanta lattina (330ml)',cat:'bevande',kcal:145,p:0,c:35,f:0},
-  {id:'sprite_lattina',name:'Sprite lattina (330ml)',cat:'bevande',kcal:130,p:0,c:34,f:0},
-  {id:'the_freddo',name:'Tè freddo pesca (bottiglia 500ml)',cat:'bevande',kcal:120,p:0,c:30,f:0},
-  {id:'succo_pesca',name:'Succo di pesca (bottiglia 200ml)',cat:'bevande',kcal:110,p:0,c:27,f:0},
-
-  // ─── FRUTTA PIATTI PRONTI ───
-  {id:'smoothie_frutta',name:'Smoothie frutta (300ml)',cat:'bevande',kcal:160,p:2,c:35,f:1},
-
-  // ─── PESCE / SUSHI ───
-  {id:'sushi_maki_8',name:'Sushi maki 8 pezzi',cat:'piatti_pronti',kcal:320,p:10,c:55,f:6},
-  {id:'sushi_nigiri_1',name:'Nigiri (1 pz)',cat:'piatti_pronti',kcal:45,p:3,c:7,f:0.5},
-  {id:'sashimi_salmone',name:'Sashimi di salmone (porzione)',cat:'pesce',kcal:165,p:22,c:0,f:8},
-  {id:'poke_bowl',name:'Poke bowl medio',cat:'piatti_pronti',kcal:580,p:28,c:70,f:18},
-  {id:'ramen',name:'Ramen (ciotola)',cat:'piatti_pronti',kcal:490,p:22,c:65,f:14},
-
-  // ─── ETNICO / INTERNAZIONALE ───
-  {id:'couscous_piatto',name:'Cous cous con verdure e carne',cat:'piatti_pronti',kcal:160,p:9,c:22,f:4},
-  {id:'paella',name:'Paella valenciana (porzione)',cat:'piatti_pronti',kcal:180,p:10,c:25,f:5},
-  {id:'tacos',name:'Tacos (1 pz)',cat:'piatti_pronti',kcal:170,p:8,c:15,f:8},
-  {id:'burrito',name:'Burrito (1 pz)',cat:'piatti_pronti',kcal:430,p:18,c:55,f:15},
-  // ─── BISCOTTI SPECIFICI MARCHE ───
-  {id:'mulino_bianco_pangocciolini',name:'Pan di stelle (3 biscotti)',cat:'dolci',kcal:130,p:2,c:18,f:5},
-  {id:'oro_saiwa',name:'Oro Saiwa (4 biscotti)',cat:'dolci',kcal:130,p:3,c:22,f:3},
-  {id:'galbusera_buondi',name:'Buondì Motta (1 pz)',cat:'dolci',kcal:155,p:2,c:22,f:6},
-  {id:'kinder_delice',name:'Kinder Delice (1 pz)',cat:'dolci',kcal:165,p:3,c:17,f:9},
-  {id:'kinder_brioss',name:'Kinder Brioss (1 pz)',cat:'dolci',kcal:125,p:3,c:16,f:5},
-  {id:'fiesta_ferrero',name:'Fiesta Ferrero (1 pz)',cat:'dolci',kcal:130,p:1,c:15,f:7},
-
-  // ─── PIATTI VEGETARIANI/VEGANI ALTERNATIVI ───
-  {id:'burger_vegetale',name:'Burger vegetale (1 pz)',cat:'piatti_pronti',kcal:230,p:20,c:10,f:13},
-  {id:'seitan_cucinato',name:'Seitan alla piastra (100g)',cat:'piatti_pronti',kcal:130,p:24,c:5,f:2},
-  {id:'tempeh_cucinato',name:'Tempeh marinato (100g)',cat:'piatti_pronti',kcal:195,p:20,c:9,f:11},
-  {id:'bowl_quinoa',name:'Bowl di quinoa con verdure',cat:'piatti_pronti',kcal:130,p:6,c:22,f:3},
-
-  // ═══ CIBI AGGIUNTI SESSIONE 2 ═══
-  // Street food italiano
-  {id:'maritozzo',name:'Maritozzo con panna',cat:'piatti_pronti',kcal:380,p:6,c:48,f:18},
-  {id:'arancino_ragu',name:'Arancino al ragù (100g)',cat:'piatti_pronti',kcal:230,p:8,c:32,f:8},
-  {id:'arancino_burro',name:'Arancino al burro (100g)',cat:'piatti_pronti',kcal:280,p:10,c:35,f:11},
-  {id:'suppli_classico',name:'Supplì al telefono',cat:'piatti_pronti',kcal:190,p:7,c:25,f:7},
-  {id:'panzerotto_pomodoro',name:'Panzerotto fritto pomodoro/mozzarella',cat:'piatti_pronti',kcal:340,p:11,c:32,f:18},
-  {id:'piadina_prosciutto',name:'Piadina prosciutto e stracchino',cat:'piatti_pronti',kcal:520,p:23,c:55,f:23},
-  {id:'piadina_vegetariana',name:'Piadina vegetariana',cat:'piatti_pronti',kcal:380,p:14,c:50,f:14},
-  {id:'focaccia_genovese',name:'Focaccia genovese (100g)',cat:'cereali',kcal:295,p:7,c:40,f:11},
-  // Polpette e secondi
-  {id:'polpetta_carne',name:'Polpetta di carne (50g)',cat:'carne',kcal:140,p:14,c:5,f:8},
-  {id:'cotoletta_pollo',name:'Cotoletta di pollo (150g)',cat:'piatti_pronti',kcal:340,p:35,c:14,f:17},
-
-  // Dolci specifici
-  {id:'biscotto_savoiardo',name:'Biscotto savoiardo (1 unità)',cat:'piatti_pronti',kcal:30,p:0.7,c:6,f:0.3},
-  {id:'colomba_pasquale',name:'Colomba pasquale (50g)',cat:'piatti_pronti',kcal:185,p:3,c:30,f:6},
-  {id:'pastiera_napoletana',name:'Pastiera napoletana (100g)',cat:'piatti_pronti',kcal:295,p:7,c:38,f:13},
-  {id:'zeppola_san_giuseppe',name:'Zeppola di San Giuseppe',cat:'piatti_pronti',kcal:280,p:5,c:30,f:16},
-
-  // Internazionali / fast food
-  {id:'kebap_pollo',name:'Kebap di pollo nel pane',cat:'piatti_pronti',kcal:550,p:38,c:55,f:18},
-  {id:'sushi_nigiri',name:'Sushi nigiri (1 pz, 30g)',cat:'piatti_pronti',kcal:50,p:3,c:8,f:0.5},
-  {id:'sushi_maki',name:'Sushi maki (1 pz, 25g)',cat:'piatti_pronti',kcal:45,p:1.5,c:8,f:0.5},
-  {id:'sushi_uramaki_salmone',name:'Uramaki salmone avocado (1 pz)',cat:'piatti_pronti',kcal:75,p:2.5,c:9,f:3},
-  {id:'sushi_temaki',name:'Temaki (cono di sushi)',cat:'piatti_pronti',kcal:160,p:7,c:18,f:6},
-  {id:'poke_classica',name:'Poke bowl classica',cat:'piatti_pronti',kcal:520,p:28,c:60,f:18},
-  {id:'hamburger_classico',name:'Hamburger classico (Big Mac style)',cat:'piatti_pronti',kcal:540,p:25,c:45,f:28},
-  {id:'patatine_mcdonalds',name:'Patatine fritte (porzione media)',cat:'piatti_pronti',kcal:340,p:4,c:43,f:17},
-  {id:'pizza_4_stagioni',name:'Pizza 4 stagioni',cat:'piatti_pronti',kcal:850,p:35,c:90,f:38},
-  {id:'calzone_classico',name:'Calzone al forno',cat:'piatti_pronti',kcal:780,p:30,c:80,f:36},
-
-  // ═══════════════════════════════════════════════════════════════════
-  // ESPANSIONE DB SESSIONE 23: +200 cibi italiani comuni e regionali
-  // ═══════════════════════════════════════════════════════════════════
-
-  // ── FORMATI PASTA MENO NOTI (cruda 100g) ──
-  {id:'strozzapreti',name:'Strozzapreti (crudo)',cat:'cereali',kcal:360,p:12,c:73,f:1.5},
-  {id:'orecchiette',name:'Orecchiette (crudo)',cat:'cereali',kcal:360,p:12,c:73,f:1.5},
-  {id:'trofie',name:'Trofie (crudo)',cat:'cereali',kcal:360,p:12,c:73,f:1.5},
-  {id:'paccheri',name:'Paccheri (crudo)',cat:'cereali',kcal:360,p:12,c:73,f:1.5},
-  {id:'pici',name:'Pici toscani (crudo)',cat:'cereali',kcal:360,p:12,c:73,f:1.5},
-  {id:'malloreddus',name:'Malloreddus sardi (crudo)',cat:'cereali',kcal:360,p:12,c:73,f:1.5},
-  {id:'cavatelli',name:'Cavatelli (crudo)',cat:'cereali',kcal:360,p:12,c:73,f:1.5},
-  {id:'busiate',name:'Busiate trapanesi (crudo)',cat:'cereali',kcal:360,p:12,c:73,f:1.5},
-  {id:'pizzoccheri',name:'Pizzoccheri valtellinesi (crudo)',cat:'cereali',kcal:345,p:13,c:68,f:2},
-  {id:'pappardelle',name:'Pappardelle all\'uovo (crudo)',cat:'cereali',kcal:370,p:13,c:71,f:3},
-  {id:'tagliatelle_uovo',name:'Tagliatelle all\'uovo (crudo)',cat:'cereali',kcal:370,p:13,c:71,f:3},
-  {id:'fettuccine_uovo',name:'Fettuccine all\'uovo (crudo)',cat:'cereali',kcal:370,p:13,c:71,f:3},
-  {id:'spaghetti_chitarra',name:'Spaghetti alla chitarra (crudo)',cat:'cereali',kcal:370,p:13,c:71,f:3},
-  {id:'ravioli_ricotta',name:'Ravioli ricotta e spinaci',cat:'cereali',kcal:265,p:11,c:38,f:7},
-  {id:'agnolotti',name:'Agnolotti del plin (con ripieno)',cat:'cereali',kcal:290,p:13,c:40,f:8},
-  {id:'gnocchi_zucca',name:'Gnocchi di zucca',cat:'cereali',kcal:140,p:3,c:28,f:1.5},
-  {id:'gnocchetti_sardi',name:'Gnocchetti sardi (crudo)',cat:'cereali',kcal:360,p:12,c:73,f:1.5},
-
-  // ── PASTA CONDITA (porzione 250g circa, kcal/100g del piatto pronto) ──
-  {id:'pasta_panna_speck',name:'Pasta panna e speck',cat:'piatti_pronti',kcal:210,p:8,c:22,f:10},
-  {id:'pasta_panna_prosciutto',name:'Pasta panna e prosciutto',cat:'piatti_pronti',kcal:195,p:8,c:22,f:9},
-  {id:'pasta_panna_salmone',name:'Pasta panna e salmone',cat:'piatti_pronti',kcal:220,p:10,c:21,f:11},
-  {id:'pasta_panna_funghi',name:'Pasta panna e funghi',cat:'piatti_pronti',kcal:185,p:6,c:23,f:8},
-  {id:'pasta_panna_zucchine',name:'Pasta panna e zucchine',cat:'piatti_pronti',kcal:170,p:6,c:22,f:7},
-  {id:'pasta_gricia',name:'Pasta alla gricia',cat:'piatti_pronti',kcal:200,p:9,c:24,f:9},
-  {id:'pasta_aglio_olio',name:'Pasta aglio, olio e peperoncino',cat:'piatti_pronti',kcal:170,p:5,c:23,f:7},
-  {id:'pasta_norma',name:'Pasta alla Norma',cat:'piatti_pronti',kcal:180,p:6,c:22,f:8},
-  {id:'pasta_pesto_trapanese',name:'Pasta al pesto trapanese',cat:'piatti_pronti',kcal:190,p:6,c:23,f:9},
-  {id:'pasta_scoglio',name:'Spaghetti allo scoglio',cat:'piatti_pronti',kcal:185,p:11,c:23,f:6},
-  {id:'pasta_ragu_bianco',name:'Pasta al ragù bianco di vitello',cat:'piatti_pronti',kcal:170,p:9,c:22,f:5},
-  {id:'pasta_puttanesca',name:'Pasta alla puttanesca',cat:'piatti_pronti',kcal:170,p:5,c:23,f:6},
-  {id:'pasta_4_formaggi',name:'Pasta ai 4 formaggi',cat:'piatti_pronti',kcal:220,p:10,c:22,f:11},
-  {id:'pasta_zucca',name:'Pasta con zucca e pancetta',cat:'piatti_pronti',kcal:185,p:7,c:24,f:7},
-  {id:'pasta_broccoli',name:'Pasta con broccoli e salsiccia',cat:'piatti_pronti',kcal:190,p:9,c:21,f:9},
-  {id:'pasta_tonno_pomodoro',name:'Pasta tonno e pomodoro',cat:'piatti_pronti',kcal:170,p:9,c:22,f:5},
-  {id:'pasta_genovese',name:'Pasta alla genovese (napoletana)',cat:'piatti_pronti',kcal:195,p:10,c:23,f:7},
-  {id:'pasta_sarde',name:'Pasta con le sarde (siciliana)',cat:'piatti_pronti',kcal:200,p:9,c:23,f:8},
-  {id:'pasta_pomodorini',name:'Pasta pomodorini e basilico',cat:'piatti_pronti',kcal:160,p:5,c:24,f:5},
-  {id:'pasta_lenticchie',name:'Pasta e lenticchie',cat:'piatti_pronti',kcal:140,p:8,c:22,f:3},
-  {id:'pasta_patate',name:'Pasta e patate (napoletana)',cat:'piatti_pronti',kcal:145,p:5,c:23,f:4},
-
-  // ── PRIMI ELABORATI ──
-  {id:'lasagna_classica',name:'Lasagne alla bolognese',cat:'piatti_pronti',kcal:210,p:10,c:18,f:11},
-  {id:'cannelloni_carne',name:'Cannelloni di carne',cat:'piatti_pronti',kcal:200,p:11,c:18,f:10},
-  {id:'risotto_radicchio',name:'Risotto radicchio e gorgonzola',cat:'piatti_pronti',kcal:175,p:6,c:24,f:6},
-  {id:'risotto_zucca',name:'Risotto alla zucca',cat:'piatti_pronti',kcal:155,p:4,c:26,f:4},
-  {id:'pasta_brodo',name:'Pastina in brodo',cat:'piatti_pronti',kcal:60,p:3,c:11,f:0.5},
-  {id:'stracciatella_brodo',name:'Stracciatella alla romana (in brodo)',cat:'piatti_pronti',kcal:85,p:7,c:5,f:5},
-
-  // ── SECONDI DI CARNE ──
-  {id:'brasato_barolo',name:'Brasato al Barolo',cat:'carne',kcal:240,p:28,c:3,f:13},
-  {id:'scaloppine_limone',name:'Scaloppine al limone',cat:'carne',kcal:175,p:25,c:3,f:7},
-  {id:'tagliata_manzo',name:'Tagliata di manzo',cat:'carne',kcal:220,p:30,c:0,f:11},
-  {id:'pollo_cacciatora',name:'Pollo alla cacciatora',cat:'carne',kcal:175,p:24,c:5,f:7},
-  {id:'pollo_marsala',name:'Pollo al marsala',cat:'carne',kcal:185,p:25,c:5,f:7},
-  {id:'arrosto_manzo',name:'Arrosto di manzo (cotto)',cat:'carne',kcal:215,p:30,c:1,f:10},
-  {id:'tacchino_arrosto',name:'Tacchino arrosto',cat:'carne',kcal:155,p:28,c:0,f:4},
-  {id:'spezzatino',name:'Spezzatino di manzo con patate',cat:'carne',kcal:185,p:18,c:10,f:9},
-  {id:'salsiccia_grigliata',name:'Salsiccia grigliata',cat:'carne',kcal:295,p:18,c:2,f:24},
-  {id:'arrosticini',name:'Arrosticini abruzzesi (4 spiedini)',cat:'carne',kcal:280,p:25,c:0,f:20},
-  {id:'bistecca_fiorentina',name:'Bistecca fiorentina (cotta)',cat:'carne',kcal:230,p:32,c:0,f:11},
-
-  // ── SECONDI DI PESCE ──
-  {id:'salmone_griglia',name:'Salmone alla griglia',cat:'pesce',kcal:215,p:22,c:0,f:14},
-  {id:'salmone_forno',name:'Salmone al forno',cat:'pesce',kcal:205,p:22,c:0,f:13},
-  {id:'branzino_forno',name:'Branzino al forno',cat:'pesce',kcal:135,p:23,c:0,f:5},
-  {id:'baccala_mantecato',name:'Baccalà mantecato',cat:'pesce',kcal:195,p:16,c:3,f:13},
-  {id:'sarde_beccafico',name:'Sarde a beccafico (siciliane)',cat:'pesce',kcal:220,p:17,c:9,f:13},
-  {id:'frittura_paranza',name:'Frittura di paranza',cat:'pesce',kcal:265,p:18,c:8,f:18},
-  {id:'cozze_marinara',name:'Cozze alla marinara',cat:'pesce',kcal:105,p:14,c:5,f:3},
-  {id:'vongole_padella',name:'Vongole in padella',cat:'pesce',kcal:90,p:14,c:3,f:2},
-  {id:'gambero_griglia',name:'Gamberoni alla griglia',cat:'pesce',kcal:100,p:21,c:0,f:1.5},
-  {id:'calamari_fritti',name:'Calamari fritti',cat:'pesce',kcal:250,p:15,c:18,f:13},
-  {id:'pesce_spada_griglia',name:'Pesce spada alla griglia',cat:'pesce',kcal:160,p:22,c:0,f:8},
-  {id:'tonno_griglia',name:'Tonno alla griglia',cat:'pesce',kcal:185,p:30,c:0,f:7},
-  {id:'acciughe_marinate',name:'Alici/acciughe marinate',cat:'pesce',kcal:130,p:18,c:1,f:6},
-
-  // ── ANTIPASTI ──
-  {id:'bruschetta_pomodoro',name:'Bruschetta al pomodoro (1 fetta)',cat:'piatti_pronti',kcal:120,p:3,c:18,f:4},
-  {id:'bruschetta_lardo',name:'Bruschetta con lardo di Colonnata',cat:'piatti_pronti',kcal:200,p:4,c:15,f:14},
-  {id:'vitello_tonnato',name:'Vitello tonnato',cat:'piatti_pronti',kcal:215,p:18,c:3,f:14},
-  {id:'prosciutto_melone',name:'Prosciutto crudo e melone',cat:'piatti_pronti',kcal:90,p:8,c:7,f:3},
-  {id:'caprese',name:'Caprese (mozzarella e pomodoro)',cat:'piatti_pronti',kcal:165,p:11,c:4,f:12},
-  {id:'arancini_carne',name:'Arancino al ragù (1 pezzo medio)',cat:'piatti_pronti',kcal:330,p:9,c:42,f:13},
-  {id:'arancini_burro',name:'Arancino al burro',cat:'piatti_pronti',kcal:310,p:8,c:40,f:13},
-  {id:'supplì_romano',name:'Supplì alla romana (1 pezzo)',cat:'piatti_pronti',kcal:280,p:9,c:35,f:11},
-  {id:'crocchette_patate',name:'Crocchette di patate (2 pezzi)',cat:'piatti_pronti',kcal:230,p:5,c:25,f:11},
-  {id:'olive_ascolane',name:'Olive ascolane (5 pezzi)',cat:'piatti_pronti',kcal:250,p:6,c:18,f:17},
-  {id:'tartare_manzo',name:'Tartare di manzo',cat:'carne',kcal:200,p:25,c:1,f:11},
-  {id:'carpaccio_manzo',name:'Carpaccio di manzo',cat:'carne',kcal:175,p:25,c:1,f:8},
-
-  // ── PIZZE AGGIUNTIVE ──
-  {id:'focaccia_recco',name:'Focaccia di Recco al formaggio',cat:'pizze',kcal:320,p:11,c:32,f:16},
-  {id:'pizza_bufala',name:'Pizza bufala (mozzarella di bufala)',cat:'pizze',kcal:285,p:13,c:32,f:12},
-  {id:'pizza_wurstel',name:'Pizza wurstel e patatine',cat:'pizze',kcal:310,p:12,c:36,f:13},
-  {id:'pinsa_romana',name:'Pinsa romana (1 base media)',cat:'pizze',kcal:230,p:8,c:35,f:6},
-  {id:'piadina_crudo',name:'Piadina crudo e rucola',cat:'pizze',kcal:295,p:13,c:33,f:12},
-
-  // ── DOLCI ITALIANI ──
-  {id:'tiramisu',name:'Tiramisù (porzione)',cat:'dolci',kcal:300,p:6,c:28,f:18},
-  {id:'sfogliatella_riccia',name:'Sfogliatella riccia',cat:'dolci',kcal:280,p:5,c:35,f:13},
-  {id:'sfogliatella_frolla',name:'Sfogliatella frolla',cat:'dolci',kcal:300,p:5,c:38,f:14},
-  {id:'maritozzo_panna',name:'Maritozzo con panna',cat:'dolci',kcal:350,p:5,c:42,f:18},
-  {id:'cassata_siciliana',name:'Cassata siciliana',cat:'dolci',kcal:340,p:6,c:50,f:13},
-  {id:'zeppole_san_giuseppe',name:'Zeppole di San Giuseppe',cat:'dolci',kcal:330,p:5,c:40,f:16},
-  {id:'castagnole',name:'Castagnole di Carnevale (3 pezzi)',cat:'dolci',kcal:280,p:4,c:35,f:14},
-  {id:'chiacchiere',name:'Chiacchiere di Carnevale',cat:'dolci',kcal:430,p:6,c:60,f:18},
-  {id:'crostata_ricotta',name:'Crostata di ricotta',cat:'dolci',kcal:295,p:8,c:38,f:13},
-  {id:'torta_caprese',name:'Torta caprese (cioccolato e mandorle)',cat:'dolci',kcal:430,p:8,c:38,f:28},
-  {id:'sbrisolona',name:'Torta sbrisolona mantovana',cat:'dolci',kcal:485,p:7,c:55,f:25},
-  {id:'profiteroles',name:'Profiteroles al cioccolato',cat:'dolci',kcal:340,p:6,c:32,f:21},
-
-  // ── COLAZIONE / BAR ──
-  {id:'cornetto_integrale',name:'Cornetto integrale vuoto',cat:'bar',kcal:340,p:8,c:48,f:13},
-  {id:'krapfen',name:'Krapfen alla crema',cat:'bar',kcal:380,p:6,c:48,f:18},
-  {id:'bombolone',name:'Bombolone alla crema',cat:'bar',kcal:380,p:6,c:48,f:18},
-  {id:'frittella_carnevale',name:'Frittella di Carnevale',cat:'bar',kcal:360,p:5,c:48,f:16},
-  {id:'biscotto_secco',name:'Biscotti secchi (5 pezzi)',cat:'bar',kcal:420,p:7,c:70,f:13},
-  {id:'plumcake',name:'Plumcake (1 fetta)',cat:'bar',kcal:380,p:6,c:50,f:17},
-  {id:'cappuccino_zucchero',name:'Cappuccino con zucchero',cat:'bevande',kcal:85,p:4,c:13,f:3},
-  {id:'caffe_macchiato',name:'Caffè macchiato',cat:'bevande',kcal:15,p:0.5,c:1,f:0.5},
-  {id:'caffe_orzo',name:'Caffè d\'orzo',cat:'bevande',kcal:10,p:0.5,c:2,f:0},
-  {id:'cioccolata_calda',name:'Cioccolata calda da bar',cat:'bevande',kcal:200,p:5,c:32,f:7},
-
-  // ── GELATI E DESSERT GELATI ──
-  {id:'gelato_fiordilatte',name:'Gelato fiordilatte (1 pallina)',cat:'gelati',kcal:130,p:3,c:18,f:5},
-  {id:'gelato_stracciatella',name:'Gelato stracciatella (1 pallina)',cat:'gelati',kcal:145,p:3,c:18,f:7},
-  {id:'gelato_limone',name:'Gelato/sorbetto al limone (1 pallina)',cat:'gelati',kcal:95,p:0.5,c:24,f:0.2},
-  {id:'gelato_fragola',name:'Gelato alla fragola (1 pallina)',cat:'gelati',kcal:115,p:2,c:22,f:2.5},
-  {id:'gelato_caffe',name:'Gelato al caffè (1 pallina)',cat:'gelati',kcal:130,p:3,c:20,f:5},
-  {id:'granita_limone',name:'Granita siciliana al limone',cat:'gelati',kcal:90,p:0,c:22,f:0},
-  {id:'granita_mandorla',name:'Granita siciliana alla mandorla',cat:'gelati',kcal:140,p:2,c:25,f:4},
-  {id:'affogato_caffe',name:'Affogato al caffè',cat:'gelati',kcal:170,p:3,c:20,f:8},
-
-  // ── BEVANDE / COCKTAIL ──
-  {id:'spritz_campari',name:'Spritz Campari (1 calice)',cat:'bevande',kcal:165,p:0,c:13,f:0},
-  {id:'gin_tonic',name:'Gin tonic (1 bicchiere)',cat:'bevande',kcal:175,p:0,c:12,f:0},
-  {id:'caipirinha',name:'Caipirinha (1 bicchiere)',cat:'bevande',kcal:240,p:0,c:30,f:0},
-  {id:'aperol_soda',name:'Aperol soda',cat:'bevande',kcal:110,p:0,c:11,f:0},
-  {id:'birra_chiara_lager',name:'Birra chiara lager (33cl)',cat:'bevande',kcal:140,p:1.5,c:11,f:0},
-  {id:'birra_weiss',name:'Birra weiss (33cl)',cat:'bevande',kcal:165,p:1.5,c:14,f:0},
-  {id:'birra_analcolica',name:'Birra analcolica (33cl)',cat:'bevande',kcal:85,p:1,c:18,f:0},
-  {id:'champagne',name:'Champagne (1 calice 125ml)',cat:'bevande',kcal:95,p:0,c:4,f:0},
-  {id:'limoncello',name:'Limoncello (1 bicchierino)',cat:'bevande',kcal:115,p:0,c:13,f:0},
-  {id:'amaro_digestivo',name:'Amaro digestivo (1 bicchierino)',cat:'bevande',kcal:90,p:0,c:10,f:0},
-
-  // ── PIATTI ETNICI COMUNI ──
-  {id:'sushi_uramaki',name:'Sushi uramaki (8 pezzi)',cat:'piatti_pronti',kcal:330,p:9,c:42,f:13},
-  {id:'temaki',name:'Temaki sushi (1 cono)',cat:'piatti_pronti',kcal:185,p:7,c:25,f:5},
-  {id:'gyoza',name:'Gyoza (4 pezzi)',cat:'piatti_pronti',kcal:220,p:9,c:25,f:9},
-  {id:'ramen_classico',name:'Ramen classico',cat:'piatti_pronti',kcal:480,p:22,c:65,f:13},
-  {id:'pad_thai',name:'Pad Thai',cat:'piatti_pronti',kcal:420,p:18,c:55,f:14},
-  {id:'riso_cantonese',name:'Riso cantonese',cat:'piatti_pronti',kcal:220,p:7,c:35,f:6},
-  {id:'pollo_curry',name:'Pollo al curry indiano',cat:'piatti_pronti',kcal:240,p:18,c:8,f:15},
-  {id:'kebab_durum',name:'Kebab dürüm (rotolo)',cat:'piatti_pronti',kcal:560,p:30,c:50,f:25},
-  {id:'tabbouleh',name:'Tabbouleh (insalata di bulgur)',cat:'piatti_pronti',kcal:130,p:3,c:22,f:4},
-  {id:'tacos_carne',name:'Tacos di carne (2 pezzi)',cat:'piatti_pronti',kcal:330,p:18,c:30,f:15},
-  {id:'burritos_carne',name:'Burrito di carne',cat:'piatti_pronti',kcal:550,p:25,c:60,f:22},
-  {id:'guacamole',name:'Guacamole',cat:'piatti_pronti',kcal:155,p:2,c:9,f:14},
-
-  // ── SNACK E APERITIVI ──
-  {id:'patatine_classiche',name:'Patatine chips classiche (30g)',cat:'snack',kcal:160,p:2,c:14,f:10},
-  {id:'patatine_ondulate',name:'Patatine ondulate (30g)',cat:'snack',kcal:155,p:2,c:15,f:9},
-  {id:'patatine_fritte_casa',name:'Patatine fritte fatte in casa',cat:'snack',kcal:280,p:4,c:38,f:13},
-  {id:'taralli_pugliesi',name:'Taralli pugliesi (8 pezzi)',cat:'snack',kcal:120,p:3,c:18,f:4},
-  {id:'taralli_finocchio',name:'Taralli al finocchio (8 pezzi)',cat:'snack',kcal:125,p:3,c:18,f:5},
-  {id:'grissini_torinesi',name:'Grissini torinesi (5 pezzi)',cat:'snack',kcal:115,p:3,c:21,f:2},
-  {id:'crackers_salati',name:'Crackers salati (1 pacchetto)',cat:'snack',kcal:130,p:3,c:21,f:4},
-  {id:'schiacciata_toscana',name:'Schiacciata toscana (1 fetta)',cat:'snack',kcal:280,p:6,c:42,f:9},
-  {id:'pop_corn_dolce',name:'Pop-corn dolce (1 porzione)',cat:'snack',kcal:380,p:5,c:60,f:13},
-  {id:'pop_corn_salato',name:'Pop-corn salato (1 porzione)',cat:'snack',kcal:340,p:6,c:55,f:11},
-  {id:'noccioline_arachidi',name:'Arachidi tostate (30g)',cat:'snack',kcal:180,p:8,c:5,f:14},
-  {id:'pistacchi_tostati',name:'Pistacchi tostati (30g)',cat:'snack',kcal:170,p:6,c:8,f:14},
-  {id:'olive_verdi_aperitivo',name:'Olive verdi (10 pezzi)',cat:'snack',kcal:55,p:0.5,c:1,f:6},
-
-  // ── VERDURE COTTE PRONTE ──
-  {id:'melanzane_griglia',name:'Melanzane alla griglia',cat:'verdure',kcal:35,p:1,c:6,f:1},
-  {id:'zucchine_griglia',name:'Zucchine alla griglia',cat:'verdure',kcal:30,p:2,c:4,f:1},
-  {id:'peperoni_griglia',name:'Peperoni alla griglia',cat:'verdure',kcal:40,p:1,c:8,f:0.5},
-  {id:'carciofi_romana',name:'Carciofi alla romana',cat:'verdure',kcal:80,p:3,c:8,f:5},
-  {id:'carciofi_giudia',name:'Carciofi alla giudia (fritti)',cat:'verdure',kcal:150,p:3,c:10,f:11},
-  {id:'cicoria_ripassata',name:'Cicoria ripassata in padella',cat:'verdure',kcal:65,p:2,c:5,f:5},
-  {id:'friarielli',name:'Friarielli/broccoli di rapa in padella',cat:'verdure',kcal:55,p:3,c:5,f:3},
-  {id:'puntarelle',name:'Puntarelle in salsa di alici',cat:'verdure',kcal:85,p:3,c:5,f:7},
-  {id:'verdure_grigliate_miste',name:'Verdure grigliate miste',cat:'verdure',kcal:55,p:2,c:6,f:3},
-  {id:'patate_fritte_casa',name:'Patate fritte fatte in casa',cat:'verdure',kcal:280,p:4,c:38,f:13},
-  {id:'puree_patate',name:'Purè di patate',cat:'verdure',kcal:115,p:3,c:18,f:4},
-
-  // ── FORMAGGI AGGIUNTIVI ──
-  {id:'asiago_fresco',name:'Asiago fresco',cat:'latticini',kcal:355,p:25,c:0,f:28},
-  {id:'asiago_stagionato',name:'Asiago stagionato',cat:'latticini',kcal:400,p:32,c:0,f:30},
-  {id:'provolone_piccante',name:'Provolone piccante',cat:'latticini',kcal:370,p:27,c:0,f:29},
-  {id:'stracchino',name:'Stracchino',cat:'latticini',kcal:300,p:18,c:1,f:26},
-  {id:'squacquerone',name:'Squacquerone',cat:'latticini',kcal:265,p:14,c:2,f:23},
-
-  // ── SALUMI AGGIUNTIVI ──
-  {id:'speck_alto_adige',name:'Speck Alto Adige IGP',cat:'carne',kcal:290,p:28,c:0,f:20},
-  {id:'bresaola_valtellina',name:'Bresaola della Valtellina',cat:'carne',kcal:150,p:32,c:0,f:2},
-  {id:'culatello',name:'Culatello di Zibello',cat:'carne',kcal:300,p:30,c:0,f:20},
-  {id:'lardo_colonnata',name:'Lardo di Colonnata',cat:'carne',kcal:760,p:5,c:0,f:80},
-  {id:'pancetta_arrotolata',name:'Pancetta arrotolata',cat:'carne',kcal:480,p:18,c:0,f:45},
-  {id:'salame_napoli',name:'Salame Napoli piccante',cat:'carne',kcal:420,p:22,c:0,f:36},
-  {id:'finocchiona',name:'Finocchiona toscana',cat:'carne',kcal:445,p:23,c:0,f:39},
-  {id:'soppressata',name:'Soppressata calabrese',cat:'carne',kcal:430,p:25,c:0,f:36},
-  {id:'mortadella_pistacchi',name:'Mortadella con pistacchi',cat:'carne',kcal:325,p:14,c:1,f:30},
-  {id:'porchetta_ariccia',name:'Porchetta di Ariccia',cat:'carne',kcal:320,p:22,c:0,f:25},
-
-  // ── FRUTTA AGGIUNTIVA ──
-  {id:'melograno',name:'Melograno',cat:'frutta',kcal:85,p:2,c:18,f:1.5},
-  {id:'castagne_lessate',name:'Castagne lessate',cat:'frutta',kcal:120,p:2,c:25,f:1},
-  {id:'castagne_arrosto',name:'Castagne arrosto',cat:'frutta',kcal:200,p:3,c:42,f:2},
-  {id:'mandarini',name:'Mandarini',cat:'frutta',kcal:55,p:0.8,c:13,f:0.2},
-  {id:'clementine',name:'Clementine',cat:'frutta',kcal:50,p:0.8,c:12,f:0.2},
-  {id:'pompelmo_rosa',name:'Pompelmo rosa',cat:'frutta',kcal:40,p:0.7,c:10,f:0.1},
-  {id:'pesche_noci',name:'Pesche noci',cat:'frutta',kcal:45,p:1,c:11,f:0.3},
-  {id:'albicocche',name:'Albicocche',cat:'frutta',kcal:48,p:1,c:12,f:0.4},
-  {id:'susine',name:'Susine',cat:'frutta',kcal:48,p:0.7,c:12,f:0.2},
-  {id:'amarene',name:'Amarene',cat:'frutta',kcal:55,p:1,c:13,f:0.3},
-
-  // ─── SESSIONE 30: INSALATE COMPLETE ───
-  {id:'insalata_verde',name:'Insalata verde (sola)',cat:'piatti_pronti',kcal:20,p:1.5,c:3,f:0.2},
-  {id:'insalata_mista',name:'Insalata mista (verdure crude)',cat:'piatti_pronti',kcal:35,p:1.5,c:6,f:0.5},
-  {id:'insalata_pollo',name:'Insalata di pollo (porzione)',cat:'piatti_pronti',kcal:180,p:22,c:8,f:7},
-  {id:'insalata_tonno',name:'Insalata di tonno (porzione)',cat:'piatti_pronti',kcal:165,p:20,c:7,f:6},
-  {id:'insalata_tonno_fagioli',name:'Insalata di tonno e fagioli',cat:'piatti_pronti',kcal:175,p:18,c:14,f:5},
-  {id:'insalata_pasta',name:'Insalata di pasta fredda',cat:'piatti_pronti',kcal:225,p:7,c:32,f:7},
-  {id:'insalata_riso',name:'Insalata di riso',cat:'piatti_pronti',kcal:215,p:6,c:35,f:6},
-  {id:'insalata_farro',name:'Insalata di farro',cat:'piatti_pronti',kcal:200,p:7,c:34,f:4},
-  {id:'insalata_quinoa',name:'Insalata di quinoa con verdure',cat:'piatti_pronti',kcal:210,p:8,c:32,f:5},
-  {id:'insalata_caprese',name:'Insalata caprese (mozzarella e pomodoro)',cat:'piatti_pronti',kcal:235,p:14,c:6,f:18},
-  {id:'insalata_caprese_bufala',name:'Caprese con bufala',cat:'piatti_pronti',kcal:255,p:15,c:5,f:20},
-  {id:'insalata_greca',name:'Insalata greca (feta e olive)',cat:'piatti_pronti',kcal:215,p:9,c:8,f:17},
-  {id:'insalata_capricciosa',name:'Insalata capricciosa',cat:'piatti_pronti',kcal:240,p:11,c:9,f:18},
-  {id:'insalata_nizzarda',name:'Insalata nizzarda',cat:'piatti_pronti',kcal:195,p:14,c:10,f:11},
-  {id:'insalata_cesare',name:'Insalata Caesar con pollo',cat:'piatti_pronti',kcal:285,p:22,c:9,f:18},
-  {id:'insalata_russa',name:'Insalata russa',cat:'piatti_pronti',kcal:195,p:3,c:12,f:15},
-  {id:'insalata_riccia',name:'Insalata riccia (sola)',cat:'piatti_pronti',kcal:18,p:1.4,c:2.5,f:0.2},
-  {id:'insalata_rucola',name:'Insalata di rucola',cat:'piatti_pronti',kcal:25,p:2.5,c:3,f:0.5},
-  {id:'insalata_radicchio',name:'Insalata di radicchio',cat:'piatti_pronti',kcal:22,p:1,c:4,f:0.2},
-  {id:'panzanella',name:'Panzanella (insalata di pane toscana)',cat:'piatti_pronti',kcal:185,p:5,c:28,f:6},
-  {id:'insalatona_completa',name:'Insalatona completa (proteine + verdure)',cat:'piatti_pronti',kcal:380,p:25,c:18,f:22},
-
-  // ─── PASTE MANCANTI ───
-  {id:'pasta_pomodoro_basilico',name:'Pasta pomodoro e basilico',cat:'piatti_pronti',kcal:140,p:4,c:26,f:2.5},
-  {id:'pasta_zucchine',name:'Pasta con zucchine',cat:'piatti_pronti',kcal:155,p:5,c:25,f:4},
-  {id:'pasta_funghi',name:'Pasta ai funghi porcini',cat:'piatti_pronti',kcal:170,p:6,c:26,f:5},
-  {id:'pasta_salmone',name:'Pasta al salmone',cat:'piatti_pronti',kcal:195,p:9,c:22,f:8},
-  {id:'pasta_gamberi',name:'Pasta ai gamberi',cat:'piatti_pronti',kcal:180,p:11,c:24,f:5},
-  {id:'pasta_ricotta',name:'Pasta con ricotta',cat:'piatti_pronti',kcal:185,p:9,c:24,f:6},
-  {id:'pasta_sorrentina',name:'Pasta alla sorrentina',cat:'piatti_pronti',kcal:175,p:8,c:23,f:6},
-  {id:'pasta_speck',name:'Pasta speck e noci',cat:'piatti_pronti',kcal:215,p:9,c:24,f:9},
-  {id:'pasta_cozze',name:'Pasta con le cozze',cat:'piatti_pronti',kcal:185,p:11,c:24,f:5},
-  {id:'pasta_scampi',name:'Pasta agli scampi',cat:'piatti_pronti',kcal:195,p:12,c:24,f:6},
-  {id:'pasta_pesce_spada',name:'Pasta con pesce spada e melanzane',cat:'piatti_pronti',kcal:200,p:11,c:23,f:7},
-
-  // ─── PIATTI ITALIANI COMUNI MANCANTI ───
-  {id:'gnocchi_sorrentina',name:'Gnocchi alla sorrentina',cat:'piatti_pronti',kcal:175,p:6,c:28,f:5},
-  {id:'gnocchi_burro_salvia',name:'Gnocchi burro e salvia',cat:'piatti_pronti',kcal:195,p:5,c:28,f:8},
-  {id:'gnocchi_pomodoro',name:'Gnocchi al pomodoro',cat:'piatti_pronti',kcal:160,p:5,c:30,f:3},
-  {id:'risotto_mare',name:'Risotto ai frutti di mare',cat:'piatti_pronti',kcal:175,p:9,c:28,f:4},
-  {id:'minestra_legumi',name:'Minestra di legumi',cat:'piatti_pronti',kcal:120,p:7,c:18,f:2},
-  {id:'crema_zucca',name:'Crema/vellutata di zucca',cat:'piatti_pronti',kcal:70,p:2,c:12,f:2},
-  {id:'caponata_siciliana',name:'Caponata siciliana',cat:'piatti_pronti',kcal:135,p:2,c:14,f:8},
-
-  // ─── PANINI / WRAP / BURGER ───
-  {id:'panino_mortadella',name:'Panino mortadella',cat:'panini',kcal:420,p:14,c:42,f:21},
-  {id:'panino_tonno',name:'Panino tonno e maionese',cat:'panini',kcal:390,p:18,c:40,f:16},
-  {id:'piadina_verdure',name:'Piadina vegetariana',cat:'panini',kcal:380,p:12,c:48,f:14},
-  {id:'wrap_pollo',name:'Wrap di pollo e verdure',cat:'panini',kcal:355,p:22,c:38,f:11},
-
-  // ─── ALTRI MANCANTI: bevande, condimenti, integratori ───
-  {id:'tisana_finocchio',name:'Tisana al finocchio',cat:'bevande',kcal:0,p:0,c:0,f:0},
-  {id:'spremuta_pompelmo',name:'Spremuta di pompelmo',cat:'bevande',kcal:38,p:0.5,c:9,f:0.1},
-  {id:'centrifuga_verdura',name:'Centrifugato di verdura',cat:'bevande',kcal:45,p:1.5,c:9,f:0.2},
-
-  // ═══════════════════════════════════════════════════════════════════
-  // SESSIONE 32 — ESPANSIONE MASSIVA (+110 cibi)
-  // ═══════════════════════════════════════════════════════════════════
-
-  // ─── FORMAGGI ITALIANI ───
-  {id:'scamorza_bianca',name:'Scamorza bianca',cat:'latticini',kcal:335,p:25,c:1,f:25},
-  {id:'casatella',name:'Casatella Trevigiana',cat:'latticini',kcal:285,p:14,c:2,f:24},
-  {id:'primo_sale',name:'Primo sale',cat:'latticini',kcal:255,p:21,c:1,f:18},
-  {id:'ricotta_salata',name:'Ricotta salata',cat:'latticini',kcal:265,p:18,c:3,f:20},
-  {id:'pecorino_toscano',name:'Pecorino Toscano DOP',cat:'latticini',kcal:380,p:26,c:1,f:30},
-  {id:'cacioricotta',name:'Cacioricotta',cat:'latticini',kcal:290,p:22,c:3,f:22},
-  {id:'feta_greca',name:'Feta greca DOP',cat:'latticini',kcal:265,p:14,c:4,f:21},
-  {id:'halloumi',name:'Halloumi (cipriota)',cat:'latticini',kcal:320,p:21,c:2,f:25},
-  {id:'fior_di_latte',name:'Fior di latte (mozzarella vacc.)',cat:'latticini',kcal:255,p:20,c:1,f:19},
-
-  // ─── SALUMI ITALIANI ───
-  {id:'coppa_piacentina',name:'Coppa Piacentina DOP',cat:'carne',kcal:380,p:25,c:0,f:31},
-  {id:'pancetta_tesa',name:'Pancetta tesa',cat:'carne',kcal:460,p:14,c:0,f:45},
-  {id:'soppressa_veneta',name:'Soppressa veneta',cat:'carne',kcal:410,p:24,c:1,f:35},
-  {id:'salame_nostrano',name:'Salame nostrano',cat:'carne',kcal:415,p:24,c:0,f:36},
-  {id:'salsiccia_secca',name:'Salsiccia secca/stagionata',cat:'carne',kcal:410,p:25,c:0,f:35},
-  {id:'wurstel_tacchino',name:'Würstel di tacchino',cat:'carne',kcal:155,p:14,c:2,f:11},
-
-  // ─── PESCI E FRUTTI DI MARE ───
-  {id:'pesce_spada_fresco',name:'Pesce spada fresco',cat:'pesce',kcal:130,p:20,c:0,f:5},
-  {id:'pesce_spada_affumicato',name:'Pesce spada affumicato',cat:'pesce',kcal:140,p:21,c:0,f:6},
-  {id:'spigola',name:'Spigola/Branzino fresco',cat:'pesce',kcal:120,p:20,c:0,f:4},
-  {id:'sciabola',name:'Pesce sciabola',cat:'pesce',kcal:125,p:21,c:0,f:4},
-  {id:'tonno_olio_oliva',name:'Tonno sott\'olio d\'oliva',cat:'pesce',kcal:215,p:26,c:0,f:13},
-  {id:'acciughe_pasta',name:'Pasta di acciughe',cat:'pesce',kcal:175,p:23,c:1,f:9},
-  {id:'sushi_salmone',name:'Sushi salmone (nigiri 2 pz)',cat:'pesce',kcal:130,p:7,c:18,f:3,isPortion:true,refGrams:60},
-  {id:'sushi_tonno',name:'Sushi tonno (nigiri 2 pz)',cat:'pesce',kcal:115,p:9,c:17,f:1.5,isPortion:true,refGrams:60},
-  {id:'sushi_california',name:'California Roll (8 pezzi)',cat:'pesce',kcal:255,p:10,c:38,f:7,isPortion:true,refGrams:200},
-  {id:'tempura_gamberi',name:'Tempura di gamberi (5 pezzi)',cat:'pesce',kcal:280,p:18,c:25,f:13,isPortion:true,refGrams:150},
-  {id:'fritto_misto_pesce',name:'Fritto misto di pesce (porzione)',cat:'piatti_pronti',kcal:320,p:22,c:18,f:18},
-
-  // ─── VERDURE E LEGUMI MANCANTI ───
-  {id:'cavolfiore_cotto',name:'Cavolfiore cotto',cat:'verdure',kcal:23,p:1.9,c:4,f:0.3},
-  {id:'verza',name:'Verza',cat:'verdure',kcal:27,p:1.4,c:6,f:0.2},
-  {id:'cime_rapa',name:'Cime di rapa',cat:'verdure',kcal:30,p:2.9,c:3,f:0.5},
-  {id:'catalogna',name:'Catalogna/Cicoria',cat:'verdure',kcal:23,p:1.5,c:3,f:0.3},
-  {id:'tarassaco',name:'Tarassaco',cat:'verdure',kcal:45,p:2.7,c:9,f:0.7},
-  {id:'agretti',name:'Agretti/Barba di frate',cat:'verdure',kcal:17,p:2,c:2,f:0.1},
-  {id:'pastinaca',name:'Pastinaca',cat:'verdure',kcal:75,p:1.2,c:18,f:0.3},
-  {id:'rapa_bianca',name:'Rapa bianca',cat:'verdure',kcal:28,p:0.9,c:6,f:0.1},
-  {id:'cipollotti',name:'Cipollotti freschi',cat:'verdure',kcal:32,p:1.8,c:7,f:0.2},
-  {id:'scalogno',name:'Scalogno',cat:'verdure',kcal:72,p:2.5,c:17,f:0.1},
-
-  // ─── LEGUMI COTTI MANCANTI ───
-  {id:'fagioli_neri',name:'Fagioli neri cotti',cat:'legumi',kcal:130,p:9,c:24,f:0.5},
-  {id:'fagioli_azuki',name:'Fagioli azuki cotti',cat:'legumi',kcal:130,p:8,c:25,f:0.2},
-  {id:'fagioli_corona',name:'Fagioli corona cotti',cat:'legumi',kcal:110,p:7,c:20,f:0.4},
-  {id:'lupini',name:'Lupini in salamoia',cat:'legumi',kcal:115,p:16,c:9,f:2.5},
-
-  // ─── FRUTTA MANCANTE ───
-  {id:'avocado_intero',name:'Avocado intero (1 medio)',cat:'frutta',kcal:240,p:3,c:12,f:22,isPortion:true,refGrams:150},
-  {id:'frutto_passione',name:'Frutto della passione (maracuja)',cat:'frutta',kcal:95,p:2.2,c:23,f:0.7},
-  {id:'lichi',name:'Lychee',cat:'frutta',kcal:65,p:0.8,c:16,f:0.4},
-  {id:'cocco_polpa',name:'Cocco fresco (polpa)',cat:'frutta',kcal:355,p:3.5,c:15,f:33},
-  {id:'guava',name:'Guava',cat:'frutta',kcal:70,p:2.6,c:14,f:1},
-  {id:'mirtilli_rossi',name:'Mirtilli rossi (cranberry)',cat:'frutta',kcal:47,p:0.4,c:12,f:0.1},
-  {id:'uvetta',name:'Uvetta/Uva passa',cat:'frutta',kcal:300,p:3,c:79,f:0.5},
-
-  // ─── CEREALI E FARINE ───
-  {id:'amaranto',name:'Amaranto (crudo)',cat:'cereali',kcal:370,p:14,c:65,f:7},
-  {id:'miglio',name:'Miglio (crudo)',cat:'cereali',kcal:355,p:11,c:73,f:4},
-  {id:'grano_saraceno',name:'Grano saraceno (crudo)',cat:'cereali',kcal:340,p:13,c:72,f:3},
-  {id:'bulgur',name:'Bulgur (crudo)',cat:'cereali',kcal:340,p:12,c:76,f:1.3},
-  {id:'crusca_avena',name:'Crusca di avena',cat:'cereali',kcal:245,p:17,c:65,f:7},
-  {id:'pane_di_segale',name:'Pane di segale',cat:'cereali',kcal:260,p:9,c:50,f:1.5},
-  {id:'piadina_romagnola',name:'Piadina romagnola (1 pezzo)',cat:'cereali',kcal:300,p:8,c:50,f:8,isPortion:true,refGrams:100},
-  {id:'pita',name:'Pane Pita (1 pezzo)',cat:'cereali',kcal:275,p:9,c:55,f:1.5,isPortion:true,refGrams:100},
-  {id:'naan',name:'Pane Naan indiano (1 pezzo)',cat:'cereali',kcal:310,p:9,c:50,f:8,isPortion:true,refGrams:120},
-  {id:'tortilla_grano',name:'Tortilla di grano (1 pezzo)',cat:'cereali',kcal:155,p:4,c:24,f:4,isPortion:true,refGrams:50},
-  {id:'tortilla_mais',name:'Tortilla di mais (1 pezzo)',cat:'cereali',kcal:115,p:3,c:22,f:1.5,isPortion:true,refGrams:50},
-
-  // ─── PIATTI ETNICI ───
-  {id:'curry_pollo',name:'Curry di pollo (porzione)',cat:'piatti_pronti',kcal:320,p:22,c:18,f:18},
-  {id:'curry_verdure',name:'Curry di verdure',cat:'piatti_pronti',kcal:185,p:6,c:22,f:8},
-  {id:'burrito_pollo',name:'Burrito di pollo',cat:'piatti_pronti',kcal:540,p:24,c:62,f:20,isPortion:true,refGrams:280},
-  {id:'fajitas_pollo',name:'Fajitas di pollo (porzione)',cat:'piatti_pronti',kcal:380,p:25,c:32,f:14},
-  {id:'shawarma_pollo',name:'Shawarma di pollo',cat:'piatti_pronti',kcal:380,p:25,c:30,f:16,isPortion:true,refGrams:250},
-  {id:'samosa',name:'Samosa indiano (1 pezzo)',cat:'piatti_pronti',kcal:135,p:3,c:14,f:8,isPortion:true,refGrams:60},
-  {id:'pollo_mandorle',name:'Pollo alle mandorle (cinese)',cat:'piatti_pronti',kcal:265,p:18,c:18,f:14},
-  {id:'manzo_funghi',name:'Manzo con funghi (cinese)',cat:'piatti_pronti',kcal:240,p:18,c:8,f:15},
-
-  // ─── DOLCI E SNACK MANCANTI ───
-  {id:'plumcake_classico',name:'Plumcake (1 fetta)',cat:'dolci',kcal:185,p:3,c:23,f:9,isPortion:true,refGrams:50},
-  {id:'crostatina_marmellata',name:'Crostatina marmellata (1 pz)',cat:'bar',kcal:175,p:2.5,c:26,f:7,isPortion:true,refGrams:40},
-  {id:'biscotti_integrali',name:'Biscotti integrali',cat:'bar',kcal:430,p:7,c:70,f:14},
-  {id:'biscotti_grancereale',name:'Biscotti tipo Grancereale',cat:'bar',kcal:440,p:9,c:68,f:14},
-  {id:'pancake_nutella',name:'Pancake con Nutella (3 pezzi)',cat:'bar',kcal:520,p:9,c:65,f:24,isPortion:true,refGrams:200},
-  {id:'waffle_classico',name:'Waffle classico (1 pezzo)',cat:'bar',kcal:290,p:6,c:33,f:14,isPortion:true,refGrams:80},
-  {id:'crepe_nutella',name:'Crêpe con Nutella',cat:'dolci',kcal:380,p:7,c:48,f:18,isPortion:true,refGrams:150},
-  {id:'crepe_marmellata',name:'Crêpe con marmellata',cat:'dolci',kcal:280,p:6,c:48,f:7,isPortion:true,refGrams:150},
-
-  // ─── BEVANDE MANCANTI ───
-  {id:'aperol',name:'Aperol liscio (1 bicchiere)',cat:'bevande',kcal:115,p:0,c:13,f:0,isPortion:true,refGrams:60},
-  {id:'campari',name:'Campari (1 bicchiere)',cat:'bevande',kcal:120,p:0,c:12,f:0,isPortion:true,refGrams:60},
-  {id:'amaro_dopo_pasto',name:'Amaro digestivo (1 bicchierino)',cat:'bevande',kcal:70,p:0,c:8,f:0,isPortion:true,refGrams:30},
-  {id:'caffe_corretto',name:'Caffè corretto sambuca/grappa',cat:'bevande',kcal:55,p:0,c:1,f:0,isPortion:true,refGrams:50},
-  {id:'tisana_zenzero',name:'Tisana zenzero limone',cat:'bevande',kcal:5,p:0,c:1,f:0,isPortion:true,refGrams:250},
-  {id:'frullato_proteico',name:'Frullato proteico (250ml)',cat:'bevande',kcal:215,p:25,c:18,f:5,isPortion:true,refGrams:250},
-  {id:'cocco_acqua',name:'Acqua di cocco',cat:'bevande',kcal:19,p:0.7,c:4,f:0.2},
-  {id:'matcha_latte',name:'Matcha latte (250ml)',cat:'bevande',kcal:90,p:5,c:11,f:3,isPortion:true,refGrams:250},
-
-  // ─── INTEGRATORI / FITNESS ───
-  {id:'barretta_proteica',name:'Barretta proteica generica',cat:'snack',kcal:215,p:20,c:18,f:7,isPortion:true,refGrams:60},
-  {id:'barretta_energetica',name:'Barretta energetica',cat:'snack',kcal:230,p:6,c:34,f:8,isPortion:true,refGrams:60},
-  {id:'whey_protein_polvere',name:'Whey protein (1 scoop 30g)',cat:'snack',kcal:115,p:24,c:3,f:1.5,isPortion:true,refGrams:30},
-  {id:'isolate_protein',name:'Isolate protein (1 scoop 30g)',cat:'snack',kcal:110,p:27,c:1,f:0.5,isPortion:true,refGrams:30},
-  {id:'casein_protein',name:'Caseina (1 scoop 30g)',cat:'snack',kcal:115,p:24,c:3,f:1,isPortion:true,refGrams:30},
-  {id:'creatina_polvere',name:'Creatina monoidrato (5g)',cat:'snack',kcal:0,p:0,c:0,f:0,isPortion:true,refGrams:5},
-  {id:'maltodestrine',name:'Maltodestrine (20g)',cat:'snack',kcal:80,p:0,c:20,f:0,isPortion:true,refGrams:20},
-
-  // ─── PRODOTTI PRONTI / MARCHE COMUNI (generici) ───
-  {id:'crackers_integrali',name:'Crackers integrali (1 confezione)',cat:'snack',kcal:120,p:3,c:18,f:4,isPortion:true,refGrams:30},
-  {id:'patatine_chips',name:'Patatine chips (1 sacchetto)',cat:'snack',kcal:155,p:2,c:14,f:10,isPortion:true,refGrams:30},
-
-  // ─── INSALATE COMPOSTE EXTRA ───
-  {id:'insalata_pollo_avocado',name:'Insalata pollo, avocado e quinoa',cat:'piatti_pronti',kcal:340,p:25,c:22,f:16},
-  {id:'insalata_salmone_avocado',name:'Insalata salmone e avocado',cat:'piatti_pronti',kcal:315,p:22,c:8,f:22},
-  {id:'insalata_uova_sode',name:'Insalata con uova sode',cat:'piatti_pronti',kcal:175,p:13,c:6,f:11},
-  {id:'insalata_mozzarella',name:'Insalata mozzarella e pomodorini',cat:'piatti_pronti',kcal:215,p:12,c:5,f:17},
-
-  // ─── PIATTI MANCANTI ───
-  {id:'frittata_verdure',name:'Frittata di verdure (porzione)',cat:'piatti_pronti',kcal:195,p:13,c:5,f:14},
-  {id:'omelette_formaggio',name:'Omelette al formaggio',cat:'piatti_pronti',kcal:240,p:18,c:2,f:18},
-  {id:'uova_strapazzate_bacon',name:'Uova strapazzate con bacon',cat:'uova',kcal:295,p:18,c:1,f:24,isPortion:true,refGrams:150},
-  {id:'polpette_carne',name:'Polpette di carne al sugo (4 pz)',cat:'piatti_pronti',kcal:280,p:22,c:8,f:18,isPortion:true,refGrams:200},
-  {id:'polpette_lenticchie',name:'Polpette di lenticchie (4 pz)',cat:'piatti_pronti',kcal:215,p:10,c:25,f:8,isPortion:true,refGrams:200},
-  {id:'pollo_grigliato',name:'Pollo grigliato (petto, porzione)',cat:'piatti_pronti',kcal:180,p:30,c:0,f:6},
-  {id:'osso_buco',name:'Osso buco con risotto',cat:'piatti_pronti',kcal:280,p:18,c:22,f:13},
-  {id:'spezzatino_manzo',name:'Spezzatino di manzo con patate',cat:'piatti_pronti',kcal:225,p:18,c:12,f:11},
-  {id:'pesto_trapanese',name:'Pesto trapanese (porzione su pasta)',cat:'piatti_pronti',kcal:195,p:6,c:24,f:8},
-  {id:'caprese_classica',name:'Caprese classica (porzione)',cat:'piatti_pronti',kcal:255,p:14,c:5,f:20},
-
-];
+// FOOD_DB caricato da food_db.js (file esterno) — vedi tag <script src="food_db.js">
 
 // ── Helper centralizzato per riconoscere cibi "a porzione fissa" ──
 // I cibi di certe categorie si misurano in PORZIONI (1 birra media, 1 pizza intera).
@@ -5917,6 +4769,82 @@ window.drawerOpen=false;
 window.toggleDrawer=function(){window.drawerOpen=!window.drawerOpen;render();}
 window.closeDrawer=function(){window.drawerOpen=false;render();}
 window.gotoTab=function(t){ST.tab=t;window.drawerOpen=false;render();}
+// ═══════════════════════════════════════════════════════════════════════════
+// SESSIONE 35 — SISTEMA LINGUA (IT / EN)
+// Dizionario UI principale. NON traduzione letterale: formulazioni sensate.
+// Contenuti dinamici (cibi/esercizi) restano in italiano.
+// ═══════════════════════════════════════════════════════════════════════════
+window.I18N = {
+  nav_home:{it:'Home',en:'Home'}, nav_work:{it:'Allenamento',en:'Workout'},
+  nav_diet:{it:'Alimentazione',en:'Nutrition'}, nav_shopping:{it:'Lista Spesa',en:'Shopping List'},
+  nav_measures:{it:'Misure',en:'Measurements'}, nav_body:{it:'Progressi',en:'Progress'},
+  nav_stats:{it:'Statistiche Pro',en:'Pro Stats'}, nav_coach:{it:'AI Coach',en:'AI Coach'},
+  nav_social:{it:'Classifica',en:'Leaderboard'}, nav_share:{it:'Condividi App',en:'Share App'},
+  nav_set:{it:'Configurazione',en:'Settings'}, nav_profile:{it:'Profilo',en:'Profile'},
+  grp_daily:{it:'QUOTIDIANO',en:'DAILY'}, grp_tools:{it:'STRUMENTI',en:'TOOLS'},
+  grp_insights:{it:'ANALISI',en:'INSIGHTS'}, grp_other:{it:'ALTRO',en:'OTHER'},
+  c_today:{it:'OGGI',en:'TODAY'}, c_close:{it:'CHIUDI',en:'CLOSE'}, c_cancel:{it:'ANNULLA',en:'CANCEL'},
+  log_in_progress:{it:'ACCESSO IN CORSO',en:'SIGNING IN'},
+  log_loading_data:{it:'Sto caricando i tuoi dati dal cloud…',en:'Loading your data from the cloud…'},
+  log_signin:{it:'ACCEDI',en:'SIGN IN'}, log_signup:{it:'REGISTRATI',en:'SIGN UP'},
+  log_email_user:{it:'EMAIL O USERNAME',en:'EMAIL OR USERNAME'}, log_password:{it:'PASSWORD',en:'PASSWORD'},
+  log_forgot:{it:'🔑 Password dimenticata?',en:'🔑 Forgot password?'},
+  h_train_today:{it:'ALLENAMENTO OGGI',en:"TODAY'S WORKOUT"},
+  h_rest_today:{it:'💤 oggi mi riposo',en:'💤 resting today'},
+  h_progress_goal:{it:'PROGRESSO OBIETTIVO',en:'GOAL PROGRESS'},
+  h_target_chosen:{it:'Target scelto',en:'Chosen target'}, h_real_estimate:{it:'Stima reale',en:'Real estimate'},
+  lang_title:{it:'Scegli la lingua',en:'Choose your language'},
+  lang_subtitle:{it:'Potrai cambiarla quando vuoi dal profilo',en:'You can change it anytime from your profile'},
+  lang_label:{it:'LINGUA',en:'LANGUAGE'}, lang_it:{it:'Italiano',en:'Italian'}, lang_en:{it:'Inglese',en:'English'},
+  // ── Comuni estesi ──
+  c_save:{it:'SALVA',en:'SAVE'}, c_confirm:{it:'CONFERMA',en:'CONFIRM'}, c_delete:{it:'ELIMINA',en:'DELETE'},
+  c_edit:{it:'MODIFICA',en:'EDIT'}, c_back:{it:'Indietro',en:'Back'}, c_next:{it:'Avanti',en:'Next'},
+  c_done:{it:'Fatto',en:'Done'}, c_loading:{it:'Caricamento...',en:'Loading...'}, c_new:{it:'NUOVA',en:'NEW'},
+  c_add:{it:'Aggiungi',en:'Add'}, c_remove:{it:'Rimuovi',en:'Remove'}, c_yes:{it:'Sì',en:'Yes'}, c_no:{it:'No',en:'No'},
+  c_active:{it:'ATTIVA',en:'ACTIVE'}, c_kcal:{it:'kcal',en:'kcal'}, c_min:{it:'min',en:'min'},
+  c_week:{it:'settimana',en:'week'}, c_day:{it:'giorno',en:'day'}, c_days:{it:'giorni',en:'days'},
+  // ── Home ──
+  h_start:{it:'▶ INIZIA ALLENAMENTO',en:'▶ START WORKOUT'},
+  h_time_to_eat:{it:'È ORA DI MANGIARE',en:'TIME TO EAT'}, h_next_meal:{it:'PROSSIMO PASTO',en:'NEXT MEAL'},
+  h_done:{it:'✓ FATTO',en:'✓ DONE'}, h_skip:{it:'✕ SALTO',en:'✕ SKIP'},
+  h_today_numbers:{it:'OGGI IN NUMERI',en:"TODAY IN NUMBERS"},
+  h_calories:{it:'Calorie',en:'Calories'}, h_water:{it:'Acqua',en:'Water'}, h_steps:{it:'Passi',en:'Steps'},
+  h_weight:{it:'Peso',en:'Weight'}, h_streak:{it:'Serie',en:'Streak'},
+  h_rest_day:{it:'GIORNO DI RIPOSO',en:'REST DAY'}, h_rest_desc:{it:'Recupero programmato. Riposa e recupera.',en:'Scheduled recovery. Rest and recover.'},
+  // ── Workout ──
+  w_title:{it:'ALLENAMENTO',en:'WORKOUT'}, w_start_session:{it:'INIZIA SESSIONE',en:'START SESSION'},
+  w_rest:{it:'RECUPERO',en:'REST'}, w_set:{it:'Serie',en:'Set'}, w_reps:{it:'Ripetizioni',en:'Reps'},
+  w_weight:{it:'Peso',en:'Weight'}, w_skip:{it:'SALTA',en:'SKIP'}, w_complete:{it:'COMPLETATO',en:'COMPLETED'},
+  w_exit:{it:'ESCI',en:'EXIT'}, w_next_ex:{it:'PROSSIMO',en:'NEXT'}, w_done_set:{it:'SERIE FATTA',en:'SET DONE'},
+  // ── Diet ──
+  d_title:{it:'ALIMENTAZIONE',en:'NUTRITION'}, d_menu_today:{it:'MENU DELLA GIORNATA',en:"TODAY'S MENU"},
+  d_macros:{it:'MACRO & NUTRIENTI',en:'MACROS & NUTRIENTS'}, d_target:{it:'target',en:'target'},
+  d_proteins:{it:'Proteine',en:'Proteins'}, d_carbs:{it:'Carboidrati',en:'Carbs'}, d_fats:{it:'Grassi',en:'Fats'},
+  d_breakfast:{it:'Colazione',en:'Breakfast'}, d_snack1:{it:'Spuntino mattina',en:'Morning snack'},
+  d_lunch:{it:'Pranzo',en:'Lunch'}, d_snack2:{it:'Spuntino pomeriggio',en:'Afternoon snack'}, d_dinner:{it:'Cena',en:'Dinner'},
+  d_ingredients:{it:'ingredienti',en:'ingredients'}, d_log_meal:{it:'SEGNA PASTO',en:'LOG MEAL'},
+  // ── Settings ──
+  s_appearance:{it:'ASPETTO',en:'APPEARANCE'}, s_theme_desc:{it:"Scegli il tema dell'app.",en:'Choose the app theme.'},
+  s_dark:{it:'Scuro',en:'Dark'}, s_light:{it:'Chiaro',en:'Light'}, s_auto:{it:'Sistema',en:'System'},
+  s_integrations:{it:'INTEGRAZIONI',en:'INTEGRATIONS'}, s_notifications:{it:'NOTIFICHE',en:'NOTIFICATIONS'},
+  s_health_sync:{it:'APPLE HEALTH SYNC',en:'APPLE HEALTH SYNC'}, s_my_recipes:{it:'LE TUE RICETTE',en:'YOUR RECIPES'},
+  s_community:{it:'CONDIVISIONE COMMUNITY',en:'COMMUNITY SHARING'}, s_tutorial:{it:'TUTORIAL & GUIDA',en:'TUTORIAL & GUIDE'},
+  // ── Profile ──
+  p_title:{it:'PROFILO',en:'PROFILE'}, p_personal:{it:'DATI PERSONALI',en:'PERSONAL DATA'},
+  p_security:{it:'SICUREZZA',en:'SECURITY'}, p_privacy:{it:'PRIVACY',en:'PRIVACY'},
+  p_logout:{it:"ESCI DALL'ACCOUNT",en:'SIGN OUT'}, p_danger:{it:'ZONA PERICOLOSA',en:'DANGER ZONE'},
+  // ── Coach ──
+  co_for_you:{it:'Per te',en:'For you'}, co_week:{it:'Settimana',en:'Week'}, co_tools:{it:'Strumenti',en:'Tools'},
+  co_chat:{it:'Chat',en:'Chat'}, co_travel:{it:'MODALITÀ TRASFERTA',en:'TRAVEL MODE'},
+  co_vacation:{it:'MODALITÀ VACANZA',en:'VACATION MODE'}, co_injuries:{it:'INFORTUNI',en:'INJURIES'},
+  // ── Misure / Shopping / Social ──
+  m_title:{it:'MISURE',en:'MEASUREMENTS'}, sh_title:{it:'LISTA SPESA',en:'SHOPPING LIST'},
+  so_title:{it:'CLASSIFICA',en:'LEADERBOARD'}, bo_title:{it:'PROGRESSI',en:'PROGRESS'},
+  st_title:{it:'STATISTICHE PRO',en:'PRO STATS'}
+};
+window.t = function(key){ const e=window.I18N[key]; if(!e) return key; const l=(window.ST&&ST.lang)?ST.lang:'it'; return e[l]||e.it||key; };
+window.setLang = async function(lang){ if(lang!=='it'&&lang!=='en') return; ST.lang=lang; ST.langChosen=true; if(typeof save==='function') await save(); render(); };
+
 window.defST=function(){
   return{
     p:null,h:[],wLog:[],nutri:{},water:{},life:{},cheatDebt:0,measures:{},notes:[],suppLog:{},activities:{},
@@ -5956,6 +4884,8 @@ window.defST=function(){
     customExercises:{},          // esercizi personalizzati creati dall'utente {id: {name,cat,sets,reps,...}}
     // ── Campi sessione 15 ──
     theme:'dark',                // 'dark' | 'light' | 'auto' (segue OS)
+    lang:'it',                   // SESSIONE 35: 'it' | 'en'
+    langChosen:false,            // true dopo che l'utente ha scelto la lingua la prima volta
     // ── Campi sessione 16 ──
     injuries:[],                 // [{area, until}] infortuni attivi
     coachView:'proactive',       // vista corrente AI Coach
@@ -5997,6 +4927,8 @@ window.saveU=async function(){
       shareRecipesToCommunity:ST.shareRecipesToCommunity,
       healthSyncLog:ST.healthSyncLog,
       theme:ST.theme,
+      lang:ST.lang,
+      langChosen:ST.langChosen,
       injuries:ST.injuries,
       onboardingDone:ST.onboardingDone,
       coachView:ST.coachView,
@@ -7376,7 +6308,7 @@ window.showUndoToast = function(message, undoCallback, durationMs = 5000) {
   toast.innerHTML = `
     <div style="font-size:18px;flex-shrink:0;">↩️</div>
     <div style="flex:1;font-size:13px;color:var(--text);min-width:0;">${message}</div>
-    <button onclick="window.executeUndo('${id}')" style="background:var(--ora);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:800;cursor:pointer;letter-spacing:.5px;flex-shrink:0;">ANNULLA</button>
+    <button onclick="window.executeUndo('${id}')" style="background:var(--ora);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:800;cursor:pointer;letter-spacing:.5px;flex-shrink:0;">${t('c_cancel')}</button>
   `;
   // Barra progresso temporale
   const bar = document.createElement('div');
@@ -10015,7 +8947,7 @@ window.renderDisclaimer=function(){
 
       <!-- Bottoni -->
       ${isReview?`
-        <button class="btn" style="width:100%;padding:14px;font-family:'Bebas Neue';font-size:16px;background:var(--blu);color:#fff;" onclick="closeDisclaimerView()">CHIUDI</button>
+        <button class="btn" style="width:100%;padding:14px;font-family:'Bebas Neue';font-size:16px;background:var(--blu);color:#fff;" onclick="closeDisclaimerView()">${t('c_close')}</button>
       `:`
         <div style="background:var(--surf);border:1px solid var(--bord);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:var(--mut);line-height:1.5;text-align:center;">Per usare l'app devi accettare il disclaimer e l'informativa privacy. Cliccando "Accetto" confermi di aver letto e compreso entrambi.</div>
         <button class="btn" style="width:100%;padding:14px;font-family:'Bebas Neue';font-size:18px;background:var(--ora);color:#fff;" onclick="acceptDisclaimer()">✓ HO LETTO E ACCETTO</button>
@@ -10291,8 +9223,8 @@ window.renderAuth = function(root){
   if (AU.loggingIn) {
     content = `<div class="card" style="text-align:center;padding:36px 20px;">
       <div style="font-size:48px;margin-bottom:14px;">🔐</div>
-      <div class="bebas" style="font-size:22px;color:var(--acc);letter-spacing:1.5px;margin-bottom:8px;">ACCESSO IN CORSO</div>
-      <div style="font-size:13px;color:var(--mut);line-height:1.5;margin-bottom:18px;">Sto caricando i tuoi dati dal cloud…</div>
+      <div class="bebas" style="font-size:22px;color:var(--acc);letter-spacing:1.5px;margin-bottom:8px;">${t('log_in_progress')}</div>
+      <div style="font-size:13px;color:var(--mut);line-height:1.5;margin-bottom:18px;">${t('log_loading_data')}</div>
       <div style="width:100%;height:4px;background:var(--surf);border-radius:99px;overflow:hidden;position:relative;">
         <div style="position:absolute;top:0;left:-30%;width:30%;height:4px;background:var(--acc);border-radius:99px;animation:authLoad 1.1s ease-in-out infinite;"></div>
       </div>
@@ -10527,7 +9459,7 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
   } else if(activeMeal){
     // Card ATTIVA: grande, bottoni FATTO/SALTO
     mealCardHtml=`<div style="background:${mealCardStyle.bg};border:2px solid ${mealCardStyle.border};border-radius:18px;padding:18px;${mealCardStyle.glow}">
-      <div style="font-size:10px;font-weight:700;color:var(--acc);letter-spacing:2px;margin-bottom:10px;cursor:pointer;" onclick="goToMeal('${mealToShow.id}')">⏰ È ORA DI MANGIARE</div>
+      <div style="font-size:10px;font-weight:700;color:var(--acc);letter-spacing:2px;margin-bottom:10px;cursor:pointer;" onclick="goToMeal('${mealToShow.id}')">⏰ ${t('h_time_to_eat')}</div>
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;cursor:pointer;" onclick="goToMeal('${mealToShow.id}')">
         <div style="font-size:40px;line-height:1;">${mealToShow.icon}</div>
         <div style="flex:1;min-width:0;">
@@ -10544,7 +9476,7 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
   } else if(nextMeal){
     // Card INATTIVA: prossimo pasto in attesa
     mealCardHtml=`<div style="background:${mealCardStyle.bg};border:1.5px solid ${mealCardStyle.border};border-radius:18px;padding:16px;opacity:.92;cursor:pointer;" onclick="goToMeal('${mealToShow.id}')">
-      <div style="font-size:10px;font-weight:700;color:var(--mut);letter-spacing:1.5px;margin-bottom:8px;">🍽️ PROSSIMO PASTO</div>
+      <div style="font-size:10px;font-weight:700;color:var(--mut);letter-spacing:1.5px;margin-bottom:8px;">🍽️ ${t('h_next_meal')}</div>
       <div style="display:flex;align-items:center;gap:12px;">
         <div style="font-size:32px;">${mealToShow.icon}</div>
         <div style="flex:1;min-width:0;">
@@ -10622,7 +9554,7 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
             <div style="font-size:12px;color:var(--mut);margin-top:3px;">${woInfo.exCount} esercizi · ~${ST.p.dur||60} min${woInfo.isCustom?' · tua scheda':''}</div>
           </div>
         </div>
-        <button class="btn" style="width:100%;padding:16px;background:${woInfo.col};color:#000;font-family:'Bebas Neue';font-size:20px;letter-spacing:2px;border:none;border-radius:12px;" onclick="startWo('${woInfo.id}')">▶ INIZIA ALLENAMENTO</button>
+        <button class="btn" style="width:100%;padding:16px;background:${woInfo.col};color:#000;font-family:'Bebas Neue';font-size:20px;letter-spacing:2px;border:none;border-radius:12px;" onclick="startWo('${woInfo.id}')">${t('h_start')}</button>
         <!-- SESSIONE 26: opzione "oggi è riposo" direttamente dalla card -->
         <button class="btn-s" style="width:100%;padding:9px;margin-top:8px;background:transparent;color:var(--mut);border:1px dashed var(--bord);font-size:12px;font-weight:600;border-radius:10px;cursor:pointer;" onclick="logRestDay()">💤 oggi mi riposo</button>
       </div>`;
@@ -10758,7 +9690,7 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
   // ═══════════════════════════════════════════════════════════
   const todayBlock=`<div style="background:var(--card);border:1px solid var(--bord);border-radius:18px;padding:16px;margin-bottom:10px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-      <div style="font-size:12px;font-weight:700;color:var(--mut);letter-spacing:1.5px;">📊 OGGI IN NUMERI</div>
+      <div style="font-size:12px;font-weight:700;color:var(--mut);letter-spacing:1.5px;">📊 ${t('h_today_numbers')}</div>
       <div style="font-size:12px;color:var(--mut);">${now.toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})}</div>
     </div>
 
@@ -11204,7 +10136,7 @@ window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,to
       <div class="lbl" style="margin-bottom:8px;">REGISTRA I PASSI DI OGGI</div>
       <div style="display:flex;gap:8px;align-items:center;">
         <input type="number" id="nStep" value="${stepsToday}" placeholder="Es. 8500" style="margin:0;font-size:22px;font-weight:700;text-align:center;flex:1;padding:12px;">
-        <button class="btn-s" style="background:var(--gre);color:#000;padding:12px 18px;" onclick="logSteps()">SALVA</button>
+        <button class="btn-s" style="background:var(--gre);color:#000;padding:12px 18px;" onclick="logSteps()">${t('c_save')}</button>
       </div>
       <div style="font-size:11px;color:var(--mut);margin-top:8px;line-height:1.4;">💡 Puoi prenderli dall'app Salute del tuo telefono (Google Fit / Apple Health).</div>
     </div>
@@ -11697,7 +10629,7 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
     </div>
   </details>
 
-  <div class="bebas" style="font-size:18px;color:var(--mut);margin:16px 0 10px;letter-spacing:1px;">MENU DELLA GIORNATA</div>
+  <div class="bebas" style="font-size:18px;color:var(--mut);margin:16px 0 10px;letter-spacing:1px;">${t('d_menu_today')}</div>
 
   <!-- SESSIONE 30: banner previsione kcal varianti selezionate -->
   ${(()=>{
@@ -11899,7 +10831,7 @@ window.renderMeasures = function(cW,mac,theme,pWeek,sx){
   return '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
     +'<div><div class="bebas" style="font-size:28px;">MISURE</div>'
     +'<div style="font-size:11px;color:var(--mut);">'+(currentDateStr===getToday()?'Oggi':currentDateStr)+(prevDate&&prevDate!==currentDateStr?' &middot; ultima: '+prevDate:'')+'</div></div>'
-    +'<button onclick="saveMeasures()" style="background:var(--acc);color:#000;border:none;border-radius:12px;padding:12px 18px;font-family:\"Bebas Neue\";font-size:16px;cursor:pointer;">SALVA</button>'
+    +'<button onclick="saveMeasures()" style="background:var(--acc);color:#000;border:none;border-radius:12px;padding:12px 18px;font-family:\"Bebas Neue\";font-size:16px;cursor:pointer;">'+t("c_save")+'</button>'
     +'</div>'
     +(!hasMeasures?'<div class="card" style="text-align:center;padding:24px;border-style:dashed;"><div style="font-size:36px;margin-bottom:8px;">📐</div><div style="font-size:14px;font-weight:600;margin-bottom:6px;">Prima misurazione</div><div style="font-size:12px;color:var(--mut);line-height:1.6;">Inserisci le misure e salva. I grafici appariranno dopo 2+ misurazioni.</div></div>':'')
     +'<div class="card" style="padding:18px;">'
@@ -12737,7 +11669,7 @@ window.renderShopping = function(mac) {
 
   let html = `
   <div class="r" style="margin-bottom:14px;">
-    <div class="bebas" style="font-size:26px;">🛒 LISTA SPESA</div>
+    <div class="bebas" style="font-size:26px;">🛒 ${t('sh_title')}</div>
     <div style="font-size:11px;color:var(--mut);">Sett. ${weekNum} · ${checkedItems}/${totalItems}</div>
   </div>
 
@@ -13271,7 +12203,7 @@ window.renderStatsPro = function() {
     {id:'calendar', emo:'📅', lbl:'Calendario'}
   ];
   return `
-  <div class="bebas" style="font-size:30px;color:var(--blu);margin:8px 0 4px;">📈 STATISTICHE PRO</div>
+  <div class="bebas" style="font-size:30px;color:var(--blu);margin:8px 0 4px;">📈 ${t('st_title')}</div>
   <div style="font-size:12px;color:var(--mut);margin-bottom:14px;">Analisi avanzata dei tuoi dati.</div>
 
   <!-- Tab interni (sticky in alto) -->
@@ -13790,57 +12722,6 @@ window.getWeeklyRecap = function() {
   };
 };
 
-window.renderCoach = function(){
-  const sx=AU.profile?.sx||'m';
-  if (!ST.coachView) ST.coachView = 'proactive';
-  const view = ST.coachView;
-  const tabs = [
-    {id:'proactive', emo:'🔔', lbl:'Per te'},
-    {id:'recap', emo:'📊', lbl:'Settimana'},
-    {id:'tools', emo:'🛠️', lbl:'Strumenti'},
-    {id:'chat', emo:'💬', lbl:'Chat'}
-  ];
-
-  if (view === 'chat') {
-    return `
-    <div style="display:flex;flex-direction:column;min-height:calc(100vh - 130px);padding-top:6px;">
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:10px;">
-        ${tabs.map(t => `<button class="btn-s" style="padding:10px 4px;background:${view===t.id?'var(--acc)':'var(--surf)'};color:${view===t.id?'#000':'var(--mut)'};border:1px solid ${view===t.id?'var(--acc)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;" onclick="ST.coachView='${t.id}';render()"><span style="font-size:16px;">${t.emo}</span><span>${t.lbl}</span></button>`).join('')}
-      </div>
-      <div id="chatArea" style="flex:1;overflow-y:auto;padding:8px 0 14px;display:flex;flex-direction:column;gap:8px;min-height:300px;">
-        ${ST.chatHistory.length===0?`<div style="text-align:center;margin-top:10px;">
-          <div style="font-size:13px;color:var(--text);line-height:1.55;margin-bottom:14px;padding:14px;background:var(--card);border:1px solid var(--bord);border-radius:12px;">🤖 Sono Marcello. Conosco il tuo profilo. Chiedimi quello che vuoi.</div>
-          <div style="display:flex;flex-direction:column;gap:6px;">
-            ${[sx==='f'?'Come ottimizzo i glutei?':'Come accelero la perdita di grasso?','Cosa mangiare prima dell\'allenamento?','Ho saltato 3 allenamenti, cosa faccio?'].map(q=>`<div onclick="el('aiIn').value='${q}';sendMsg();" style="cursor:pointer;background:var(--surf);border:1px solid var(--bord);border-radius:10px;padding:10px 12px;font-size:12px;text-align:left;">${q}</div>`).join('')}
-          </div>
-        </div>`:ST.chatHistory.map(m=>`<div style="display:flex;justify-content:${m.role==='user'?'flex-end':'flex-start'};"><div class="bbl ${m.role==='user'?'bbl-u':'bbl-ai'}">${m.content.replace(/\n/g,'<br>')}</div></div>`).join('')}
-        ${ST.chatLoading?`<div style="display:flex;"><div class="bbl bbl-ai"><span style="letter-spacing:3px;animation:blink 1s infinite">●●●</span></div></div>`:''}
-      </div>
-      <div style="padding:10px 0;background:var(--bg);border-top:1px solid var(--bord);">
-        <div style="display:flex;gap:8px;margin-bottom:${ST.chatHistory.length?'6':'0'}px;">
-          <input id="aiIn" placeholder="Chiedimi qualcosa..." style="flex:1;margin:0;" onkeydown="if(event.key==='Enter')sendMsg();">
-          <button class="btn" style="width:auto;padding:0 16px;margin:0;font-size:16px;${ST.chatLoading?'opacity:.5;pointer-events:none':''}" onclick="sendMsg()">➤</button>
-        </div>
-        ${ST.chatHistory.length>0?`<div style="text-align:center;"><button class="btn-s btn-action" style="font-size:10px;padding:4px 8px;" onclick="clearChat()">🗑 Svuota chat</button></div>`:''}
-      </div>
-    </div>`;
-  }
-
-  return `
-  <div class="bebas" style="font-size:30px;color:var(--acc);margin:8px 0 4px;">🤖 AI COACH</div>
-
-  <div style="position:sticky;top:60px;z-index:10;background:var(--bg);padding:8px 0;margin-bottom:10px;border-bottom:1px solid var(--bord);">
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;">
-      ${tabs.map(t => `<button class="btn-s" style="padding:10px 4px;background:${view===t.id?'var(--acc)':'var(--surf)'};color:${view===t.id?'#000':'var(--mut)'};border:1px solid ${view===t.id?'var(--acc)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;" onclick="ST.coachView='${t.id}';render()"><span style="font-size:16px;">${t.emo}</span><span>${t.lbl}</span></button>`).join('')}
-    </div>
-  </div>
-
-  ${view==='proactive' ? renderCoachProactive() : ''}
-  ${view==='recap' ? renderCoachRecap() : ''}
-  ${view==='tools' ? renderCoachTools() : ''}
-  `;
-};
-
 // ── COACH PROATTIVO ──
 window.renderCoachProactive = function() {
   const alerts = window.getCoachAlerts();
@@ -14216,7 +13097,7 @@ window.renderCoach = function(){
   }
 
   return `
-  <div class="bebas" style="font-size:30px;color:var(--acc);margin:8px 0 4px;">🤖 AI COACH</div>
+  <div class="bebas" style="font-size:30px;color:var(--acc);margin:8px 0 4px;">🤖 ${t('nav_coach')}</div>
 
   <div style="position:sticky;top:60px;z-index:10;background:var(--bg);padding:8px 0;margin-bottom:10px;border-bottom:1px solid var(--bord);">
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;">
@@ -14240,7 +13121,7 @@ window.renderProfile = function() {
 
   return `
   <div style="margin:8px 0 14px;">
-    <div class="bebas" style="font-size:30px;color:var(--blu);margin-bottom:2px;">👤 PROFILO</div>
+    <div class="bebas" style="font-size:30px;color:var(--blu);margin-bottom:2px;">👤 ${t('p_title')}</div>
     <div style="font-size:12px;color:var(--mut);">I tuoi dati personali, sicurezza e privacy.</div>
   </div>
 
@@ -14277,7 +13158,7 @@ window.renderProfile = function() {
     <div class="pw-wrap"><input type="password" id="cpCur" placeholder="Password attuale"><span class="pw-eye" onclick="togglePw(this)">👁️</span></div>
     <span class="lbl">NUOVA PASSWORD</span>
     <div class="pw-wrap"><input type="password" id="cpNew" placeholder="Min 8 car., 1 num, 1 spec."><span class="pw-eye" onclick="togglePw(this)">👁️</span></div>
-    <span class="lbl">CONFERMA</span>
+    <span class="lbl">${t('c_confirm')}</span>
     <div class="pw-wrap"><input type="password" id="cpNew2" placeholder="Ripeti la nuova password"><span class="pw-eye" onclick="togglePw(this)">👁️</span></div>
     <button class="btn-s btn-purp" style="width:100%;padding:13px;font-family:'Bebas Neue';font-size:16px;letter-spacing:1px;" onclick="doChangePassword()">AGGIORNA PASSWORD</button>
   </div>
@@ -14721,7 +13602,7 @@ window.renderSettings = function(mac){
 
   <!-- ── TEMA APP (sessione 15) ── -->
   <div class="card" style="border-color:var(--blu);">
-    <div class="bebas" style="font-size:18px;color:var(--blu);margin-bottom:6px;">🎨 ASPETTO</div>
+    <div class="bebas" style="font-size:18px;color:var(--blu);margin-bottom:6px;">🎨 ${t('s_appearance')}</div>
     <div style="font-size:11px;color:var(--mut);margin-bottom:10px;">Scegli il tema dell'app.</div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
       ${[
@@ -14738,9 +13619,16 @@ window.renderSettings = function(mac){
     </div>
   </div>
 
-  <!-- ── INTEGRAZIONI BILANCE / APPS SALUTE (sessione 6) ── -->
+  <!-- ── SESSIONE 35: LINGUA / LANGUAGE ── -->
+  <div class="card" style="border-color:var(--acc);">
+    <div class="bebas" style="font-size:18px;color:var(--acc);margin-bottom:6px;">🌍 ${window.t('lang_label')}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+      <button class="btn-s" style="padding:14px 4px;background:${(ST.lang||'it')==='it'?'var(--acc)':'var(--surf)'};color:${(ST.lang||'it')==='it'?'#000':'var(--text)'};border:1.5px solid var(--acc);font-weight:700;border-radius:10px;cursor:pointer;" onclick="setLang('it')">🇮🇹 Italiano</button>
+      <button class="btn-s" style="padding:14px 4px;background:${ST.lang==='en'?'var(--acc)':'var(--surf)'};color:${ST.lang==='en'?'#000':'var(--text)'};border:1.5px solid var(--acc);font-weight:700;border-radius:10px;cursor:pointer;" onclick="setLang('en')">🇬🇧 English</button>
+    </div>
+  </div>
   <div class="card" style="border-color:var(--blu);">
-    <div class="bebas" style="font-size:18px;color:var(--blu);margin-bottom:6px;">🔌 INTEGRAZIONI</div>
+    <div class="bebas" style="font-size:18px;color:var(--blu);margin-bottom:6px;">🔌 ${t('s_integrations')}</div>
     <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:12px;">
       Importa dati da bilance smart e app salute, esporta in formato standard.
     </div>
@@ -14803,6 +13691,23 @@ window.renderSettings = function(mac){
 window.render = function() {
   const root=document.getElementById('app');
   if(!AU.user){renderAuth(root);return;}
+
+  // ── SESSIONE 35: scelta lingua al primo accesso ──
+  // Mostrata una sola volta, dopo il login, se l'utente non l'ha mai scelta.
+  if (AU.user && ST.langChosen === false) {
+    root.innerHTML = `<div style="max-width:500px;margin:50px auto 0;padding:0 20px;">
+      <div class="card" style="text-align:center;padding:32px 22px;">
+        <div style="font-size:46px;margin-bottom:14px;">🌍</div>
+        <div class="bebas" style="font-size:26px;color:var(--acc);letter-spacing:1px;margin-bottom:6px;">${t('lang_title')} / Choose language</div>
+        <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:22px;">${t('lang_subtitle')}</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <button class="btn" style="padding:16px;background:${ST.lang==='it'?'var(--acc)':'var(--surf)'};color:${ST.lang==='it'?'#000':'var(--text)'};border:2px solid var(--acc);font-size:16px;font-weight:700;border-radius:12px;cursor:pointer;" onclick="setLang('it')">🇮🇹 Italiano</button>
+          <button class="btn" style="padding:16px;background:${ST.lang==='en'?'var(--acc)':'var(--surf)'};color:${ST.lang==='en'?'#000':'var(--text)'};border:2px solid var(--acc);font-size:16px;font-weight:700;border-radius:12px;cursor:pointer;" onclick="setLang('en')">🇬🇧 English</button>
+        </div>
+      </div>
+    </div>`;
+    return;
+  }
 
   // ── PRESERVA SCROLL POSITION (sessione 15, esteso sessione 16) ──
   // Quando render() viene chiamato dopo cambi di stato (toggle, save, espandi),
@@ -15129,7 +14034,7 @@ window.render = function() {
               </div>`).join('')}
             </div>`;
           })()}
-          <button class="btn btn-action" style="width:100%;padding:12px;margin-top:10px;" onclick="closeSheet()">ANNULLA</button>
+          <button class="btn btn-action" style="width:100%;padding:12px;margin-top:10px;" onclick="closeSheet()">${t('c_cancel')}</button>
         </div></div>`;
       })() : ''
     );
@@ -15184,7 +14089,7 @@ window.render = function() {
 
     <!-- Bottone CREA NUOVO ESERCIZIO PERSONALIZZATO (sessione 13) -->
     <button class="btn-s" style="width:100%;padding:13px;background:rgba(167,139,250,.15);border:1.5px dashed var(--purp);color:var(--purp);font-weight:700;font-size:13px;border-radius:10px;cursor:pointer;margin-top:10px;" onclick="openCustomExerciseSheet('${ST.sheetData.slot}','${ST.sheetData.curId}')">➕ NON TROVI QUELLO CHE VUOI? CREA NUOVO ESERCIZIO</button>
-    <button class="btn btn-action" style="margin-top:8px;width:100%;padding:12px;" onclick="closeSheet()">ANNULLA</button>
+    <button class="btn btn-action" style="margin-top:8px;width:100%;padding:12px;" onclick="closeSheet()">${t('c_cancel')}</button>
   </div></div>`:
   // PUNTO 17: editor pasto personalizzato
   ST.sheet==='customMeal'&&ST.sheetData?(()=>{
@@ -15308,8 +14213,8 @@ window.render = function() {
 
       <!-- Azioni -->
       <div style="display:flex;gap:8px;">
-        <button class="btn btn-action" style="flex:1;padding:12px;" onclick="closeSheet()">ANNULLA</button>
-        <button class="btn" style="flex:1;padding:12px;" onclick="saveCustomMeal()">SALVA</button>
+        <button class="btn btn-action" style="flex:1;padding:12px;" onclick="closeSheet()">${t('c_cancel')}</button>
+        <button class="btn" style="flex:1;padding:12px;" onclick="saveCustomMeal()">${t('c_save')}</button>
       </div>
       <div style="font-size:10px;color:var(--mut);text-align:center;margin-top:10px;line-height:1.4;">💡 Se lasci vuoto il pasto e salvi, torni ai consigli automatici.</div>
     </div></div>`;
@@ -15341,7 +14246,7 @@ window.render = function() {
         <div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:5px;">💡 SUGGERIMENTI</div>
         <div style="font-size:11px;color:var(--mut);line-height:1.5;">Le grammature dei singoli ingredienti sono nella card del pasto. Adatta la cottura ai tuoi gusti — la ricetta è una linea guida, non una regola rigida.</div>
       </div>
-      <button class="btn btn-action" style="width:100%;padding:12px;margin-top:14px;" onclick="closeSheet()">CHIUDI</button>
+      <button class="btn btn-action" style="width:100%;padding:12px;margin-top:14px;" onclick="closeSheet()">${t('c_close')}</button>
     </div></div>`;
   })():
   // ── SHEET ESERCIZI BODYWEIGHT TRASFERTA (sessione 7) ──
@@ -15393,7 +14298,7 @@ window.render = function() {
         </div>
       </div>
 
-      <button class="btn btn-action" style="width:100%;padding:12px;" onclick="closeSheet()">CHIUDI</button>
+      <button class="btn btn-action" style="width:100%;padding:12px;" onclick="closeSheet()">${t('c_close')}</button>
     </div></div>`;
   })():
   ST.sheet==='travelEx'?(()=>{
@@ -15422,7 +14327,7 @@ window.render = function() {
         • 10 burpees<br>
         Defaticamento 2' (stretching).
       </div>
-      <button class="btn btn-action" style="width:100%;padding:12px;margin-top:14px;" onclick="closeSheet()">CHIUDI</button>
+      <button class="btn btn-action" style="width:100%;padding:12px;margin-top:14px;" onclick="closeSheet()">${t('c_close')}</button>
     </div></div>`;
   })():
   // ── SHEET MODALITÀ TRASFERTA (sessione 7) ──
@@ -15481,7 +14386,7 @@ window.render = function() {
       `}
 
       <div style="display:flex;gap:6px;">
-        <button class="btn btn-action" style="flex:1;padding:12px;" onclick="closeSheet()">ANNULLA</button>
+        <button class="btn btn-action" style="flex:1;padding:12px;" onclick="closeSheet()">${t('c_cancel')}</button>
         <button class="btn" style="flex:2;padding:12px;background:var(--ora);color:#fff;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;" onclick="confirmTravelMode()">✓ ATTIVA</button>
       </div>
     </div></div>`;
@@ -15566,7 +14471,7 @@ window.render = function() {
       </div>
 
       <div style="display:flex;gap:6px;">
-        <button class="btn btn-action" style="flex:1;padding:12px;" onclick="closeSheet()">ANNULLA</button>
+        <button class="btn btn-action" style="flex:1;padding:12px;" onclick="closeSheet()">${t('c_cancel')}</button>
         <button class="btn" style="flex:2;padding:12px;background:var(--red);color:#fff;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;" onclick="confirmInjury()">✓ CONFERMA</button>
       </div>
     </div></div>`;
@@ -15630,7 +14535,7 @@ window.render = function() {
       <textarea oninput="ST.sheetData.steps=this.value" rows="4" placeholder="Cuoci la pasta al dente&#10;In padella scalda aglio e olio&#10;Aggiungi i pomodorini..." style="width:100%;padding:10px;font-size:13px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;color:var(--text);margin-bottom:14px;font-family:inherit;resize:vertical;">${escapeHtml(d.steps||'')}</textarea>
 
       <div style="display:flex;gap:6px;">
-        <button class="btn btn-action" style="flex:1;padding:14px;" onclick="closeSheet()">ANNULLA</button>
+        <button class="btn btn-action" style="flex:1;padding:14px;" onclick="closeSheet()">${t('c_cancel')}</button>
         <button class="btn" style="flex:2;padding:14px;background:var(--purp);color:#fff;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;border:none;border-radius:12px;" onclick="submitRecipeForm()">${d.editId?'✓ AGGIORNA':'✓ SALVA RICETTA'}</button>
       </div>
     </div></div>`;
@@ -15672,7 +14577,7 @@ window.render = function() {
           </div>`).join('')}
         </div>
         <div style="display:flex;gap:6px;">
-          <button class="btn btn-action" style="flex:1;padding:13px;" onclick="closeSheet()">CHIUDI</button>
+          <button class="btn btn-action" style="flex:1;padding:13px;" onclick="closeSheet()">${t('c_close')}</button>
           <button class="btn" style="flex:1;padding:13px;background:var(--purp);color:#fff;font-family:'Bebas Neue';font-size:15px;letter-spacing:1px;border:none;border-radius:12px;" onclick="closeSheet();openAddRecipeSheet()">➕ NUOVA</button>
         </div>
       `}
@@ -15715,7 +14620,7 @@ window.render = function() {
           ${current==='auto'?'<div style="color:var(--blu);font-size:18px;">✓</div>':''}
         </button>
       </div>
-      <button class="btn btn-action" style="width:100%;padding:11px;margin-top:14px;" onclick="closeSheet()">CHIUDI</button>
+      <button class="btn btn-action" style="width:100%;padding:11px;margin-top:14px;" onclick="closeSheet()">${t('c_close')}</button>
     </div></div>`;
   })():
   ST.sheet==='onboarding'&&ST.sheetData?(()=>{
@@ -15821,7 +14726,7 @@ window.render = function() {
       </div>
 
       <div style="display:flex;gap:6px;">
-        ${d.slot ? `<button class="btn btn-action" style="flex:1;padding:12px;" onclick="ST.sheet='swap';render()">← INDIETRO</button>` : `<button class="btn btn-action" style="flex:1;padding:12px;" onclick="closeSheet()">ANNULLA</button>`}
+        ${d.slot ? `<button class="btn btn-action" style="flex:1;padding:12px;" onclick="ST.sheet='swap';render()">← INDIETRO</button>` : `<button class="btn btn-action" style="flex:1;padding:12px;" onclick="closeSheet()">${t('c_cancel')}</button>`}
         <button class="btn" style="flex:2;padding:12px;background:var(--purp);color:#fff;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;" onclick="confirmCustomExercise()">✓ ${d.slot?'CREA E APPLICA':'CREA'}</button>
       </div>
     </div></div>`;
@@ -15841,7 +14746,7 @@ window.render = function() {
       <div style="font-size:11px;color:var(--mut);text-align:center;margin-bottom:10px;">
         ${ST.sheetData.status === 'starting' ? '⏳ Avvio camera...' : '🔍 In attesa di un codice...'}
       </div>
-      <button class="btn btn-action" style="width:100%;padding:12px;" onclick="stopBarcodeScan()">ANNULLA</button>
+      <button class="btn btn-action" style="width:100%;padding:12px;" onclick="stopBarcodeScan()">${t('c_cancel')}</button>
     </div></div>`;
   })():
   ST.sheet==='customFood'&&ST.sheetData?(()=>{
@@ -16097,7 +15002,7 @@ window.render = function() {
         <div style="font-size:12px;color:var(--mut);margin-bottom:14px;">Scegli lo sport o l'attività che hai fatto (o stai per fare). Le kcal sono calcolate dal tuo peso.</div>
         <input id="sportSearch" type="text" maxlength="50" placeholder="🔍 Cerca (es. corsa, padel, yoga...)" oninput="updateActivityQuery(this.value)" style="margin-bottom:10px;font-size:14px;padding:10px;" value="${escapeHtml(d.q||'')}">
         <div id="sportListContainer" style="height:50vh;overflow-y:auto;">${_buildSportListHtml()}</div>
-        <button class="btn btn-action" style="margin-top:12px;width:100%;padding:12px;" onclick="closeSheet()">ANNULLA</button>
+        <button class="btn btn-action" style="margin-top:12px;width:100%;padding:12px;" onclick="closeSheet()">${t('c_cancel')}</button>
       </div></div>`;
     }
     // Schermata config (minuti manuali o cronometro)
@@ -16161,7 +15066,7 @@ window.render = function() {
         </div>
         <div style="font-size:11px;color:var(--mut);margin-bottom:14px;line-height:1.5;">💡 Suggeriti per il tuo focus: ${sr.note||sr.sets+'×'+sr.reps+', recupero '+sr.rest+'s'}.</div>
         <div style="display:flex;gap:8px;">
-          <button class="btn btn-action" style="flex:1;padding:12px;" onclick="ST.sheetData.subSheet=null;render();">ANNULLA</button>
+          <button class="btn btn-action" style="flex:1;padding:12px;" onclick="ST.sheetData.subSheet=null;render();">${t('c_cancel')}</button>
           <button class="btn" style="flex:1;padding:12px;background:var(--purp);color:#fff;" onclick="saveCustomExerciseToDraft()">AGGIUNGI</button>
         </div>
       </div></div>`;
@@ -16228,8 +15133,8 @@ window.render = function() {
 
       <!-- Azioni -->
       <div style="display:flex;gap:8px;">
-        <button class="btn btn-action" style="flex:1;padding:12px;" onclick="closeSheet()">ANNULLA</button>
-        <button class="btn" style="flex:1;padding:12px;background:var(--purp);color:#fff;" onclick="saveCustomWorkout()">SALVA</button>
+        <button class="btn btn-action" style="flex:1;padding:12px;" onclick="closeSheet()">${t('c_cancel')}</button>
+        <button class="btn" style="flex:1;padding:12px;background:var(--purp);color:#fff;" onclick="saveCustomWorkout()">${t('c_save')}</button>
       </div>
     </div></div>`;
   })():'';
@@ -16238,28 +15143,24 @@ window.render = function() {
   const shortPickH='';
   // ── NAVIGAZIONE: Drawer organizzato in macro-sezioni (sessione 14) ──
   const NAV_ITEMS=[
-    // QUOTIDIANO
-    {id:'home',ic:'🏠',lbl:'Home',group:'daily'},
-    {id:'work',ic:'🏋️',lbl:'Allenamento',group:'daily'},
-    {id:'diet',ic:'🥗',lbl:'Alimentazione',group:'daily'},
-    // STRUMENTI
-    {id:'shopping',ic:'🛒',lbl:'Lista Spesa',group:'tools'},
-    {id:'measures',ic:'📐',lbl:'Misure',group:'tools'},
-    // ANALISI
-    {id:'body',ic:'📊',lbl:'Progressi',group:'insights'},
-    {id:'stats',ic:'📈',lbl:'Statistiche Pro',group:'insights'}, // sessione 16
-    {id:'coach',ic:'🤖',lbl:'AI Coach',group:'insights'},
-    {id:'social',ic:'🏆',lbl:'Classifica',group:'insights'},
-    // ALTRO
-    {id:'share',ic:'📤',lbl:'Condividi App',group:'other'},
-    {id:'set',ic:'⚙️',lbl:'Configurazione',group:'other'},
-    {id:'profile',ic:'👤',lbl:'Profilo',group:'other'}, // sessione 17
+    {id:'home',ic:'🏠',lbl:t('nav_home'),group:'daily'},
+    {id:'work',ic:'🏋️',lbl:t('nav_work'),group:'daily'},
+    {id:'diet',ic:'🥗',lbl:t('nav_diet'),group:'daily'},
+    {id:'shopping',ic:'🛒',lbl:t('nav_shopping'),group:'tools'},
+    {id:'measures',ic:'📐',lbl:t('nav_measures'),group:'tools'},
+    {id:'body',ic:'📊',lbl:t('nav_body'),group:'insights'},
+    {id:'stats',ic:'📈',lbl:t('nav_stats'),group:'insights'},
+    {id:'coach',ic:'🤖',lbl:t('nav_coach'),group:'insights'},
+    {id:'social',ic:'🏆',lbl:t('nav_social'),group:'insights'},
+    {id:'share',ic:'📤',lbl:t('nav_share'),group:'other'},
+    {id:'set',ic:'⚙️',lbl:t('nav_set'),group:'other'},
+    {id:'profile',ic:'👤',lbl:t('nav_profile'),group:'other'},
   ];
   const NAV_GROUPS = [
-    {id:'daily', lbl:'QUOTIDIANO'},
-    {id:'tools', lbl:'STRUMENTI'},
-    {id:'insights', lbl:'ANALISI'},
-    {id:'other', lbl:'ALTRO'}
+    {id:'daily', lbl:t('grp_daily')},
+    {id:'tools', lbl:t('grp_tools')},
+    {id:'insights', lbl:t('grp_insights')},
+    {id:'other', lbl:t('grp_other')}
   ];
   const curNav=NAV_ITEMS.find(n=>n.id===ST.tab)||NAV_ITEMS[0];
   const drawerH=`<div class="drawer-ov ${window.drawerOpen?'on':''}" onclick="closeDrawer()"></div>
@@ -16292,7 +15193,7 @@ window.render = function() {
     <div style="display:flex;align-items:center;gap:6px;">
       <!-- SESSIONE 26: bottone help contestuale per ogni sezione -->
       ${window.__sectionHelps?.[ST.tab] ? `<button onclick="showSectionHelp('${ST.tab}')" style="width:30px;height:30px;border-radius:50%;background:var(--surf);border:1.5px solid var(--bord);color:var(--mut);font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="Guida sezione">?</button>` : ''}
-      ${currentDateStr!==getToday()?`<button class="btn-s" style="padding:6px 10px;font-size:11px;font-weight:700;background:var(--ora);color:#fff;border:none;letter-spacing:1px;" onclick="changeCurrentDate(getToday())">OGGI</button>`:''}
+      ${currentDateStr!==getToday()?`<button class="btn-s" style="padding:6px 10px;font-size:11px;font-weight:700;background:var(--ora);color:#fff;border:none;letter-spacing:1px;" onclick="changeCurrentDate(getToday())">${t('c_today')}</button>`:''}
       <input type="date" value="${currentDateStr}" max="${getToday()}" onchange="changeCurrentDate(this.value)" style="width:auto;margin:0;padding:6px 8px;font-size:12px;border:1.5px solid ${currentDateStr!==getToday()?'var(--ora)':'var(--bord)'};border-radius:8px;color:${currentDateStr!==getToday()?'var(--ora)':'var(--text)'};background:var(--surf);font-weight:700;outline:none;cursor:pointer;">
     </div>
   </div>
