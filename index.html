@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION39-AUTOSYNC-I18N2">
+<meta name="ft-version" content="build-SESSION40-I18N3">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -520,7 +520,7 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
     <div class="spinner"></div>
     <div class="bebas" style="color:var(--text);font-size:28px;letter-spacing:3px;">SYSTEM BOOTING</div>
     <div style="color:var(--mut);font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:1px;">Connessione al Cloud Secure Database...</div>
-    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION39</div>
+    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION40</div>
   </div>
 </div>
 
@@ -4984,7 +4984,11 @@ window.I18N = {
   p_age:{it:'Età',en:'Age'}, p_change_pw:{it:'Cambia password',en:'Change password'}, p_delete_account:{it:'Elimina account',en:'Delete account'},
   rec_my_recipes:{it:'LE MIE RICETTE',en:'MY RECIPES'}, rec_new:{it:'NUOVA RICETTA',en:'NEW RECIPE'},
   rec_name:{it:'Nome ricetta',en:'Recipe name'}, rec_ingredients:{it:'Ingredienti',en:'Ingredients'},
-  rec_steps:{it:'Procedimento',en:'Steps'}, rec_use:{it:'USA COME PASTO',en:'USE AS MEAL'}
+  rec_steps:{it:'Procedimento',en:'Steps'}, rec_use:{it:'USA COME PASTO',en:'USE AS MEAL'},
+  // ── Sezioni Configurazione (sessione 40) ──
+  sec_program:{it:'PROGRAMMA & OBIETTIVI',en:'PROGRAM & GOALS'}, sec_nutrition:{it:'ALIMENTAZIONE',en:'NUTRITION'},
+  sec_training:{it:'ALLENAMENTO',en:'WORKOUT'}, sec_coaching:{it:'COACHING',en:'COACHING'},
+  sec_notif_tut:{it:'NOTIFICHE & TUTORIAL',en:'NOTIFICATIONS & TUTORIAL'}, sec_advanced:{it:'AVANZATE',en:'ADVANCED'}
 };
 window.t = function(key){ const e=window.I18N[key]; if(!e) return key; const l=(window.ST&&ST.lang)?ST.lang:'it'; return e[l]||e.it||key; };
 window.setLang = async function(lang){ if(lang!=='it'&&lang!=='en') return; ST.lang=lang; ST.langChosen=true; if(typeof save==='function') await save(); render(); };
@@ -10983,7 +10987,7 @@ window.renderMeasures = function(cW,mac,theme,pWeek,sx){
     chartsHtml+='<div class="card"><span class="lbl">% GRASSO CORPOREO</span>'+svg(bfArr,'v','var(--yel)',70)+'</div>';
   }
   return '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
-    +'<div><div class="bebas" style="font-size:28px;">MISURE</div>'
+    +'<div><div class="bebas" style="font-size:28px;">'+t("m_title")+'</div>'
     +'<div style="font-size:11px;color:var(--mut);">'+(currentDateStr===getToday()?'Oggi':currentDateStr)+(prevDate&&prevDate!==currentDateStr?' &middot; ultima: '+prevDate:'')+'</div></div>'
     +'<button onclick="saveMeasures()" style="background:var(--acc);color:#000;border:none;border-radius:12px;padding:12px 18px;font-family:\"Bebas Neue\";font-size:16px;cursor:pointer;">'+t("c_save")+'</button>'
     +'</div>'
@@ -11008,7 +11012,7 @@ window.renderMeasures = function(cW,mac,theme,pWeek,sx){
     + mField('bodyfat','% Grasso Corporeo','Stima con plicometro o bilancia impedenziometrica (opzionale)','%')
     + '<button onclick="saveMeasures()" style="width:100%;background:var(--acc);color:#000;border:none;border-radius:12px;padding:14px;font-family:\"Bebas Neue\";font-size:20px;cursor:pointer;margin-top:6px;">SALVA MISURE</button>'
     +'</div>'
-    +(chartsHtml?'<div class="bebas" style="font-size:18px;color:var(--mut);margin:14px 0 10px;letter-spacing:1px;">GRAFICI PROGRESSIONE</div>'+chartsHtml:'');
+    +(chartsHtml?'<div class="bebas" style="font-size:18px;color:var(--mut);margin:14px 0 10px;letter-spacing:1px;">'+(t("m_title")==="MEASUREMENTS"?"PROGRESSION CHARTS":"GRAFICI PROGRESSIONE")+'</div>'+chartsHtml:'');
 }
 window.renderBody = function(cW,mac,theme,pWeek,sx){
   if(!ST.chartFilter) ST.chartFilter=30;
@@ -11271,7 +11275,7 @@ window.renderBody = function(cW,mac,theme,pWeek,sx){
       charts+=`<div class="card"><div class="r" style="margin-bottom:8px;"><span class="lbl" style="margin:0;">% GRASSO CORPOREO</span><span style="font-size:11px;color:var(--yel);">${bfArr[bfArr.length-1].v}%</span></div>${svg(bfArr,'v','var(--yel)',75)}</div>`;
     }
     if(!charts) charts=`<div class="card" style="text-align:center;padding:20px;color:var(--mut);font-size:13px;">Inserisci almeno 2 misurazioni per vedere i grafici di progressione</div>`;
-    return`<div class="bebas" style="font-size:18px;color:var(--mut);margin:16px 0 10px;letter-spacing:1px;">📈 TREND MISURE</div>${charts}`;
+    return`<div class="bebas" style="font-size:18px;color:var(--mut);margin:16px 0 10px;letter-spacing:1px;">📈 ${t('m_title')==='MEASUREMENTS'?'MEASUREMENTS TREND':'TREND MISURE'}</div>${charts}`;
   })()}
   ${wLogF.length>=2?`<div class="card"><span class="lbl">VOLUME ALLENAMENTI (KG)</span>${svg(wLogF,'vol',theme,90)}</div>`:''}
 
@@ -11539,7 +11543,7 @@ window.renderBody = function(cW,mac,theme,pWeek,sx){
     const exStats = allStats.filter(s => s.maxKg > 0 || s.maxSec > 0 || s.maxReps > 0);
     if (exStats.length === 0) return '';
     const top = exStats.slice(0, 8); // top 8 esercizi più frequenti con dati
-    return `<div class="bebas" style="font-size:18px;color:var(--mut);margin:16px 0 10px;letter-spacing:1px;">📊 PROGRESSI PER ESERCIZIO</div>
+    return `<div class="bebas" style="font-size:18px;color:var(--mut);margin:16px 0 10px;letter-spacing:1px;">📊 ${t('bo_weight_trend')==='WEIGHT TREND'?'EXERCISE PROGRESS':'PROGRESSI PER ESERCIZIO'}</div>
     <div class="card" style="padding:14px;">
       <div style="font-size:11px;color:var(--mut);line-height:1.5;margin-bottom:12px;">Top ${top.length} esercizi con dati registrati. Il <strong style="color:var(--acc);">1RM stimato</strong> è il peso massimo teorico per una singola ripetizione (formula Epley).</div>
       ${top.map(s => {
@@ -11603,7 +11607,7 @@ window.renderBody = function(cW,mac,theme,pWeek,sx){
 window.renderSocial = function() {
   // ── OPT-IN: se l'utente non ha dato consenso, mostra schermata di scelta ──
   if (!ST.shareLeaderboardConsent) {
-    return `<div class="bebas" style="font-size:32px;margin-bottom:6px;">🏆 CLASSIFICA AMICI</div>
+    return `<div class="bebas" style="font-size:32px;margin-bottom:6px;">🏆 ${t('so_ranking')}</div>
     <div style="font-size:13px;color:var(--mut);margin-bottom:18px;">Sezione opzionale per il confronto amichevole con altri utenti FitTracker PRO.</div>
 
     <div class="card" style="border-color:var(--purp);background:linear-gradient(135deg,rgba(167,139,250,.08),rgba(96,165,250,.04));">
@@ -13389,7 +13393,7 @@ window.renderSettings = function(mac){
 
   ${sectionsMenu}
 
-  ${sectionTitle('sec-program', '🎯', 'PROGRAMMA & OBIETTIVI', 'var(--acc)')}
+  ${sectionTitle('sec-program', '🎯', t('sec_program'), 'var(--acc)')}
 
   <!-- ════ 1. PROGRAMMA (obiettivo, strategia, sessioni) ════ -->
   <div class="card">
@@ -13424,7 +13428,7 @@ window.renderSettings = function(mac){
     <button class="btn" style="width:100%;padding:14px;background:var(--blu);color:#fff;font-size:15px;font-weight:700;letter-spacing:1px;border-radius:12px;border:none;cursor:pointer;margin-top:8px;" onclick="updateTimes()">SALVA ORARI</button>
   </div>
 
-  ${sectionTitle('sec-nutrition', '🥗', 'ALIMENTAZIONE', 'var(--gre)')}
+  ${sectionTitle('sec-nutrition', '🥗', t('sec_nutrition'), 'var(--gre)')}
 
   <!-- ════ INTOLLERANZE ════ -->
   <div class="card">
@@ -13469,10 +13473,10 @@ window.renderSettings = function(mac){
 
   <!-- ════ RICETTE PERSONALI (sessione 31) ════ -->
   <div class="card" style="border-color:var(--purp);">
-    <div class="bebas" style="font-size:20px;color:var(--purp);margin-bottom:6px;">📖 LE TUE RICETTE</div>
+    <div class="bebas" style="font-size:20px;color:var(--purp);margin-bottom:6px;">📖 ${t('s_my_recipes')}</div>
     <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:12px;">Crea le tue ricette personali con macro e ingredienti. Puoi usarle come pasto sostitutivo e (se attivi la condivisione) renderle disponibili agli altri utenti.</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-      <button class="btn-s btn-action" style="padding:12px 8px;font-size:12px;font-weight:700;background:var(--purp);color:#fff;border:none;cursor:pointer;letter-spacing:.5px;" onclick="openAddRecipeSheet()">➕ NUOVA RICETTA</button>
+      <button class="btn-s btn-action" style="padding:12px 8px;font-size:12px;font-weight:700;background:var(--purp);color:#fff;border:none;cursor:pointer;letter-spacing:.5px;" onclick="openAddRecipeSheet()">➕ ${t('rec_new')}</button>
       <button class="btn-s" style="padding:12px 8px;font-size:12px;font-weight:700;background:var(--surf);color:var(--purp);border:1.5px solid var(--purp);cursor:pointer;letter-spacing:.5px;" onclick="openMyRecipesSheet()">📚 LE MIE (${(ST.userRecipes||[]).length})</button>
     </div>
   </div>
@@ -13514,7 +13518,7 @@ window.renderSettings = function(mac){
     <button class="btn-s" style="width:100%;padding:12px;font-size:13px;background:rgba(74,222,128,.1);border:1.5px solid var(--gre);color:var(--gre);font-weight:700;border-radius:8px;cursor:pointer;" onclick="exportFoodDb()">💾 SCARICA food_db.js AGGIORNATO</button>
   </div>
 
-  ${sectionTitle('sec-training', '💪', 'ALLENAMENTO', 'var(--ora)')}
+  ${sectionTitle('sec-training', '💪', t('sec_training'), 'var(--ora)')}
 
   <!-- ════ FOCUS ALLENAMENTO ════ -->
   <div id="wrapEFocus"><div class="card">
@@ -13597,7 +13601,7 @@ window.renderSettings = function(mac){
     <button class="btn" style="background:var(--purp);color:#fff;padding:12px;" onclick="openCustomWorkoutEditor()">+ CREA NUOVA SCHEDA</button>
   </div>
 
-  ${sectionTitle('sec-coaching', '🤖', 'COACHING', 'var(--purp)')}
+  ${sectionTitle('sec-coaching', '🤖', t('sec_coaching'), 'var(--purp)')}
 
   <!-- AI RICALCOLO PIANO (sessione 17: spostato qui dentro Coaching) -->
   <div class="card" style="border-color:var(--acc);">
@@ -13621,7 +13625,7 @@ window.renderSettings = function(mac){
     <button class="btn-s" style="width:100%;padding:9px;font-size:11px;background:var(--surf);border:1px solid var(--blu);color:var(--blu);font-weight:700;border-radius:8px;cursor:pointer;" onclick="ST.tab='coach';ST.coachView='tools';render()">→ APRI STRUMENTI AI COACH</button>
   </div>
 
-  ${sectionTitle('sec-notifications', '🔔', 'NOTIFICHE & TUTORIAL', 'var(--ora)')}
+  ${sectionTitle('sec-notifications', '🔔', t('sec_notif_tut'), 'var(--ora)')}
 
   <!-- ── NOTIFICHE PUSH (sessione 12 - master toggle + UX migliorata) ── -->
   <div class="card" style="border-color:var(--ora);">
@@ -13700,7 +13704,7 @@ window.renderSettings = function(mac){
 
   <!-- ── SESSIONE 31: APPLE HEALTH SYNC ── -->
   <div class="card" style="border-color:#ff2d55;">
-    <div class="bebas" style="font-size:18px;color:#ff2d55;margin-bottom:6px;">❤️ APPLE HEALTH SYNC</div>
+    <div class="bebas" style="font-size:18px;color:#ff2d55;margin-bottom:6px;">❤️ ${t('s_health_sync')}</div>
     <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:12px;">Sincronizza dati con l'app Salute di Apple. Export e import avvengono tramite file (no API native).</div>
 
     <!-- EXPORT WORKOUT → ICS -->
@@ -13769,7 +13773,7 @@ window.renderSettings = function(mac){
     <button class="btn-s btn-action" style="width:100%;padding:11px;font-size:13px;" onclick="window.startOnboardingTour()">▶ RIVEDI TOUR</button>
   </div>
 
-  ${sectionTitle('sec-advanced', '⚙️', 'AVANZATE', 'var(--mut)')}
+  ${sectionTitle('sec-advanced', '⚙️', t('sec_advanced'), 'var(--mut)')}
 
   <!-- ── TEMA APP (sessione 15) ── -->
   <div class="card" style="border-color:var(--blu);">
@@ -13977,7 +13981,7 @@ window.render = function() {
       <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;">
         <div style="font-size:48px;margin-bottom:12px;">💪</div><div class="bebas" style="font-size:32px;color:var(--acc);line-height:1;margin-bottom:6px;">${escapeHtml(ex.name.split('—')[0].trim())}</div><div style="font-size:14px;color:var(--mut);margin-bottom:20px;">${totalSets} serie completate</div>
         <div style="display:flex;gap:10px;margin-bottom:28px;">${Array(totalSets).fill(0).map(()=>'<div class="set-dot done"></div>').join('')}</div>
-        ${isLastEx?`<div class="card" style="width:100%;padding:20px;text-align:center;"><div class="bebas" style="font-size:28px;color:var(--acc);margin-bottom:4px;">🏆 ${t('w_done_title')}</div></div>`:`<div class="card" style="width:100%;padding:16px;"><div style="font-size:11px;color:var(--mut);margin-bottom:8px;font-weight:700;letter-spacing:1px;">PROSSIMO ESERCIZIO</div><div class="bebas" style="font-size:22px;color:var(--text);">${escapeHtml(nextEx?.name||'')}</div></div>`}
+        ${isLastEx?`<div class="card" style="width:100%;padding:20px;text-align:center;"><div class="bebas" style="font-size:28px;color:var(--acc);margin-bottom:4px;">🏆 ${t('w_done_title')}</div></div>`:`<div class="card" style="width:100%;padding:16px;"><div style="font-size:11px;color:var(--mut);margin-bottom:8px;font-weight:700;letter-spacing:1px;">${t('w_done_title')==='WORKOUT COMPLETE!'?'NEXT EXERCISE':'PROSSIMO ESERCIZIO'}</div><div class="bebas" style="font-size:22px;color:var(--text);">${escapeHtml(nextEx?.name||'')}</div></div>`}
       </div>
       <div style="padding:14px;border-top:1px solid var(--bord);"><button class="btn" style="height:68px;font-size:22px;background:${isLastEx?'var(--gre)':wo.col||'var(--acc)'};" onclick="advanceExercise()">${isLastEx?'🏁 SALVA E TERMINA':'➡️ PROSSIMO'}</button></div></div>`;return;
     }
@@ -14716,7 +14720,7 @@ window.render = function() {
     const slotLabels = {col:'🌅 Col', sp1:'🍎 Sp1', pra:'🍽️ Pra', sp2:'🍌 Sp2', cen:'🌙 Cen'};
     return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh" style="max-height:88vh;overflow-y:auto;">
       <div class="sh-h"></div>
-      <div class="bebas" style="font-size:24px;color:var(--purp);margin-bottom:4px;letter-spacing:1px;">📚 LE MIE RICETTE</div>
+      <div class="bebas" style="font-size:24px;color:var(--purp);margin-bottom:4px;letter-spacing:1px;">📚 ${t('rec_my_recipes')}</div>
       <div style="font-size:11px;color:var(--mut);margin-bottom:14px;">${list.length} ricette salvate. Tocca per usarla come pasto o modificarla.</div>
 
       ${list.length === 0 ? `
