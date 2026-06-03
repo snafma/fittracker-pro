@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION41-I18N4">
+<meta name="ft-version" content="build-SESSION43-AUTOTRANS">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -520,7 +520,7 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
     <div class="spinner"></div>
     <div class="bebas" style="color:var(--text);font-size:28px;letter-spacing:3px;">SYSTEM BOOTING</div>
     <div style="color:var(--mut);font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:1px;">Connessione al Cloud Secure Database...</div>
-    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION41</div>
+    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION43</div>
   </div>
 </div>
 
@@ -5002,10 +5002,286 @@ window.I18N = {
   fd_portions:{it:'porzioni',en:'portions'}, fd_create_custom:{it:'+ Crea cibo personalizzato',en:'+ Create custom food'},
   // ── Generici extra ──
   c_total:{it:'Totale',en:'Total'}, c_target2:{it:'Obiettivo',en:'Target'}, c_remaining:{it:'Rimanenti',en:'Remaining'},
-  c_completed:{it:'Completato',en:'Completed'}, c_optional:{it:'opzionale',en:'optional'}
+  c_completed:{it:'Completato',en:'Completed'}, c_optional:{it:'opzionale',en:'optional'},
+  // ── Ricerca cibo/attività (sessione 42) ──
+  ph_search_food:{it:'🔍 Cerca cibo (es. pasta, pollo, mela...)',en:'🔍 Search food (e.g. pasta, chicken, apple...)'},
+  ph_search_cheat:{it:'🔍 Cerca cibo (es. fritto misto, pizza, birra...)',en:'🔍 Search food (e.g. fried food, pizza, beer...)'},
+  ph_search_sport:{it:'🔍 Cerca (es. corsa, padel, yoga...)',en:'🔍 Search (e.g. running, padel, yoga...)'},
+  ph_food_name:{it:'Nome cibo (es. Pasta al sugo)',en:'Food name (e.g. Pasta with sauce)'},
+  ph_custom_food:{it:'Es: Hamburger del bar di Marco',en:"E.g. Marco's bar burger"},
+  fd_select_food:{it:'SELEZIONA UN CIBO',en:'SELECT A FOOD'}, fd_no_results:{it:'Nessun risultato',en:'No results'},
+  act_search:{it:'CERCA ATTIVITÀ',en:'SEARCH ACTIVITY'}, act_minutes:{it:'minuti',en:'minutes'},
+  act_add:{it:'AGGIUNGI ATTIVITÀ',en:'ADD ACTIVITY'}
 };
 window.t = function(key){ const e=window.I18N[key]; if(!e) return key; const l=(window.ST&&ST.lang)?ST.lang:'it'; return e[l]||e.it||key; };
 window.setLang = async function(lang){ if(lang!=='it'&&lang!=='en') return; ST.lang=lang; ST.langChosen=true; if(typeof save==='function') await save(); render(); };
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SESSIONE 43 — AUTO-TRADUZIONE TESTO VISIBILE (approccio ibrido)
+// Mappa IT→EN delle frasi dell'interfaccia. Quando ST.lang==='en', la funzione
+// autoTranslate() sostituisce nel testo renderizzato le frasi italiane con quelle
+// inglesi. Lavora SOLO sul testo tra i tag, non tocca codice/codici/valori.
+// Le frasi più lunghe vengono sostituite prima (per evitare match parziali).
+// ═══════════════════════════════════════════════════════════════════════════
+window.AUTO_TRANS = {
+  // Frasi lunghe / descrizioni
+  "Nessun cibo nella categoria selezionata.": "No food in the selected category.",
+  "Nessun cibo nella categoria.": "No food in this category.",
+  "Definizione (Perdita Grasso)": "Cutting (Fat Loss)",
+  "Massa (Aumento Muscolo)": "Bulking (Muscle Gain)",
+  "💤 oggi mi riposo": "💤 resting today",
+  "Bilancia Bluetooth": "Bluetooth Scale",
+  "Usa il campo \"veloce\" per testo libero.": "Use the \"quick\" field for free text.",
+  "Non condividiamo dati con terzi, nessuna pubblicità, nessuna profilazione.": "We don't share data with third parties, no ads, no profiling.",
+  "Classifica amici (opzionale)": "Friends leaderboard (optional)",
+  "Esecuzione del servizio": "Service operation",
+  "Accesso e portabilità": "Access and portability",
+  "Cancellazione (oblio)": "Erasure (right to be forgotten)",
+  "Nessun cookie pubblicitario, profilazione o tracker di terzi.": "No advertising cookies, profiling or third-party trackers.",
+  "Salta tour ✕": "Skip tour ✕",
+  "Aggiungi almeno 2 dati per il grafico": "Add at least 2 data points for the chart",
+  "EMAIL (per recupero password)": "EMAIL (for password recovery)",
+  "PASSWORD (min 8 car., 1 num., 1 spec.)": "PASSWORD (min 8 chars, 1 num, 1 special)",
+  "Configura il tuo programma personale. L'AI lo adatterà ogni settimana.": "Set up your personal program. The AI will adapt it every week.",
+  "🏋️ In Palestra (con attrezzi)": "🏋️ At the Gym (with equipment)",
+  "Programma solo passi": "Steps-only program",
+  "INTOLLERANZE ALIMENTARI (tocca per selezionare)": "FOOD INTOLERANCES (tap to select)",
+  "FOCUS DI ALLENAMENTO — cosa vuoi sviluppare?": "TRAINING FOCUS — what do you want to develop?",
+  "USI INTEGRATORI PROTEICI? (whey, proteine in polvere)": "DO YOU USE PROTEIN SUPPLEMENTS? (whey, protein powder)",
+  "🍽️ I TUOI PIATTI / CIBI PREFERITI (opzionale)": "🍽️ YOUR FAVORITE DISHES / FOODS (optional)",
+  "Giornata alimentare conclusa": "Food day completed",
+  "Nessuna attività": "No activity",
+  "Allenamento, pasti principali, obiettivi del giorno. Complimenti!": "Workout, main meals, daily goals. Well done!",
+  "Goditi il riposo! Tracciamo tutto ma senza pressione. Lo streak è salvo.": "Enjoy your rest! We track everything but without pressure. Your streak is safe.",
+  "Messaggio del giorno": "Message of the day",
+  "Adattamento palestra in trasferta": "Gym adaptation while traveling",
+  "Passi totali": "Total steps",
+  "Hai registrato passi in": "You logged steps in",
+  "Camminata mattutina": "Morning walk",
+  "Spostamenti quotidiani": "Daily commute",
+  "Pausa pranzo attiva": "Active lunch break",
+  "Camminata serale": "Evening walk",
+  "Trucco per perdere peso": "Weight loss trick",
+  "Sarà la prossima volta che torni in palestra": "It'll be next time you're back at the gym",
+  "Bici 25-40 min (LISS) oppure HIIT 20 min": "Bike 25-40 min (LISS) or HIIT 20 min",
+  "Stretching leggero, camminata, mobilità": "Light stretching, walking, mobility",
+  "Sessione cardio adattiva — calcolata dall'AI": "Adaptive cardio session — calculated by AI",
+  "Solo le mie schede": "Only my routines",
+  "Sport, camminate, corsa — tutto conta sul bilancio calorico": "Sports, walks, running — everything counts toward calorie balance",
+  "Nessuna attività registrata oggi.": "No activity logged today.",
+  "Suggerimenti pratici per hotel/ristorante": "Practical tips for hotel/restaurant",
+  "Scegli un'opzione": "Choose an option",
+  "Hai mangiato qualcosa fuori dieta? Usa": "Ate something off-diet? Use",
+  "Azzera log di oggi": "Reset today's log",
+  "Come calcoliamo i tuoi numeri": "How we calculate your numbers",
+  "È quanto bruci ogni giorno se stessi a letto.": "It's how much you burn each day if you stayed in bed.",
+  "È quanto bruci in totale in un giorno tipo.": "It's how much you burn in total on a typical day.",
+  "Hai scritto:": "You wrote:",
+  "📊 Usa stima media": "📊 Use average estimate",
+  "✕ Annulla": "✕ Cancel",
+  "Riconoscimento in corso...": "Recognizing...",
+  "Pasti adattati per:": "Meals adapted for:",
+  "Vedi il menù dei prossimi 7 giorni": "See the next 7 days menu",
+  "Pianificazione non disponibile": "Planning not available",
+  "Le tue scelte combaciano col target.": "Your choices match the target.",
+  "🤖 Ripristina auto": "🤖 Restore auto",
+  "Prima misurazione": "First measurement",
+  "Inserisci le misure e salva. I grafici appariranno dopo 2+ misurazioni.": "Enter measurements and save. Charts will appear after 2+ measurements.",
+  "Le frecce mostrano la variazione vs ultima misurazione.": "Arrows show the change vs last measurement.",
+  "Tap su un giorno futuro per impostarlo Train/Riposo": "Tap a future day to set it Train/Rest",
+  "Rate attuale": "Current rate",
+  "Giorni a target": "Days to target",
+  "Inserisci almeno 2 misurazioni per vedere i grafici di progressione": "Enter at least 2 measurements to see progression charts",
+  "Giorni con allenamento + dieta tracciata": "Days with workout + tracked diet",
+  "Volume liftato": "Volume lifted",
+  "Kcal bruciate": "Calories burned",
+  "PR raggiunti": "PRs achieved",
+  "A questo ritmo raggiungerai il tuo obiettivo di": "At this rate you'll reach your goal of",
+  "Vedi Statistiche Pro": "See Pro Stats",
+  "Confronto periodi, calcolatore 1RM, calendario, top progressi": "Period comparison, 1RM calculator, calendar, top progress",
+  "Nessun allenamento registrato": "No workout logged",
+  "Sezione opzionale per il confronto amichevole con altri utenti FitTracker.": "Optional section for friendly comparison with other FitTracker users.",
+  "NON vengono condivisi": "NOT shared",
+  "✓ Cosa viene condiviso (se attivi):": "✓ What's shared (if enabled):",
+  "Confronto settimanale. Solo metriche pubbliche aggregate.": "Weekly comparison. Only aggregated public metrics.",
+  "Nessun utente ancora in classifica.": "No users on the leaderboard yet.",
+  "Pronto al confronto?": "Ready to compare?",
+  "Detersivi, ospiti, viaggi... aggiungi extra qui": "Detergents, guests, trips... add extras here",
+  "Analisi avanzata dei tuoi dati.": "Advanced analysis of your data.",
+  "Completa qualche allenamento per vedere le statistiche.": "Complete some workouts to see the stats.",
+  "CALCOLA 1RM (massimale)": "CALCULATE 1RM (max)",
+  "Inserisci peso e reps fatte. La formula stima il tuo 1RM teorico.": "Enter weight and reps done. The formula estimates your theoretical 1RM.",
+  "Il tuo 1RM stimato": "Your estimated 1RM",
+  "Inserisci peso e reps per calcolare": "Enter weight and reps to calculate",
+  "Più veloce — apre la chat con il messaggio già pronto": "Faster — opens chat with the message ready",
+  "Apre la tua app email con messaggio già pronto": "Opens your email app with the message ready",
+  "Per incollarlo dove vuoi (Telegram, social, note...)": "To paste it wherever you want (Telegram, social, notes...)",
+  "Tutto sotto controllo": "All under control",
+  "Continua il tuo programma. Ti avviserò se serve.": "Keep up your program. I'll alert you if needed.",
+  "Insight personalizzati basati sui tuoi dati.": "Personalized insights based on your data.",
+  "PR battuti": "PRs beaten",
+  "Disponibilità di una palestra (sì/no)": "Gym availability (yes/no)",
+  "Tempo che hai a disposizione": "Time available to you",
+  "Numero di sessioni possibili": "Number of possible sessions",
+  "Sospendere alert deficit/sgarro": "Pause deficit/cheat alerts",
+  "Mantenere lo streak senza pressione": "Keep your streak without pressure",
+  "Allenarti solo se vuoi (niente obblighi)": "Train only if you want (no obligations)",
+  "Continuare a tracciare per analisi future": "Keep tracking for future analysis",
+  "Esclude esercizi che coinvolgono la zona.": "Excludes exercises involving the area.",
+  "Nessun infortunio attivo.": "No active injuries.",
+  "🤖 Sono Marcello. Conosco il tuo profilo. Chiedimi quello che vuoi.": "🤖 I'm Marcello. I know your profile. Ask me anything.",
+  "I tuoi dati personali, sicurezza e privacy.": "Your personal data, security and privacy.",
+  "✓ App installata sul dispositivo": "✓ App installed on device",
+  "Obiettivo, strategia e dettagli operativi degli allenamenti.": "Goal, strategy and operational workout details.",
+  "🏋️ In Palestra": "🏋️ At the Gym",
+  "Influenza i pasti suggeriti.": "Affects suggested meals.",
+  "Se usi proteine in polvere/whey, le includiamo nei suggerimenti.": "If you use protein powder/whey, we include it in suggestions.",
+  "Cercheremo di includerli nei consigli mantenendo il target calorico. Opzionale.": "We'll try to include them in advice while keeping the calorie target. Optional.",
+  "Cibi attuali:": "Current foods:",
+  "Scegli quali gruppi muscolari privilegiare nelle schede.": "Choose which muscle groups to prioritize in routines.",
+  "Avvia automaticamente la serie": "Automatically start the set",
+  "Scarica le schede A/B/C generate dall'AI in PDF stampabile.": "Download the A/B/C routines generated by AI as a printable PDF.",
+  "Nessuna scheda personalizzata.": "No custom routines.",
+  "Spostate nella tab": "Moved to the tab",
+  "✓ Notifiche abilitate dal browser": "✓ Notifications enabled by the browser",
+  "Esporta workout → Calendar": "Export workouts → Calendar",
+  "Esporta storico peso → CSV": "Export weight history → CSV",
+  "Importa dati da Salute (export.xml)": "Import data from Health (export.xml)",
+  "Importa pesate, passi e ore di sonno dall'export di Apple Health.": "Import weigh-ins, steps and sleep hours from the Apple Health export.",
+  "Per importare:": "To import:",
+  "Per esportare verso Salute:": "To export to Health:",
+  "📊 Ultimo sync:": "📊 Last sync:",
+  "Rivedi il tour guidato di benvenuto.": "Review the guided welcome tour.",
+  "Scegli il tema dell'app.": "Choose the app theme.",
+  "Browser non supportato. Usa Chrome o Edge su Android/Desktop.": "Browser not supported. Use Chrome or Edge on Android/Desktop.",
+  "Apple Salute (iOS)": "Apple Health (iOS)",
+  "Importa peso, passi, sonno da export.xml": "Import weight, steps, sleep from export.xml",
+  "Esporta tutti i dati": "Export all data",
+  "Esporta peso e nutrizione in CSV": "Export weight and nutrition to CSV",
+  "Prima volta — inserisci il valore reale": "First time — enter the real value",
+  "Aggiungi nota personale (opzionale)": "Add personal note (optional)",
+  "Aggiungi i cibi che mangi davvero con le quantità e le kcal. Target del pasto:": "Add the foods you really eat with quantities and calories. Meal target:",
+  "Nessun cibo aggiunto. Aggiungine almeno 1 dal database o inseriscilo manualmente.": "No food added. Add at least 1 from the database or enter it manually.",
+  "Mangi fuori casa? Ecco come mantenere la rotta senza stress.": "Eating out? Here's how to stay on track stress-free.",
+  "Aperitivi infiniti": "Endless aperitifs",
+  "Colazione hotel \"all you can\"": "\"All you can\" hotel breakfast",
+  "Carenza acqua": "Lack of water",
+  "Sale eccessivo": "Excess salt",
+  "Adatto allenamenti e dieta in base alle tue condizioni in trasferta.": "I adapt workouts and diet based on your travel conditions.",
+  "🏋️ Ho una palestra": "🏋️ I have a gym",
+  "🍽️ Niente allenamento, solo dieta": "🍽️ No workout, diet only",
+  "Modalità solo dieta": "Diet-only mode",
+  "Esclude esercizi della zona dal piano per il periodo che indichi.": "Excludes area exercises from the plan for the period you set.",
+  "Crea una tua ricetta personalizzata. Le macro sono per la porzione intera.": "Create your own custom recipe. Macros are for the whole portion.",
+  "INGREDIENTI (uno per riga)": "INGREDIENTS (one per line)",
+  "PROCEDIMENTO (uno step per riga)": "STEPS (one per line)",
+  "Nessuna ricetta ancora": "No recipes yet",
+  "Crea la tua prima ricetta personale.": "Create your first personal recipe.",
+  "Apparirà qui pronta da usare come pasto.": "It'll appear here ready to use as a meal.",
+  "Come vuoi programmare questo giorno?": "How do you want to plan this day?",
+  "Forza il giorno come train, cambia anche le kcal del giorno": "Force the day as training, also changes the day's calories",
+  "Forza giorno di riposo: meno carbo e kcal nel menu": "Force rest day: fewer carbs and calories in the menu",
+  "Multi-articolare": "Compound",
+  "Isolamento": "Isolation",
+  "Isometrico": "Isometric",
+  "Ripetizioni": "Reps",
+  "Riposo (s)": "Rest (s)",
+  "MUSCOLO/I LAVORATI (descrizione)": "MUSCLE(S) WORKED (description)",
+  "ESECUZIONE (opzionale, max 3 passi)": "EXECUTION (optional, max 3 steps)",
+  "CONSIGLIO TECNICO (opzionale)": "TECHNIQUE TIP (optional)",
+  "Inquadra il codice a barre del prodotto e attendi il riconoscimento.": "Frame the product barcode and wait for recognition.",
+  "Disponibile nelle ricerche future.": "Available in future searches.",
+  "Per prodotti confezionati · dati da OpenFoodFacts": "For packaged products · data from OpenFoodFacts",
+  "Descrizione porzione (es. \"media 40cl\", \"pezzo\")": "Portion description (e.g. \"medium 40cl\", \"piece\")",
+  "Kcal per porzione *": "Calories per portion *",
+  "Grammi tipici (~)": "Typical grams (~)",
+  "Kcal totali *": "Total calories *",
+  "Macro (opzionali, in grammi):": "Macros (optional, in grams):",
+  "Come vuoi registrare questa attività?": "How do you want to log this activity?",
+  "Inizia ora e ferma quando hai finito. Le kcal vengono calcolate in automatico.": "Start now and stop when done. Calories are calculated automatically.",
+  "Nessun esercizio. Aggiungine almeno 1.": "No exercises. Add at least 1.",
+  "Volume totale:": "Total volume:",
+  "Connesso come": "Connected as",
+  "Errore caricamento. Ricarica la pagina.": "Loading error. Reload the page.",
+  "Errore avvio. Ricarica.": "Startup error. Reload.",
+  "Caricamento app non riuscito. Possibili cause:": "App loading failed. Possible causes:",
+  "Cache browser vecchia → premi": "Old browser cache → press",
+  "Connessione internet": "Internet connection",
+  "Firewall che blocca gstatic.com": "Firewall blocking gstatic.com",
+  // Parole singole / brevi (sostituite per ultime, con word-boundary)
+  "Riposo": "Rest",
+  "Proteine": "Proteins",
+  "Grassi": "Fats",
+  "Carboidrati": "Carbs",
+  "Carbo": "Carbs",
+  "Solo dieta": "Diet only",
+  "Salute": "Health",
+  "Account": "Account",
+  "Fitness": "Fitness",
+  "Consenso": "Consent",
+  "Rettifica": "Rectification",
+  "Limitazione": "Restriction",
+  "Opposizione": "Objection",
+  "Reclamo": "Complaint",
+  "Tocca": "Tap",
+  "Definizione": "Cutting",
+  "Massa": "Bulking",
+  "Totale:": "Total:",
+  "Focus:": "Focus:",
+  "Mancano": "Remaining",
+  "Sessioni": "Sessions",
+  "Variazione:": "Change:",
+  "Peso (kg)": "Weight (kg)",
+  "Reps": "Reps",
+  "Workout": "Workout",
+  "Sgarri": "Cheats",
+  "Sgarro": "Cheat",
+  "Nessun dato": "No data",
+  "Completato": "Completed",
+  "Saltato": "Skipped",
+  "Suggerimento": "Tip",
+  "Programma": "Program",
+  "Allenam.": "Workout",
+  "Aliment.": "Nutrition",
+  "Coaching": "Coaching",
+  "Notifiche": "Notifications",
+  "Avanzate": "Advanced",
+  "Allenamento": "Workout",
+  "Mangia": "Eat",
+  "Inizio": "Start",
+  "Fine": "End",
+  "PR oggi": "PRs today",
+  "Grammi:": "Grams:",
+  "Devi farlo": "You must do it",
+  "Automatico": "Automatic",
+  "Serie": "Sets",
+  "Sport non valido": "Invalid sport"
+};
+
+// Funzione che traduce il testo visibile di un frammento HTML quando lang===en.
+// Sostituisce solo testo tra > e < per non toccare attributi/codice.
+window.autoTranslate = function(htmlStr) {
+  if (!window.ST || ST.lang !== 'en') return htmlStr;
+  if (!htmlStr || typeof htmlStr !== 'string') return htmlStr;
+  const map = window.AUTO_TRANS;
+  // Ordino le chiavi per lunghezza decrescente: prima le frasi lunghe
+  if (!window.__autoTransKeys) {
+    window.__autoTransKeys = Object.keys(map).sort((a,b) => b.length - a.length);
+  }
+  // Sostituisco solo nel testo tra tag: spezzo su > e <
+  // Approccio: regex che cattura il testo tra > e < e lo traduce
+  return htmlStr.replace(/>([^<]+)</g, (full, text) => {
+    let t = text;
+    for (const key of window.__autoTransKeys) {
+      if (t.includes(key)) {
+        // Sostituzione globale della frase
+        t = t.split(key).join(map[key]);
+      }
+    }
+    return '>' + t + '<';
+  });
+};
+
 
 window.defST=function(){
   return{
@@ -14347,7 +14623,7 @@ window.render = function() {
           const portion = sel ? window.foodPortion(sel, grams) : null;
           return `
             <!-- Campo ricerca -->
-            <input id="dbSearch" type="text" maxlength="50" value="${escapeHtml(query)}" placeholder="🔍 Cerca cibo (es. pasta, pollo, mela...)" oninput="updateFoodQuery(this.value)" style="margin-bottom:8px;font-size:14px;padding:10px;">
+            <input id="dbSearch" type="text" maxlength="50" value="${escapeHtml(query)}" placeholder="${t('ph_search_food')}" oninput="updateFoodQuery(this.value)" style="margin-bottom:8px;font-size:14px;padding:10px;">
 
             <!-- Chip categorie -->
             <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">
@@ -14391,7 +14667,7 @@ window.render = function() {
         })() : `
           <!-- ─── MODALITÀ INSERIMENTO MANUALE ─── -->
           <div style="font-size:11px;color:var(--mut);margin-bottom:10px;line-height:1.5;">Per cibi non presenti nel database. Inserisci tu nome, grammi e kcal totali (li trovi sull'etichetta).</div>
-          <input id="cmName" type="text" maxlength="80" placeholder="Nome cibo (es. Pasta al sugo)" style="margin-bottom:8px;font-size:14px;padding:10px;">
+          <input id="cmName" type="text" maxlength="80" placeholder="${t('ph_food_name')}" style="margin-bottom:8px;font-size:14px;padding:10px;">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
             <input id="cmGrams" type="number" min="1" max="2000" placeholder="Grammi" style="margin:0;font-size:14px;padding:10px;text-align:center;">
             <input id="cmKcal" type="number" min="1" max="3000" placeholder="Kcal tot" style="margin:0;font-size:14px;padding:10px;text-align:center;">
@@ -14958,7 +15234,7 @@ window.render = function() {
       <!-- Nome -->
       <div style="margin-bottom:12px;">
         <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:6px;">NOME CIBO *</div>
-        <input id="customFoodName" type="text" maxlength="60" value="${escapeHtml(d.name||'')}" placeholder="Es: Hamburger del bar di Marco" oninput="ST.sheetData.name=this.value" style="width:100%;font-size:14px;padding:10px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;color:var(--text);">
+        <input id="customFoodName" type="text" maxlength="60" value="${escapeHtml(d.name||'')}" placeholder="${t('ph_custom_food')}" oninput="ST.sheetData.name=this.value" style="width:100%;font-size:14px;padding:10px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;color:var(--text);">
       </div>
 
       <!-- Categoria -->
@@ -15086,7 +15362,7 @@ window.render = function() {
           ${cartHtml}
 
           <!-- Search bar -->
-          <input id="cheatDbSearch" type="text" maxlength="50" value="${escapeHtml(d.foodQuery||'')}" placeholder="🔍 Cerca cibo (es. fritto misto, pizza, birra...)" oninput="updateCheatFoodQuery(this.value)" style="margin-bottom:8px;font-size:14px;padding:10px;width:100%;box-sizing:border-box;">
+          <input id="cheatDbSearch" type="text" maxlength="50" value="${escapeHtml(d.foodQuery||'')}" placeholder="${t('ph_search_cheat')}" oninput="updateCheatFoodQuery(this.value)" style="margin-bottom:8px;font-size:14px;padding:10px;width:100%;box-sizing:border-box;">
 
           <!-- Bottone CREA NUOVO CIBO subito sotto search (più visibile, sessione 12) -->
           <button class="btn-s" style="width:100%;padding:11px;background:rgba(167,139,250,.15);border:1.5px dashed var(--purp);color:var(--purp);font-weight:700;font-size:12px;border-radius:8px;cursor:pointer;margin-bottom:10px;" onclick="openCustomFoodSheet()">➕ NON TROVI QUELLO CHE CERCHI? CREA UN NUOVO CIBO</button>
@@ -15189,7 +15465,7 @@ window.render = function() {
       return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div>
         <div class="bebas" style="font-size:22px;margin-bottom:4px;">🏃 NUOVA ATTIVITÀ</div>
         <div style="font-size:12px;color:var(--mut);margin-bottom:14px;">Scegli lo sport o l'attività che hai fatto (o stai per fare). Le kcal sono calcolate dal tuo peso.</div>
-        <input id="sportSearch" type="text" maxlength="50" placeholder="🔍 Cerca (es. corsa, padel, yoga...)" oninput="updateActivityQuery(this.value)" style="margin-bottom:10px;font-size:14px;padding:10px;" value="${escapeHtml(d.q||'')}">
+        <input id="sportSearch" type="text" maxlength="50" placeholder="${t('ph_search_sport')}" oninput="updateActivityQuery(this.value)" style="margin-bottom:10px;font-size:14px;padding:10px;" value="${escapeHtml(d.q||'')}">
         <div id="sportListContainer" style="height:50vh;overflow-y:auto;">${_buildSportListHtml()}</div>
         <button class="btn btn-action" style="margin-top:12px;width:100%;padding:12px;" onclick="closeSheet()">${t('c_cancel')}</button>
       </div></div>`;
@@ -15256,7 +15532,7 @@ window.render = function() {
         <div style="font-size:11px;color:var(--mut);margin-bottom:14px;line-height:1.5;">💡 Suggeriti per il tuo focus: ${sr.note||sr.sets+'×'+sr.reps+', recupero '+sr.rest+'s'}.</div>
         <div style="display:flex;gap:8px;">
           <button class="btn btn-action" style="flex:1;padding:12px;" onclick="ST.sheetData.subSheet=null;render();">${t('c_cancel')}</button>
-          <button class="btn" style="flex:1;padding:12px;background:var(--purp);color:#fff;" onclick="saveCustomExerciseToDraft()">AGGIUNGI</button>
+          <button class="btn" style="flex:1;padding:12px;background:var(--purp);color:#fff;" onclick="saveCustomExerciseToDraft()">${t('c_add').toUpperCase()}</button>
         </div>
       </div></div>`;
     }
@@ -15410,7 +15686,7 @@ window.render = function() {
     </div>` ;
   })() : ''}
   <div class="content"><div class="wrap">`;
-  if(!ST.p){H+=renderSetup();H+=`</div></div>`;root.innerHTML=H+sheetH;
+  if(!ST.p){H+=renderSetup();H+=`</div></div>`;let __h=H+sheetH; if(typeof autoTranslate==='function')__h=autoTranslate(__h); root.innerHTML=__h;
     // PUNTO 11: inizializza visibilità campi form registrazione
     setTimeout(()=>{if(window.toggleSessVisibility) toggleSessVisibility();},0);
     return;
@@ -15428,7 +15704,10 @@ window.render = function() {
   else if(ST.tab==='set') H+=renderSettings(mac);
   else if(ST.tab==='profile') H+=renderProfile(); // sessione 17
   H+=`</div></div>`;
-  root.innerHTML=H+sheetH+moreSheetH+shortPickH+renderTour()+renderDisclaimer();
+  // SESSIONE 43: auto-traduzione del testo visibile quando lang===en
+  let __finalHtml = H+sheetH+moreSheetH+shortPickH+renderTour()+renderDisclaimer();
+  if (typeof autoTranslate === 'function') __finalHtml = autoTranslate(__finalHtml);
+  root.innerHTML=__finalHtml;
   // Applica tema salvato (sessione 15)
   try { if (typeof applyTheme === 'function') applyTheme(ST?.theme || 'dark'); } catch(_) {}
   // ── RIPRISTINA SCROLL (sessione 15, esteso 17) ──
