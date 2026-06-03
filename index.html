@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION45-FOODNAMES1">
+<meta name="ft-version" content="build-SESSION48-FOODNAMES-COMPLETE">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -520,7 +520,7 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
     <div class="spinner"></div>
     <div class="bebas" style="color:var(--text);font-size:28px;letter-spacing:3px;">SYSTEM BOOTING</div>
     <div style="color:var(--mut);font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:1px;">Connessione al Cloud Secure Database...</div>
-    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION45</div>
+    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION48</div>
   </div>
 </div>
 
@@ -10144,6 +10144,17 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
   const etaDate = etaInfo?.etaDate ? new Date(etaInfo.etaDate) : null;
   const etaLabel = etaDate ? etaDate.toLocaleDateString('it-IT', { day:'numeric', month:'short', year:'2-digit' }) : null;
   const etaDiffDays = etaInfo?.etaDiffDays;
+  // SESSIONE 47: messaggio quando la stima reale non è ancora calcolabile
+  let etaPendingMsg = 'Pesati per qualche giorno';
+  if (etaInfo == null) {
+    // getTargetSummary ha ritornato null o senza etaDate: capisco perché
+    const sm = (typeof window.getTargetSummary === 'function') ? window.getTargetSummary(ST.h, ST.p) : null;
+    if (!sm || sm.status === 'insufficient_data') etaPendingMsg = 'Servono più pesate';
+    else if (sm.status === 'reached') etaPendingMsg = '🎯 Obiettivo raggiunto!';
+    else if (sm.status === 'overdue') etaPendingMsg = 'Data superata';
+    else if (sm.status === 'plateau') etaPendingMsg = 'Peso fermo: continua';
+    else etaPendingMsg = 'In calcolo…';
+  }
   // Colore dot ETA: verde se ≤ data target, giallo se +1-21gg, rosso se >21gg
   let etaCol = 'var(--gre)';
   if (etaDiffDays != null) {
@@ -10172,15 +10183,20 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
     <div style="background:var(--surf);border-radius:99px;height:7px;overflow:hidden;position:relative;">
       <div style="width:${progressEnh}%;height:7px;background:linear-gradient(90deg,${theme}aa,${theme});border-radius:99px;transition:width .4s;"></div>
     </div>
-    ${etaLabel ? `
+    ${tgtDate ? `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px;font-size:10px;">
       <div style="background:var(--surf);border-radius:8px;padding:6px 8px;">
         <div style="color:var(--mut);line-height:1.2;">📌 Target scelto</div>
         <div style="color:var(--text);font-weight:700;">${tgtLabel}</div>
       </div>
-      <div style="background:var(--surf);border-radius:8px;padding:6px 8px;border:1px solid ${etaCol}30;">
+      <div style="background:var(--surf);border-radius:8px;padding:6px 8px;border:1px solid ${etaLabel ? etaCol+'30' : 'var(--bord)'};">
+        ${etaLabel ? `
         <div style="color:${etaCol};line-height:1.2;">🎯 Stima reale ${etaDiffDays > 0 ? '<span style="font-size:9px;">(+'+etaDiffDays+'gg)</span>' : etaDiffDays < 0 ? '<span style="font-size:9px;">('+etaDiffDays+'gg)</span>' : '<span style="font-size:9px;">(in tempo)</span>'}</div>
         <div style="color:${etaCol};font-weight:700;">${etaLabel}</div>
+        ` : `
+        <div style="color:var(--mut);line-height:1.2;">🎯 Stima reale</div>
+        <div style="color:var(--mut);font-weight:600;font-size:9px;line-height:1.2;margin-top:2px;">${etaPendingMsg}</div>
+        `}
       </div>
     </div>` : ''}
   </div>`;
