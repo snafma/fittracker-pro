@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION53-FULL-IT-AUDIT">
+<meta name="ft-version" content="build-SESSION54-DEEP-IT-AUDIT">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -520,7 +520,7 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
     <div class="spinner"></div>
     <div class="bebas" style="color:var(--text);font-size:28px;letter-spacing:3px;">SYSTEM BOOTING</div>
     <div style="color:var(--mut);font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:1px;">Connessione al Cloud Secure Database...</div>
-    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION53</div>
+    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION54</div>
   </div>
 </div>
 
@@ -587,7 +587,7 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
   window.resetGdprConsent = function() {
     if (!confirm('Vuoi rivedere il banner privacy al prossimo accesso?')) return;
     try { localStorage.removeItem('ft_gdpr_consent_v1'); } catch(_) {}
-    alert('Consenso resettato. Ricarica la pagina per rivedere il banner.');
+    alert(LL('Consenso resettato. Ricarica la pagina per rivedere il banner.','Consent reset. Reload the page to see the banner again.'));
   };
 })();
 
@@ -682,7 +682,7 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
       if (b) b.style.display = 'none';
     } else if (isIOS) {
       // Su iOS non c'è API: mostro alert con istruzioni dettagliate
-      alert('Per installare l\'app su iPhone:\n\n1. Tocca l\'icona Condividi (⬆️) in basso\n2. Scorri e tocca "Aggiungi alla schermata Home"\n3. Tocca "Aggiungi" in alto a destra\n\nL\'app apparirà sul tuo Home screen come una app nativa.');
+      alert(LL('Per installare l\'app su iPhone:\n\n1. Tocca l\'icona Condividi (⬆️) in basso\n2. Scorri e tocca "Aggiungi alla schermata Home"\n3. Tocca "Aggiungi" in alto a destra\n\nL\'app apparirà sul tuo Home screen come una app nativa.','To install the app on iPhone:\n\n1. Tap the Share icon (⬆️) at the bottom\n2. Scroll and tap "Add to Home Screen"\n3. Tap "Add" at the top right\n\nThe app will appear on your Home screen like a native app.'));
     }
   };
 
@@ -694,10 +694,10 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
 
   // Reset (chiamabile da Configurazione)
   window.resetPwaInstallBanner = function() {
-    if (!confirm('Rimostrare il banner di installazione app al prossimo refresh?')) return;
+    if (!confirm(LL('Rimostrare il banner di installazione app al prossimo refresh?','Show the app install banner again on next refresh?'))) return;
     setDismissed(null);
     try { localStorage.removeItem('ft_pwa_install_dismissed_v1'); } catch(_) {}
-    alert('Banner installazione resettato. Ricarica la pagina per rivederlo (se il browser supporta PWA).');
+    alert(LL('Banner installazione resettato. Ricarica la pagina per rivederlo (se il browser supporta PWA).','Install banner reset. Reload the page to see it again (if the browser supports PWA).'));
   };
 
   // Helper per Configurazione: dice se app è già installata
@@ -1775,9 +1775,9 @@ window.currentWeightKg=function(){
 // Aggiunge un'attività al giorno corrente
 window.addActivity=function(sportId, minutes){
   const sport=sportById(sportId);
-  if(!sport) return alert('Sport non trovato');
+  if(!sport) return alert(LL('Sport non trovato','Sport not found'));
   const mins=parseInt(minutes);
-  if(isNaN(mins)||mins<1||mins>600) return alert('Minuti non validi (1-600)');
+  if(isNaN(mins)||mins<1||mins>600) return alert(LL('Minuti non validi (1-600)','Invalid minutes (1-600)'));
   const kcal=calcSportKcal(sportId, mins, currentWeightKg());
   if(!ST.activities) ST.activities={};
   if(!ST.activities[currentDateStr]) ST.activities[currentDateStr]=[];
@@ -1793,7 +1793,7 @@ window.addActivity=function(sportId, minutes){
 
 // Rimuove un'attività
 window.deleteActivity=function(activityId){
-  if(!confirm('Eliminare questa attività?')) return;
+  if(!confirm(LL('Eliminare questa attività?','Delete this activity?'))) return;
   if(!ST.activities||!ST.activities[currentDateStr]) return;
   ST.activities[currentDateStr]=ST.activities[currentDateStr].filter(a=>a.id!==activityId);
   if(ST.activities[currentDateStr].length===0) delete ST.activities[currentDateStr];
@@ -1873,7 +1873,7 @@ window.stopAndSaveStopwatch=function(){
   const totalMs=ST.stopwatch.elapsed;
   const totalMin=Math.round(totalMs/60000);
   if(totalMin<1){
-    if(!confirm('Attività molto breve (meno di 1 minuto). Salvare comunque?')) return;
+    if(!confirm(LL('Attività molto breve (meno di 1 minuto). Salvare comunque?','Very short activity (less than 1 minute). Save anyway?'))) return;
   }
   const sportId=ST.stopwatch.sportId;
   ST.stopwatch=null;
@@ -2636,20 +2636,20 @@ window.startVacation = async function() {
   endDefault.setDate(endDefault.getDate() + 7);
   const startStr = prompt('Quando inizi la vacanza? (formato AAAA-MM-GG)', today.toISOString().slice(0,10));
   if (!startStr) return;
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(startStr)) return alert('Formato data non valido');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(startStr)) return alert(LL('Formato data non valido','Invalid date format'));
   const endStr = prompt('Quando finisce la vacanza? (formato AAAA-MM-GG)', endDefault.toISOString().slice(0,10));
   if (!endStr) return;
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(endStr)) return alert('Formato data non valido');
-  if (endStr < startStr) return alert('La data fine non può essere prima della data inizio');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(endStr)) return alert(LL('Formato data non valido','Invalid date format'));
+  if (endStr < startStr) return alert(LL('La data fine non può essere prima della data inizio','The end date cannot be before the start date'));
   // SESSIONE 33: chiedo se vuole comunque allenamenti opzionali o solo dieta (zero workout)
-  const dietOnly = !confirm('Vuoi che ti proponga comunque gli allenamenti (in forma opzionale)?\n\n• OK = sì, mostrami i workout (facoltativi)\n• Annulla = no, solo dieta — segna tutti i giorni come riposo');
+  const dietOnly = !confirm(LL('Vuoi che ti proponga comunque gli allenamenti (in forma opzionale)?\n\n• OK = sì, mostrami i workout (facoltativi)\n• Annulla = no, solo dieta — segna tutti i giorni come riposo','Should I still suggest workouts (as optional)?\n\n• OK = yes, show me the workouts (optional)\n• Cancel = no, diet only — mark all days as rest'));
   ST.vacationMode = { active: true, startD: startStr, endD: endStr, dietOnly };
   await save();
   render();
 };
 
 window.endVacation = async function() {
-  if (!confirm('Vuoi tornare al programma normale?\n\nDeficit, obiettivo e alert torneranno attivi.')) return;
+  if (!confirm(LL('Vuoi tornare al programma normale?\n\nDeficit, obiettivo e alert torneranno attivi.','Do you want to return to the normal program?\n\nDeficit, goal and alerts will be reactivated.'))) return;
   ST.vacationMode = null;
   await save();
   render();
@@ -3217,8 +3217,8 @@ window.saveCustomWorkout=function(){
   if(!ST.sheetData) return;
   const draft=ST.sheetData.draft;
   const name=(document.getElementById('cwName')?.value||'').trim().slice(0,60).replace(/[<>]/g,'');
-  if(!name) return alert('Inserisci un nome per la scheda.');
-  if(!draft.exercises||draft.exercises.length===0) return alert('Aggiungi almeno 1 esercizio alla scheda.');
+  if(!name) return alert(LL('Inserisci un nome per la scheda.','Enter a name for the routine.'));
+  if(!draft.exercises||draft.exercises.length===0) return alert(LL('Aggiungi almeno 1 esercizio alla scheda.','Add at least 1 exercise to the routine.'));
   draft.name=name;
   if(!ST.p.customWorkouts) ST.p.customWorkouts=[];
   const existingIdx=ST.p.customWorkouts.findIndex(w=>w.id===draft.id);
@@ -3227,7 +3227,7 @@ window.saveCustomWorkout=function(){
   const minVolByFocus={total:8,upper:6,lower:6,glutes:5,hyp:10,strength:5};
   const minVol=minVolByFocus[ST.p.focus]||6;
   if(vol.totalSets<minVol){
-    if(!confirm(`⚠️ La tua scheda ha ${vol.totalSets} serie totali, sotto il minimo consigliato per il focus "${ST.p.focus||'total'}" (${minVol} serie).\n\nUna scheda così leggera potrebbe non essere sufficiente per il tuo obiettivo. Vuoi salvare comunque?`)){
+    if(!confirm(LL(`⚠️ La tua scheda ha ${vol.totalSets} serie totali, sotto il minimo consigliato per il focus "${ST.p.focus||'total'}" (${minVol} serie).\n\nUna scheda così leggera potrebbe non essere sufficiente per il tuo obiettivo. Vuoi salvare comunque?`,`⚠️ Your routine has ${vol.totalSets} total sets, below the recommended minimum for the "${ST.p.focus||'total'}" focus (${minVol} sets).\n\nSuch a light routine might not be enough for your goal. Save anyway?`))){
       return;
     }
   }
@@ -3241,7 +3241,7 @@ window.saveCustomWorkout=function(){
 };
 
 window.deleteCustomWorkout=function(id){
-  if(!confirm('Eliminare questa scheda personalizzata?')) return;
+  if(!confirm(LL('Eliminare questa scheda personalizzata?','Delete this custom routine?'))) return;
   ST.p.customWorkouts=(ST.p.customWorkouts||[]).filter(w=>w.id!==id);
   save();
 };
@@ -3300,7 +3300,7 @@ window.exportWorkoutPDF = async function(workoutId) {
       // Scheda AI: usa buildWorkout
       const built = window.buildWorkout(workoutId, ST.p, 1, ST.exPrefs || {}, AU.profile?.sx || 'm');
       if (!built) {
-        alert('Scheda non trovata. Configura prima il programma in Configurazione.');
+        alert(LL('Scheda non trovata. Configura prima il programma in Configurazione.','Routine not found. Set up the program first in Settings.'));
         return;
       }
       wo = { name: built.name || `Scheda ${workoutId}`, emoji: built.emoji || '💪', exercises: built.exercises || [] };
@@ -3311,7 +3311,7 @@ window.exportWorkoutPDF = async function(workoutId) {
     // 2) Carica jsPDF
     if (typeof alert === 'function' && typeof navigator !== 'undefined' && !navigator.onLine) {
       // Serve CDN. Se offline avviso.
-      alert('Per scaricare il PDF serve essere online (la libreria si carica al volo).');
+      alert(LL('Per scaricare il PDF serve essere online (la libreria si carica al volo).','To download the PDF you need to be online (the library loads on the fly).'));
       return;
     }
     const jsPDF = await window.__loadJsPDF();
@@ -3449,7 +3449,7 @@ window.exportWorkoutPDF = async function(workoutId) {
     doc.save(fileName);
   } catch (err) {
     console.error('exportWorkoutPDF fail:', err);
-    alert('Errore durante l\'esportazione PDF: ' + (err.message || 'sconosciuto'));
+    alert(LL('Errore durante l\'esportazione PDF: ','Error during PDF export: ') + (err.message || LL('sconosciuto','unknown')));
   }
 };
 
@@ -5061,6 +5061,8 @@ window.I18N = {
   act_add:{it:'AGGIUNGI ATTIVITÀ',en:'ADD ACTIVITY'}
 };
 window.t = function(key){ const e=window.I18N[key]; if(!e) return key; const l=(window.ST&&ST.lang)?ST.lang:'it'; return e[l]||e.it||key; };
+// Helper bilingue per testi alla fonte (alert/prompt/confirm nativi e stringhe dinamiche)
+window.LL = function(it, en){ return (window.ST && ST.lang === 'en') ? en : it; };
 window.setLang = async function(lang){ if(lang!=='it'&&lang!=='en') return; ST.lang=lang; ST.langChosen=true; if(typeof save==='function') await save(); render(); };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -5147,7 +5149,7 @@ window.AUTO_TRANS = {
   "File CSV importabile in MyFitnessPal, Cronometer, Excel, Google Sheets.": "CSV file importable into MyFitnessPal, Cronometer, Excel, Google Sheets.",
   "I tuoi dati sono al sicuro nel cloud. Dopo il logout puoi rientrare con la tua email.": "Your data is safe in the cloud. After logout you can log back in with your email.",
   "Lista per i prossimi 7 giorni dal tuo programma. Spunta, rimuovi o aggiungi.": "List for the next 7 days from your program. Check off, remove or add.",
-  "Stacchi per qualche giorno? Attiva la modalità vacanza per:": "Taking a few days off? Enable vacation mode to:",
+  "${(window.ST&&ST.lang==='en')?`Taking a few days off? Enable vacation mode to:`:`Stacchi per qualche giorno? Attiva la modalità vacanza per:`}": "Taking a few days off? Enable vacation mode to:",
   "Hai impostato": "You set",
   ", ma non hai ancora creato nessuna scheda personalizzata.": ", but you haven't created any custom routine yet.",
   "verdure grigliate/al vapore, insalata mista (olio a parte), purè senza burro": "grilled/steamed vegetables, mixed salad (oil on the side), butter-free mash",
@@ -5547,7 +5549,7 @@ window.AUTO_TRANS = {
   "1 fettina bresaola o petto pollo": "1 slice bresaola or chicken breast",
   "petto pollo": "chicken breast", "Insalata mista": "Mixed salad",
   "Verdure saltate": "Sautéed vegetables", "Verdure": "Vegetables", "verdure": "vegetables",
-  "saltate": "sautéed", "saltati": "sautéed", "saltato": "sautéed",
+  "Verdure saltate (1 conf.)": "Sautéed vegetables (1 pack)", "saltate": "sautéed",
   // ═══ BLOCCO 17 — sheet "scegli dal DB" categorie + label ═══
   "Cereali": "Grains", "Cereali e Pane": "Grains & Bread", "Carne": "Meat", "Carne e Salumi": "Meat & Cold Cuts",
   "Pesce": "Fish", "Latt.": "Dairy", "Latticini": "Dairy", "Uova": "Eggs", "Legumi": "Legumes",
@@ -5563,6 +5565,102 @@ window.AUTO_TRANS = {
   // sheet nuova ricetta
   "INGREDIENTI (uno per riga)": "INGREDIENTS (one per line)", "PROCEDIMENTO (uno step per riga)": "STEPS (one step per line)",
   "AGGIUNTE PERSONALI": "PERSONAL ADDITIONS",
+  "SPORT OUTDOOR": "OUTDOOR SPORT",
+  // share app tab
+  "CONDIVIDI L'APP": "SHARE THE APP",
+  "Invita amici e familiari a usare FitTracker PRO. Ognuno avrà il proprio account privato salvato nel Cloud.": "Invite friends and family to use FitTracker PRO. Everyone gets their own private account saved in the Cloud.",
+  "Più veloce — apre la chat con il messaggio già pronto": "Fastest — opens the chat with the message ready",
+  "CONDIVIDI SU WHATSAPP": "SHARE ON WHATSAPP", "CONDIVISIONE RAPIDA": "QUICK SHARE",
+  "Apre il menu di condivisione del tuo telefono (Telegram, Messenger, SMS...)": "Opens your phone's share menu (Telegram, Messenger, SMS...)",
+  "SCEGLI APP DI CONDIVISIONE": "CHOOSE SHARE APP",
+  "Apre la tua app email con messaggio già pronto": "Opens your email app with the message ready",
+  "INVIA VIA EMAIL": "SEND BY EMAIL", "COPIA LINK": "COPY LINK",
+  "Per incollarlo dove vuoi (Telegram, social, note...)": "To paste it wherever you want (Telegram, social, notes...)",
+  "COPIA NEGLI APPUNTI": "COPY TO CLIPBOARD",
+  // measures label title-case + descrizioni
+  "Vita": "Waist", "Addome": "Abdomen", "Fianchi": "Hips", "Torace": "Chest", "Spalle": "Shoulders",
+  "Coscia": "Thigh", "Polpaccio": "Calf",
+  "Bicipite rilassato": "Relaxed biceps", "Punto piu stretto - ombelico": "Narrowest point - navel",
+  "2 dita sotto lombelico": "2 fingers below navel", "Massima circonferenza glutei": "Max glute circumference",
+  "Braccio disteso - muscolo a riposo": "Arm extended - muscle at rest",
+  "Braccio flesso a 90 gradi - max contrazione": "Arm flexed at 90 degrees - max contraction",
+  "Massima circonferenza - parte alta": "Max circumference - upper part",
+  "Massima circonferenza del polpaccio": "Max calf circumference",
+  "Larghezza max - acromion": "Max width - acromion", "Linea capezzoli - fine espirazione": "Nipple line - end of exhale",
+  // travel/vacation bottoni + bullet card
+  "ATTIVA MODALITÀ TRASFERTA": "ENABLE TRAVEL MODE", "ATTIVA MODALITÀ VACANZA": "ENABLE VACATION MODE",
+  "TORNATO A CASA": "BACK HOME", "TORNATO DALLA VACANZA": "BACK FROM VACATION", "MODIFICA": "EDIT",
+  "Disponibilità di una palestra (sì/no)": "Gym availability (yes/no)",
+  "Numero di sessioni possibili": "Number of possible sessions",
+  "Continuare a tracciare per analisi future": "Keep tracking for future analysis",
+  "Fine": "End", "Inizio": "Start",
+  // barcode + nuovo cibo
+  "INQUADRA IL CODICE": "FRAME THE CODE", "Inquadra il codice a barre del prodotto e attendi il riconoscimento.": "Frame the product barcode and wait for recognition.",
+  "Per prodotti confezionati · dati da OpenFoodFacts": "For packaged products · data from OpenFoodFacts",
+  "NUOVO CIBO": "NEW FOOD", "Disponibile nelle ricerche future.": "Available in future searches.",
+  "NOME CIBO *": "FOOD NAME *", "CATEGORIA": "CATEGORY",
+  // ═══ BLOCCO 18 — residui audit sessione 54 ═══
+  // New activity sheet (categorie + attività)
+  "Scegli lo sport o l'attività che hai fatto (o stai per fare). Le kcal sono calcolate dal tuo peso.": "Choose the sport or activity you did (or are about to do). Calories are calculated from your weight.",
+  "Camminata": "Walking", "Corsa": "Running", "Ciclismo": "Cycling", "Nuoto": "Swimming",
+  "Sport di squadra": "Team sports", "Sport con racchetta": "Racket sports", "Palestra / Functional": "Gym / Functional",
+  "Altro / Vari": "Other / Misc", "Camminata lenta": "Slow walk", "Camminata veloce": "Brisk walk",
+  "Camminata in salita / collina": "Uphill / hill walk", "Camminata con cane": "Walk with dog",
+  "Corsa lenta (jogging)": "Slow run (jogging)", "Corsa media (~10 km/h)": "Medium run (~10 km/h)",
+  "Corsa veloce (~13 km/h)": "Fast run (~13 km/h)",
+  // Customize meal
+  "TOTALE ATTUALE": "CURRENT TOTAL", "DAL DATABASE": "FROM DATABASE", "MANUALE": "MANUAL",
+  "Verdure": "Vegetables",
+  // Plan week giorni
+  "Lunedì": "Monday", "Martedì": "Tuesday", "Mercoledì": "Wednesday", "Giovedì": "Thursday",
+  "Venerdì": "Friday", "Sabato": "Saturday", "Domenica": "Sunday",
+  "Lunedì (oggi)": "Monday (today)", "Martedì (oggi)": "Tuesday (today)", "Mercoledì (oggi)": "Wednesday (today)",
+  "Giovedì (oggi)": "Thursday (today)", "Venerdì (oggi)": "Friday (today)", "Sabato (oggi)": "Saturday (today)", "Domenica (oggi)": "Sunday (today)",
+  "Pane & companatico": "Bread & toppings", "Pane &amp; companatico": "Bread &amp; toppings",
+  "Legumi & Verdure": "Legumes & Vegetables", "Legumi &amp; Verdure": "Legumes &amp; Vegetables",
+  "Uova + Pasta": "Eggs + Pasta",
+  // Recipe ingredients ricorrenti
+  "1 mela o pera": "1 apple or pear", "1 banana matura": "1 ripe banana", "1 tazza tè verde": "1 cup green tea",
+  "15g Walnuts or Almonds": "15g Walnuts or Almonds", "Grains integrali extra": "extra whole grains",
+  "banana matura": "ripe banana", "mela o pera": "apple or pear",
+  // Measurements
+  "VITA": "WAIST", "ADDOME": "ABDOMEN", "FIANCHI": "HIPS", "TORACE": "CHEST", "SPALLE": "SHOULDERS",
+  "BICIPITE CONTRATTO": "FLEXED BICEPS", "Bicipite contratto": "Flexed biceps",
+  "AVAMBRACCIO": "FOREARM", "Avambraccio": "Forearm", "COSCIA": "THIGH", "Coscia": "Thigh",
+  "POLPACCIO": "CALF", "Polpaccio": "Calf", "DESTRA": "RIGHT", "SINISTRA": "LEFT",
+  "Massima circonferenza - sotto il gomito": "Max circumference - below the elbow",
+  "Massima circonferenza – sotto il gomito": "Max circumference – below the elbow",
+  "Punto centrale - a metà coscia": "Mid point - mid thigh", "Massima circonferenza - polpaccio": "Max circumference - calf",
+  // Pro Stats overview
+  "STATISTICHE AVANZATE": "ADVANCED STATS", "DA MIGLIORARE": "TO IMPROVE", "OTTIMO": "GREAT", "BUONO": "GOOD",
+  "TOTALI ALL-TIME": "ALL-TIME TOTALS", "MEDIA SESS./WK.": "AVG SESS./WK.", "ADERENZA DIETA": "DIET ADHERENCE",
+  "con workout": "with workout", "con dieta": "with diet", "completi": "complete",
+  "ultime 4 sett.": "last 4 wks", "ultimi 7 gg": "last 7 days", "ultime 4 settimane": "last 4 weeks",
+  "Vedi Statistiche Pro": "See Pro Stats",
+  "Top 8 exercises con dati registrati. Il 1RM stimato is the theoretical max weight for a single rep (Epley formula).": "Top 8 exercises with logged data. The estimated 1RM is the theoretical max weight for a single rep (Epley formula).",
+  // 1RM
+  "CALCOLA 1RM (massimale)": "CALCULATE 1RM (max)", "massimale": "max",
+  // Compare
+  "Ultimi 30gg vs 30gg precedenti": "Last 30 days vs previous 30 days", "Ultimi 7gg vs 7gg precedenti": "Last 7 days vs previous 7 days",
+  "Ultimi 90gg vs 90gg precedenti": "Last 90 days vs previous 90 days",
+  "Allenamenti": "Workouts", "attuale": "current", "precedente": "previous", "PR ottenuti": "PRs earned",
+  "PR raggiunti": "PRs hit", "Volume": "Volume", "Kcal bruciate": "Kcal burned",
+  // AI Coach
+  "GRUPPI MUSCOLARI": "MUSCLE GROUPS", "Sonno": "Sleep", "volume totale": "total volume", "PR battuti": "PRs hit",
+  "Chiedimi qualcosa...": "Ask me anything...", "Conosco il tuo profilo. Chiedimi quello che vuoi.": "I know your profile. Ask me anything you want.",
+  "Come accelero la perdita di grasso?": "How do I speed up fat loss?",
+  "Cosa mangiare prima dell'allenamento?": "What to eat before training?",
+  // Travel / Vacation mode
+  "MODALITÀ VACANZA": "VACATION MODE", "MODALITÀ TRASFERTA": "TRAVEL MODE",
+  "Stai per partire? Attiva la modalità trasferta. L'app adatta automaticamente exercises e dieta in base a:": "About to leave? Enable travel mode. The app automatically adapts exercises and diet based on:",
+  "Disponibilità di una palestra (sì/no)": "Gym availability (yes/no)", "Tempo che hai a disposizione": "Time you have available",
+  "Numero di sessions possibili": "Number of possible sessions",
+  "Sospendere alert deficit/sgarro": "Pause deficit/cheat alerts", "Mantenere lo streak senza pressione": "Keep the streak without pressure",
+  "Allenarti solo se vuoi (niente obblighi)": "Train only if you want (no obligations)", "Continuare a tracciare per analisi future": "Keep tracking for future analysis",
+  "Disponibilità di una palestra": "Gym availability",
+  // Report injury
+  "ZONA INTERESSATA": "AFFECTED AREA", "DURATA STIMATA": "ESTIMATED DURATION", "NOTA": "NOTE", "CONFERMA": "CONFIRM",
+  "Per infortuni gravi consulta sempre un medico. Quando guarisci prima del previsto, premi ✓ per riattivare.": "For serious injuries always consult a doctor. When you heal earlier than expected, tap ✓ to reactivate.",
   "Pasta integrale": "Whole wheat pasta", "Pane integrale": "Whole wheat bread",
   "Whole wheat bread": "Whole wheat bread",
   "Frutta secca": "Nuts", "frutta secca": "nuts", "Almonds o noci": "Almonds or walnuts",
@@ -5746,13 +5844,32 @@ window.autoTranslate = function(htmlStr) {
   if (!window.__autoTransKeys) {
     window.__autoTransKeys = Object.keys(map).sort((a,b) => b.length - a.length);
   }
+  // Pre-compilo regex con confine di parola per le chiavi che iniziano/finiscono con lettera,
+  // così "Cardi" non matcha dentro "Cardio" e "saltato" non rompe altre parole.
+  if (!window.__autoTransRe) {
+    window.__autoTransRe = {};
+    const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    for (const key of window.__autoTransKeys) {
+      const startsAlnum = /^[A-Za-zÀ-ÿ0-9]/.test(key);
+      const endsAlnum = /[A-Za-zÀ-ÿ0-9]$/.test(key);
+      if (startsAlnum && endsAlnum) {
+        // Confine di parola compatibile con accenti: niente lettera prima/dopo
+        try { window.__autoTransRe[key] = new RegExp('(?<![A-Za-zÀ-ÿ0-9])' + esc(key) + '(?![A-Za-zÀ-ÿ0-9])', 'g'); }
+        catch(_) { window.__autoTransRe[key] = null; }
+      } else {
+        window.__autoTransRe[key] = null; // usa substring (frasi con punteggiatura)
+      }
+    }
+  }
   // Sostituisco solo nel testo tra tag: spezzo su > e <
-  // Approccio: regex che cattura il testo tra > e < e lo traduce
   return htmlStr.replace(/>([^<]+)</g, (full, text) => {
     let t = text;
     for (const key of window.__autoTransKeys) {
-      if (t.includes(key)) {
-        // Sostituzione globale della frase
+      const re = window.__autoTransRe[key];
+      if (re) {
+        re.lastIndex = 0;
+        if (re.test(t)) { re.lastIndex = 0; t = t.replace(re, map[key]); }
+      } else if (t.includes(key)) {
         t = t.split(key).join(map[key]);
       }
     }
@@ -5953,7 +6070,7 @@ window.loadLeaderboard = async function() {
     window.__leaderboard = data;
   } catch(e) {
     console.warn('loadLeaderboard fail:', e);
-    alert('Errore nel caricare la classifica. Riprova.');
+    alert(LL('Errore nel caricare la classifica. Riprova.','Error loading the leaderboard. Try again.'));
   }
   window.__leaderboardLoading = false;
   render();
@@ -5971,7 +6088,7 @@ window.enableLeaderboardConsent = async function() {
 };
 
 window.disableLeaderboardConsent = async function() {
-  if (!confirm('Vuoi disattivare la condivisione classifica?\n\nI tuoi dati verranno rimossi dal cloud entro 24 ore. Potrai riattivare quando vorrai.')) return;
+  if (!confirm(LL('Vuoi disattivare la condivisione classifica?\n\nI tuoi dati verranno rimossi dal cloud entro 24 ore. Potrai riattivare quando vorrai.','Do you want to turn off leaderboard sharing?\n\nYour data will be removed from the cloud within 24 hours. You can re-enable it whenever you want.'))) return;
   ST.shareLeaderboardConsent = false;
   // Tento di rimuovere il proprio doc dalla leaderboard (se possibile)
   try {
@@ -6174,7 +6291,7 @@ window.doLogin=async function(){
 
 window.doLogout=async function(){
   // Conferma esplicita prima del logout
-  if (!confirm('Vuoi davvero uscire?\n\nI tuoi dati restano salvati nel cloud, potrai rientrare quando vuoi con la tua email.')) {
+  if (!confirm(LL('Vuoi davvero uscire?\n\nI tuoi dati restano salvati nel cloud, potrai rientrare quando vuoi con la tua email.','Do you really want to log out?\n\nYour data stays saved in the cloud, you can come back anytime with your email.'))) {
     return;
   }
   try{
@@ -6227,7 +6344,7 @@ window.doChangePassword=async function(){
 // Genera un file JSON scaricabile con TUTTI i dati dell'utente
 window.exportMyData = function() {
   try {
-    if (!AU.user) return alert('Devi essere loggato per esportare i dati.');
+    if (!AU.user) return alert(LL('Devi essere loggato per esportare i dati.','You must be logged in to export data.'));
     const exportData = {
       _meta: {
         app: 'FitTracker PRO',
@@ -6316,7 +6433,7 @@ window.doDeleteAccount=async function(){
   );
   if (!inputEmail) return;
   if (inputEmail.trim().toLowerCase() !== currentEmail.toLowerCase()) {
-    return alert('❌ Email non corrispondente. Cancellazione annullata per sicurezza.');
+    return alert(LL('❌ Email non corrispondente. Cancellazione annullata per sicurezza.','❌ Email does not match. Deletion cancelled for safety.'));
   }
 
   // Step 3: re-inserimento password
@@ -6334,7 +6451,7 @@ window.doDeleteAccount=async function(){
     '(in maiuscolo, esattamente come scritto sopra)'
   );
   if (magicWord !== 'CANCELLA') {
-    return alert('❌ Parola non corretta. Account NON cancellato. I tuoi dati sono al sicuro.');
+    return alert(LL('❌ Parola non corretta. Account NON cancellato. I tuoi dati sono al sicuro.','❌ Wrong word. Account NOT deleted. Your data is safe.'));
   }
 
   // Esecuzione cancellazione
@@ -6343,7 +6460,7 @@ window.doDeleteAccount=async function(){
     await window.FBAuth.deleteAccount(pw);
     AU.user=null;AU.profile=null;
     Object.assign(ST,defST());
-    alert('✅ Account cancellato definitivamente.\n\nGrazie per aver usato FitTracker PRO.');
+    alert(LL('✅ Account cancellato definitivamente.\n\nGrazie per aver usato FitTracker PRO.','✅ Account permanently deleted.\n\nThank you for using FitTracker PRO.'));
     render();
   }catch(e){
     // Errore comune: password sbagliata
@@ -6624,10 +6741,10 @@ window.initProgram=function(){
   }
   // FIX: warning non bloccanti — l'utente decide, noi adattiamo il piano
   if(sess===0&&t==='bulk'){
-    if(!confirm('⚠️ Aumentare massa muscolare richiede allenamento con resistenze. Senza palestra, l\'aumento di peso sarà principalmente grasso. Vuoi procedere comunque?')) return;
+    if(!confirm(LL('⚠️ Aumentare massa muscolare richiede allenamento con resistenze. Senza palestra, l\'aumento di peso sarà principalmente grasso. Vuoi procedere comunque?','⚠️ Building muscle requires resistance training. Without a gym, weight gain will mainly be fat. Do you want to proceed anyway?'))) return;
   }
   if(sess===1&&t==='bulk'){
-    if(!confirm('⚠️ Per la massa muscolare sono consigliate almeno 2-3 sessioni/settimana. Con 1 sola la progressione sarà lenta. Vuoi procedere comunque?')) return;
+    if(!confirm(LL('⚠️ Per la massa muscolare sono consigliate almeno 2-3 sessioni/settimana. Con 1 sola la progressione sarà lenta. Vuoi procedere comunque?','⚠️ For muscle gain, at least 2-3 sessions/week are recommended. With only 1, progress will be slow. Do you want to proceed anyway?'))) return;
   }
   let tDate=new Date(tRaw);
   // FIX: rate settimanale realistico in base a sessioni (più sessioni = più velocità possibile)
@@ -6706,9 +6823,9 @@ window.updateProfile=function(){
   const agRaw=parseInt(vv('pfAg'));
   const wStartRaw=parseFloat(vv('pfWStart'));
 
-  if(isNaN(htRaw)||htRaw<100||htRaw>250) return alert('Altezza non valida (deve essere tra 100 e 250 cm)');
-  if(isNaN(agRaw)||agRaw<10||agRaw>100) return alert('Età non valida (deve essere tra 10 e 100 anni)');
-  if(isNaN(wStartRaw)||wStartRaw<20||wStartRaw>300) return alert('Peso non valido (deve essere tra 20 e 300 kg)');
+  if(isNaN(htRaw)||htRaw<100||htRaw>250) return alert(LL('Altezza non valida (deve essere tra 100 e 250 cm)','Invalid height (must be between 100 and 250 cm)'));
+  if(isNaN(agRaw)||agRaw<10||agRaw>100) return alert(LL('Età non valida (deve essere tra 10 e 100 anni)','Invalid age (must be between 10 and 100 years)'));
+  if(isNaN(wStartRaw)||wStartRaw<20||wStartRaw>300) return alert(LL('Peso non valido (deve essere tra 20 e 300 kg)','Invalid weight (must be between 20 and 300 kg)'));
 
   // Aggiorno AU.profile
   if(!AU.profile) AU.profile={};
@@ -6728,7 +6845,7 @@ window.updateProfile=function(){
   }
 
   save();
-  alert('✅ Profilo aggiornato');
+  alert(LL('✅ Profilo aggiornato','✅ Profile updated'));
 };
 
 window.pickProfileSxChip=function(el){
@@ -6771,10 +6888,10 @@ window.updateProgram=function(){
   if(!g||!tRaw) return alert('Compila campi!');
   // FIX: warning non bloccanti anche in update
   if(sess===0&&t==='bulk'){
-    if(!confirm('⚠️ Aumentare massa muscolare richiede allenamento. Senza palestra l\'aumento sarà prevalentemente grasso. Procedo?')) return;
+    if(!confirm(LL('⚠️ Aumentare massa muscolare richiede allenamento. Senza palestra l\'aumento sarà prevalentemente grasso. Procedo?','⚠️ Building muscle requires training. Without a gym the gain will be mostly fat. Proceed?'))) return;
   }
   if(sess===1&&t==='bulk'){
-    if(!confirm('⚠️ Per massa sono consigliate almeno 2-3 sessioni/settimana. Procedo?')) return;
+    if(!confirm(LL('⚠️ Per massa sono consigliate almeno 2-3 sessioni/settimana. Procedo?','⚠️ For muscle gain at least 2-3 sessions/week are recommended. Proceed?'))) return;
   }
   let tDate=new Date(tRaw);
   const currW=ST.h[ST.h.length-1]?.w||70;
@@ -6791,7 +6908,7 @@ window.updateProgram=function(){
   };
   ST.p.g=g;ST.p.t=t;ST.p.dur=dur;ST.p.targetD=tDate.toISOString().split('T')[0];ST.p.sessions=sess;ST.p.cardioLevel=cl;ST.p.intol=intol;ST.p.loc=loc;ST.p.focus=focus;ST.p.diet=diet;ST.p.usesSupplements=usesSupplements;ST.p.favs=newFavs;
   ST.p.times=times;ST.p.workoutTime=workoutTime;
-  save();alert('Programma aggiornato! Consigli nutrizionali e allenamenti ricalcolati.');
+  save();alert(LL('Programma aggiornato! Consigli nutrizionali e allenamenti ricalcolati.','Program updated! Nutrition advice and workouts recalculated.'));
 }
 
 // ── SAVE FUNCTIONS PER SEZIONE (sessione 3) ──
@@ -6822,10 +6939,10 @@ window.updateProgramOnly=function(){
 
   // Warning non bloccanti
   if(sess===0&&t==='bulk'){
-    if(!confirm('⚠️ Aumentare massa muscolare richiede allenamento. Senza palestra l\'aumento sarà prevalentemente grasso. Procedo?')) return;
+    if(!confirm(LL('⚠️ Aumentare massa muscolare richiede allenamento. Senza palestra l\'aumento sarà prevalentemente grasso. Procedo?','⚠️ Building muscle requires training. Without a gym the gain will be mostly fat. Proceed?'))) return;
   }
   if(sess===1&&t==='bulk'){
-    if(!confirm('⚠️ Per massa sono consigliate almeno 2-3 sessioni/settimana. Procedo?')) return;
+    if(!confirm(LL('⚠️ Per massa sono consigliate almeno 2-3 sessioni/settimana. Procedo?','⚠️ For muscle gain at least 2-3 sessions/week are recommended. Proceed?'))) return;
   }
   // Aggiorna data se troppo ravvicinata per sessioni
   let tDate=new Date(tRaw);
@@ -6838,7 +6955,7 @@ window.updateProgramOnly=function(){
   ST.p.g=g; ST.p.t=t; ST.p.dur=dur; ST.p.targetD=tDate.toISOString().split('T')[0];
   ST.p.sessions=sess; ST.p.cardioLevel=cl; ST.p.loc=loc;
   save();
-  alert('✓ Programma salvato.');
+  alert(LL('✓ Programma salvato.','✓ Program saved.'));
 }
 
 window.updateTimes=function(){
@@ -6853,7 +6970,7 @@ window.updateTimes=function(){
   const workoutTime=vv('tWo')||ST.p.workoutTime||'18:00';
   ST.p.times=times; ST.p.workoutTime=workoutTime;
   save();
-  alert('✓ Orari salvati. I pasti suggeriti rispetteranno i tuoi orari.');
+  alert(LL('✓ Orari salvati. I pasti suggeriti rispetteranno i tuoi orari.','✓ Schedules saved. Suggested meals will follow your schedule.'));
 }
 
 window.updateIntolerances=function(){
@@ -6862,7 +6979,7 @@ window.updateIntolerances=function(){
   const intol=[...intolEls].map(c=>c.dataset.id);
   ST.p.intol=intol;
   save();
-  alert(intol.length>0?`✓ ${intol.length} intolleranza/e salvata/e.`:'✓ Nessuna intolleranza.');
+  alert(intol.length>0?LL(`✓ ${intol.length} intolleranza/e salvata/e.`,`✓ ${intol.length} intolerance(s) saved.`):LL('✓ Nessuna intolleranza.','✓ No intolerances.'));
 }
 
 window.updateFocus=function(){
@@ -6871,7 +6988,7 @@ window.updateFocus=function(){
   const focus=focusEl?.dataset?.focus||ST.p.focus||'total';
   ST.p.focus=focus;
   save();
-  alert('✓ Focus allenamento salvato. Le prossime schede si adatteranno.');
+  alert(LL('✓ Focus allenamento salvato. Le prossime schede si adatteranno.','✓ Training focus saved. Future routines will adapt.'));
 }
 
 window.updateDiet=function(){
@@ -6891,7 +7008,7 @@ window.updateSupplements=function(){
   const usesSupplements=suppEl?(suppEl.dataset?.supp==='yes'):(ST.p.usesSupplements||false);
   ST.p.usesSupplements=usesSupplements;
   save();
-  alert(usesSupplements?'✓ Integratori attivi nelle proposte.':'✓ Solo cibi nelle proposte.');
+  alert(usesSupplements?LL('✓ Integratori attivi nelle proposte.','✓ Supplements active in suggestions.'):LL('✓ Solo cibi nelle proposte.','✓ Only foods in suggestions.'));
 }
 
 window.updateFavs=function(){
@@ -6904,7 +7021,7 @@ window.updateFavs=function(){
   };
   ST.p.favs=newFavs;
   save();
-  alert('✓ Piatti preferiti salvati.');
+  alert(LL('✓ Piatti preferiti salvati.','✓ Favorite meals saved.'));
 }
 window.changeCurrentDate=function(dStr){
   currentDateStr=dStr;
@@ -6939,7 +7056,7 @@ window.importAppleHealth = function() {
     try {
       let xmlText;
       if (file.name.endsWith('.zip')) {
-        return alert('⚠️ Hai caricato un .zip. Estrai prima il file e carica solo "export.xml" o "export_cda.xml".');
+        return alert(LL('⚠️ Hai caricato un .zip. Estrai prima il file e carica solo "export.xml" o "export_cda.xml".','⚠️ You uploaded a .zip. Extract the file first and upload only "export.xml" or "export_cda.xml".'));
       } else {
         xmlText = await file.text();
       }
@@ -6947,7 +7064,7 @@ window.importAppleHealth = function() {
       const parser = new DOMParser();
       const doc = parser.parseFromString(xmlText, 'application/xml');
       const errs = doc.getElementsByTagName('parsererror');
-      if (errs.length) return alert('⚠️ File XML non valido. Controlla di aver caricato export.xml di Salute iOS.');
+      if (errs.length) return alert(LL('⚠️ File XML non valido. Controlla di aver caricato export.xml di Salute iOS.','⚠️ Invalid XML file. Make sure you uploaded export.xml from iOS Health.'));
 
       // Estrazione dati: peso, passi, sonno, allenamenti
       const records = doc.getElementsByTagName('Record');
@@ -7014,7 +7131,7 @@ window.importAppleHealth = function() {
 
       ST.h.sort((a, b) => new Date(a.d) - new Date(b.d));
       await save();
-      alert(`✓ Import completato!\n\n• ${importedW} pesate\n• ${importedSteps} giorni con passi\n• ${importedSleep} notti di sonno\n\nDati duplicati ignorati.`);
+      alert(LL(`✓ Import completato!\n\n• ${importedW} pesate\n• ${importedSteps} giorni con passi\n• ${importedSleep} notti di sonno\n\nDati duplicati ignorati.`,`✓ Import complete!\n\n• ${importedW} weigh-ins\n• ${importedSteps} days with steps\n• ${importedSleep} nights of sleep\n\nDuplicate data ignored.`));
     } catch (e) {
       console.error('Apple Health import fail:', e);
       alert('Errore durante l\'import: ' + (e?.message || e));
@@ -7053,7 +7170,7 @@ window.confirmTravelMode = function() {
   const d = ST.sheetData;
   if (!d) return;
   if (!d.startD || !d.endD) return alert('Inserisci date inizio e fine.');
-  if (new Date(d.endD) < new Date(d.startD)) return alert('Data fine non può essere precedente all\'inizio.');
+  if (new Date(d.endD) < new Date(d.startD)) return alert(LL('Data fine non può essere precedente all\'inizio.','End date cannot be before the start.'));
   const dietOnly = d.trainMode === 'dietonly';
   ST.travelMode = {
     active: true,
@@ -7115,15 +7232,15 @@ window.TRAVEL_BODYWEIGHT_EX = [
 
 window.enableNotifications = async function() {
   if (!('Notification' in window)) {
-    return alert('⚠️ Browser non supporta notifiche.');
+    return alert(LL('⚠️ Browser non supporta notifiche.','⚠️ Browser does not support notifications.'));
   }
   if (Notification.permission === 'granted') {
-    alert('✓ Notifiche già attive!');
+    alert(LL('✓ Notifiche già attive!','✓ Notifications already on!'));
     rescheduleAllNotifications();
     return;
   }
   if (Notification.permission === 'denied') {
-    return alert('✗ Notifiche bloccate dal browser.\n\nPer riabilitarle:\n1. Tocca l\'icona del lucchetto nella barra indirizzo\n2. Cambia "Notifiche" da Bloccate ad Attive\n3. Ricarica la pagina');
+    return alert(LL('✗ Notifiche bloccate dal browser.\n\nPer riabilitarle:\n1. Tocca l\'icona del lucchetto nella barra indirizzo\n2. Cambia "Notifiche" da Bloccate ad Attive\n3. Ricarica la pagina','✗ Notifications blocked by the browser.\n\nTo re-enable them:\n1. Tap the lock icon in the address bar\n2. Change "Notifications" from Blocked to Allowed\n3. Reload the page'));
   }
   try {
     const result = await Notification.requestPermission();
@@ -7140,7 +7257,7 @@ window.enableNotifications = async function() {
       rescheduleAllNotifications();
       render();
     } else {
-      alert('Permesso notifiche non concesso.');
+      alert(LL('Permesso notifiche non concesso.','Notification permission not granted.'));
     }
   } catch (e) {
     alert('Errore: ' + (e?.message || e));
@@ -7282,8 +7399,8 @@ window.toggleNotifMaster = async function(enabled) {
 };
 
 window.testNotification = function() {
-  if (!('Notification' in window)) return alert('Browser non supporta notifiche.');
-  if (Notification.permission !== 'granted') return alert('Prima attiva le notifiche.');
+  if (!('Notification' in window)) return alert(LL('Browser non supporta notifiche.','Browser does not support notifications.'));
+  if (Notification.permission !== 'granted') return alert(LL('Prima attiva le notifiche.','Enable notifications first.'));
   try {
     new Notification('🧪 Notifica di test', {
       body: 'Le notifiche funzionano correttamente! 💪',
@@ -7306,7 +7423,7 @@ window.testNotification = function() {
 
 // EXPORT 1: workout fatti → file .ics
 window.exportWorkoutsToCalendar = function() {
-  if (!ST.wLog || ST.wLog.length === 0) return alert('Nessun workout da esportare.');
+  if (!ST.wLog || ST.wLog.length === 0) return alert(LL('Nessun workout da esportare.','No workout to export.'));
   // Filtra ultimi 90 giorni
   const cutoff = new Date(Date.now() - 90*86400000).toISOString().slice(0,10);
   const workouts = ST.wLog.filter(w => w.d >= cutoff && !w.isRest);
@@ -7361,12 +7478,12 @@ END:VEVENT
   if (!ST.healthSyncLog) ST.healthSyncLog = {};
   ST.healthSyncLog.lastExportWorkouts = new Date().toISOString();
   save();
-  alert(`✅ ${workouts.length} workout esportati.\n\nApri il file scaricato per importarlo nel Calendar. Apple Health leggerà automaticamente i tuoi allenamenti dal calendario.`);
+  alert(LL(`✅ ${workouts.length} workout esportati.\n\nApri il file scaricato per importarlo nel Calendar. Apple Health leggerà automaticamente i tuoi allenamenti dal calendario.`,`✅ ${workouts.length} workouts exported.\n\nOpen the downloaded file to import it into Calendar. Apple Health will automatically read your workouts from the calendar.`));
 };
 
 // EXPORT 2: peso → file CSV (importabile manualmente in Salute o tracker peso)
 window.exportWeightToCSV = function() {
-  if (!ST.h || ST.h.length === 0) return alert('Nessuna pesata da esportare.');
+  if (!ST.h || ST.h.length === 0) return alert(LL('Nessuna pesata da esportare.','No weigh-in to export.'));
   let csv = 'Data,Peso (kg)\n';
   ST.h.forEach(h => { csv += `${h.d},${h.w}\n`; });
   const blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
@@ -7381,7 +7498,7 @@ window.exportWeightToCSV = function() {
   if (!ST.healthSyncLog) ST.healthSyncLog = {};
   ST.healthSyncLog.lastExportWeight = new Date().toISOString();
   save();
-  alert(`✅ ${ST.h.length} pesate esportate in CSV.\n\nIl file è scaricato. Puoi importarlo in Numbers/Excel o in app come Apple Health (tramite app terze).`);
+  alert(LL(`✅ ${ST.h.length} pesate esportate in CSV.\n\nIl file è scaricato. Puoi importarlo in Numbers/Excel o in app come Apple Health (tramite app terze).`,`✅ ${ST.h.length} weigh-ins exported to CSV.\n\nThe file has been downloaded. You can import it into Numbers/Excel or apps like Apple Health (via third-party apps).`));
 };
 
 // IMPORT: parser export.xml di Apple Health
@@ -7397,7 +7514,7 @@ window.importFromAppleHealth = function() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 80 * 1024 * 1024) {
-      return alert('File troppo grande (max 80 MB). Apple Health export.xml dovrebbe essere sotto questa soglia.');
+      return alert(LL('File troppo grande (max 80 MB). Apple Health export.xml dovrebbe essere sotto questa soglia.','File too large (max 80 MB). Apple Health export.xml should be below this threshold.'));
     }
     try {
       const txt = await file.text();
@@ -7468,14 +7585,10 @@ window.importFromAppleHealth = function() {
       ST.healthSyncLog.lastImport = new Date().toISOString();
       await save();
       render();
-      alert(`✅ Importazione completata da Apple Health:\n\n` +
-            `⚖️ Pesate: ${addedW} nuove, ${updatedW} aggiornate\n` +
-            `👟 Passi: ${addedSteps} giorni\n` +
-            `😴 Sonno: ${addedSleep} giorni\n\n` +
-            `Vai in tab Body per vedere il grafico aggiornato.`);
+      alert(LL(`✅ Importazione completata da Apple Health:\n\n⚖️ Pesate: ${addedW} nuove, ${updatedW} aggiornate\n👟 Passi: ${addedSteps} giorni\n😴 Sonno: ${addedSleep} giorni\n\nVai in tab Body per vedere il grafico aggiornato.`,`✅ Import from Apple Health complete:\n\n⚖️ Weigh-ins: ${addedW} new, ${updatedW} updated\n👟 Steps: ${addedSteps} days\n😴 Sleep: ${addedSleep} days\n\nGo to the Body tab to see the updated chart.`));
     } catch(err) {
       console.error('Apple Health import error:', err);
-      alert('❌ Errore durante import: ' + err.message + '\n\nVerifica che il file sia export.xml di Apple Health.');
+      alert(LL('❌ Errore durante import: ','❌ Error during import: ') + err.message + LL('\n\nVerifica che il file sia export.xml di Apple Health.','\n\nMake sure the file is Apple Health export.xml.'));
     }
   });
   document.body.appendChild(inp);
@@ -7527,7 +7640,7 @@ window.deleteUserRecipe = async function(id) {
 
 window.useRecipeAsMeal = async function(recipeId, mealSlot) {
   const r = (ST.userRecipes || []).find(x => x.id === recipeId);
-  if (!r) return alert('Ricetta non trovata');
+  if (!r) return alert(LL('Ricetta non trovata','Recipe not found'));
   if (!ST.p) ST.p = {};
   if (!ST.p.customMeals) ST.p.customMeals = {};
   // Genero "items" sintetici dagli ingredienti
@@ -7564,7 +7677,7 @@ window.openMyRecipesSheet = function() {
 
 window.submitRecipeForm = async function() {
   const d = ST.sheetData || {};
-  if (!d.name?.trim()) return alert('Inserisci un nome per la ricetta');
+  if (!d.name?.trim()) return alert(LL('Inserisci un nome per la ricetta','Enter a name for the recipe'));
   if (!d.kcal || parseInt(d.kcal) < 50) return alert('Inserisci le kcal totali (min 50)');
   const recipe = {
     name: d.name.trim(),
@@ -7826,7 +7939,7 @@ window.exportToMyFitnessPal = function() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    alert('✓ CSV scaricato. Importabile su MyFitnessPal, Cronometer, Excel, Google Sheets.');
+    alert(LL('✓ CSV scaricato. Importabile su MyFitnessPal, Cronometer, Excel, Google Sheets.','✓ CSV downloaded. Importable into MyFitnessPal, Cronometer, Excel, Google Sheets.'));
   } catch (e) {
     alert('Errore export: ' + (e?.message || e));
   }
@@ -7834,10 +7947,10 @@ window.exportToMyFitnessPal = function() {
 
 window.connectBluetoothScale = async function() {
   if (!('bluetooth' in navigator)) {
-    return alert('⚠️ Bluetooth non supportato dal browser. Usa Chrome o Edge su Android/Desktop.');
+    return alert(LL('⚠️ Bluetooth non supportato dal browser. Usa Chrome o Edge su Android/Desktop.','⚠️ Bluetooth not supported by the browser. Use Chrome or Edge on Android/Desktop.'));
   }
   try {
-    alert('Accendi la bilancia e salici sopra. Poi premi OK per cercare il dispositivo.');
+    alert(LL('Accendi la bilancia e salici sopra. Poi premi OK per cercare il dispositivo.','Turn on the scale and step on it. Then press OK to search for the device.'));
     const device = await navigator.bluetooth.requestDevice({
       filters: [
         { services: ['weight_scale'] },
@@ -7878,14 +7991,14 @@ window.connectBluetoothScale = async function() {
         }
       });
       // Timeout 30s
-      setTimeout(() => { if (!weightFound) alert('⏱ Timeout — bilancia non ha trasmesso peso. Riprova.'); }, 30000);
+      setTimeout(() => { if (!weightFound) alert(LL('⏱ Timeout — bilancia non ha trasmesso peso. Riprova.','⏱ Timeout — scale did not transmit weight. Try again.')); }, 30000);
     } catch(e) {
       // Fallback: lettura semplice
-      alert('⚠️ La bilancia non è del tipo standard "Weight Scale". Prova a inserire il peso manualmente.');
+      alert(LL('⚠️ La bilancia non è del tipo standard "Weight Scale". Prova a inserire il peso manualmente.','⚠️ The scale is not the standard "Weight Scale" type. Try entering the weight manually.'));
     }
   } catch(e) {
     if (e.name === 'NotFoundError') {
-      alert('Nessuna bilancia selezionata.');
+      alert(LL('Nessuna bilancia selezionata.','No scale selected.'));
     } else {
       alert('Errore Bluetooth: ' + (e.message || e.name));
     }
@@ -7903,7 +8016,7 @@ window.deleteWeight=function(){
 window.logSleep=function(v){initLife();ST.life[currentDateStr].sleep=parseFloat(v);save();}
 window.logSleepBtn=function(){
   const v=parseFloat(vv('nSleep'));
-  if(isNaN(v) || v<0 || v>14) return alert('Inserisci un valore di sonno valido (0-14 ore)');
+  if(isNaN(v) || v<0 || v>14) return alert(LL('Inserisci un valore di sonno valido (0-14 ore)','Enter a valid sleep value (0-14 hours)'));
   initLife();
   ST.life[currentDateStr].sleep=v;
   save();
@@ -8127,7 +8240,7 @@ window.pickSimilarFood=function(idx){
 window.applyManualCheatKcal=function(){
   if(!window.cheatSimilarPick) return;
   const kcalRaw=parseInt(document.getElementById('manualCheatKcal')?.value);
-  if(isNaN(kcalRaw)||kcalRaw<1||kcalRaw>5000) return alert('Inserisci un valore valido tra 1 e 5000 kcal.');
+  if(isNaN(kcalRaw)||kcalRaw<1||kcalRaw>5000) return alert(LL('Inserisci un valore valido tra 1 e 5000 kcal.','Enter a valid value between 1 and 5000 kcal.'));
   // Aggrego con gli items già riconosciuti (se multipart)
   const priorItems=window.cheatSimilarPick.fallbackItems||[];
   const priorTotal=priorItems.reduce((s,it)=>s+(Number(it.kcal)||0)*(Number(it.qty)||1),0);
@@ -8183,8 +8296,8 @@ window.confirmCustomFood = function() {
   if (!d) return;
   if (!d.name || d.name.trim().length < 2) return alert('Inserisci un nome (minimo 2 caratteri).');
   if (d.name.length > 60) return alert('Nome troppo lungo (max 60 caratteri).');
-  if (!d.kcal || d.kcal < 1 || d.kcal > 1000) return alert('Kcal non valide (1-1000).');
-  if (!d.refGrams || d.refGrams < 1 || d.refGrams > 5000) return alert('Grammi di riferimento non validi (1-5000).');
+  if (!d.kcal || d.kcal < 1 || d.kcal > 1000) return alert(LL('Kcal non valide (1-1000).','Invalid kcal (1-1000).'));
+  if (!d.refGrams || d.refGrams < 1 || d.refGrams > 5000) return alert(LL('Grammi di riferimento non validi (1-5000).','Invalid reference grams (1-5000).'));
 
   // Genera ID univoco
   const id = 'custom_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
@@ -8280,7 +8393,7 @@ window.confirmCustomFood = function() {
 };
 
 window.deleteCustomFood = async function(id) {
-  if (!confirm('Eliminare questo cibo personalizzato?\n\nNon influisce su sgarri già registrati.')) return;
+  if (!confirm(LL('Eliminare questo cibo personalizzato?\n\nNon influisce su sgarri già registrati.','Delete this custom food?\n\nIt does not affect cheats already logged.'))) return;
   if (!ST.customFoods) return;
   ST.customFoods = ST.customFoods.filter(f => f.id !== id);
   await save();
@@ -8316,17 +8429,23 @@ window.startBarcodeScanForCart = async function() {
 };
 
 async function _doBarcodeScan() {
-  // Check supporto
+  var _EN = (window.ST && ST.lang === 'en');
+  var L = function(it, en){ return _EN ? en : it; };
+  // Check supporto. NB: su iOS in modalità "app a schermo intero" (PWA standalone)
+  // BarcodeDetector e/o la camera spesso non sono disponibili: usiamo il fallback manuale.
   if (!('BarcodeDetector' in window)) {
-    alert('Il tuo browser non supporta lo scan del codice a barre.\n\nFunziona su:\n• iPhone con iOS 17+ in Safari\n• Android con Chrome aggiornato\n\nIn alternativa, inserisci manualmente il codice qui sotto.');
-    const manual = prompt('Inserisci il codice a barre (8-13 cifre):');
+    alert(L(
+      'Lo scan automatico non è disponibile in questa modalità.\n\nFunziona meglio aprendo l\'app nel browser Safari (non come app a schermo intero) su iPhone con iOS 17+, oppure su Android con Chrome aggiornato.\n\nNel frattempo puoi inserire il codice manualmente qui sotto.',
+      'Automatic scan is not available in this mode.\n\nIt works best by opening the app in the Safari browser (not as a full-screen app) on iPhone with iOS 17+, or on Android with an updated Chrome.\n\nMeanwhile you can enter the code manually below.'
+    ));
+    const manual = prompt(L('Inserisci il codice a barre (8-13 cifre):', 'Enter the barcode (8-13 digits):'));
     if (manual && /^\d{8,13}$/.test(manual.trim())) {
       window.lookupBarcode(manual.trim());
     }
     return;
   }
   if (!navigator.mediaDevices?.getUserMedia) {
-    alert('La camera non è accessibile in questo browser.');
+    alert(L('La camera non è accessibile in questo browser.', 'The camera is not accessible in this browser.'));
     return;
   }
 
@@ -8386,9 +8505,9 @@ async function _doBarcodeScan() {
   } catch(err) {
     console.error('Camera fail:', err);
     if (err.name === 'NotAllowedError') {
-      alert('Per scansionare devi consentire l\'accesso alla camera.\n\nVai su Impostazioni Safari → Camera e abilita.');
+      alert(L('Per scansionare devi consentire l\'accesso alla camera.\n\nVai su Impostazioni Safari → Camera e abilita.', 'To scan you must allow camera access.\n\nGo to Safari Settings → Camera and enable it.'));
     } else {
-      alert('Impossibile accendere la camera: ' + (err.message || err.name));
+      alert(L('Impossibile accendere la camera: ', 'Unable to start the camera: ') + (err.message || err.name));
     }
     stopBarcodeScan();
   }
@@ -8539,7 +8658,7 @@ window.addToCheatCart=function(){
   let kcal,label,qty,grams;
   if(portInfo.byPortion){
     qty=parseFloat(document.getElementById('cheatQty')?.value||1);
-    if(isNaN(qty)||qty<0.25||qty>20) return alert('Quantità non valida (0.25 - 20)');
+    if(isNaN(qty)||qty<0.25||qty>20) return alert(LL('Quantità non valida (0.25 - 20)','Invalid quantity (0.25 - 20)'));
     kcal=Math.round(f.kcal * portInfo.mult * qty);
     // Formattazione "umana" della quantità (1, ½, 1½, 2, ecc.)
     const qtyDisplay = qty === 0.5 ? '½' : qty === 1.5 ? '1½' : qty === 2.5 ? '2½' : qty.toString();
@@ -8553,7 +8672,7 @@ window.addToCheatCart=function(){
     grams=null;
   } else {
     grams=parseFloat(document.getElementById('cheatGrams')?.value||0);
-    if(isNaN(grams)||grams<1||grams>5000) return alert('Grammi non validi (1-5000)');
+    if(isNaN(grams)||grams<1||grams>5000) return alert(LL('Grammi non validi (1-5000)','Invalid grams (1-5000)'));
     grams = Math.round(grams);
     kcal=Math.round((f.kcal*grams)/100);
     label=`${f.name} (${grams}g)`;
@@ -8623,7 +8742,7 @@ window.saveCartAsFavorite = function() {
     createdAt: Date.now()
   });
   save();
-  alert(`✓ Combo "${name.trim()}" salvato! Lo ritrovi in cima ai cibi quando apri il picker.`);
+  alert(LL(`✓ Combo "${name.trim()}" salvato! Lo ritrovi in cima ai cibi quando apri il picker.`,`✓ Combo "${name.trim()}" saved! You'll find it at the top of the foods when you open the picker.`));
   render();
 };
 
@@ -8674,7 +8793,7 @@ window.confirmCheatFromDb=function(){
   if(portInfo.byPortion){
     // Cibo/drink a porzione fissa: chiedi solo "quante"
     const qty=parseInt(document.getElementById('cheatQty')?.value||1);
-    if(isNaN(qty)||qty<1||qty>20) return alert('Quantità non valida (1-20)');
+    if(isNaN(qty)||qty<1||qty>20) return alert(LL('Quantità non valida (1-20)','Invalid quantity (1-20)'));
     kcal=Math.round(f.kcal * portInfo.mult * qty);
     // Label intelligente:
     // - Drink (es. birra): "2× Birra chiara (media 40cl)"
@@ -8690,7 +8809,7 @@ window.confirmCheatFromDb=function(){
     grams=null;
   } else {
     grams=parseInt(document.getElementById('cheatGrams')?.value||0);
-    if(isNaN(grams)||grams<1||grams>5000) return alert('Grammi non validi (1-5000)');
+    if(isNaN(grams)||grams<1||grams>5000) return alert(LL('Grammi non validi (1-5000)','Invalid grams (1-5000)'));
     kcal=Math.round((f.kcal*grams)/100);
     label=`${f.name} (${grams}g)`;
   }
@@ -8991,8 +9110,8 @@ window.addCustomMealItem=function(){
   const grams=parseInt(document.getElementById('cmGrams')?.value||0);
   const kcal=parseInt(document.getElementById('cmKcal')?.value||0);
   if(!name) return alert('Inserisci il nome del cibo.');
-  if(!grams||grams<1||grams>2000) return alert('Grammi: deve essere tra 1 e 2000.');
-  if(!kcal||kcal<1||kcal>3000) return alert('Kcal: deve essere tra 1 e 3000.');
+  if(!grams||grams<1||grams>2000) return alert(LL('Grammi: deve essere tra 1 e 2000.','Grams: must be between 1 and 2000.'));
+  if(!kcal||kcal<1||kcal>3000) return alert(LL('Kcal: deve essere tra 1 e 3000.','Kcal: must be between 1 and 3000.'));
   // Sanitizzazione nome (niente <>)
   const safeName=name.replace(/[<>]/g,'');
   ST.sheetData.draft.push({name:safeName,grams,kcal});
@@ -9119,7 +9238,7 @@ window.selectFood=function(foodId){
 window.addDbFoodToDraft=function(){
   if(!ST.sheetData||!ST.sheetData.selectedFood) return;
   const grams=parseInt(document.getElementById('dbGrams')?.value||0);
-  if(!grams||grams<1||grams>2000) return alert('Grammi: deve essere tra 1 e 2000.');
+  if(!grams||grams<1||grams>2000) return alert(LL('Grammi: deve essere tra 1 e 2000.','Grams: must be between 1 and 2000.'));
   const f=ST.sheetData.selectedFood;
   const portion=window.foodPortion(f, grams);
   ST.sheetData.draft.push({
@@ -9174,7 +9293,7 @@ window.saveCustomMeal=function(){
 
 // Ripristina il pasto AI (elimina custom)
 window.restoreMealAI=function(mealId){
-  if(!confirm('Ripristinare i consigli automatici per questo pasto?')) return;
+  if(!confirm(LL('Ripristinare i consigli automatici per questo pasto?','Restore automatic suggestions for this meal?'))) return;
   if(ST.p.customMeals) delete ST.p.customMeals[mealId];
   save();
 };
@@ -9256,7 +9375,7 @@ window.saveMeasures=function(){
   // Compat: map old fields
   if(!ST.measures[currentDateStr].arm_r){const old=ST.measures[currentDateStr].arm;if(old>0)ST.measures[currentDateStr].arm_r=old;}
   if(!ST.measures[currentDateStr].thigh_r){const old=ST.measures[currentDateStr].thigh;if(old>0)ST.measures[currentDateStr].thigh_r=old;}
-  save();alert('✅ Misure salvate!');
+  save();alert(LL('✅ Misure salvate!','✅ Measurements saved!'));
 }
 window.getMeasureArr=function(field){
   return Object.keys(ST.measures).sort().filter(d=>ST.measures[d]?.[field]>0).map(d=>({d,v:ST.measures[d][field]})).slice(-(ST.chartFilter||30));
@@ -9605,7 +9724,7 @@ window.confirmCustomExercise = function() {
   if (!d.name || d.name.trim().length < 3) return alert('Inserisci un nome (minimo 3 caratteri).');
   if (d.name.length > 60) return alert('Nome troppo lungo (max 60 caratteri).');
   const sets = parseInt(d.sets) || 3;
-  if (sets < 1 || sets > 10) return alert('Numero serie non valido (1-10).');
+  if (sets < 1 || sets > 10) return alert(LL('Numero serie non valido (1-10).','Invalid number of sets (1-10).'));
 
   const id = 'custom_ex_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
   const steps = [d.steps0, d.steps1, d.steps2].map(s => (s||'').trim()).filter(s => s.length > 0);
@@ -10150,20 +10269,20 @@ window.generateLocalCoachingAdvice=function(ctx, an, mac, st){
 
   return parts.join(' ');
 }
-window.copyLink=function(){const url=window.location.href.split('?')[0];navigator.clipboard?navigator.clipboard.writeText(url).then(()=>alert('✅ Link copiato!')):alert(url);}
-window.shareViaEmail=function(){const url=window.location.href.split('?')[0];const b=encodeURIComponent(`Ciao! Unisciti a FitTracker PRO:\n${url}`);window.location.href=`mailto:?subject=${encodeURIComponent('FitTracker PRO')}&body=${b}`;}
+window.copyLink=function(){const url=window.location.href.split('?')[0];navigator.clipboard?navigator.clipboard.writeText(url).then(()=>alert(LL('✅ Link copiato!','✅ Link copied!'))):alert(url);}
+window.shareViaEmail=function(){const url=window.location.href.split('?')[0];const b=encodeURIComponent(LL(`Ciao! Unisciti a FitTracker PRO:\n${url}`,`Hi! Join FitTracker PRO:\n${url}`));window.location.href=`mailto:?subject=${encodeURIComponent('FitTracker PRO')}&body=${b}`;}
 // PUNTO 10: condivisione WhatsApp + condivisione nativa mobile
 window.shareViaWhatsApp=function(){
   const url=window.location.href.split('?')[0];
-  const txt=encodeURIComponent(`Ciao! Sto usando FitTracker PRO per i miei allenamenti e la mia dieta. Provala anche tu: ${url}`);
+  const txt=encodeURIComponent(LL(`Ciao! Sto usando FitTracker PRO per i miei allenamenti e la mia dieta. Provala anche tu: ${url}`,`Hi! I'm using FitTracker PRO for my workouts and diet. Try it too: ${url}`));
   window.open(`https://wa.me/?text=${txt}`,'_blank');
 }
 window.shareViaNative=function(){
   const url=window.location.href.split('?')[0];
   if(navigator.share){
-    navigator.share({title:'FitTracker PRO',text:'Allenamenti, dieta e progressi tracciati con AI',url}).catch(()=>{});
+    navigator.share({title:'FitTracker PRO',text:LL('Allenamenti, dieta e progressi tracciati con AI','Workouts, diet and progress tracked with AI'),url}).catch(()=>{});
   } else {
-    alert('Condivisione nativa non disponibile su questo dispositivo. Usa WhatsApp, email o copia link.');
+    alert(LL('Condivisione nativa non disponibile su questo dispositivo. Usa WhatsApp, email o copia link.','Native sharing not available on this device. Use WhatsApp, email or copy the link.'));
   }
 }
 window.svg=function(data,key,col,H,goal){
@@ -11180,7 +11299,7 @@ window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,to
   else if(todayWoId==='cardio') todayBox=`<div class="bebas" style="font-size:26px;color:var(--blu);">🏃 CARDIO DAY</div><div style="font-size:12px;color:var(--mut);margin-top:4px;">Bici 25-40 min (LISS) oppure HIIT 20 min</div>`;
   else if(todayWoId==='free') todayBox=`<div class="bebas" style="font-size:26px;color:var(--ora);">🎉 GIORNO LIBERO</div>`;
   else if(todayWoId==='rest') todayBox=`<div class="bebas" style="font-size:26px;color:var(--purp);">💤 RIPOSO ATTIVO</div><div style="font-size:12px;color:var(--mut);margin-top:4px;">Stretching leggero, camminata, mobilità</div>`;
-  else if(todayWoId&&WO_SCH[todayWoId]) todayBox=`<div class="bebas" style="font-size:26px;color:${WO_SCH[todayWoId].col};">${WO_SCH[todayWoId].emoji} ${WO_SCH[todayWoId].name}</div><div style="font-size:12px;color:var(--mut);margin-top:4px;">${sr.sets} serie × ${sr.reps} reps · ${sr.rest}s riposo${sr.note?' · '+sr.note:''}</div>`;
+  else if(todayWoId&&WO_SCH[todayWoId]) todayBox=`<div class="bebas" style="font-size:26px;color:${WO_SCH[todayWoId].col};">${WO_SCH[todayWoId].emoji} ${WO_SCH[todayWoId].name}</div><div style="font-size:12px;color:var(--mut);margin-top:4px;">${sr.sets} serie × ${sr.reps} reps · ${sr.rest}s ${(window.ST&&ST.lang==='en')?'rest':'riposo'}${sr.note?' · '+sr.note:''}</div>`;
   else todayBox=`<div class="bebas" style="font-size:26px;color:var(--mut);">—</div>`;
   // Card cardio giorno
   const cardioCard=todayWoId==='cardio'?`<div class="card" style="border-left:5px solid var(--blu);padding:16px;">
@@ -12251,7 +12370,7 @@ window.renderBody = function(cW,mac,theme,pWeek,sx){
         <div style="height:8px;background:var(--bg);border-radius:4px;overflow:hidden;">
           <div style="width:${consistencyPct}%;height:100%;background:${consColor};transition:width .6s ease;"></div>
         </div>
-        <div style="font-size:10px;color:var(--mut);margin-top:6px;">${daysWithBoth}/30 giorni completi · ${daysWithWorkout} con workout · ${daysWithDiet} con dieta</div>
+        <div style="font-size:10px;color:var(--mut);margin-top:6px;">${daysWithBoth}/30 ${(window.ST&&ST.lang==='en')?'days complete':'giorni completi'} · ${daysWithWorkout} ${(window.ST&&ST.lang==='en')?'with workout':'con workout'} · ${daysWithDiet} ${(window.ST&&ST.lang==='en')?'with diet':'con dieta'}</div>
       </div>
 
       <!-- STREAK -->
@@ -12367,7 +12486,7 @@ window.renderBody = function(cW,mac,theme,pWeek,sx){
     const top = exStats.slice(0, 8); // top 8 esercizi più frequenti con dati
     return `<div class="bebas" style="font-size:18px;color:var(--mut);margin:16px 0 10px;letter-spacing:1px;">📊 ${t('bo_weight_trend')==='WEIGHT TREND'?'EXERCISE PROGRESS':'PROGRESSI PER ESERCIZIO'}</div>
     <div class="card" style="padding:14px;">
-      <div style="font-size:11px;color:var(--mut);line-height:1.5;margin-bottom:12px;">Top ${top.length} esercizi con dati registrati. Il <strong style="color:var(--acc);">1RM stimato</strong> è il peso massimo teorico per una singola ripetizione (formula Epley).</div>
+      <div style="font-size:11px;color:var(--mut);line-height:1.5;margin-bottom:12px;">${(window.ST&&ST.lang==='en')?`Top ${top.length} exercises with logged data. The `:`Top ${top.length} esercizi con dati registrati. Il `}<strong style="color:var(--acc);">${(window.ST&&ST.lang==='en')?'estimated 1RM':'1RM stimato'}</strong>${(window.ST&&ST.lang==='en')?` is the theoretical max weight for a single rep (Epley formula).`:` è il peso massimo teorico per una singola ripetizione (formula Epley).`}</div>
       ${top.map(s => {
         const unit = s.unit || 'kg';
         const isKg = unit === 'kg' && s.maxKg > 0;
@@ -12434,31 +12553,31 @@ window.renderSocial = function() {
 
     <div class="card" style="border-color:var(--purp);background:linear-gradient(135deg,rgba(167,139,250,.08),rgba(96,165,250,.04));">
       <div style="text-align:center;font-size:48px;margin-bottom:10px;">🔒</div>
-      <div class="bebas" style="font-size:22px;color:var(--purp);text-align:center;margin-bottom:10px;">PARTECIPAZIONE OPZIONALE</div>
+      <div class="bebas" style="font-size:22px;color:var(--purp);text-align:center;margin-bottom:10px;">${LL('PARTECIPAZIONE OPZIONALE','OPTIONAL PARTICIPATION')}</div>
       <div style="font-size:13px;color:var(--text);line-height:1.6;margin-bottom:14px;">
-        La classifica amici è <strong>privacy-by-default</strong>: i tuoi dati di allenamento <strong>NON vengono condivisi</strong> finché non dai esplicito consenso.
+        ${LL('La classifica amici è <strong>privacy-by-default</strong>: i tuoi dati di allenamento <strong>NON vengono condivisi</strong> finché non dai esplicito consenso.','The friends leaderboard is <strong>privacy-by-default</strong>: your workout data is <strong>NOT shared</strong> until you give explicit consent.')}
       </div>
 
       <div style="background:var(--surf);border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px;line-height:1.7;">
-        <strong style="color:var(--gre);">✓ Cosa viene condiviso (se attivi):</strong><br>
-        • Username (es. "${AU.user}")<br>
-        • Numero di sessioni allenamento (totale e ultimi 7gg)<br>
-        • Volume totale liftato (kg)<br>
-        • Kcal bruciate complessive (ultimi 7gg)<br>
-        • Streak giorni consecutivi<br>
-        • Variazione peso percentuale (±X%)<br>
-        • Strategia (cut/bulk)<br><br>
-        <strong style="color:var(--red);">✗ Cosa NON viene MAI condiviso:</strong><br>
-        • Peso assoluto (kg)<br>
-        • Misure corporee, foto, % grasso<br>
-        • Email, password, dati personali<br>
-        • Pasti consumati, sgarri specifici<br>
-        • Note esercizio, schede personalizzate
+        <strong style="color:var(--gre);">${LL('✓ Cosa viene condiviso (se attivi):','✓ What is shared (if you enable):')}</strong><br>
+        • ${LL('Username (es.','Username (e.g.')} "${AU.user}")<br>
+        • ${LL('Numero di sessioni allenamento (totale e ultimi 7gg)','Number of workout sessions (total and last 7 days)')}<br>
+        • ${LL('Volume totale liftato (kg)','Total lifted volume (kg)')}<br>
+        • ${LL('Kcal bruciate complessive (ultimi 7gg)','Total calories burned (last 7 days)')}<br>
+        • ${LL('Streak giorni consecutivi','Consecutive-day streak')}<br>
+        • ${LL('Variazione peso percentuale (±X%)','Weight change percentage (±X%)')}<br>
+        • ${LL('Strategia (cut/bulk)','Strategy (cut/bulk)')}<br><br>
+        <strong style="color:var(--red);">${LL('✗ Cosa NON viene MAI condiviso:','✗ What is NEVER shared:')}</strong><br>
+        • ${LL('Peso assoluto (kg)','Absolute weight (kg)')}<br>
+        • ${LL('Misure corporee, foto, % grasso','Body measurements, photos, body fat %')}<br>
+        • ${LL('Email, password, dati personali','Email, password, personal data')}<br>
+        • ${LL('Pasti consumati, sgarri specifici','Meals eaten, specific cheats')}<br>
+        • ${LL('Note esercizio, schede personalizzate','Exercise notes, custom routines')}
       </div>
 
-      <button class="btn" style="width:100%;padding:14px;background:var(--purp);color:#fff;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;border:none;border-radius:12px;margin-bottom:8px;cursor:pointer;" onclick="enableLeaderboardConsent()">✓ ATTIVA CLASSIFICA AMICI</button>
+      <button class="btn" style="width:100%;padding:14px;background:var(--purp);color:#fff;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;border:none;border-radius:12px;margin-bottom:8px;cursor:pointer;" onclick="enableLeaderboardConsent()">${LL('✓ ATTIVA CLASSIFICA AMICI','✓ ENABLE FRIENDS LEADERBOARD')}</button>
       <div style="font-size:11px;color:var(--mut);text-align:center;line-height:1.5;">
-        Puoi disattivarla in qualsiasi momento. Anche dopo la disattivazione, i tuoi dati condivisi verranno cancellati dal cloud entro 24 ore.
+        ${LL('Puoi disattivarla in qualsiasi momento. Anche dopo la disattivazione, i tuoi dati condivisi verranno cancellati dal cloud entro 24 ore.','You can disable it at any time. Even after disabling, your shared data will be deleted from the cloud within 24 hours.')}
       </div>
     </div>`;
   }
@@ -12494,10 +12613,10 @@ window.renderSocial = function() {
         const isMe = o.u.user === AU.user;
         return `<div style="flex:1;max-width:110px;text-align:center;">
           <div style="font-size:32px;line-height:1;margin-bottom:4px;">${o.pos===1?'🥇':o.pos===2?'🥈':'🥉'}</div>
-          <div style="font-size:12px;font-weight:700;color:${isMe?'var(--purp)':'var(--text)'};margin-bottom:6px;line-height:1.2;word-break:break-word;">${escapeHtml(o.u.user)}${isMe?' (tu)':''}</div>
+          <div style="font-size:12px;font-weight:700;color:${isMe?'var(--purp)':'var(--text)'};margin-bottom:6px;line-height:1.2;word-break:break-word;">${escapeHtml(o.u.user)}${isMe?LL(' (tu)',' (you)'):''}</div>
           <div style="background:linear-gradient(180deg,${o.col},${o.col}aa);height:${o.h}px;border-radius:8px 8px 0 0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#000;border:2px solid ${o.col};border-bottom:none;">
             <div class="bebas" style="font-size:28px;line-height:1;">${o.u.sessions7d||0}</div>
-            <div style="font-size:8px;font-weight:800;letter-spacing:1px;">SESS 7G</div>
+            <div style="font-size:8px;font-weight:800;letter-spacing:1px;">${LL('SESS 7G','SESS 7D')}</div>
           </div>
         </div>`;
       }).join('')}
@@ -12514,17 +12633,17 @@ window.renderSocial = function() {
       return `<div style="display:flex;align-items:center;padding:14px;background:${isMe?'rgba(167,139,250,.15)':'var(--surf)'};border:2px solid ${isMe?'var(--purp)':'var(--bord)'};border-radius:14px;margin-bottom:8px;${isMe?'box-shadow:0 2px 12px rgba(167,139,250,.2);':''}">
         <div style="font-size:22px;width:40px;text-align:center;flex-shrink:0;">${rank}</div>
         <div style="flex:1;min-width:0;margin-left:6px;">
-          <div style="font-size:15px;font-weight:700;color:${isMe?'var(--purp)':'var(--text)'};margin-bottom:3px;">${escapeHtml(u.user)}${isMe?' (tu)':''}</div>
+          <div style="font-size:15px;font-weight:700;color:${isMe?'var(--purp)':'var(--text)'};margin-bottom:3px;">${escapeHtml(u.user)}${isMe?LL(' (tu)',' (you)'):''}</div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:10px;color:var(--mut);">
             <span>🔥 ${u.streak||0} streak</span>
-            <span>🏋️ ${u.totalSessions||0} totali</span>
+            <span>🏋️ ${u.totalSessions||0} ${LL('totali','total')}</span>
             ${volK > 0 ? `<span>📈 ${volK}k vol</span>` : ''}
             ${u.kcal7d > 0 ? `<span>⚡ ${u.kcal7d} kcal</span>` : ''}
           </div>
         </div>
         <div style="text-align:right;flex-shrink:0;">
           <div class="bebas" style="font-size:26px;color:${isMe?'var(--purp)':'var(--acc)'};line-height:1;">${u.sessions7d||0}</div>
-          <div style="font-size:9px;color:var(--mut);letter-spacing:.5px;font-weight:700;">SESS. 7G</div>
+          <div style="font-size:9px;color:var(--mut);letter-spacing:.5px;font-weight:700;">${LL('SESS. 7G','SESS. 7D')}</div>
         </div>
       </div>`;
     }).join('');
@@ -12534,8 +12653,8 @@ window.renderSocial = function() {
     <!-- Hero header -->
     <div style="background:linear-gradient(135deg,rgba(167,139,250,.18),rgba(139,92,246,.05));border:2px solid var(--purp);border-radius:18px;padding:20px;margin-bottom:14px;text-align:center;">
       <div style="font-size:48px;line-height:1;margin-bottom:6px;">🏆</div>
-      <div class="bebas" style="font-size:28px;color:var(--purp);letter-spacing:1px;line-height:1;margin-bottom:4px;">CLASSIFICA AMICI</div>
-      <div style="font-size:12px;color:var(--mut);line-height:1.5;">Confronto settimanale. Solo metriche pubbliche aggregate.</div>
+      <div class="bebas" style="font-size:28px;color:var(--purp);letter-spacing:1px;line-height:1;margin-bottom:4px;">${LL('CLASSIFICA AMICI','FRIENDS LEADERBOARD')}</div>
+      <div style="font-size:12px;color:var(--mut);line-height:1.5;">${LL('Confronto settimanale. Solo metriche pubbliche aggregate.','Weekly comparison. Public aggregate metrics only.')}</div>
     </div>
 
     ${myStats && myRank ? `
@@ -12543,46 +12662,46 @@ window.renderSocial = function() {
     <div style="background:linear-gradient(135deg,var(--purp),#8b5cf6);color:#fff;border-radius:16px;padding:16px;margin-bottom:14px;display:flex;align-items:center;gap:14px;">
       <div style="font-size:42px;line-height:1;">${myRank<=3?['🥇','🥈','🥉'][myRank-1]:`#${myRank}`}</div>
       <div style="flex:1;min-width:0;">
-        <div style="font-size:11px;opacity:.85;letter-spacing:1px;font-weight:700;">SEI IN POSIZIONE</div>
-        <div class="bebas" style="font-size:24px;line-height:1;color:#fff;">${myRank}° su ${data.length}</div>
-        <div style="font-size:11px;opacity:.85;margin-top:3px;">${myStats.sessions7d||0} sessioni · ${myStats.streak||0}🔥 streak</div>
+        <div style="font-size:11px;opacity:.85;letter-spacing:1px;font-weight:700;">${LL('SEI IN POSIZIONE','YOUR POSITION')}</div>
+        <div class="bebas" style="font-size:24px;line-height:1;color:#fff;">${myRank}${LL('° su ',' of ')}${data.length}</div>
+        <div style="font-size:11px;opacity:.85;margin-top:3px;">${myStats.sessions7d||0} ${LL('sessioni','sessions')} · ${myStats.streak||0}🔥 streak</div>
       </div>
     </div>` : ''}
 
     <!-- Bottone aggiorna -->
     <button onclick="loadLeaderboard()" style="width:100%;padding:14px;background:${isLoading?'var(--surf)':'var(--purp)'};color:${isLoading?'var(--mut)':'#fff'};border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:14px;${isLoading?'pointer-events:none;':''}">
-      ${isLoading?'⏳ Caricamento classifica...':data?'🔄 AGGIORNA CLASSIFICA':'🚀 CARICA CLASSIFICA'}
+      ${isLoading?LL('⏳ Caricamento classifica...','⏳ Loading leaderboard...'):data?LL('🔄 AGGIORNA CLASSIFICA','🔄 REFRESH LEADERBOARD'):LL('🚀 CARICA CLASSIFICA','🚀 LOAD LEADERBOARD')}
     </button>
 
     ${data && data.length ? `
     ${podioHtml}
-    <div class="bebas" style="font-size:18px;color:var(--mut);margin:20px 0 10px;letter-spacing:1px;">📋 CLASSIFICA COMPLETA</div>
+    <div class="bebas" style="font-size:18px;color:var(--mut);margin:20px 0 10px;letter-spacing:1px;">${LL('📋 CLASSIFICA COMPLETA','📋 FULL LEADERBOARD')}</div>
     ${fullListHtml}
 
     <!-- Note finali -->
     <div style="background:var(--surf);border:1px solid var(--bord);border-radius:12px;padding:14px;margin-top:14px;font-size:11px;color:var(--mut);line-height:1.6;">
-      <strong style="color:var(--text);">ℹ️ Come funziona</strong><br>
-      • La classifica si aggiorna automaticamente ad ogni salvataggio dati<br>
-      • Vengono mostrate solo metriche aggregate (sessioni, volume, kcal, streak)<br>
-      • Nessun dato personale (peso, foto, misure) viene condiviso<br>
-      • L'ordinamento è per <strong>sessioni-7g</strong>: chi si allena di più di recente
+      <strong style="color:var(--text);">${LL('ℹ️ Come funziona','ℹ️ How it works')}</strong><br>
+      • ${LL('La classifica si aggiorna automaticamente ad ogni salvataggio dati','The leaderboard updates automatically on every data save')}<br>
+      • ${LL('Vengono mostrate solo metriche aggregate (sessioni, volume, kcal, streak)','Only aggregate metrics are shown (sessions, volume, kcal, streak)')}<br>
+      • ${LL('Nessun dato personale (peso, foto, misure) viene condiviso','No personal data (weight, photos, measurements) is shared')}<br>
+      • ${LL("L'ordinamento è per <strong>sessioni-7g</strong>: chi si allena di più di recente",'Sorted by <strong>sessions-7d</strong>: whoever trains most recently')}
     </div>` : data ? `
     <div class="card" style="text-align:center;padding:30px;">
       <div style="font-size:48px;margin-bottom:10px;">🤷</div>
-      <div style="font-size:14px;color:var(--mut);">Nessun utente ancora in classifica.</div>
+      <div style="font-size:14px;color:var(--mut);">${LL('Nessun utente ancora in classifica.','No users in the leaderboard yet.')}</div>
     </div>` : `
     <div class="card" style="text-align:center;padding:30px;">
       <div style="font-size:48px;margin-bottom:10px;">📊</div>
-      <div style="font-size:14px;color:var(--text);font-weight:600;margin-bottom:6px;">Pronto al confronto?</div>
-      <div style="font-size:12px;color:var(--mut);line-height:1.5;">Tocca <strong style="color:var(--purp);">"CARICA CLASSIFICA"</strong> per vedere come vai rispetto agli altri utenti FitTracker PRO.</div>
+      <div style="font-size:14px;color:var(--text);font-weight:600;margin-bottom:6px;">${LL('Pronto al confronto?','Ready to compare?')}</div>
+      <div style="font-size:12px;color:var(--mut);line-height:1.5;">${LL('Tocca <strong style="color:var(--purp);">"CARICA CLASSIFICA"</strong> per vedere come vai rispetto agli altri utenti FitTracker PRO.','Tap <strong style="color:var(--purp);">"LOAD LEADERBOARD"</strong> to see how you compare to other FitTracker PRO users.')}</div>
     </div>`}
 
     <!-- Footer privacy + disattivazione -->
     <div style="margin-top:18px;padding:12px;background:var(--surf);border-radius:10px;border:1px solid var(--bord);">
       <div style="font-size:11px;color:var(--mut);line-height:1.6;margin-bottom:8px;">
-        🔒 Stai partecipando alla classifica. Le metriche aggregate vengono aggiornate ad ogni salvataggio.
+        ${LL('🔒 Stai partecipando alla classifica. Le metriche aggregate vengono aggiornate ad ogni salvataggio.','🔒 You are participating in the leaderboard. Aggregate metrics update on every save.')}
       </div>
-      <button class="btn-s" style="width:100%;padding:8px;background:transparent;border:1px solid var(--red);color:var(--red);font-size:11px;font-weight:600;border-radius:8px;cursor:pointer;" onclick="disableLeaderboardConsent()">DISATTIVA CONDIVISIONE</button>
+      <button class="btn-s" style="width:100%;padding:8px;background:transparent;border:1px solid var(--red);color:var(--red);font-size:11px;font-weight:600;border-radius:8px;cursor:pointer;" onclick="disableLeaderboardConsent()">${LL('DISATTIVA CONDIVISIONE','DISABLE SHARING')}</button>
     </div>
   </div>`;
 };
@@ -12998,7 +13117,7 @@ window.regenerateShoppingList = async function() {
 };
 
 window.openAddShoppingItem = function() {
-  const label = prompt('Cosa vuoi aggiungere alla lista spesa?\n\nEs: Detersivo piatti, Vino per ospiti, Pannolini...');
+  const label = prompt(LL('Cosa vuoi aggiungere alla lista spesa?\n\nEs: Detersivo piatti, Vino per ospiti, Pannolini...','What do you want to add to the shopping list?\n\nE.g.: Dish soap, Wine for guests, Diapers...'));
   if (!label || label.trim().length === 0) return;
   if (label.length > 60) return alert('Massimo 60 caratteri.');
   if (!ST.shoppingState) ST.shoppingState = { removed: [], extras: [], checked: [], lastGenWeek: null };
@@ -13070,11 +13189,11 @@ window.shareShoppingList = function() {
       text
     }).catch(() => {
       // Fallback: copy to clipboard
-      navigator.clipboard?.writeText(text).then(() => alert('✓ Lista copiata negli appunti'));
+      navigator.clipboard?.writeText(text).then(() => alert(LL('✓ Lista copiata negli appunti','✓ List copied to clipboard')));
     });
   } else if (navigator.clipboard) {
-    navigator.clipboard.writeText(text).then(() => alert('✓ Lista copiata negli appunti'))
-      .catch(() => alert('Impossibile copiare. Lista:\n\n' + text.slice(0, 500)));
+    navigator.clipboard.writeText(text).then(() => alert(LL('✓ Lista copiata negli appunti','✓ List copied to clipboard')))
+      .catch(() => alert(LL('Impossibile copiare. Lista:\n\n','Unable to copy. List:\n\n') + text.slice(0, 500)));
   } else {
     alert(text);
   }
@@ -13339,7 +13458,7 @@ window.renderStats1RM = function() {
     </div>
     ${rm > 0 ? `
     <div style="background:linear-gradient(135deg,rgba(96,165,250,.15),rgba(96,165,250,.04));border:1.5px solid var(--blu);border-radius:12px;padding:14px;text-align:center;margin-bottom:12px;">
-      <div style="font-size:11px;color:var(--mut);">Il tuo 1RM stimato</div>
+      <div style="font-size:11px;color:var(--mut);">${(window.ST&&ST.lang==='en')?'Your estimated 1RM':'Il tuo 1RM stimato'}</div>
       <div class="bebas" style="font-size:42px;color:var(--blu);line-height:1;">${rm}<span style="font-size:18px;color:var(--mut);"> kg</span></div>
     </div>
     <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:6px;">CARICHI CONSIGLIATI</div>
@@ -13790,7 +13909,7 @@ window.renderCoachRecap = function() {
     }).join('')}
     <div style="font-size:10px;color:var(--mut);margin-top:8px;line-height:1.4;">${(()=>{
       const lowMuscles = Object.entries(heat).filter(([k,v]) => v === 0 && k !== 'cardio').map(([k]) => muscleLabels[k]||k);
-      if (lowMuscles.length > 0) return `⚠️ Non hai allenato: ${lowMuscles.join(', ')}.`;
+      if (lowMuscles.length > 0) return (window.ST&&ST.lang==='en')?`⚠️ You haven't trained: ${lowMuscles.join(', ')}.`:`⚠️ Non hai allenato: ${lowMuscles.join(', ')}.`;
       return '✓ Hai bilanciato tutti i gruppi.';
     })()}</div>
   </div>
@@ -13832,7 +13951,7 @@ window.renderCoachTools = function() {
       </div>
     ` : `
       <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:12px;">
-        Stai per partire? Attiva la modalità trasferta. L'app adatta automaticamente esercizi e dieta in base a:
+        ${(window.ST&&ST.lang==='en')?`About to leave? Enable travel mode. The app automatically adapts workouts and diet based on:`:`Stai per partire? Attiva la modalità trasferta. L'app adatta automaticamente esercizi e dieta in base a:`}
         <ul style="margin-top:8px;margin-left:20px;font-size:12px;">
           <li>Disponibilità di una palestra (sì/no)</li>
           <li>Tempo che hai a disposizione</li>
@@ -13845,21 +13964,21 @@ window.renderCoachTools = function() {
 
   <!-- ── MODALITÀ VACANZA (sessione 32: spostata da Configurazione) ── -->
   <div class="card" style="border-color:${isVacOn?'var(--blu)':'var(--bord)'};${isVacOn?'background:linear-gradient(135deg,rgba(96,165,250,.06),transparent);':''}">
-    <div class="bebas" style="font-size:18px;color:${isVacOn?'var(--blu)':'var(--text)'};margin-bottom:6px;">🏖️ MODALITÀ VACANZA ${isVacOn?'(ATTIVA)':''}</div>
+    <div class="bebas" style="font-size:18px;color:${isVacOn?'var(--blu)':'var(--text)'};margin-bottom:6px;">${(window.ST&&ST.lang==='en')?'🏖️ VACATION MODE':'🏖️ MODALITÀ VACANZA'} ${isVacOn?((window.ST&&ST.lang==='en')?'(ON)':'(ATTIVA)'):''}</div>
     ${isVacOn ? `
       <div style="background:rgba(96,165,250,.08);border:1px solid var(--blu);border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;line-height:1.6;">
-        <div style="font-weight:700;color:var(--blu);margin-bottom:4px;">🌴 In vacanza fino al ${new Date(vm.endD+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'long'})}</div>
+        <div style="font-weight:700;color:var(--blu);margin-bottom:4px;">${(window.ST&&ST.lang==='en')?'🌴 On vacation until ':'🌴 In vacanza fino al '}${new Date(vm.endD+'T12:00:00').toLocaleDateString((window.ST&&ST.lang==='en')?'en-GB':'it-IT',{day:'2-digit',month:'long'})}</div>
         <div style="color:var(--text);">
-          ${vm.dietOnly ? '🍽️ <strong>Solo dieta</strong> — niente workout<br>😌 Tutti i giorni di riposo' : '🏝️ Allenamento e dieta <strong>opzionali</strong>'}<br>
-          😌 Nessun banner deficit/sgarro<br>
-          🔥 Streak preservato — niente pressione<br>
-          📊 Tracking comunque attivo
+          ${vm.dietOnly ? ((window.ST&&ST.lang==='en')?'🍽️ <strong>Diet only</strong> — no workouts<br>😌 All rest days':'🍽️ <strong>Solo dieta</strong> — niente workout<br>😌 Tutti i giorni di riposo') : ((window.ST&&ST.lang==='en')?'🏝️ Training and diet <strong>optional</strong>':'🏝️ Allenamento e dieta <strong>opzionali</strong>')}<br>
+          ${(window.ST&&ST.lang==='en')?'😌 No deficit/cheat banner':'😌 Nessun banner deficit/sgarro'}<br>
+          ${(window.ST&&ST.lang==='en')?'🔥 Streak preserved — no pressure':'🔥 Streak preservato — niente pressione'}<br>
+          ${(window.ST&&ST.lang==='en')?'📊 Tracking still active':'📊 Tracking comunque attivo'}
         </div>
       </div>
       <button class="btn-s" style="width:100%;padding:10px;font-size:12px;background:var(--surf);border:1px solid var(--red);color:var(--red);font-weight:600;border-radius:8px;cursor:pointer;" onclick="endVacation()">✓ TORNATO DALLA VACANZA</button>
     ` : `
       <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:12px;">
-        Stacchi per qualche giorno? Attiva la modalità vacanza per:
+        ${(window.ST&&ST.lang==='en')?`Taking a few days off? Enable vacation mode to:`:`Stacchi per qualche giorno? Attiva la modalità vacanza per:`}
         <ul style="margin-top:8px;margin-left:20px;font-size:12px;">
           <li>Sospendere alert deficit/sgarro</li>
           <li>Mantenere lo streak senza pressione</li>
@@ -14062,9 +14181,9 @@ window.renderCoach = function(){
       </div>
       <div id="chatArea" style="flex:1;overflow-y:auto;padding:8px 0 14px;display:flex;flex-direction:column;gap:8px;min-height:300px;">
         ${ST.chatHistory.length===0?`<div style="text-align:center;margin-top:10px;">
-          <div style="font-size:13px;color:var(--text);line-height:1.55;margin-bottom:14px;padding:14px;background:var(--card);border:1px solid var(--bord);border-radius:12px;">🤖 Sono Marcello. Conosco il tuo profilo. Chiedimi quello che vuoi.</div>
+          <div style="font-size:13px;color:var(--text);line-height:1.55;margin-bottom:14px;padding:14px;background:var(--card);border:1px solid var(--bord);border-radius:12px;">${(window.ST&&ST.lang==='en')?`🤖 I'm your coach. I know your profile. Ask me anything you want.`:`🤖 Sono il tuo coach. Conosco il tuo profilo. Chiedimi quello che vuoi.`}</div>
           <div style="display:flex;flex-direction:column;gap:6px;">
-            ${[sx==='f'?'Come ottimizzo i glutei?':'Come accelero la perdita di grasso?','Cosa mangiare prima dell\'allenamento?','Ho saltato 3 allenamenti, cosa faccio?'].map(q=>`<div onclick="el('aiIn').value='${q}';sendMsg();" style="cursor:pointer;background:var(--surf);border:1px solid var(--bord);border-radius:10px;padding:10px 12px;font-size:12px;text-align:left;">${q}</div>`).join('')}
+            ${((window.ST&&ST.lang==='en')?[sx==='f'?'How do I optimize glutes?':'How do I speed up fat loss?','What to eat before training?','I skipped 3 workouts, what do I do?']:[sx==='f'?'Come ottimizzo i glutei?':'Come accelero la perdita di grasso?','Cosa mangiare prima dell\'allenamento?','Ho saltato 3 allenamenti, cosa faccio?']).map(q=>`<div onclick="el('aiIn').value='${q}';sendMsg();" style="cursor:pointer;background:var(--surf);border:1px solid var(--bord);border-radius:10px;padding:10px 12px;font-size:12px;text-align:left;">${q}</div>`).join('')}
           </div>
         </div>`:ST.chatHistory.map(m=>`<div style="display:flex;justify-content:${m.role==='user'?'flex-end':'flex-start'};"><div class="bbl ${m.role==='user'?'bbl-u':'bbl-ai'}">${m.content.replace(/\n/g,'<br>')}</div></div>`).join('')}
         ${ST.chatLoading?`<div style="display:flex;"><div class="bbl bbl-ai"><span style="letter-spacing:3px;animation:blink 1s infinite">●●●</span></div></div>`:''}
@@ -15354,19 +15473,19 @@ window.render = function() {
 
       <!-- Tipo allenamento: palestra / bodyweight / solo dieta -->
       <div style="background:var(--surf);border-radius:10px;padding:12px;margin-bottom:10px;">
-        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:8px;">🏋️ COME TI ALLENI IN TRASFERTA?</div>
+        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:8px;">${(window.ST&&ST.lang==='en')?'🏋️ HOW DO YOU TRAIN WHILE TRAVELING?':'🏋️ COME TI ALLENI IN TRASFERTA?'}</div>
         <div style="display:flex;flex-direction:column;gap:6px;">
-          <button class="btn-s" style="padding:12px;font-size:13px;background:${d.trainMode==='gym'?'var(--acc)':'var(--surf)'};color:${d.trainMode==='gym'?'#000':'var(--text)'};border:1.5px solid ${d.trainMode==='gym'?'var(--acc)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;text-align:left;" onclick="ST.sheetData.trainMode='gym';ST.sheetData.hasGym=true;render()">🏋️ Ho una palestra</button>
-          <button class="btn-s" style="padding:12px;font-size:13px;background:${d.trainMode==='bodyweight'?'var(--ora)':'var(--surf)'};color:${d.trainMode==='bodyweight'?'#fff':'var(--text)'};border:1.5px solid ${d.trainMode==='bodyweight'?'var(--ora)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;text-align:left;" onclick="ST.sheetData.trainMode='bodyweight';ST.sheetData.hasGym=false;render()">🏠 Solo corpo libero (stanza/hotel)</button>
-          <button class="btn-s" style="padding:12px;font-size:13px;background:${d.trainMode==='dietonly'?'var(--blu)':'var(--surf)'};color:${d.trainMode==='dietonly'?'#fff':'var(--text)'};border:1.5px solid ${d.trainMode==='dietonly'?'var(--blu)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;text-align:left;" onclick="ST.sheetData.trainMode='dietonly';ST.sheetData.hasGym=false;render()">🍽️ Niente allenamento, solo dieta</button>
+          <button class="btn-s" style="padding:12px;font-size:13px;background:${d.trainMode==='gym'?'var(--acc)':'var(--surf)'};color:${d.trainMode==='gym'?'#000':'var(--text)'};border:1.5px solid ${d.trainMode==='gym'?'var(--acc)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;text-align:left;" onclick="ST.sheetData.trainMode='gym';ST.sheetData.hasGym=true;render()">${(window.ST&&ST.lang==='en')?'🏋️ I have a gym':'🏋️ Ho una palestra'}</button>
+          <button class="btn-s" style="padding:12px;font-size:13px;background:${d.trainMode==='bodyweight'?'var(--ora)':'var(--surf)'};color:${d.trainMode==='bodyweight'?'#fff':'var(--text)'};border:1.5px solid ${d.trainMode==='bodyweight'?'var(--ora)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;text-align:left;" onclick="ST.sheetData.trainMode='bodyweight';ST.sheetData.hasGym=false;render()">${(window.ST&&ST.lang==='en')?'🏠 Bodyweight only (room/hotel)':'🏠 Solo corpo libero (stanza/hotel)'}</button>
+          <button class="btn-s" style="padding:12px;font-size:13px;background:${d.trainMode==='dietonly'?'var(--blu)':'var(--surf)'};color:${d.trainMode==='dietonly'?'#fff':'var(--text)'};border:1.5px solid ${d.trainMode==='dietonly'?'var(--blu)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;text-align:left;" onclick="ST.sheetData.trainMode='dietonly';ST.sheetData.hasGym=false;render()">${(window.ST&&ST.lang==='en')?'🍽️ No training, diet only':'🍽️ Niente allenamento, solo dieta'}</button>
         </div>
-        <div style="font-size:10px;color:var(--mut);margin-top:8px;font-style:italic;line-height:1.4;">${d.trainMode==='gym'?'Programma normale ridotto in durata.':d.trainMode==='bodyweight'?'Esercizi a corpo libero: push-up, squat, plank, burpees, ecc.':'Nessun allenamento programmato. Adatto solo la dieta (porzioni da viaggio, pasti fuori). I giorni saranno tutti di riposo.'}</div>
+        <div style="font-size:10px;color:var(--mut);margin-top:8px;font-style:italic;line-height:1.4;">${d.trainMode==='gym'?((window.ST&&ST.lang==='en')?'Normal program reduced in duration.':'Programma normale ridotto in durata.'):d.trainMode==='bodyweight'?((window.ST&&ST.lang==='en')?'Bodyweight exercises: push-ups, squats, plank, burpees, etc.':'Esercizi a corpo libero: push-up, squat, plank, burpees, ecc.'):((window.ST&&ST.lang==='en')?'No training scheduled. I only adapt the diet (travel portions, eating out). All days will be rest days.':'Nessun allenamento programmato. Adatto solo la dieta (porzioni da viaggio, pasti fuori). I giorni saranno tutti di riposo.')}</div>
       </div>
 
       ${d.trainMode!=='dietonly' ? `
       <!-- Sessioni / settimana -->
       <div style="background:var(--surf);border-radius:10px;padding:12px;margin-bottom:10px;">
-        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:8px;">📅 SESSIONI A SETTIMANA</div>
+        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:8px;">${(window.ST&&ST.lang==='en')?'📅 SESSIONS PER WEEK':'📅 SESSIONI A SETTIMANA'}</div>
         <div style="display:flex;gap:6px;">
           ${[2,3,4,5].map(n => `<button class="btn-s" style="flex:1;padding:10px;font-size:13px;background:${d.sessions===n?'var(--blu)':'var(--surf)'};color:${d.sessions===n?'#fff':'var(--mut)'};border:1px solid ${d.sessions===n?'var(--blu)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;" onclick="ST.sheetData.sessions=${n};render()">${n}</button>`).join('')}
         </div>
@@ -15374,14 +15493,14 @@ window.render = function() {
 
       <!-- Durata sessione -->
       <div style="background:var(--surf);border-radius:10px;padding:12px;margin-bottom:14px;">
-        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:8px;">⏱️ DURATA SESSIONE (min)</div>
+        <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:8px;">${(window.ST&&ST.lang==='en')?'⏱️ SESSION DURATION (min)':'⏱️ DURATA SESSIONE (min)'}</div>
         <div style="display:flex;gap:6px;">
           ${[15,30,45,60].map(n => `<button class="btn-s" style="flex:1;padding:10px;font-size:13px;background:${d.dur===n?'var(--purp)':'var(--surf)'};color:${d.dur===n?'#fff':'var(--mut)'};border:1px solid ${d.dur===n?'var(--purp)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;" onclick="ST.sheetData.dur=${n};render()">${n}'</button>`).join('')}
         </div>
       </div>
       ` : `
       <div style="background:rgba(96,165,250,.06);border:1px solid var(--blu);border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--text);line-height:1.5;">
-        🍽️ <strong>Modalità solo dieta</strong>: durante la trasferta non ti programmeremo allenamenti. Gestiremo solo i pasti con porzioni adatte a viaggio e ristorante. Tutti i giorni saranno di riposo (kcal da rest day).
+        ${(window.ST&&ST.lang==='en')?`🍽️ <strong>Diet-only mode</strong>: while traveling we won't schedule workouts. We'll only manage meals with portions suited for travel and restaurants. All days will be rest days (rest-day kcal).`:`🍽️ <strong>Modalità solo dieta</strong>: durante la trasferta non ti programmeremo allenamenti. Gestiremo solo i pasti con porzioni adatte a viaggio e ristorante. Tutti i giorni saranno di riposo (kcal da rest day).`}
       </div>
       `}
 
@@ -15727,7 +15846,7 @@ window.render = function() {
 
       <div style="display:flex;gap:6px;">
         ${d.slot ? `<button class="btn btn-action" style="flex:1;padding:12px;" onclick="ST.sheet='swap';render()">← INDIETRO</button>` : `<button class="btn btn-action" style="flex:1;padding:12px;" onclick="closeSheet()">${t('c_cancel')}</button>`}
-        <button class="btn" style="flex:2;padding:12px;background:var(--purp);color:#fff;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;" onclick="confirmCustomExercise()">✓ ${d.slot?'CREA E APPLICA':'CREA'}</button>
+        <button class="btn" style="flex:2;padding:12px;background:var(--purp);color:#fff;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;" onclick="confirmCustomExercise()">✓ ${d.slot?((window.ST&&ST.lang==='en')?'CREATE & APPLY':'CREA E APPLICA'):((window.ST&&ST.lang==='en')?'CREATE':'CREA')}</button>
       </div>
     </div></div>`;
   })():
@@ -15744,7 +15863,7 @@ window.render = function() {
         <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:80%;height:2px;background:var(--blu);animation:scanline 2s infinite;opacity:.7;"></div>
       </div>
       <div style="font-size:11px;color:var(--mut);text-align:center;margin-bottom:10px;">
-        ${ST.sheetData.status === 'starting' ? '⏳ Avvio camera...' : '🔍 In attesa di un codice...'}
+        ${ST.sheetData.status === 'starting' ? ((window.ST&&ST.lang==='en')?'⏳ Starting camera...':'⏳ Avvio camera...') : ((window.ST&&ST.lang==='en')?'🔍 Waiting for a code...':'🔍 In attesa di un codice...')}
       </div>
       <button class="btn btn-action" style="width:100%;padding:12px;" onclick="stopBarcodeScan()">${t('c_cancel')}</button>
     </div></div>`;
@@ -15760,7 +15879,7 @@ window.render = function() {
       <!-- Si attiva sui dispositivi che supportano BarcodeDetector (iOS 17+, Android Chrome) -->
       <button class="btn-s" style="width:100%;padding:12px;background:linear-gradient(135deg,rgba(96,165,250,.15),rgba(167,139,250,.08));border:1.5px solid var(--blu);color:var(--blu);font-weight:800;font-size:13px;border-radius:10px;cursor:pointer;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:8px;${d.barcodeLoading?'opacity:.5;pointer-events:none;':''}" onclick="startBarcodeScan()">
         <span style="font-size:18px;">${d.barcodeLoading?'⏳':'📷'}</span>
-        <span>${d.barcodeLoading?'CERCO IN OPENFOODFACTS...':'SCANSIONA CODICE A BARRE'}</span>
+        <span>${d.barcodeLoading?((window.ST&&ST.lang==='en')?'SEARCHING OPENFOODFACTS...':'CERCO IN OPENFOODFACTS...'):((window.ST&&ST.lang==='en')?'SCAN BARCODE':'SCANSIONA CODICE A BARRE')}</span>
       </button>
       <div style="font-size:10px;color:var(--mut);text-align:center;margin-bottom:10px;">Per prodotti confezionati · dati da OpenFoodFacts</div>
       ${d.barcodeSuccess ? `<div style="background:rgba(34,197,94,.1);border:1px solid var(--gre);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:11px;color:var(--gre);">${escapeHtml(d.barcodeSuccess)}</div>` : ''}
@@ -15847,7 +15966,7 @@ window.render = function() {
 
       <!-- Hint -->
       <div style="background:var(--surf);border-radius:8px;padding:10px;font-size:11px;color:var(--text);line-height:1.5;margin-bottom:14px;">
-        💡 Inserisci i valori che vedi sull'etichetta nutrizionale. Se non li hai, prova a stimare dal cibo simile più vicino oppure cerca su Google "kcal [nome cibo] 100g".
+        ${LL('💡 Inserisci i valori che vedi sull\'etichetta nutrizionale. Se non li hai, prova a stimare dal cibo simile più vicino oppure cerca su Google "kcal [nome cibo] 100g".','💡 Enter the values you see on the nutrition label. If you don\'t have them, try estimating from the closest similar food or search Google "kcal [food name] 100g".')}
       </div>
 
       <div style="display:flex;gap:6px;">
