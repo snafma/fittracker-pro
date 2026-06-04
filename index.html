@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION51-FULL-AUDIT">
+<meta name="ft-version" content="build-SESSION52-COACH-BILINGUAL">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -520,7 +520,7 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
     <div class="spinner"></div>
     <div class="bebas" style="color:var(--text);font-size:28px;letter-spacing:3px;">SYSTEM BOOTING</div>
     <div style="color:var(--mut);font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:1px;">Connessione al Cloud Secure Database...</div>
-    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION51</div>
+    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION52</div>
   </div>
 </div>
 
@@ -2776,7 +2776,10 @@ window.calcMacrosForToday = function() {
 };
 
 window.analyze=function(history,goal,wLog){
-  if(!history||history.length<4) return{status:'new',msg:'Inserisci almeno 4 pesate per l\'AI.',col:'var(--mut)',calAdj:0,cardioAdj:0,alert:null,missed:0};
+  // SESSIONE 52: messaggi bilingue
+  const _EN = (window.ST && ST.lang === 'en');
+  const _L = (it, en) => _EN ? en : it;
+  if(!history||history.length<4) return{status:'new',msg:_L('Inserisci almeno 4 pesate per l\'AI.','Add at least 4 weigh-ins for the AI.'),col:'var(--mut)',calAdj:0,cardioAdj:0,alert:null,missed:0};
   const recent=history.slice(-14);
   const fw=recent[0].w,lw=recent[recent.length-1].w,days=Math.max(1,recent.length);
   const wRate=goal.t==='cut'?((fw-lw)/days*7):((lw-fw)/days*7);
@@ -2788,16 +2791,16 @@ window.analyze=function(history,goal,wLog){
   const proj=new Date();proj.setDate(proj.getDate()+wkNeed*7);
   let status,msg,col,calAdj=0,cardioAdj=0,alert=null;
   if(goal.t==='cut'){
-    if(ratio<0.1){status='stalled';msg='🚨 STALLO. Peso bloccato. Ridotte calorie e aumentato cardio.';col='var(--red)';calAdj=-250;cardioAdj=2;alert='stalled';}
-    else if(ratio<0.5){status='slow';msg='⚠️ Lento. Riduco le calorie e aggiungo cardio.';col='var(--ora)';calAdj=-150;cardioAdj=1;alert='slow';}
-    else if(ratio<0.8){status='good';msg='✅ Progresso nella norma. Il piano funziona.';col='var(--acc)';}
-    else if(ratio<=1.3){status='perfect';msg='🎯 Ritmo perfetto! Sei in linea.';col='var(--acc)';}
-    else if(ratio<=1.8){status='fast';msg='⚡ Vai veloce. Aumento calorie per i muscoli.';col='var(--yel)';calAdj=150;cardioAdj=-1;alert='fast';}
-    else{status='tfast';msg='🛑 Troppo veloce — rischio muscolare. Calorie aumentate.';col='var(--red)';calAdj=250;cardioAdj=-2;alert='tfast';}
+    if(ratio<0.1){status='stalled';msg=_L('🚨 STALLO. Peso bloccato. Ridotte calorie e aumentato cardio.','🚨 STALLED. Weight stuck. Calories reduced and cardio increased.');col='var(--red)';calAdj=-250;cardioAdj=2;alert='stalled';}
+    else if(ratio<0.5){status='slow';msg=_L('⚠️ Lento. Riduco le calorie e aggiungo cardio.','⚠️ Slow. Reducing calories and adding cardio.');col='var(--ora)';calAdj=-150;cardioAdj=1;alert='slow';}
+    else if(ratio<0.8){status='good';msg=_L('✅ Progresso nella norma. Il piano funziona.','✅ Progress on track. The plan is working.');col='var(--acc)';}
+    else if(ratio<=1.3){status='perfect';msg=_L('🎯 Ritmo perfetto! Sei in linea.','🎯 Perfect pace! You\'re right on track.');col='var(--acc)';}
+    else if(ratio<=1.8){status='fast';msg=_L('⚡ Vai veloce. Aumento calorie per i muscoli.','⚡ Going fast. Increasing calories to protect muscle.');col='var(--yel)';calAdj=150;cardioAdj=-1;alert='fast';}
+    else{status='tfast';msg=_L('🛑 Troppo veloce — rischio muscolare. Calorie aumentate.','🛑 Too fast — muscle loss risk. Calories increased.');col='var(--red)';calAdj=250;cardioAdj=-2;alert='tfast';}
   }else{
-    if(ratio<0.3){status='slow';msg='⚠️ Massa lenta. Ho aumentato le calorie.';col='var(--ora)';calAdj=200;cardioAdj=-1;}
-    else if(ratio<=1.3){status='good';msg='✅ Buona progressione muscolare.';col='var(--acc)';}
-    else{status='fast';msg='🍃 Cresci veloce. Aggiungo cardio per il grasso.';col='var(--yel)';cardioAdj=1;calAdj=-100;}
+    if(ratio<0.3){status='slow';msg=_L('⚠️ Massa lenta. Ho aumentato le calorie.','⚠️ Slow bulking. Calories increased.');col='var(--ora)';calAdj=200;cardioAdj=-1;}
+    else if(ratio<=1.3){status='good';msg=_L('✅ Buona progressione muscolare.','✅ Good muscle progression.');col='var(--acc)';}
+    else{status='fast';msg=_L('🍃 Cresci veloce. Aggiungo cardio per il grasso.','🍃 Growing fast. Adding cardio to limit fat.');col='var(--yel)';cardioAdj=1;calAdj=-100;}
   }
   // ── FIX 4: Adatta calorie e cardio in base agli allenamenti mancati ──
   let missed=0,adherencePct=100;
@@ -2805,14 +2808,10 @@ window.analyze=function(history,goal,wLog){
     const mw=getMissedWorkouts(wLog,goal.sessions||3,goal.programStart);
     missed=mw.missed;adherencePct=mw.adherencePct;
     if(missed>=2){
-      // Ha saltato 2+ allenamenti la settimana scorsa
-      // Non ha senso aggiungere più cardio se già fatica a rispettare il piano
       cardioAdj=Math.min(cardioAdj,0);
-      // Riduci leggermente il deficit calorico (ha bruciato meno del previsto)
       if(goal.t==='cut'&&calAdj<=0) calAdj=Math.min(calAdj+100,0);
       if(missed>=goal.sessions){
-        // Ha saltato TUTTI gli allenamenti la settimana scorsa — segnala
-        msg=`⚠️ ${msg} · Settimana scorsa: ${mw.done}/${goal.sessions} allenamenti completati. Le calorie sono state adattate.`;
+        msg=_L(`⚠️ ${msg} · Settimana scorsa: ${mw.done}/${goal.sessions} allenamenti completati. Le calorie sono state adattate.`, `⚠️ ${msg} · Last week: ${mw.done}/${goal.sessions} workouts completed. Calories have been adjusted.`);
       }
     }
   }
@@ -3039,124 +3038,162 @@ window.getMotivationalMsg=function(an,ST,cW,mac,pWeek){
   const isSunday=dayOfWeek===0;
   const hour=new Date().getHours();
   const seed=today+stk; // varia ogni giorno
+  // SESSIONE 52: bilingue
+  const _EN=(window.ST&&ST.lang==='en'); const L=(it,en)=>_EN?en:it;
 
   // ════════ PRIORITÀ MASSIMA: situazioni critiche ════════
-  if(an.status==='stalled') return {emoji:'🚨',color:'var(--red)',title:'METABOLISMO IN STALLO',msg:`Il peso è fermo da giorni. L'AI ha già adeguato calorie e cardio. Bevi più acqua, dormi 7-8h e segui il piano: lo stallo si sblocca sempre.`};
-  if(an.status==='tfast') return {emoji:'⚠️',color:'var(--yel)',title:'ATTENZIONE ALLA VELOCITÀ',msg:`Stai perdendo peso troppo velocemente — rischi di perdere massa muscolare. L'AI ha aumentato le calorie. Mangia di più, allena con i pesi.`};
+  if(an.status==='stalled') return {emoji:'🚨',color:'var(--red)',title:L('METABOLISMO IN STALLO','METABOLISM STALLED'),msg:L(`Il peso è fermo da giorni. L'AI ha già adeguato calorie e cardio. Bevi più acqua, dormi 7-8h e segui il piano: lo stallo si sblocca sempre.`,`Weight has been stuck for days. The AI already adjusted calories and cardio. Drink more water, sleep 7-8h and follow the plan: plateaus always break.`)};
+  if(an.status==='tfast') return {emoji:'⚠️',color:'var(--yel)',title:L('ATTENZIONE ALLA VELOCITÀ','WATCH YOUR PACE'),msg:L(`Stai perdendo peso troppo velocemente — rischi di perdere massa muscolare. L'AI ha aumentato le calorie. Mangia di più, allena con i pesi.`,`You're losing weight too fast — you risk losing muscle. The AI increased your calories. Eat more, train with weights.`)};
 
   // ════════ TRAGUARDI RAGGIUNTI ════════
-  if(progress>=95) return {emoji:'🏆',color:'var(--acc)',title:'TRAGUARDO IN VISTA',msg:`Sei al ${Math.round(progress)}%. Mancano ${kgLeft.toFixed(1)}kg. Concentrati su sonno, idratazione e tecnica: il finale è il momento più delicato.`};
+  if(progress>=95) return {emoji:'🏆',color:'var(--acc)',title:L('TRAGUARDO IN VISTA','FINISH LINE IN SIGHT'),msg:L(`Sei al ${Math.round(progress)}%. Mancano ${kgLeft.toFixed(1)}kg. Concentrati su sonno, idratazione e tecnica: il finale è il momento più delicato.`,`You're at ${Math.round(progress)}%. ${kgLeft.toFixed(1)}kg to go. Focus on sleep, hydration and technique: the final stretch is the most delicate.`)};
   if(progress>=75) {
-    const opts=[
+    const opts=L([
       `Sei al ${Math.round(progress)}%. Mancano solo ${kgLeft.toFixed(1)}kg al traguardo. Resisti, manca poco.`,
       `Hai fatto il 75% del lavoro. Quello che sta arrivando è il momento più gratificante.`,
       `${kgLeft.toFixed(1)}kg dall'obiettivo. Continua come stai facendo, niente eroismi.`
-    ];
-    return {emoji:'🏁',color:'var(--acc)',title:'QUASI ARRIVATO',msg:__seedRandom(seed,opts)};
+    ],[
+      `You're at ${Math.round(progress)}%. Only ${kgLeft.toFixed(1)}kg from the goal. Hold on, almost there.`,
+      `You've done 75% of the work. What's coming is the most rewarding part.`,
+      `${kgLeft.toFixed(1)}kg from your goal. Keep doing what you're doing, no heroics.`
+    ]);
+    return {emoji:'🏁',color:'var(--acc)',title:L('QUASI ARRIVATO','ALMOST THERE'),msg:__seedRandom(seed,opts)};
   }
 
   // ════════ STREAK FORTI ════════
-  if(stk>=14) return {emoji:'🔥',color:'var(--ora)',title:`${stk} GIORNI CONSECUTIVI`,msg:`Due settimane piene di costanza. È così che si costruisce davvero — non con motivazione, ma con disciplina.`};
-  if(stk>=7) return {emoji:'🔥',color:'var(--ora)',title:`${stk} GIORNI DI STREAK`,msg:`Una settimana intera senza saltare. Questo è il vero segreto del cambiamento.`};
+  if(stk>=14) return {emoji:'🔥',color:'var(--ora)',title:L(`${stk} GIORNI CONSECUTIVI`,`${stk} DAYS IN A ROW`),msg:L(`Due settimane piene di costanza. È così che si costruisce davvero — non con motivazione, ma con disciplina.`,`Two full weeks of consistency. That's how you really build it — not with motivation, but with discipline.`)};
+  if(stk>=7) return {emoji:'🔥',color:'var(--ora)',title:L(`${stk} GIORNI DI STREAK`,`${stk}-DAY STREAK`),msg:L(`Una settimana intera senza saltare. Questo è il vero segreto del cambiamento.`,`A whole week without skipping. This is the real secret to change.`)};
 
   // ════════ AZIONI FATTE OGGI (positive) ════════
   if(weightLoggedToday && todayWoLog && (kcalToday > 0)) {
-    const opts=[
+    const opts=L([
       `Peso registrato, allenamento fatto, dieta in carreggiata. Giornata da copertina.`,
       `Hai chiuso il triplete: peso ✓ allenamento ✓ pasti ✓. Continua così.`,
       `Tre cose per tre. Questi sono i giorni che fanno la differenza nel lungo periodo.`
-    ];
-    return {emoji:'⭐',color:'var(--acc)',title:'GIORNATA PERFETTA',msg:__seedRandom(seed,opts)};
+    ],[
+      `Weight logged, workout done, diet on track. A textbook day.`,
+      `You nailed the triple: weight ✓ workout ✓ meals ✓. Keep it up.`,
+      `Three for three. These are the days that make the difference long-term.`
+    ]);
+    return {emoji:'⭐',color:'var(--acc)',title:L('GIORNATA PERFETTA','PERFECT DAY'),msg:__seedRandom(seed,opts)};
   }
   if(todayWoLog) {
-    const opts=[
+    const opts=L([
       `Allenamento di oggi completato. Adesso recupero, idratazione, e dieta in linea.`,
       `Sessione fatta. Il prossimo passo: nutrire il corpo per ottimizzare il recupero.`,
       `Hai chiuso l'allenamento. La parte più dura è già fatta.`
-    ];
-    return {emoji:'💪',color:'var(--acc)',title:'ALLENAMENTO FATTO',msg:__seedRandom(seed,opts)};
+    ],[
+      `Today's workout done. Now recovery, hydration, and diet on track.`,
+      `Session complete. Next step: feed the body to optimize recovery.`,
+      `You closed out the workout. The hardest part is already done.`
+    ]);
+    return {emoji:'💪',color:'var(--acc)',title:L('ALLENAMENTO FATTO','WORKOUT DONE'),msg:__seedRandom(seed,opts)};
   }
 
   // ════════ AZIONI MANCANTI (gentile push) ════════
   if(!weightLoggedToday && hour>=7) {
-    const opts=[
+    const opts=L([
       `Pesati appena puoi: tracciare il peso ogni mattina è il modo migliore per tenere il polso del progresso.`,
       `Manca il peso di oggi. Bastano 5 secondi e la grafica del tuo trend si aggiorna.`,
       `Senza peso giornaliero l'AI lavora alla cieca. Pesati a stomaco vuoto, dopo il bagno.`
-    ];
-    return {emoji:'⚖️',color:'var(--blu)',title:'REGISTRA IL PESO',msg:__seedRandom(seed,opts)};
+    ],[
+      `Weigh in when you can: tracking weight every morning is the best way to keep a pulse on progress.`,
+      `Today's weight is missing. Just 5 seconds and your trend chart updates.`,
+      `Without a daily weigh-in the AI works blind. Weigh yourself on an empty stomach, after the bathroom.`
+    ]);
+    return {emoji:'⚖️',color:'var(--blu)',title:L('REGISTRA IL PESO','LOG YOUR WEIGHT'),msg:__seedRandom(seed,opts)};
   }
   if(mealsDone===0 && hour>=10 && hour<=22) {
-    return {emoji:'🥗',color:'var(--ora)',title:'NESSUN PASTO REGISTRATO',msg:`Tracciare i pasti è il segnale che il tuo cervello resta in controllo. Bastano 30 secondi per ogni pasto.`};
+    return {emoji:'🥗',color:'var(--ora)',title:L('NESSUN PASTO REGISTRATO','NO MEALS LOGGED'),msg:L(`Tracciare i pasti è il segnale che il tuo cervello resta in controllo. Bastano 30 secondi per ogni pasto.`,`Tracking meals is the signal that your brain stays in control. Just 30 seconds per meal.`)};
   }
   if(!todayWoLog && ST.p.sessions>0 && hour>=15 && !isSunday) {
-    const opts=[
+    const opts=L([
       `Hai ancora margine per allenarti oggi. Anche 30 minuti contano.`,
       `Niente allenamento oggi? Decidi adesso: anche un workout breve vale più di uno saltato.`,
       `Senti la stanchezza? Inizia comunque, dopo 5 minuti passa.`
-    ];
-    return {emoji:'🏋️',color:'var(--purp)',title:'IL CORPO TI ASPETTA',msg:__seedRandom(seed,opts)};
+    ],[
+      `You still have time to train today. Even 30 minutes counts.`,
+      `No workout today? Decide now: even a short workout beats a skipped one.`,
+      `Feeling tired? Start anyway, it passes after 5 minutes.`
+    ]);
+    return {emoji:'🏋️',color:'var(--purp)',title:L('IL CORPO TI ASPETTA','YOUR BODY IS WAITING'),msg:__seedRandom(seed,opts)};
   }
 
   // ════════ KCAL A TARGET ════════
   if(kcalRatio >= 0.85 && kcalRatio <= 1.10) {
-    return {emoji:'🎯',color:'var(--acc)',title:'KCAL IN LINEA',msg:`${Math.round(kcalToday)}/${Math.round(kcalTarget)} kcal: precisione chirurgica. È così che si ottengono i risultati.`};
+    return {emoji:'🎯',color:'var(--acc)',title:L('KCAL IN LINEA','CALORIES ON TARGET'),msg:L(`${Math.round(kcalToday)}/${Math.round(kcalTarget)} kcal: precisione chirurgica. È così che si ottengono i risultati.`,`${Math.round(kcalToday)}/${Math.round(kcalTarget)} kcal: surgical precision. This is how results happen.`)};
   }
   if(kcalRatio < 0.5 && hour>=18) {
-    return {emoji:'🥄',color:'var(--yel)',title:'POCHE KCAL OGGI',msg:`Solo ${Math.round(kcalToday)}/${Math.round(kcalTarget)} kcal. Mangiare troppo poco rallenta il metabolismo: rispetta il piano.`};
+    return {emoji:'🥄',color:'var(--yel)',title:L('POCHE KCAL OGGI','LOW CALORIES TODAY'),msg:L(`Solo ${Math.round(kcalToday)}/${Math.round(kcalTarget)} kcal. Mangiare troppo poco rallenta il metabolismo: rispetta il piano.`,`Only ${Math.round(kcalToday)}/${Math.round(kcalTarget)} kcal. Eating too little slows metabolism: stick to the plan.`)};
   }
 
   // ════════ STREAK MEDIA ════════
   if(stk>=3) {
-    const opts=[
+    const opts=L([
       `${stk} giorni filati. La consistenza sta diventando un'abitudine.`,
       `${stk} giorni consecutivi. Ogni giorno che chiudi vale doppio.`,
       `Stai costruendo la tua routine. ${stk} giorni e contando.`
-    ];
-    return {emoji:'⚡',color:'var(--acc)',title:`${stk} GIORNI CONSECUTIVI`,msg:__seedRandom(seed,opts)};
+    ],[
+      `${stk} days straight. Consistency is becoming a habit.`,
+      `${stk} days in a row. Every day you close counts double.`,
+      `You're building your routine. ${stk} days and counting.`
+    ]);
+    return {emoji:'⚡',color:'var(--acc)',title:L(`${stk} GIORNI CONSECUTIVI`,`${stk} DAYS IN A ROW`),msg:__seedRandom(seed,opts)};
   }
 
   // ════════ MILESTONE PROGRESSO ════════
-  if(progress>=50 && progress<75) return {emoji:'💪',color:'var(--acc)',title:'METÀ STRADA SUPERATA',msg:`${Math.round(progress)}% completato. Hai già dimostrato di poterlo fare. La seconda metà è più facile: sai come si fa.`};
-  if(progress>=25 && progress<50) return {emoji:'📈',color:'var(--acc)',title:'MOMENTUM IN CRESCITA',msg:`${lost.toFixed(1)}kg già eliminati, ${kgLeft.toFixed(1)}kg restano. Il corpo si sta adattando — tieni la rotta.`};
+  if(progress>=50 && progress<75) return {emoji:'💪',color:'var(--acc)',title:L('METÀ STRADA SUPERATA','PAST THE HALFWAY MARK'),msg:L(`${Math.round(progress)}% completato. Hai già dimostrato di poterlo fare. La seconda metà è più facile: sai come si fa.`,`${Math.round(progress)}% done. You've already proven you can do it. The second half is easier: you know how now.`)};
+  if(progress>=25 && progress<50) return {emoji:'📈',color:'var(--acc)',title:L('MOMENTUM IN CRESCITA','BUILDING MOMENTUM'),msg:L(`${lost.toFixed(1)}kg già eliminati, ${kgLeft.toFixed(1)}kg restano. Il corpo si sta adattando — tieni la rotta.`,`${lost.toFixed(1)}kg already gone, ${kgLeft.toFixed(1)}kg to go. Your body is adapting — stay the course.`)};
 
   // ════════ ANALISI AI ════════
-  if(an.status==='perfect') return {emoji:'🎯',color:'var(--acc)',title:'RITMO PERFETTO',msg:`L'AI conferma: sei esattamente nella traiettoria giusta. Non cambiare nulla.`};
-  if(an.status==='good') return {emoji:'✅',color:'var(--acc)',title:'PIANO IN LINEA',msg:`Progressi regolari. La consistenza quotidiana porta ai risultati.`};
-  if(an.status==='fast') return {emoji:'⚡',color:'var(--yel)',title:'ANDAMENTO VELOCE',msg:`L'AI ha aumentato le calorie per proteggere i muscoli. Mangia ciò che ti viene assegnato.`};
+  if(an.status==='perfect') return {emoji:'🎯',color:'var(--acc)',title:L('RITMO PERFETTO','PERFECT PACE'),msg:L(`L'AI conferma: sei esattamente nella traiettoria giusta. Non cambiare nulla.`,`The AI confirms: you're exactly on the right trajectory. Don't change a thing.`)};
+  if(an.status==='good') return {emoji:'✅',color:'var(--acc)',title:L('PIANO IN LINEA','PLAN ON TRACK'),msg:L(`Progressi regolari. La consistenza quotidiana porta ai risultati.`,`Steady progress. Daily consistency brings results.`)};
+  if(an.status==='fast') return {emoji:'⚡',color:'var(--yel)',title:L('ANDAMENTO VELOCE','FAST PACE'),msg:L(`L'AI ha aumentato le calorie per proteggere i muscoli. Mangia ciò che ti viene assegnato.`,`The AI increased calories to protect your muscles. Eat what you're assigned.`)};
 
   // ════════ CONTESTI TEMPORALI ════════
-  if(wLogF.length===0 && pWeek>=2) return {emoji:'🏋️',color:'var(--purp)',title:'INIZIA OGGI',msg:`Nessun allenamento registrato. Anche 20 minuti fanno la differenza. Inizia adesso.`};
+  if(wLogF.length===0 && pWeek>=2) return {emoji:'🏋️',color:'var(--purp)',title:L('INIZIA OGGI','START TODAY'),msg:L(`Nessun allenamento registrato. Anche 20 minuti fanno la differenza. Inizia adesso.`,`No workouts logged. Even 20 minutes makes a difference. Start now.`)};
   if(isMonday) {
-    const opts=[
+    const opts=L([
       `Settimana ${pWeek}, nuovo inizio. Pianifica i tuoi 3 momenti chiave: peso, allenamento, pasti.`,
       `Lunedì = reset. L'AI ha ricalcolato il piano in base alla settimana scorsa.`,
       `Ogni lunedì è una nuova opportunità. Non aspettare il prossimo.`
-    ];
-    return {emoji:'🗓️',color:'var(--blu)',title:`SETTIMANA ${pWeek}`,msg:__seedRandom(seed,opts)};
+    ],[
+      `Week ${pWeek}, a fresh start. Plan your 3 key moments: weight, workout, meals.`,
+      `Monday = reset. The AI recalculated the plan based on last week.`,
+      `Every Monday is a new opportunity. Don't wait for the next one.`
+    ]);
+    return {emoji:'🗓️',color:'var(--blu)',title:L(`SETTIMANA ${pWeek}`,`WEEK ${pWeek}`),msg:__seedRandom(seed,opts)};
   }
   if(isFriday) {
-    return {emoji:'🚀',color:'var(--blu)',title:'FINE SETTIMANA IN VISTA',msg:`Il weekend è il momento in cui i piani crollano. Pianifica adesso pasti e allenamenti dei prossimi 2 giorni.`};
+    return {emoji:'🚀',color:'var(--blu)',title:L('FINE SETTIMANA IN VISTA','WEEKEND AHEAD'),msg:L(`Il weekend è il momento in cui i piani crollano. Pianifica adesso pasti e allenamenti dei prossimi 2 giorni.`,`The weekend is when plans fall apart. Plan now the meals and workouts for the next 2 days.`)};
   }
   if(isSunday) {
-    return {emoji:'🌅',color:'var(--purp)',title:'PREPARA LA PROSSIMA SETTIMANA',msg:`La domenica è il giorno del meal prep e del riposo. Pesa gli alimenti, prepara i contenitori, recupera bene.`};
+    return {emoji:'🌅',color:'var(--purp)',title:L('PREPARA LA PROSSIMA SETTIMANA','PREP FOR NEXT WEEK'),msg:L(`La domenica è il giorno del meal prep e del riposo. Pesa gli alimenti, prepara i contenitori, recupera bene.`,`Sunday is meal prep and rest day. Weigh your food, prep your containers, recover well.`)};
   }
 
   // ════════ DEFAULT VARIATO ════════
   if(pWeek<=2) {
-    const opts=[
+    const opts=L([
       `Nelle prime settimane il corpo si adatta. Non sempre vedrai i risultati subito sul peso.`,
       `Settimana ${pWeek}: stai costruendo la base. La consistenza ora paga doppio dopo.`,
       `Inizio percorso: l'importante è non saltare le routine, anche se i risultati tarderanno.`
-    ];
-    return {emoji:'🚀',color:'var(--blu)',title:`SETTIMANA ${pWeek}`,msg:__seedRandom(seed,opts)};
+    ],[
+      `In the first weeks the body adapts. You won't always see results on the scale right away.`,
+      `Week ${pWeek}: you're building the foundation. Consistency now pays double later.`,
+      `Start of the journey: the key is not skipping routines, even if results take time.`
+    ]);
+    return {emoji:'🚀',color:'var(--blu)',title:L(`SETTIMANA ${pWeek}`,`WEEK ${pWeek}`),msg:__seedRandom(seed,opts)};
   }
-  const opts=[
+  const opts=L([
     `I risultati arrivano in settimane, non in giorni. Ogni pasto e allenamento si accumula.`,
     `Continua a fare quello che stai facendo. Il corpo cambia lentamente, ma cambia.`,
     `Mantieni la rotta: peso, pasti, allenamento. Tre azioni semplici che fanno tutta la differenza.`
-  ];
-  return {emoji:'💡',color:'var(--mut)',title:'RIMANI COSTANTE',msg:__seedRandom(seed,opts)};
+  ],[
+    `Results come in weeks, not days. Every meal and workout adds up.`,
+    `Keep doing what you're doing. The body changes slowly, but it changes.`,
+    `Stay the course: weight, meals, workout. Three simple actions that make all the difference.`
+  ]);
+  return {emoji:'💡',color:'var(--mut)',title:L('RIMANI COSTANTE','STAY CONSISTENT'),msg:__seedRandom(seed,opts)};
 };
 // ─── § 13. EDITOR SCHEDE CUSTOM ────────────────────────────────────────────
 // PUNTO 18: gestione schede personalizzate
@@ -5422,6 +5459,45 @@ window.AUTO_TRANS = {
   "• Numero di sessioni allenamento (totale e ultimi 7gg)": "• Number of workout sessions (total and last 7 days)",
   "Numero di sessioni allenamento (totale e ultimi 7gg)": "Number of workout sessions (total and last 7 days)",
   "Sessioni": "Sessions", "FATS rimasti": "FATS left",
+  // ═══ BLOCCO 11 — option e label del setup iniziale ═══
+  "Definizione (Perdita Grasso)": "Cutting (Fat Loss)", "Massa (Aumento Muscolo)": "Bulking (Muscle Gain)",
+  "PESO ATTUALE (KG)": "CURRENT WEIGHT (KG)", "PESO OBIETTIVO (KG)": "TARGET WEIGHT (KG)",
+  "DATA OBIETTIVO (PREVISTA)": "TARGET DATE (EXPECTED)", "DOVE TI ALLENI?": "WHERE DO YOU TRAIN?",
+  "🏋️ In Palestra (con attrezzi)": "🏋️ At the Gym (with equipment)", "🏠 A Casa (corpo libero)": "🏠 At Home (bodyweight)",
+  "SESSIONI DI ALLENAMENTO A SETTIMANA": "TRAINING SESSIONS PER WEEK",
+  "0 — Solo Nutrizione &amp; Passi (nessuna palestra)": "0 — Nutrition &amp; Steps only (no gym)",
+  "0 — Solo Nutrizione & Passi (nessuna palestra)": "0 — Nutrition & Steps only (no gym)",
+  "1 sessione/settimana": "1 session/week", "2 sessioni/settimana": "2 sessions/week",
+  "3 sessioni/settimana (consigliato)": "3 sessions/week (recommended)", "4 sessioni/settimana": "4 sessions/week",
+  "5 sessioni/settimana": "5 sessions/week", "6 sessioni/settimana (intenso)": "6 sessions/week (intense)",
+  "Programma solo passi": "Steps-only program",
+  "il tuo obiettivo sarà camminare 10.000–12.000 passi/giorno + alimentazione controllata. Non avrai esercizi in palestra.": "your goal will be to walk 10,000–12,000 steps/day + controlled nutrition. You won't have gym exercises.",
+  "DURATA OGNI SESSIONE": "DURATION PER SESSION", "45 minuti": "45 minutes", "60 minuti (ideale)": "60 minutes (ideal)", "90 minuti": "90 minutes",
+  "SESSIONI CARDIO DI BASE A SETTIMANA": "BASE CARDIO SESSIONS PER WEEK",
+  "0 — Solo pesi": "0 — Weights only", "1 — Leggero": "1 — Light", "2 — Moderato": "2 — Moderate", "3 — Intenso": "3 — Intense",
+  "INTOLLERANZE ALIMENTARI (tocca per selezionare)": "FOOD INTOLERANCES (tap to select)",
+  "inserisci il tuo obiettivo": "enter your goal",
+  // ═══ BLOCCO 13 — Apple Health / Salute (testi esatti) ═══
+  "Importa dati da Salute (export.xml)": "Import data from Health (export.xml)",
+  "Importa pesate, passi e ore di sonno dall'export di Apple Health.": "Import weigh-ins, steps and sleep hours from the Apple Health export.",
+  "❓ Come esportare i dati da Salute →": "❓ How to export data from Health →",
+  "Per importare:": "To import:", "Per esportare verso Salute:": "To export to Health:",
+  "Apri l'app": "Open the", "su iPhone": "app on iPhone",
+  "Tocca la": "Tap your", "in alto a destra": "in the top right",
+  "tua foto profilo": "profile photo",
+  "Esporta tutti i dati Salute": "Export All Health Data",
+  "Aspetta che generi il file (può richiedere alcuni minuti)": "Wait for it to generate the file (may take a few minutes)",
+  "Quando appare il foglio di condivisione, scegli": "When the share sheet appears, choose",
+  "Salva in File": "Save to Files", "Salva in file": "Save to Files",
+  "Importa dati da Salute": "Import data from Health",
+  "Scarica il file .ics dai workout, aprilo dall'iPhone e tocca \"Aggiungi al Calendar\". Apple Health legge automaticamente i workout dal Calendar nelle ultime 24h.": "Download the .ics from workouts, open it on iPhone and tap \"Add to Calendar\". Apple Health automatically reads workouts from Calendar in the last 24h.",
+  "Importa dati da bilance smart e app salute, esporta in formato standard.": "Import data from smart scales and health apps, export in standard format.",
+  "Tocca per attivare/disattivare. I cibi corrispondenti verranno esclusi dai pasti suggeriti.": "Tap to enable/disable. Matching foods will be excluded from suggested meals.",
+  "Salute": "Health", "salute": "health",
+  "Puoi disattivarla in qualsiasi momento. Anche dopo la disattivazione, i tuoi dati condivisi verranno cancellati dal cloud entro 24 ore.": "You can disable it at any time. Even after disabling, your shared data will be deleted from the cloud within 24 hours.",
+  // ═══ BLOCCO 12 — setup preferiti ═══
+  "🍽️ I TUOI PIATTI / CIBI PREFERITI (opzionale)": "🍽️ YOUR FAVORITE MEALS / FOODS (optional)",
+  "Scrivi 2-3 piatti o cibi che ami davvero per ciascun pasto. Cercheremo di includerli nel tuo menù, mantenendo comunque il target calorico per il tuo obiettivo. Esempi: \"pasta al pomodoro, bresaola, yogurt greco\". Max 200 caratteri ciascuno.": "Write 2-3 meals or foods you really love for each meal. We'll try to include them in your menu while keeping the calorie target for your goal. Examples: \"tomato pasta, bresaola, Greek yogurt\". Max 200 characters each.",
   "DIARIO ALLENAMENTI": "WORKOUT LOG",
   "💊 INTEGRATORI PROTEICI": "💊 PROTEIN SUPPLEMENTS", "INTEGRATORI PROTEICI": "PROTEIN SUPPLEMENTS",
   "🍽️ I MIEI PIATTI PREFERITI": "🍽️ MY FAVORITE MEALS", "I MIEI PIATTI PREFERITI": "MY FAVORITE MEALS",
@@ -6457,7 +6533,7 @@ window.initProgram=function(){
   // Bulk: 0 sess=0.15kg/sett, 1-2 sess=0.2, 3+ sess=0.3
   const maxRate = t==='cut' ? (sess===0?0.4:sess<3?0.6:0.8) : (sess===0?0.15:sess<3?0.2:0.3);
   const minWk=Math.abs(w-g)/maxRate;
-  if((tDate-new Date())/(7*864e5)<minWk){tDate=new Date(new Date().getTime()+minWk*7*864e5);alert('⚠️ Data obiettivo corretta automaticamente.\n\nCon '+sess+' sessioni/settimana, il rate massimo realistico è '+maxRate+' kg/settimana. Nuova data: '+tDate.toLocaleDateString('it-IT'));}
+  if((tDate-new Date())/(7*864e5)<minWk){tDate=new Date(new Date().getTime()+minWk*7*864e5);alert((window.ST&&ST.lang==='en')?('⚠️ Target date automatically corrected.\n\nWith '+sess+' sessions/week, the realistic max rate is '+maxRate+' kg/week. New date: '+tDate.toLocaleDateString('en-GB')):('⚠️ Data obiettivo corretta automaticamente.\n\nCon '+sess+' sessioni/settimana, il rate massimo realistico è '+maxRate+' kg/settimana. Nuova data: '+tDate.toLocaleDateString('it-IT')));}
   // PUNTO 12: integratori proteici (chip, default NO)
   const usesSupplements=document.querySelector('.supp-chip.on')?.dataset?.supp==='yes';
   // PUNTO 16: cibi preferiti (sanitizzati, max 200 char)
@@ -6603,7 +6679,7 @@ window.updateProgram=function(){
   // FIX: stesso rate realistico basato su sessioni
   const maxRate2 = t==='cut' ? (sess===0?0.4:sess<3?0.6:0.8) : (sess===0?0.15:sess<3?0.2:0.3);
   const minWk=Math.abs(currW-g)/maxRate2;
-  if((tDate-new Date())/(7*864e5)<minWk){tDate=new Date(new Date().getTime()+minWk*7*864e5);alert('⚠️ Data obiettivo corretta.\n\nCon '+sess+' sessioni/settimana il rate massimo realistico è '+maxRate2+' kg/settimana. Nuova data: '+tDate.toLocaleDateString('it-IT'));}
+  if((tDate-new Date())/(7*864e5)<minWk){tDate=new Date(new Date().getTime()+minWk*7*864e5);alert((window.ST&&ST.lang==='en')?('⚠️ Target date corrected.\n\nWith '+sess+' sessions/week the realistic max rate is '+maxRate2+' kg/week. New date: '+tDate.toLocaleDateString('en-GB')):('⚠️ Data obiettivo corretta.\n\nCon '+sess+' sessioni/settimana il rate massimo realistico è '+maxRate2+' kg/settimana. Nuova data: '+tDate.toLocaleDateString('it-IT')));}
   // PUNTO 16: salva cibi preferiti (sanitizzati)
   const sanitizeFav=v=>(v||'').toString().slice(0,200).replace(/[<>]/g,'').trim();
   const newFavs={
@@ -6655,7 +6731,7 @@ window.updateProgramOnly=function(){
   const minWk=Math.abs(currW-g)/maxRate;
   if((tDate-new Date())/(7*864e5)<minWk){
     tDate=new Date(new Date().getTime()+minWk*7*864e5);
-    alert('⚠️ Data obiettivo corretta.\n\nCon '+sess+' sessioni/settimana il rate massimo realistico è '+maxRate+' kg/settimana. Nuova data: '+tDate.toLocaleDateString('it-IT'));
+    alert((window.ST&&ST.lang==='en')?('⚠️ Target date corrected.\n\nWith '+sess+' sessions/week the realistic max rate is '+maxRate+' kg/week. New date: '+tDate.toLocaleDateString('en-GB')):('⚠️ Data obiettivo corretta.\n\nCon '+sess+' sessioni/settimana il rate massimo realistico è '+maxRate+' kg/settimana. Nuova data: '+tDate.toLocaleDateString('it-IT')));
   }
   ST.p.g=g; ST.p.t=t; ST.p.dur=dur; ST.p.targetD=tDate.toISOString().split('T')[0];
   ST.p.sessions=sess; ST.p.cardioLevel=cl; ST.p.loc=loc;
@@ -6702,8 +6778,9 @@ window.updateDiet=function(){
   const diet=dietEl?.dataset?.diet||ST.p.diet||'omnivore';
   ST.p.diet=diet;
   save();
-  const labels={omnivore:'Onnivoro',vegetarian:'Vegetariano',vegan:'Vegano'};
-  alert(`✓ Alimentazione: ${labels[diet]}.`);
+  const _EN=(window.ST&&ST.lang==='en');
+  const labels=_EN?{omnivore:'Omnivore',vegetarian:'Vegetarian',vegan:'Vegan'}:{omnivore:'Onnivoro',vegetarian:'Vegetariano',vegan:'Vegano'};
+  alert(_EN?`✓ Diet: ${labels[diet]}.`:`✓ Alimentazione: ${labels[diet]}.`);
 }
 
 window.updateSupplements=function(){
@@ -9004,6 +9081,7 @@ window.restoreMealAI=function(mealId){
 // Ritorna {totalKcal, targetKcal, divergePct, newTargetD, advice} oppure null
 window.computeCustomProjection=function(){
   if(!ST.p.customMeals) return null;
+  const _EN=(window.ST&&ST.lang==='en'); const L=(it,en)=>_EN?en:it; const _loc=_EN?'en-GB':'it-IT';
   const customIds=Object.keys(ST.p.customMeals).filter(id=>ST.p.customMeals[id]?.length>0);
   if(customIds.length===0) return null;
   const cW=ST.h.length?ST.h[ST.h.length-1].w:70;
@@ -9037,30 +9115,30 @@ window.computeCustomProjection=function(){
       const effectiveDeficit=Math.max(100, (mac.tdee - totalKcal));
       const weeklyLoss=effectiveDeficit*7/7700; // 7700 kcal = 1 kg
       if(weeklyLoss<0.1){
-        advice=`Con queste quantità non c'è abbastanza deficit calorico per perdere peso. Serve un deficit di almeno 200-300 kcal/giorno sotto il tuo TDEE (${mac.tdee} kcal).`;
+        advice=L(`Con queste quantità non c'è abbastanza deficit calorico per perdere peso. Serve un deficit di almeno 200-300 kcal/giorno sotto il tuo TDEE (${mac.tdee} kcal).`,`With these amounts there isn't enough of a calorie deficit to lose weight. You need at least 200-300 kcal/day below your TDEE (${mac.tdee} kcal).`);
       } else {
         const weeksNeeded=Math.ceil(kgRemain/weeklyLoss);
         const newD=new Date();newD.setDate(newD.getDate()+weeksNeeded*7);
         newTargetD=newD.toISOString().split('T')[0];
-        advice=`Con ${totalKcal} kcal/giorno il dimagrimento sarà più lento del previsto. Nuova data stimata: ${newD.toLocaleDateString('it-IT')} (~${weeksNeeded} settimane).`;
+        advice=L(`Con ${totalKcal} kcal/giorno il dimagrimento sarà più lento del previsto. Nuova data stimata: ${newD.toLocaleDateString(_loc)} (~${weeksNeeded} settimane).`,`At ${totalKcal} kcal/day weight loss will be slower than planned. New estimated date: ${newD.toLocaleDateString(_loc)} (~${weeksNeeded} weeks).`);
       }
     } else if(ST.p.t==='cut' && diff<0){
-      advice=`Stai consumando ${Math.abs(diff)} kcal sotto il target. Attenzione: deficit troppo aggressivo rallenta il metabolismo. Considera di aumentare leggermente.`;
+      advice=L(`Stai consumando ${Math.abs(diff)} kcal sotto il target. Attenzione: deficit troppo aggressivo rallenta il metabolismo. Considera di aumentare leggermente.`,`You're eating ${Math.abs(diff)} kcal below target. Careful: too aggressive a deficit slows metabolism. Consider increasing slightly.`);
     } else if(ST.p.t==='bulk' && diff<0){
       // Surplus inferiore al previsto → massa più lenta
       const kgRemain=Math.max(0.1,ST.p.g-cW);
       const effectiveSurplus=Math.max(100,totalKcal-mac.tdee);
       const weeklyGain=effectiveSurplus*7/7700;
       if(weeklyGain<0.05){
-        advice=`Con queste quantità non c'è abbastanza surplus calorico per aumentare massa. Serve un surplus di almeno 200-300 kcal/giorno sopra il tuo TDEE (${mac.tdee} kcal).`;
+        advice=L(`Con queste quantità non c'è abbastanza surplus calorico per aumentare massa. Serve un surplus di almeno 200-300 kcal/giorno sopra il tuo TDEE (${mac.tdee} kcal).`,`With these amounts there isn't enough of a calorie surplus to gain mass. You need at least 200-300 kcal/day above your TDEE (${mac.tdee} kcal).`);
       } else {
         const weeksNeeded=Math.ceil(kgRemain/weeklyGain);
         const newD=new Date();newD.setDate(newD.getDate()+weeksNeeded*7);
         newTargetD=newD.toISOString().split('T')[0];
-        advice=`Con ${totalKcal} kcal/giorno l'aumento di massa sarà più lento del previsto. Nuova data stimata: ${newD.toLocaleDateString('it-IT')} (~${weeksNeeded} settimane).`;
+        advice=L(`Con ${totalKcal} kcal/giorno l'aumento di massa sarà più lento del previsto. Nuova data stimata: ${newD.toLocaleDateString(_loc)} (~${weeksNeeded} settimane).`,`At ${totalKcal} kcal/day muscle gain will be slower than planned. New estimated date: ${newD.toLocaleDateString(_loc)} (~${weeksNeeded} weeks).`);
       }
     } else if(ST.p.t==='bulk' && diff>0){
-      advice=`Stai consumando ${diff} kcal sopra il target. Surplus eccessivo = grasso invece di muscolo. Considera di ridurre.`;
+      advice=L(`Stai consumando ${diff} kcal sopra il target. Surplus eccessivo = grasso invece di muscolo. Considera di ridurre.`,`You're eating ${diff} kcal above target. Excess surplus = fat instead of muscle. Consider reducing.`);
     }
   }
   return{totalKcal,targetKcal,divergePct,diff,newTargetD,advice};
@@ -9790,7 +9868,14 @@ window.aiRecalculatePlan=async function(){
     aiAnalysisStatus:an.status,
     aiAnalysisMsg:an.msg,
   };
-  const sys=`Sei un personal trainer e nutrizionista italiano con 20+ anni di esperienza. L'utente ti passa i suoi dati reali. Dai un consiglio CONCRETO e BREVE (max 200 parole) su come adattare il piano per la prossima settimana. Sii specifico: quante kcal aggiungere/togliere, quale tipo di cardio, quali esercizi privilegiare, cosa modificare nei pasti. Tono motivante ma diretto. Italiano. NIENTE markdown, niente liste, prosa scorrevole.`;
+  // SESSIONE 52: prompt API bilingue
+  const _aiEN = (window.ST && ST.lang === 'en');
+  const sys = _aiEN
+    ? `You are a personal trainer and nutritionist with 20+ years of experience. The user gives you their real data. Give CONCRETE, SHORT advice (max 200 words) on how to adapt the plan for next week. Be specific: how many kcal to add/remove, what kind of cardio, which exercises to prioritize, what to change in meals. Motivating but direct tone. English. NO markdown, no lists, flowing prose.`
+    : `Sei un personal trainer e nutrizionista italiano con 20+ anni di esperienza. L'utente ti passa i suoi dati reali. Dai un consiglio CONCRETO e BREVE (max 200 parole) su come adattare il piano per la prossima settimana. Sii specifico: quante kcal aggiungere/togliere, quale tipo di cardio, quali esercizi privilegiare, cosa modificare nei pasti. Tono motivante ma diretto. Italiano. NIENTE markdown, niente liste, prosa scorrevole.`;
+  const _userMsg = _aiEN
+    ? 'Here is my current data in JSON:\n'+JSON.stringify(ctx,null,2)+'\n\nGive me your advice for next week.'
+    : 'Ecco i miei dati attuali in JSON:\n'+JSON.stringify(ctx,null,2)+'\n\nDammi il tuo consiglio per la prossima settimana.';
   // Genera analisi locale basata sui dati reali — sempre disponibile, no API
   const localAdvice = generateLocalCoachingAdvice(ctx, an, mac, ST);
   try{
@@ -9798,18 +9883,18 @@ window.aiRecalculatePlan=async function(){
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         model:'claude-sonnet-4-20250514',max_tokens:600,system:sys,
-        messages:[{role:'user',content:'Ecco i miei dati attuali in JSON:\n'+JSON.stringify(ctx,null,2)+'\n\nDammi il tuo consiglio per la prossima settimana.'}]
+        messages:[{role:'user',content:_userMsg}]
       })
     });
     if(!r.ok) throw new Error('API status '+r.status);
     const d=await r.json();
     const advice=d.content?.[0]?.text||localAdvice;
-    ST.aiPlan={advice,date:new Date().toLocaleDateString('it-IT'),context:ctx,source:'ai',_ts:Date.now()};
+    ST.aiPlan={advice,date:new Date().toLocaleDateString(ST.lang==='en'?'en-GB':'it-IT'),context:ctx,source:'ai',_ts:Date.now()};
     window.AI_CACHE.plan[cacheKey]=ST.aiPlan;
     saveAiCache();
   }catch(e){
     // Fallback locale: usa l'analisi rule-based completa
-    ST.aiPlan={advice:localAdvice,date:new Date().toLocaleDateString('it-IT'),context:ctx,source:'local',_ts:Date.now()};
+    ST.aiPlan={advice:localAdvice,date:new Date().toLocaleDateString(ST.lang==='en'?'en-GB':'it-IT'),context:ctx,source:'local',_ts:Date.now()};
   }
   window.aiPlanLoading=false;
   save();
@@ -9818,59 +9903,65 @@ window.aiRecalculatePlan=async function(){
 // Generatore di consigli locale (no API) — basato sull'analisi rule-based
 // Sempre disponibile, non richiede rete
 window.generateLocalCoachingAdvice=function(ctx, an, mac, st){
+  // SESSIONE 52: generazione bilingue. EN se ST.lang==='en', altrimenti IT.
+  const EN = (window.ST && ST.lang === 'en');
+  const L = (it, en) => EN ? en : it;
   const parts=[];
   const w=ctx.currentWeight, s=ctx.startWeight, g=ctx.goalWeight;
-  const strategy=ctx.strategy==='cut'?'definizione':'massa';
+  const strategy=L(ctx.strategy==='cut'?'definizione':'massa', ctx.strategy==='cut'?'cutting':'bulking');
   const isCut=ctx.strategy==='cut';
   const completion=ctx.workoutsCompleted14d, target14=ctx.workoutsTarget14d;
   const compliance=target14>0?Math.round(100*completion/target14):0;
   const weekNum=ctx.weekNumber;
 
   // 1. Apertura — stato globale
+  // an.msg può essere localizzato a monte; lo uso così com'è ma traduco la cornice.
+  const msgLow = (an.msg||'').toLowerCase();
   if(an.status==='good'){
-    parts.push(`Ottimo lavoro questa settimana: ${an.msg.toLowerCase()}.`);
+    parts.push(L(`Ottimo lavoro questa settimana: ${msgLow}.`, `Great work this week: ${msgLow}.`));
   } else if(an.status==='warn'){
-    parts.push(`Attenzione: ${an.msg.toLowerCase()}.`);
+    parts.push(L(`Attenzione: ${msgLow}.`, `Heads up: ${msgLow}.`));
   } else if(an.status==='bad'){
-    parts.push(`Ricalibra: ${an.msg.toLowerCase()}.`);
+    parts.push(L(`Ricalibra: ${msgLow}.`, `Recalibrate: ${msgLow}.`));
   } else {
-    parts.push(`Settimana ${weekNum} di programma in ${strategy}.`);
+    parts.push(L(`Settimana ${weekNum} di programma in ${strategy}.`, `Week ${weekNum} of your ${strategy} program.`));
   }
 
   // 2. Aderenza allenamenti
   if(target14>0){
     if(compliance>=90){
-      parts.push(`Hai completato ${completion}/${target14} allenamenti previsti — costanza eccellente.`);
+      parts.push(L(`Hai completato ${completion}/${target14} allenamenti previsti — costanza eccellente.`, `You completed ${completion}/${target14} planned workouts — excellent consistency.`));
     } else if(compliance>=60){
-      parts.push(`Hai fatto ${completion}/${target14} allenamenti: prova a recuperarne uno extra prossima settimana.`);
+      parts.push(L(`Hai fatto ${completion}/${target14} allenamenti: prova a recuperarne uno extra prossima settimana.`, `You did ${completion}/${target14} workouts: try to fit in one extra next week.`));
     } else if(compliance>=30){
-      parts.push(`Solo ${completion}/${target14} allenamenti completati: ridurre le sessioni a un livello sostenibile è meglio che saltarle.`);
+      parts.push(L(`Solo ${completion}/${target14} allenamenti completati: ridurre le sessioni a un livello sostenibile è meglio che saltarle.`, `Only ${completion}/${target14} workouts completed: cutting sessions to a sustainable level beats skipping them.`));
     } else if(completion===0){
-      parts.push(`Nessun allenamento registrato in 2 settimane: parti con sessioni brevi 30 min, costanza prima di tutto.`);
+      parts.push(L(`Nessun allenamento registrato in 2 settimane: parti con sessioni brevi 30 min, costanza prima di tutto.`, `No workouts logged in 2 weeks: start with short 30-min sessions, consistency first.`));
     }
   }
 
   // 3. Andamento peso
   if(s && w){
     const delta=Math.round((w-s)*10)/10;
+    const ad=Math.abs(delta);
     if(isCut){
       if(delta<=-0.3){
-        parts.push(`Hai perso ${Math.abs(delta)}kg da inizio programma: ritmo corretto, mantieni le ${ctx.targetKcal} kcal target.`);
+        parts.push(L(`Hai perso ${ad}kg da inizio programma: ritmo corretto, mantieni le ${ctx.targetKcal} kcal target.`, `You've lost ${ad}kg since the start: good pace, keep the ${ctx.targetKcal} kcal target.`));
       } else if(delta<0){
-        parts.push(`Calo lieve di ${Math.abs(delta)}kg: aggiungi 1-2 sessioni cardio leggero (30 min, 110-130 bpm) per accelerare.`);
+        parts.push(L(`Calo lieve di ${ad}kg: aggiungi 1-2 sessioni cardio leggero (30 min, 110-130 bpm) per accelerare.`, `Slight ${ad}kg drop: add 1-2 light cardio sessions (30 min, 110-130 bpm) to speed things up.`));
       } else if(delta>=0 && delta<0.5){
-        parts.push(`Peso stabile: probabile recomposizione (perdi grasso, guadagni muscolo). Continua e misura le pieghe se possibile.`);
+        parts.push(L(`Peso stabile: probabile recomposizione (perdi grasso, guadagni muscolo). Continua e misura le pieghe se possibile.`, `Weight stable: likely body recomposition (losing fat, gaining muscle). Keep going and measure skinfolds if you can.`));
       } else {
-        parts.push(`Aumento di ${delta}kg in fase di ${strategy}: rivedi le porzioni di carbo a colazione e pranzo, taglia 200 kcal.`);
+        parts.push(L(`Aumento di ${delta}kg in fase di ${strategy}: rivedi le porzioni di carbo a colazione e pranzo, taglia 200 kcal.`, `Up ${delta}kg during ${strategy}: review carb portions at breakfast and lunch, cut 200 kcal.`));
       }
     } else {
       // bulk
       if(delta>=0.3){
-        parts.push(`Aumento di ${delta}kg: ottimo se vuoi massa. Se senti che è grasso, riduci surplus a +200 kcal.`);
+        parts.push(L(`Aumento di ${delta}kg: ottimo se vuoi massa. Se senti che è grasso, riduci surplus a +200 kcal.`, `Up ${delta}kg: great for bulking. If it feels like fat, reduce the surplus to +200 kcal.`));
       } else if(delta<0){
-        parts.push(`Stai calando in fase massa: aumenta di 250 kcal/giorno (+1 frutto a colazione, +50g pasta a pranzo).`);
+        parts.push(L(`Stai calando in fase massa: aumenta di 250 kcal/giorno (+1 frutto a colazione, +50g pasta a pranzo).`, `You're losing during a bulk: add 250 kcal/day (+1 fruit at breakfast, +50g pasta at lunch).`));
       } else {
-        parts.push(`Peso fermo: aggiungi 1 spuntino proteico nel pomeriggio (yogurt greco + frutta secca).`);
+        parts.push(L(`Peso fermo: aggiungi 1 spuntino proteico nel pomeriggio (yogurt greco + frutta secca).`, `Weight stuck: add 1 protein snack in the afternoon (Greek yogurt + nuts).`));
       }
     }
   }
@@ -9894,9 +9985,9 @@ window.generateLocalCoachingAdvice=function(ctx, an, mac, st){
   const totSlotCheats = Object.values(cheatsByMeal).reduce((s,n)=>s+n, 0);
 
   if(totalCheats>=8){
-    parts.push(`Hai accumulato ${totalCheats} sgarri in 2 settimane: prova ad organizzare 1 pasto libero a settimana invece di tanti piccoli sgarri non gestiti.`);
+    parts.push(L(`Hai accumulato ${totalCheats} sgarri in 2 settimane: prova ad organizzare 1 pasto libero a settimana invece di tanti piccoli sgarri non gestiti.`, `You've racked up ${totalCheats} cheats in 2 weeks: try planning 1 free meal a week instead of many small unplanned ones.`));
   } else if(totalCheats>=4){
-    parts.push(`${totalCheats} sgarri tracciati: nella media. Annotare aiuta la consapevolezza.`);
+    parts.push(L(`${totalCheats} sgarri tracciati: nella media. Annotare aiuta la consapevolezza.`, `${totalCheats} cheats logged: about average. Tracking them builds awareness.`));
   }
 
   // Pattern detection: trova il pasto più "sgarrato" se rappresenta >40% dei totali
@@ -9905,32 +9996,53 @@ window.generateLocalCoachingAdvice=function(ctx, an, mac, st){
     const top = sortedSlots[0];
     const topPct = top[1] / totSlotCheats;
     if (topPct >= 0.4 && top[0] !== 'altro') {
-      const slotNames = {col:'a colazione', sp1:'a metà mattina', pra:'a pranzo', sp2:'a metà pomeriggio', cen:'a cena'};
-      const tips = {
+      const slotNames = EN
+        ? {col:'at breakfast', sp1:'mid-morning', pra:'at lunch', sp2:'mid-afternoon', cen:'at dinner'}
+        : {col:'a colazione', sp1:'a metà mattina', pra:'a pranzo', sp2:'a metà pomeriggio', cen:'a cena'};
+      const tipsIt = {
         col: 'Prova una colazione più sostanziosa con proteine: yogurt greco + frutta + cereali integrali ti tiene sazio fino a pranzo.',
         sp1: 'Programma uno spuntino solido: 1 frutto + frutta secca + tè verde aiuta a non arrivare affamato a pranzo.',
         pra: 'A pranzo gli sgarri spesso sono da fame eccessiva: aumenta proteine al mattino e fai pranzi con verdure abbondanti che saziano.',
         sp2: 'Lo spuntino pomeridiano è critico: yogurt greco con miele e mandorle è la combinazione anti-sgarro più efficace.',
         cen: 'Sgarri serali = giornata sbilanciata. Mangia di più pranzando, riduci di 100 kcal cena, e tieni un quadretto di cioccolato fondente come dolce concesso.'
       };
-      parts.push(`Pattern rilevato: ${top[1]} sgarri su ${totSlotCheats} sono ${slotNames[top[0]]||'in quel pasto'}. ${tips[top[0]]||''}`);
+      const tipsEn = {
+        col: 'Try a more substantial protein breakfast: Greek yogurt + fruit + whole grains keeps you full until lunch.',
+        sp1: 'Plan a solid snack: 1 fruit + nuts + green tea helps you avoid arriving starving at lunch.',
+        pra: 'Lunch cheats often come from being too hungry: boost morning protein and have lunches with plenty of filling vegetables.',
+        sp2: 'The afternoon snack is critical: Greek yogurt with honey and almonds is the most effective anti-cheat combo.',
+        cen: 'Evening cheats = unbalanced day. Eat more at lunch, cut 100 kcal at dinner, and keep a square of dark chocolate as an allowed treat.'
+      };
+      const tips = EN ? tipsEn : tipsIt;
+      const fallbackSlot = EN ? 'in that meal' : 'in quel pasto';
+      parts.push(L(
+        `Pattern rilevato: ${top[1]} sgarri su ${totSlotCheats} sono ${slotNames[top[0]]||fallbackSlot}. ${tips[top[0]]||''}`,
+        `Pattern detected: ${top[1]} of ${totSlotCheats} cheats are ${slotNames[top[0]]||fallbackSlot}. ${tips[top[0]]||''}`
+      ));
     }
   }
 
   // 5. Consiglio specifico per strategia
   if(isCut){
-    parts.push(`Mantieni proteine ad almeno ${mac.prot}g/giorno per preservare massa magra. Privilegia esercizi multiarticolari (squat, panca, stacchi) e tieni alto il volume di camminata quotidiana.`);
+    parts.push(L(`Mantieni proteine ad almeno ${mac.prot}g/giorno per preservare massa magra. Privilegia esercizi multiarticolari (squat, panca, stacchi) e tieni alto il volume di camminata quotidiana.`, `Keep protein at least ${mac.prot}g/day to preserve lean mass. Prioritize compound lifts (squat, bench, deadlift) and keep daily walking volume high.`));
   } else {
-    parts.push(`Per crescere: sovraccarico progressivo settimanale (2.5kg sui compound, 1kg sugli isolamenti se completi tutte le serie). 1.6-2g proteine per kg di peso, 7-8h sonno sono critici.`);
+    parts.push(L(`Per crescere: sovraccarico progressivo settimanale (2.5kg sui compound, 1kg sugli isolamenti se completi tutte le serie). 1.6-2g proteine per kg di peso, 7-8h sonno sono critici.`, `To grow: progressive overload weekly (2.5kg on compounds, 1kg on isolation if you complete all sets). 1.6-2g protein per kg of bodyweight and 7-8h sleep are critical.`));
   }
 
   // 6. Chiusura motivante
-  const closes=[
+  const closesIt=[
     `Continua così, i risultati arrivano con la costanza, non con la perfezione.`,
     `Piccoli passi quotidiani battono grandi sforzi sporadici.`,
     `Il tuo programma sta funzionando: fidati del processo.`,
     `Una settimana alla volta, un allenamento alla volta.`
   ];
+  const closesEn=[
+    `Keep it up — results come from consistency, not perfection.`,
+    `Small daily steps beat big sporadic efforts.`,
+    `Your program is working: trust the process.`,
+    `One week at a time, one workout at a time.`
+  ];
+  const closes = EN ? closesEn : closesIt;
   parts.push(closes[weekNum%closes.length]);
 
   return parts.join(' ');
@@ -10752,7 +10864,7 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
         <div style="width:36px;height:36px;border-radius:50%;background:rgba(167,139,250,.25);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🛌</div>
         <div style="flex:1;">
           <div style="font-size:11px;font-weight:800;color:var(--purp);letter-spacing:2px;">SETTIMANA DI SCARICO</div>
-          <div style="font-size:10px;color:var(--mut);font-weight:600;">Settimana ${pwk(ST.programStart)} del programma</div>
+          <div style="font-size:10px;color:var(--mut);font-weight:600;">${(window.ST&&ST.lang==='en')?`Week ${pwk(ST.programStart)} of your program`:`Settimana ${pwk(ST.programStart)} del programma`}</div>
         </div>
       </div>
       <div style="font-size:13px;line-height:1.55;color:var(--text);font-weight:500;">È il momento di una <strong style="color:var(--purp);">deload week</strong>: riduci pesi del 30-40% mantenendo le ripetizioni, oppure dimezza le serie. Il corpo recupera, i muscoli supercompensano. La prossima settimana tornerai più forte di prima.</div>
@@ -10868,11 +10980,12 @@ window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,to
     const weekPct=Math.min(100,Math.round(weekSteps/weekGoal*100));
     // Messaggio motivazionale in base al progresso di oggi
     let motivMsg='', motivCol='var(--gre)';
-    if(stepsPct>=100){ motivMsg=`🏆 Obiettivo raggiunto! ${stepsToday.toLocaleString('it-IT')} passi oggi.`; motivCol='var(--acc)'; }
-    else if(stepsPct>=75){ motivMsg=`Quasi fatto! Mancano ${(stepsGoal-stepsToday).toLocaleString('it-IT')} passi.`; motivCol='var(--acc)'; }
-    else if(stepsPct>=50){ motivMsg=`A metà strada. Fai ancora una bella camminata di ${Math.round((stepsGoal-stepsToday)/100)*100} passi.`; motivCol='var(--gre)'; }
-    else if(stepsToday>0){ motivMsg=`Hai fatto ${stepsToday.toLocaleString('it-IT')} passi. Oggi puntiamo a ${stepsGoal.toLocaleString('it-IT')}: fai una bella camminata di almeno 30 minuti.`; motivCol='var(--blu)'; }
-    else { motivMsg=`🚶 Oggi obiettivo: ${stepsGoal.toLocaleString('it-IT')} passi. Bastano 2 camminate da 20-30 minuti per raggiungerlo.`; motivCol='var(--blu)'; }
+    const _EN=(window.ST&&ST.lang==='en'); const _L=(it,en)=>_EN?en:it; const _lc=_EN?'en-GB':'it-IT';
+    if(stepsPct>=100){ motivMsg=_L(`🏆 Obiettivo raggiunto! ${stepsToday.toLocaleString(_lc)} passi oggi.`,`🏆 Goal reached! ${stepsToday.toLocaleString(_lc)} steps today.`); motivCol='var(--acc)'; }
+    else if(stepsPct>=75){ motivMsg=_L(`Quasi fatto! Mancano ${(stepsGoal-stepsToday).toLocaleString(_lc)} passi.`,`Almost there! ${(stepsGoal-stepsToday).toLocaleString(_lc)} steps to go.`); motivCol='var(--acc)'; }
+    else if(stepsPct>=50){ motivMsg=_L(`A metà strada. Fai ancora una bella camminata di ${Math.round((stepsGoal-stepsToday)/100)*100} passi.`,`Halfway there. Take another good walk of ${Math.round((stepsGoal-stepsToday)/100)*100} steps.`); motivCol='var(--gre)'; }
+    else if(stepsToday>0){ motivMsg=_L(`Hai fatto ${stepsToday.toLocaleString(_lc)} passi. Oggi puntiamo a ${stepsGoal.toLocaleString(_lc)}: fai una bella camminata di almeno 30 minuti.`,`You've done ${stepsToday.toLocaleString(_lc)} steps. Today's goal is ${stepsGoal.toLocaleString(_lc)}: take a good 30-minute walk.`); motivCol='var(--blu)'; }
+    else { motivMsg=_L(`🚶 Oggi obiettivo: ${stepsGoal.toLocaleString(_lc)} passi. Bastano 2 camminate da 20-30 minuti per raggiungerlo.`,`🚶 Today's goal: ${stepsGoal.toLocaleString(_lc)} steps. Just 2 walks of 20-30 minutes will get you there.`); motivCol='var(--blu)'; }
     return `
     ${travelBanner}
     <div class="r" style="margin-bottom:14px;"><div class="bebas" style="font-size:26px;">ALLENAMENTO</div><div style="font-size:11px;color:var(--mut);">Sett.${pWeek}${isD?' · DELOAD':''}</div></div>
@@ -10985,8 +11098,8 @@ window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,to
   // Allenamenti mancati
   const {missed,adherencePct}=getMissedWorkouts(ST.wLog,(ST.p.sessions!=null?ST.p.sessions:3),ST.programStart);
   const missedBanner=missed>=2?`<div class="card" style="border-color:var(--ora);background:rgba(255,104,53,.04);padding:14px;">
-    <div style="font-size:13px;color:var(--ora);font-weight:600;">⚠️ Settimana scorsa: ${ST.p.sessions-missed}/${ST.p.sessions} allenamenti completati (${adherencePct}%)</div>
-    <div style="font-size:12px;color:var(--mut);margin-top:4px;line-height:1.5;">L'AI ha adattato calorie e cardio tenendo conto degli allenamenti saltati. Cerca di rispettare il piano questa settimana.</div>
+    <div style="font-size:13px;color:var(--ora);font-weight:600;">${(window.ST&&ST.lang==='en')?`⚠️ Last week: ${ST.p.sessions-missed}/${ST.p.sessions} workouts completed (${adherencePct}%)`:`⚠️ Settimana scorsa: ${ST.p.sessions-missed}/${ST.p.sessions} allenamenti completati (${adherencePct}%)`}</div>
+    <div style="font-size:12px;color:var(--mut);margin-top:4px;line-height:1.5;">${(window.ST&&ST.lang==='en')?`The AI adjusted calories and cardio accounting for skipped workouts. Try to stick to the plan this week.`:`L'AI ha adattato calorie e cardio tenendo conto degli allenamenti saltati. Cerca di rispettare il piano questa settimana.`}</div>
   </div>`:'';
   return`
   ${travelBanner}
@@ -12092,13 +12205,13 @@ window.renderBody = function(cW,mac,theme,pWeek,sx){
       ${trendKgPerWeek !== 0 && recentW.length >= 3 ? `
       <!-- TREND PESO + PROIEZIONE -->
       <div style="background:var(--surf);border-radius:12px;padding:12px;margin-bottom:10px;">
-        <div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:6px;">📉 TREND PESO (4 sett.)</div>
-        <div class="bebas" style="font-size:22px;line-height:1;color:${(ST.p?.t==='cut'?trendKgPerWeek<0:trendKgPerWeek>0)?'var(--gre)':'var(--red)'};">${trendKgPerWeek>0?'+':''}${trendKgPerWeek.toFixed(2)} kg/sett.</div>
+        <div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:6px;">${(window.ST&&ST.lang==='en')?'📉 WEIGHT TREND (4 wks)':'📉 TREND PESO (4 sett.)'}</div>
+        <div class="bebas" style="font-size:22px;line-height:1;color:${(ST.p?.t==='cut'?trendKgPerWeek<0:trendKgPerWeek>0)?'var(--gre)':'var(--red)'};">${trendKgPerWeek>0?'+':''}${trendKgPerWeek.toFixed(2)} ${(window.ST&&ST.lang==='en')?'kg/wk':'kg/sett.'}</div>
         ${projDate ? `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--bord);">
-          <div style="font-size:11px;color:var(--text);">A questo ritmo raggiungerai il tuo obiettivo di <strong style="color:var(--acc);">${ST.p.g}kg</strong> entro:</div>
+          <div style="font-size:11px;color:var(--text);">${(window.ST&&ST.lang==='en')?`At this rate you'll reach your goal of <strong style="color:var(--acc);">${ST.p.g}kg</strong> by:`:`A questo ritmo raggiungerai il tuo obiettivo di <strong style="color:var(--acc);">${ST.p.g}kg</strong> entro:`}</div>
           <div class="bebas" style="font-size:18px;color:var(--acc);margin-top:4px;">${projDate}</div>
-          <div style="font-size:10px;color:var(--mut);margin-top:2px;">~${daysToGoal} giorni</div>
-        </div>` : `<div style="font-size:11px;color:var(--ora);margin-top:6px;">⚠️ Trend non allineato all'obiettivo (${ST.p?.t==='cut'?'cut':'bulk'}). Rivedi il piano.</div>`}
+          <div style="font-size:10px;color:var(--mut);margin-top:2px;">~${daysToGoal} ${(window.ST&&ST.lang==='en')?'days':'giorni'}</div>
+        </div>` : `<div style="font-size:11px;color:var(--ora);margin-top:6px;">${(window.ST&&ST.lang==='en')?`⚠️ Trend not aligned with goal (${ST.p?.t==='cut'?'cut':'bulk'}). Review the plan.`:`⚠️ Trend non allineato all'obiettivo (${ST.p?.t==='cut'?'cut':'bulk'}). Rivedi il piano.`}</div>`}
       </div>` : ''}
 
       ${maxKcalSession > 0 ? `
@@ -13307,6 +13420,7 @@ window.renderShare = function(){
 // ── HELPER: alert AI proattivi (sessione 16) ──
 window.getCoachAlerts = function() {
   const alerts = [];
+  const _EN = (window.ST && ST.lang==='en'); const L=(it,en)=>_EN?en:it;
   const now = Date.now();
   const today = new Date().toISOString().slice(0,10);
   const wLog = ST.wLog || [];
@@ -13319,9 +13433,9 @@ window.getCoachAlerts = function() {
     alerts.push({
       level: 'warning',
       icon: '⚠️',
-      title: 'Allenamenti saltati',
-      msg: `Hai fatto ${last7.length}/${targetSess} sessioni questa settimana. Recupera con un workout breve oggi se puoi.`,
-      action: { label: 'Vai ad Allenamento', cb: "ST.tab='work';render()" }
+      title: L('Allenamenti saltati','Missed workouts'),
+      msg: L(`Hai fatto ${last7.length}/${targetSess} sessioni questa settimana. Recupera con un workout breve oggi se puoi.`,`You did ${last7.length}/${targetSess} sessions this week. Catch up with a short workout today if you can.`),
+      action: { label: L('Vai ad Allenamento','Go to Workout'), cb: "ST.tab='work';render()" }
     });
   }
 
@@ -13332,8 +13446,8 @@ window.getCoachAlerts = function() {
     const wMax = Math.max(...recentWeights.map(h => h.w));
     if (Math.abs(wMax - wMin) < 0.5) {
       alerts.push({
-        level: 'info', icon: '📊', title: 'Peso in stallo',
-        msg: `Il tuo peso è stabile da 3 settimane (${wMin.toFixed(1)}-${wMax.toFixed(1)}kg). ${ST.p?.t==='cut'?'Prova ad aumentare cardio o ridurre 100 kcal.':'Prova ad aumentare 100-200 kcal/die da fonti sane.'}`,
+        level: 'info', icon: '📊', title: L('Peso in stallo','Weight plateau'),
+        msg: L(`Il tuo peso è stabile da 3 settimane (${wMin.toFixed(1)}-${wMax.toFixed(1)}kg). ${ST.p?.t==='cut'?'Prova ad aumentare cardio o ridurre 100 kcal.':'Prova ad aumentare 100-200 kcal/die da fonti sane.'}`,`Your weight has been stable for 3 weeks (${wMin.toFixed(1)}-${wMax.toFixed(1)}kg). ${ST.p?.t==='cut'?'Try increasing cardio or cutting 100 kcal.':'Try adding 100-200 kcal/day from healthy sources.'}`),
         action: null
       });
     }
@@ -13343,8 +13457,8 @@ window.getCoachAlerts = function() {
   const todayPR = ST.wHistory?.[today] ? Object.values(ST.wHistory[today]).filter(e => e?.isPR).length : 0;
   if (todayPR > 0) {
     alerts.push({
-      level: 'success', icon: '🏆', title: `${todayPR} PR oggi!`,
-      msg: 'Stai progredendo. Il muscolo cresce nel recupero, non nell\'allenamento. Idratati e dormi bene stanotte.',
+      level: 'success', icon: '🏆', title: L(`${todayPR} PR oggi!`,`${todayPR} PRs today!`),
+      msg: L('Stai progredendo. Il muscolo cresce nel recupero, non nell\'allenamento. Idratati e dormi bene stanotte.','You\'re progressing. Muscle grows during recovery, not during training. Stay hydrated and sleep well tonight.'),
       action: null
     });
   }
@@ -13355,17 +13469,17 @@ window.getCoachAlerts = function() {
   if (completedWos.length >= 8) {
     if (!lastMeasure) {
       alerts.push({
-        level: 'info', icon: '📐', title: 'Mai prese le misure',
-        msg: 'Aggiungere le misure (vita, fianchi, braccia) ti dà un quadro più preciso del tuo progresso. Il peso da solo inganna.',
-        action: { label: 'Vai a Misure', cb: "ST.tab='measures';render()" }
+        level: 'info', icon: '📐', title: L('Mai prese le misure','Measurements never taken'),
+        msg: L('Aggiungere le misure (vita, fianchi, braccia) ti dà un quadro più preciso del tuo progresso. Il peso da solo inganna.','Adding measurements (waist, hips, arms) gives a more accurate picture of your progress. Weight alone is misleading.'),
+        action: { label: L('Vai a Misure','Go to Measurements'), cb: "ST.tab='measures';render()" }
       });
     } else {
       const daysSince = Math.floor((now - new Date(lastMeasure).getTime()) / 86400000);
       if (daysSince >= 30) {
         alerts.push({
-          level: 'info', icon: '📐', title: 'Misure da rifare',
-          msg: `Ultima volta ${daysSince} giorni fa. Rifai per vedere com'è cambiata la composizione corporea.`,
-          action: { label: 'Vai a Misure', cb: "ST.tab='measures';render()" }
+          level: 'info', icon: '📐', title: L('Misure da rifare','Time to re-measure'),
+          msg: L(`Ultima volta ${daysSince} giorni fa. Rifai per vedere com'è cambiata la composizione corporea.`,`Last taken ${daysSince} days ago. Re-measure to see how your body composition has changed.`),
+          action: { label: L('Vai a Misure','Go to Measurements'), cb: "ST.tab='measures';render()" }
         });
       }
     }
@@ -13381,8 +13495,8 @@ window.getCoachAlerts = function() {
     const avgSleep = last7days.reduce((s,v) => s+v, 0) / last7days.length;
     if (avgSleep < 6) {
       alerts.push({
-        level: 'warning', icon: '😴', title: 'Sonno insufficiente',
-        msg: `Media ultime notti: ${avgSleep.toFixed(1)}h. Sotto 6h riduci adattazioni e aumenti cortisolo. Mira a 7-8h.`,
+        level: 'warning', icon: '😴', title: L('Sonno insufficiente','Insufficient sleep'),
+        msg: L(`Media ultime notti: ${avgSleep.toFixed(1)}h. Sotto 6h riduci adattazioni e aumenti cortisolo. Mira a 7-8h.`,`Recent nights average: ${avgSleep.toFixed(1)}h. Below 6h reduces adaptation and raises cortisol. Aim for 7-8h.`),
         action: null
       });
     }
@@ -13391,8 +13505,8 @@ window.getCoachAlerts = function() {
   // 6. Settimana ottima
   if (last7.length >= targetSess && todayPR === 0) {
     alerts.push({
-      level: 'success', icon: '✨', title: 'Settimana on track',
-      msg: `Stai rispettando il programma alla grande. Continua così.`,
+      level: 'success', icon: '✨', title: L('Settimana on track','Week on track'),
+      msg: L(`Stai rispettando il programma alla grande. Continua così.`,`You're sticking to the program brilliantly. Keep it up.`),
       action: null
     });
   }
