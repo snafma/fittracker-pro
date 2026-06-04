@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION52-COACH-BILINGUAL">
+<meta name="ft-version" content="build-SESSION53-FULL-IT-AUDIT">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -520,7 +520,7 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
     <div class="spinner"></div>
     <div class="bebas" style="color:var(--text);font-size:28px;letter-spacing:3px;">SYSTEM BOOTING</div>
     <div style="color:var(--mut);font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:1px;">Connessione al Cloud Secure Database...</div>
-    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION52</div>
+    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION53</div>
   </div>
 </div>
 
@@ -2863,8 +2863,9 @@ window.checkTargetAdjustment = function(history, goal) {
 // Restituisce un riepilogo dettagliato della direzione: in linea, in ritardo, in anticipo, fermo
 // Utilizzato dal nuovo banner avanzato in home + tab Body
 window.getTargetSummary = function(history, goal) {
+  const _EN=(window.ST&&ST.lang==='en'); const L=(it,en)=>_EN?en:it;
   if (!history || history.length < 2 || !goal?.targetD) {
-    return { status: 'insufficient_data', label: 'Dati insufficienti' };
+    return { status: 'insufficient_data', label: L('Dati insufficienti','Insufficient data') };
   }
   // Ultimi 14 giorni di peso
   const recent = history.slice(-14);
@@ -2891,7 +2892,7 @@ window.getTargetSummary = function(history, goal) {
   if (!onCorrectSide || rem < 0.3) {
     return {
       status: 'reached',
-      label: '🎯 Obiettivo raggiunto!',
+      label: L('🎯 Obiettivo raggiunto!','🎯 Goal reached!'),
       remKg: rem,
       currentRate: wRate.toFixed(2),
       daysToTarget,
@@ -2903,7 +2904,7 @@ window.getTargetSummary = function(history, goal) {
   if (daysToTarget <= 0) {
     return {
       status: 'overdue',
-      label: '⚠️ Data obiettivo superata',
+      label: L('⚠️ Data obiettivo superata','⚠️ Target date passed'),
       remKg: rem,
       currentRate: wRate.toFixed(2),
       daysToTarget,
@@ -2919,32 +2920,32 @@ window.getTargetSummary = function(history, goal) {
   let status, label, advice;
   if (Math.abs(wRate) < 0.1) {
     status = 'plateau';
-    label = '⏸️ Stallo (peso fermo)';
+    label = L('⏸️ Stallo (peso fermo)','⏸️ Plateau (weight stuck)');
     advice = goal.t === 'cut'
-      ? 'Aumenta cardio di 2 sessioni/settimana oppure riduci 100 kcal/die. Spesso lo stallo si rompe in 7-10 giorni.'
-      : 'Aumenta 100-150 kcal/die da carboidrati o proteine. Controlla che dormi 7+ ore.';
+      ? L('Aumenta cardio di 2 sessioni/settimana oppure riduci 100 kcal/die. Spesso lo stallo si rompe in 7-10 giorni.','Add 2 cardio sessions/week or cut 100 kcal/day. The plateau usually breaks in 7-10 days.')
+      : L('Aumenta 100-150 kcal/die da carboidrati o proteine. Controlla che dormi 7+ ore.','Add 100-150 kcal/day from carbs or protein. Make sure you sleep 7+ hours.');
   } else if (ratio < 0.5) {
     status = 'behind';
-    label = '🐌 In ritardo';
-    advice = `Avanzi a ${wRate.toFixed(2)}kg/sett ma servirebbe ${reqRate.toFixed(2)}kg/sett. Adatta strategia o sposta la data.`;
+    label = L('🐌 In ritardo','🐌 Behind');
+    advice = L(`Avanzi a ${wRate.toFixed(2)}kg/sett ma servirebbe ${reqRate.toFixed(2)}kg/sett. Adatta strategia o sposta la data.`,`You're moving at ${wRate.toFixed(2)}kg/wk but you'd need ${reqRate.toFixed(2)}kg/wk. Adjust strategy or move the date.`);
   } else if (ratio < 0.85) {
     status = 'slow';
-    label = '🟡 Leggermente in ritardo';
-    advice = `Stai progredendo a ${wRate.toFixed(2)}kg/sett. Per centrare il target in tempo serve un piccolo aggiustamento.`;
+    label = L('🟡 Leggermente in ritardo','🟡 Slightly behind');
+    advice = L(`Stai progredendo a ${wRate.toFixed(2)}kg/sett. Per centrare il target in tempo serve un piccolo aggiustamento.`,`You're progressing at ${wRate.toFixed(2)}kg/wk. A small adjustment is needed to hit the target in time.`);
   } else if (ratio < 1.2) {
     status = 'on_track';
-    label = '✅ In linea';
-    advice = `Stai progredendo a ${wRate.toFixed(2)}kg/sett, in linea con il piano. Continua così.`;
+    label = L('✅ In linea','✅ On track');
+    advice = L(`Stai progredendo a ${wRate.toFixed(2)}kg/sett, in linea con il piano. Continua così.`,`You're progressing at ${wRate.toFixed(2)}kg/wk, in line with the plan. Keep it up.`);
   } else if (ratio < 2) {
     status = 'fast';
-    label = '🚀 In anticipo';
-    advice = `Stai progredendo più rapidamente del previsto (${wRate.toFixed(2)}kg/sett). Occhio a non perdere massa muscolare.`;
+    label = L('🚀 In anticipo','🚀 Ahead of schedule');
+    advice = L(`Stai progredendo più rapidamente del previsto (${wRate.toFixed(2)}kg/sett). Occhio a non perdere massa muscolare.`,`You're progressing faster than expected (${wRate.toFixed(2)}kg/wk). Watch out for muscle loss.`);
   } else {
     status = 'too_fast';
-    label = '⚠️ Troppo veloce';
+    label = L('⚠️ Troppo veloce','⚠️ Too fast');
     advice = goal.t === 'cut'
-      ? 'Calo peso troppo rapido: rischio perdita muscolare. Considera di aumentare le calorie di 150-200 kcal/die.'
-      : 'Aumento peso troppo rapido: è probabile sia grasso più che muscolo. Riduci 150-200 kcal/die.';
+      ? L('Calo peso troppo rapido: rischio perdita muscolare. Considera di aumentare le calorie di 150-200 kcal/die.','Weight dropping too fast: muscle loss risk. Consider increasing calories by 150-200 kcal/day.')
+      : L('Aumento peso troppo rapido: è probabile sia grasso più che muscolo. Riduci 150-200 kcal/die.','Weight gaining too fast: likely fat more than muscle. Cut 150-200 kcal/day.');
   }
 
   // ETA stimato a ratio attuale
@@ -5359,6 +5360,7 @@ window.AUTO_TRANS = {
   ": email, password (cifrata da Firebase, mai accessibile in chiaro), username derivato dall'email": ": email, password (encrypted by Firebase, never readable in plain text), username derived from email",
   ": solo se attivata espressamente, condividi username, sessioni allenamento, volume lifting e streak.": ": only if explicitly enabled, you share username, workout sessions, lifting volume and streak.",
   "I dati vengono conservati finché mantieni l'account attivo. Dopo eliminazione account,": "Data is kept as long as you keep the account active. After account deletion,",
+  "I dati vengono conservati finché mantieni l'account attivo. Dopo eliminazione account, cancellazione completa entro 30 giorni dai server Firebase. Classifica: rimozione entro 24 ore dalla disattivazione.": "Data is kept as long as you keep your account active. After account deletion, complete erasure within 30 days from Firebase servers. Leaderboard: removal within 24 hours of disabling.",
   "Password cifrate con scrypt (Firebase Auth). Firestore Security Rules permettono ad ogni utente di accedere solo ai propri dati.": "Passwords encrypted with scrypt (Firebase Auth). Firestore Security Rules let each user access only their own data.",
   "Per usare l'app devi accettare il disclaimer e l'informativa privacy. Cliccando \"Accetto\" confermi di aver letto entrambi.": "To use the app you must accept the disclaimer and privacy policy. By clicking \"I accept\" you confirm you've read both.",
   "Puoi cancellare il tuo account o esportare i dati in qualsiasi momento dalla Configurazione.": "You can delete your account or export your data at any time from Settings.",
@@ -5494,6 +5496,106 @@ window.AUTO_TRANS = {
   "Importa dati da bilance smart e app salute, esporta in formato standard.": "Import data from smart scales and health apps, export in standard format.",
   "Tocca per attivare/disattivare. I cibi corrispondenti verranno esclusi dai pasti suggeriti.": "Tap to enable/disable. Matching foods will be excluded from suggested meals.",
   "Salute": "Health", "salute": "health",
+  // ═══ BLOCCO 14 — nomi giorni/pasti, sezioni misure/shopping/stats, frasi varie ═══
+  // Nomi giorni workout (WO_SCH)
+  "PETTO & TRICIPITI": "CHEST & TRICEPS", "PETTO &amp; TRICIPITI": "CHEST &amp; TRICEPS",
+  "GAMBE & SPALLE": "LEGS & SHOULDERS", "GAMBE &amp; SPALLE": "LEGS &amp; SHOULDERS",
+  "SCHIENA & BICIPITI": "BACK & BICEPS", "SCHIENA &amp; BICIPITI": "BACK &amp; BICEPS",
+  "GLUTEI & CORE": "GLUTES & CORE", "GLUTEI &amp; CORE": "GLUTES &amp; CORE",
+  "CORPO COMPLETO": "FULL BODY",
+  // Nomi pasti (maiuscolo)
+  "COLAZIONE": "BREAKFAST", "PRANZO": "LUNCH", "CENA": "DINNER",
+  "SPUNTINO MATTINA": "MORNING SNACK", "SPUNTINO POMERIGGIO": "AFTERNOON SNACK",
+  // Home
+  "kg mancanti": "kg to go", "mancanti": "to go", "consecutivi": "consecutive",
+  "STREAK RECORD": "STREAK RECORD", "Nessuna attività": "No activity", "NESSUNA ATTIVITÀ": "NO ACTIVITY",
+  "Inserisci passi di oggi": "Enter today's steps", "ACQUA": "WATER", "SONNO": "SLEEP",
+  "11 ancora": "11 to go", "ancora": "to go",
+  "Salvato. Modifica e tocca AGG. per aggiornare.": "Saved. Edit and tap UPD. to update.",
+  "Salvato.": "Saved.", "Kcal bruciate": "Kcal burned",
+  "Tap su un giorno futuro per impostarlo Train/Rest": "Tap a future day to set it Train/Rest",
+  // Measures
+  "CIRCONFERENZE": "CIRCUMFERENCES", "Collo": "Neck", "COLLO": "NECK",
+  "Meta collo - orizzontale": "Mid neck - horizontal", "Larghezza massima - acromi": "Max width - acromion",
+  "Linea capezzoli - fine espirazione": "Nipple line - end of exhale",
+  "Punto piu stretto - ombelico": "Narrowest point - navel", "Punto più stretto - ombelico": "Narrowest point - navel",
+  "2 dita sotto lombelico": "2 fingers below navel", "BRACCIA": "ARMS", "GAMBE": "LEGS",
+  "Bicipite rilassato": "Relaxed biceps", "% Grasso Corporeo": "% Body Fat",
+  // Stats
+  "RIEPILOGO TOTALE": "TOTAL SUMMARY", "bruciate": "burned", "record battuti": "PRs hit",
+  "kg totali": "total kg", "⏱ TEMPO 30G": "⏱ TIME 30D", "TEMPO 30G": "TIME 30D",
+  "VOLUME 30G": "VOLUME 30D", "PR 30G": "PRs 30D", "CALORIE 30D": "CALORIES 30D",
+  // Diet
+  "Menù basato su goal, intolleranze e tipo di alimentazione. Train days = più carbo, rest days = più proteine.": "Menu based on goal, intolerances and diet type. Train days = more carbs, rest days = more protein.",
+  // Settings
+  "⚠️ INTOLLERANZE ALIMENTARI": "⚠️ FOOD INTOLERANCES", "🥗 TIPO DI ALIMENTAZIONE": "🥗 DIET TYPE",
+  "🧭 NAVIGA RAPIDAMENTE": "🧭 QUICK NAVIGATION", "🥜 Frutta Secca": "🥜 Nuts", "Frutta Secca": "Nuts",
+  // Share
+  "Invita amici e familiari a usare FitTracker PRO. Ognuno avrà il proprio account privato e i propri dati.": "Invite friends and family to use FitTracker PRO. Everyone gets their own private account and data.",
+  "Più veloce — apre la chat con il messaggio già pronto": "Faster — opens the chat with a ready-made message",
+  "• Kcal bruciate complessive (ultimi 7gg)": "• Total kcal burned (last 7 days)",
+  // Shopping categorie + frasi
+  "🥩 Carne &amp; Fish": "🥩 Meat &amp; Fish", "🥩 Carne & Fish": "🥩 Meat & Fish",
+  "🥬 Frutta &amp; Verdura": "🥬 Fruit &amp; Vegetables", "🥬 Frutta & Verdura": "🥬 Fruit & Vegetables",
+  "🥜 Snacks &amp; Frutta secca": "🥜 Snacks &amp; Nuts", "🥜 Snacks & Frutta secca": "🥜 Snacks & Nuts",
+  "1 conf. settimanale": "1 weekly pack", "conf. settimanale": "weekly pack",
+  // ═══ BLOCCO 15 — item cibo ricorrenti (menu del giorno + shopping) ═══
+  "Fiocchi di Latte 0%": "Cottage Cheese 0%", "Fiocchi di Latte": "Cottage Cheese",
+  "Ricotta o Fiocchi di Latte 0%": "Ricotta or Cottage Cheese 0%",
+  "Lenticchie o ceci cotti": "Cooked lentils or chickpeas", "ceci cotti": "cooked chickpeas",
+  "Bresaola o petto pollo": "Bresaola or chicken breast",
+  "1 fettina bresaola o petto pollo": "1 slice bresaola or chicken breast",
+  "petto pollo": "chicken breast", "Insalata mista": "Mixed salad",
+  "Verdure saltate": "Sautéed vegetables", "Verdure": "Vegetables", "verdure": "vegetables",
+  "saltate": "sautéed", "saltati": "sautéed", "saltato": "sautéed",
+  // ═══ BLOCCO 17 — sheet "scegli dal DB" categorie + label ═══
+  "Cereali": "Grains", "Cereali e Pane": "Grains & Bread", "Carne": "Meat", "Carne e Salumi": "Meat & Cold Cuts",
+  "Pesce": "Fish", "Latt.": "Dairy", "Latticini": "Dairy", "Uova": "Eggs", "Legumi": "Legumes",
+  "Verdure": "Vegetables", "Frutta": "Fruit", "Frutta e Frutta secca": "Fruit & Nuts",
+  "Condim.": "Cond.", "Condimenti e Salse": "Condiments & Sauces", "Bevande": "Drinks",
+  "Bevande e Integratori": "Drinks & Supplements", "Piatti": "Dishes", "Piatti Pronti": "Ready Meals",
+  "Pizze": "Pizzas", "Pizze e Focacce": "Pizzas & Focaccia", "Dolci": "Sweets", "Gelati": "Ice Cream",
+  "Fast": "Fast", "Fast Food": "Fast Food", "Snack": "Snacks", "Bar": "Bar", "Bar e Colazione": "Bar & Breakfast",
+  "I TUOI PIÙ FREQUENTI": "YOUR MOST FREQUENT", "RECENTI": "RECENT",
+  "SUGGERITI PER COLAZIONE": "SUGGESTED FOR BREAKFAST", "SUGGERITI PER PRANZO": "SUGGESTED FOR LUNCH",
+  "SUGGERITI PER CENA": "SUGGESTED FOR DINNER", "SUGGERITI PER SPUNTINO MATTINA": "SUGGESTED FOR MORNING SNACK",
+  "SUGGERITI PER SPUNTINO POMERIGGIO": "SUGGESTED FOR AFTERNOON SNACK", "SUGGERITI PER PASTO": "SUGGESTED FOR MEAL",
+  // sheet nuova ricetta
+  "INGREDIENTI (uno per riga)": "INGREDIENTS (one per line)", "PROCEDIMENTO (uno step per riga)": "STEPS (one step per line)",
+  "AGGIUNTE PERSONALI": "PERSONAL ADDITIONS",
+  "Pasta integrale": "Whole wheat pasta", "Pane integrale": "Whole wheat bread",
+  "Whole wheat bread": "Whole wheat bread",
+  "Frutta secca": "Nuts", "frutta secca": "nuts", "Almonds o noci": "Almonds or walnuts",
+  "Noci o Mandorle": "Walnuts or Almonds", "Noci": "Walnuts", "Mandorle": "Almonds",
+  "Tè o caffè": "Tea or coffee", "Caffè": "Coffee", "Caffè amaro": "Black coffee",
+  "Caffè nero (opzionale)": "Black coffee (optional)", "Caffè o Tè verde": "Coffee or green tea",
+  "1 kiwi": "1 kiwi", "1 frutto": "1 fruit", "Frutto": "Fruit", "1 frutto di stagione": "1 seasonal fruit",
+  "Cioccolato fondente 85%": "Dark chocolate 85%", "Cioccolato fondente 80%": "Dark chocolate 80%",
+  "Pasta di riso (cruda)": "Rice pasta (raw)", "Pasta integrale (cruda)": "Whole wheat pasta (raw)",
+  "Farro (crudo)": "Spelt (raw)", "Riso (crudo)": "Rice (raw)",
+  "3 uova sode": "3 boiled eggs", "1-2 uova alla coque": "1-2 soft-boiled eggs",
+  "2 uova strapazzate": "2 scrambled eggs", "uova sode": "boiled eggs",
+  "Tofu grigliato": "Grilled tofu", "2 fette tofu affumicato": "2 slices smoked tofu",
+  "1 fetta pane integrale tostato": "1 slice toasted whole wheat bread",
+  "1 fetta pane integrale": "1 slice whole wheat bread", "2 fette pane integrale": "2 slices whole wheat bread",
+  "1 fetta pane integrale + miele": "1 slice whole wheat bread + honey",
+  "Yogurt Greco 0%": "Greek Yogurt 0%", "Avena integrale": "Whole oats",
+  "Latte vegetale": "Plant milk", "Riso soffiato": "Puffed rice", "Riso soffiato se senza glutine": "puffed rice if gluten-free",
+  "1 cucchiaino burro di mandorle": "1 tsp almond butter", "1 gallette di riso": "1 rice cake",
+  "Ricotta": "Ricotta", "Proteica classica": "Classic protein",
+  // ═══ BLOCCO 16 — frasi GDPR esatte (come rese nel modale, con termini IT interni) ═══
+  ". I consigli su allenamento, calorie e macronutrienti sono generati con regole standard e ": ". Workout, calorie and macronutrient advice is generated with standard rules and is ",
+  ": Configurazione → \"Cancella il mio account\" (irreversibile, tripla conferma).": ": Settings → \"Delete my account\" (irreversible, triple confirmation).",
+  ": scarica i tuoi dati JSON dalla Configurazione → \"Esporta i miei dati\".": ": download your JSON data from Settings → \"Export my data\".",
+  ": solo se attivata espressamente, condividi username, sessioni allenamento, volume liftato, kcal bruciate (ultimi 7gg), streak, variazione peso percentuale (mai valore assoluto), strategia (cut/bulk).": ": only if explicitly enabled, you share username, workout sessions, lifting volume, calories burned (last 7 days), streak, weight change percentage (never absolute value), strategy (cut/bulk).",
+  // termini interni usati nei link GDPR (potrebbero apparire da soli)
+  "Cancella il mio account": "Delete my account", "Esporta i miei dati": "Export my data",
+  "Kcal bruciate": "Kcal burned", "kcal bruciate": "kcal burned",
+  "volume liftato": "lifting volume", "Volume liftato": "Lifting volume",
+  "Menù basato su obiettivo, intolleranze e tipo di alimentazione. Train days = più carbo, rest days = meno. Imposta manualmente train/rest dal calendario in tab Body.": "Menu based on goal, intolerances and diet type. Train days = more carbs, rest days = less. Manually set train/rest from the calendar in the Body tab.",
+  "Invita amici e familiari a usare FitTracker PRO. Ognuno avrà il proprio account privato salvato nel Cloud.": "Invite friends and family to use FitTracker PRO. Everyone gets their own private account saved in the Cloud.",
+  // GDPR residuo (frase spezzata: dopo "After account deletion," continua in italiano)
+  "i dati vengono eliminati definitivamente entro 30 giorni (backup inclusi).": "data is permanently deleted within 30 days (including backups).",
   "Puoi disattivarla in qualsiasi momento. Anche dopo la disattivazione, i tuoi dati condivisi verranno cancellati dal cloud entro 24 ore.": "You can disable it at any time. Even after disabling, your shared data will be deleted from the cloud within 24 hours.",
   // ═══ BLOCCO 12 — setup preferiti ═══
   "🍽️ I TUOI PIATTI / CIBI PREFERITI (opzionale)": "🍽️ YOUR FAVORITE MEALS / FOODS (optional)",
@@ -8735,14 +8837,14 @@ window._buildCheatDbListHtml=function(){
                       renderQuickRow(recent, 'RECENTI', 'var(--blu)', '🕐') +
                       renderQuickRow(suggested, `SUGGERITI PER ${slot==='col'?'COLAZIONE':slot==='sp1'?'SPUNTINO MATTINA':slot==='pra'?'PRANZO':slot==='sp2'?'SPUNTINO POMERIGGIO':slot==='cen'?'CENA':'PASTO'}`, 'var(--gre)', '💡');
     if (quickHtml) {
-      return quickHtml + `<div style="text-align:center;padding:14px 8px;font-size:11px;color:var(--mut);line-height:1.5;margin-top:6px;border-top:1px dashed var(--bord);padding-top:14px;">💡 Digita 2+ lettere o scegli una categoria per cercare tra ${(window.FOOD_DB||[]).length} cibi.</div>`;
+      return quickHtml + `<div style="text-align:center;padding:14px 8px;font-size:11px;color:var(--mut);line-height:1.5;margin-top:6px;border-top:1px dashed var(--bord);padding-top:14px;">${(window.ST&&ST.lang==='en')?`💡 Type 2+ letters or pick a category to search ${(window.FOOD_DB||[]).length} foods.`:`💡 Digita 2+ lettere o scegli una categoria per cercare tra ${(window.FOOD_DB||[]).length} cibi.`}</div>`;
     }
   }
 
   if(results.length===0){
     if(q.length>=2) return `<div style="text-align:center;padding:20px;font-size:12px;color:var(--mut);">Nessun cibo trovato per "${escapeHtml(q)}".<br>Usa il campo "veloce" per testo libero.</div>`;
     if(cat) return `<div style="text-align:center;padding:14px;font-size:12px;color:var(--mut);">Nessun cibo nella categoria.</div>`;
-    return `<div style="text-align:center;padding:14px;font-size:11px;color:var(--mut);line-height:1.5;">💡 Digita 2+ lettere o scegli una categoria per cercare tra ${(window.FOOD_DB||[]).length} cibi.</div>`;
+    return `<div style="text-align:center;padding:14px;font-size:11px;color:var(--mut);line-height:1.5;">${(window.ST&&ST.lang==='en')?`💡 Type 2+ letters or pick a category to search ${(window.FOOD_DB||[]).length} foods.`:`💡 Digita 2+ lettere o scegli una categoria per cercare tra ${(window.FOOD_DB||[]).length} cibi.`}</div>`;
   }
   return results.map(f=>{
     const c=window.FOOD_CATS?.find(x=>x.id===f.cat);
@@ -8969,7 +9071,7 @@ window._buildDropdownHtml=function(results, query, cat){
   }
   if(query.length>=2) return `<div style="text-align:center;padding:14px;font-size:12px;color:var(--mut);">Nessun cibo trovato per "${escapeHtml(query)}". Prova la modalità "Manuale" per aggiungerlo a mano.</div>`;
   if(cat) return `<div style="text-align:center;padding:10px;font-size:12px;color:var(--mut);">Nessun cibo nella categoria selezionata.</div>`;
-  return `<div style="text-align:center;padding:10px;font-size:11px;color:var(--mut);line-height:1.5;">💡 Digita almeno 2 lettere o seleziona una categoria per cercare tra ${window.FOOD_DB.length} cibi italiani.</div>`;
+  return `<div style="text-align:center;padding:10px;font-size:11px;color:var(--mut);line-height:1.5;">${(window.ST&&ST.lang==='en')?`💡 Type at least 2 letters or select a category to search ${window.FOOD_DB.length} foods.`:`💡 Digita almeno 2 lettere o seleziona una categoria per cercare tra ${window.FOOD_DB.length} cibi italiani.`}</div>`;
 };
 // Helper: render completo (fallback quando cambia la struttura della UI)
 window._updateFoodQueryFullRender=function(){
@@ -9570,68 +9672,69 @@ window.swapEx=function(slot,newId){
 window.closeSheet=function(){ST.sheet=null;ST.sheetData=null;render();}
 
 // PUNTO 15: tour guidato per nuovi utenti
-window.TOUR_STEPS=[
+window.getTourSteps = function(){ var _EN=(window.ST&&ST.lang==='en'); var L=function(it,en){return _EN?en:it;}; return [
   {
     icon:'👋',
-    title:'Benvenuto in FitTracker PRO!',
-    body:'Il tuo programma personalizzato è pronto. Ti accompagniamo in 10 passi rapidi tra tutte le funzionalità chiave dell\'app.',
+    title:L('Benvenuto in FitTracker PRO!','Welcome to FitTracker PRO!'),
+    body:L('Il tuo programma personalizzato è pronto. Ti accompagniamo in 10 passi rapidi tra tutte le funzionalità chiave dell\'app.','Your personalized program is ready. We\'ll walk you through all the key app features in 10 quick steps.'),
     color:'var(--acc)'
   },
   {
     icon:'🏠',
-    title:'Tab "Home" — Il tuo dashboard',
-    body:'Tutto in un colpo d\'occhio: messaggio del coach del giorno, allenamento o pasto di oggi, peso, sonno, sport outdoor, passi. Tocca ogni card per registrare i dati. Per il peso puoi anche connettere una bilancia Bluetooth (Mi Body, Renpho, YUNMAI, Withings) toccando "📡 CONNETTI BILANCIA BLUETOOTH".',
+    title:L('Tab "Home" — Il tuo dashboard','"Home" tab — Your dashboard'),
+    body:L('Tutto in un colpo d\'occhio: messaggio del coach del giorno, allenamento o pasto di oggi, peso, sonno, sport outdoor, passi. Tocca ogni card per registrare i dati. Per il peso puoi anche connettere una bilancia Bluetooth (Mi Body, Renpho, YUNMAI, Withings) toccando "📡 CONNETTI BILANCIA BLUETOOTH".','Everything at a glance: the coach\'s message of the day, today\'s workout or meal, weight, sleep, outdoor sport, steps. Tap each card to log data. For weight you can also connect a Bluetooth scale (Mi Body, Renpho, YUNMAI, Withings) by tapping "📡 CONNECT BLUETOOTH SCALE".'),
     color:'var(--blu)'
   },
   {
     icon:'🏋️',
-    title:'Tab "Allenamento"',
-    body:'Le schede del giorno: riscaldamento, esercizi e stretching. Premi ▶ INIZIA SERIE per partire. Per ogni serie inserisci peso E ripetizioni effettive. Banner live con DURATA · VOLUME · KCAL. Ogni esercizio ha SVG anatomico, errori comuni, respirazione e note libere persistenti. Quando batti un record vedi banner dorato 🏆 PR durante il recupero, con suoni di celebrazione.',
+    title:L('Tab "Allenamento"','"Workout" tab'),
+    body:L('Le schede del giorno: riscaldamento, esercizi e stretching. Premi ▶ INIZIA SERIE per partire. Per ogni serie inserisci peso E ripetizioni effettive. Banner live con DURATA · VOLUME · KCAL. Ogni esercizio ha SVG anatomico, errori comuni, respirazione e note libere persistenti. Quando batti un record vedi banner dorato 🏆 PR durante il recupero, con suoni di celebrazione.','Today\'s routines: warm-up, exercises and stretching. Tap ▶ START SET to begin. For each set enter the actual weight AND reps. Live banner with DURATION · VOLUME · KCAL. Each exercise has an anatomical SVG, common mistakes, breathing and persistent free notes. When you hit a record you see a golden 🏆 PR banner during rest, with celebration sounds.'),
     color:'var(--gre)'
   },
   {
     icon:'🥗',
-    title:'Tab "Alimentazione"',
-    body:'Piano giornaliero con kcal e macro target. Per ogni pasto vedi gli ingredienti dettagliati e tocca "📖 VEDI LA RICETTA COMPLETA" per la ricetta passo-passo (oltre 120 ricette italiane). Lo "spuntino pomeridiano" diventa "pre-workout" automaticamente solo se cade prima del tuo orario allenamento. Puoi personalizzare ogni pasto con "✏️ Personalizza".',
+    title:L('Tab "Alimentazione"','"Nutrition" tab'),
+    body:L('Piano giornaliero con kcal e macro target. Per ogni pasto vedi gli ingredienti dettagliati e tocca "📖 VEDI LA RICETTA COMPLETA" per la ricetta passo-passo (oltre 120 ricette italiane). Lo "spuntino pomeridiano" diventa "pre-workout" automaticamente solo se cade prima del tuo orario allenamento. Puoi personalizzare ogni pasto con "✏️ Personalizza".','Daily plan with kcal and macro targets. For each meal you see detailed ingredients and tap "📖 SEE FULL RECIPE" for the step-by-step recipe (over 120 Italian recipes). The "afternoon snack" automatically becomes "pre-workout" only if it falls before your training time. You can customize each meal with "✏️ Customize".'),
     color:'var(--ora)'
   },
   {
     icon:'🍔',
-    title:'Hai sgarrato? Nessun problema',
-    body:'Nella tab Alimentazione, sezione SGARRO: scegli prima il pasto a cui è riferito (chip arancioni: colazione, pranzo, ecc.) — quel pasto verrà automaticamente segnato come saltato. Poi "🔍 SCEGLI DAL DATABASE" per cercare tra 700 alimenti italiani. Per pizze, dolci, fast food ti chiede "QUANTE PORZIONI". Per drink (birra, spritz, mojito) "QUANTI". Macros e kcal calcolati con precisione realistica.',
+    title:L('Hai sgarrato? Nessun problema','Cheated? No problem'),
+    body:L('Nella tab Alimentazione, sezione SGARRO: scegli prima il pasto a cui è riferito (chip arancioni: colazione, pranzo, ecc.) — quel pasto verrà automaticamente segnato come saltato. Poi "🔍 SCEGLI DAL DATABASE" per cercare tra 700 alimenti italiani. Per pizze, dolci, fast food ti chiede "QUANTE PORZIONI". Per drink (birra, spritz, mojito) "QUANTI". Macros e kcal calcolati con precisione realistica.','In the Nutrition tab, CHEAT section: first choose the meal it refers to (orange chips: breakfast, lunch, etc.) — that meal will automatically be marked as skipped. Then "🔍 CHOOSE FROM DATABASE" to search among 700 Italian foods. For pizzas, sweets, fast food it asks "HOW MANY SERVINGS". For drinks (beer, spritz, mojito) "HOW MANY". Macros and kcal calculated with realistic precision.'),
     color:'var(--ora)'
   },
   {
     icon:'📐',
-    title:'Tab "Misure Corporee"',
-    body:'Registra circonferenze ogni 1-2 settimane: collo, spalle, petto, vita, addome, fianchi, braccia (dx/sx, rilassate e contratte), avambracci, cosce, polpacci, % grasso. Le frecce mostrano variazione vs ultima misura. ↓ verde = riduzione, ↑ rosso = aumento. Più dati = grafici progressione più precisi.',
+    title:L('Tab "Misure Corporee"','"Body Measurements" tab'),
+    body:L('Registra circonferenze ogni 1-2 settimane: collo, spalle, petto, vita, addome, fianchi, braccia (dx/sx, rilassate e contratte), avambracci, cosce, polpacci, % grasso. Le frecce mostrano variazione vs ultima misura. ↓ verde = riduzione, ↑ rosso = aumento. Più dati = grafici progressione più precisi.','Record circumferences every 1-2 weeks: neck, shoulders, chest, waist, abdomen, hips, arms (R/L, relaxed and flexed), forearms, thighs, calves, body fat %. Arrows show the change vs the last measurement. ↓ green = decrease, ↑ red = increase. More data = more accurate progression charts.'),
     color:'var(--blu)'
   },
   {
     icon:'📊',
-    title:'Tab "Analisi & Progressi" — Statistiche pro',
-    body:'Statistiche avanzate: Consistency Score 30 giorni, streak attuale e record, totali all-time (sessioni, volume in tonnellate, kcal, PR), trend peso 4 settimane con regressione lineare e PROIEZIONE data raggiungimento obiettivo. Confronto settimana corrente vs precedente. Top esercizi più frequenti. Banner deload week ogni 5 settimane per recupero programmato.',
+    title:L('Tab "Analisi & Progressi" — Statistiche pro','"Analysis & Progress" tab — Pro stats'),
+    body:L('Statistiche avanzate: Consistency Score 30 giorni, streak attuale e record, totali all-time (sessioni, volume in tonnellate, kcal, PR), trend peso 4 settimane con regressione lineare e PROIEZIONE data raggiungimento obiettivo. Confronto settimana corrente vs precedente. Top esercizi più frequenti. Banner deload week ogni 5 settimane per recupero programmato.','Advanced stats: 30-day Consistency Score, current and record streak, all-time totals (sessions, volume in tonnes, kcal, PRs), 4-week weight trend with linear regression and PROJECTION of the goal date. Current vs previous week comparison. Top most frequent exercises. Deload week banner every 5 weeks for planned recovery.'),
     color:'var(--purp)'
   },
   {
     icon:'🏆',
-    title:'Tab "Classifica Amici" (opzionale)',
-    body:'Confronto opzionale fra utenti: podio 🥇🥈🥉. Privacy by default: i tuoi dati NON vengono condivisi finché non dai consenso esplicito dalla tab. Si condividono solo metriche aggregate (sessioni, volume, streak) — mai peso assoluto, foto o misure. Disattivabile in qualsiasi momento.',
+    title:L('Tab "Classifica Amici" (opzionale)','"Friends Leaderboard" tab (optional)'),
+    body:L('Confronto opzionale fra utenti: podio 🥇🥈🥉. Privacy by default: i tuoi dati NON vengono condivisi finché non dai consenso esplicito dalla tab. Si condividono solo metriche aggregate (sessioni, volume, streak) — mai peso assoluto, foto o misure. Disattivabile in qualsiasi momento.','Optional comparison between users: podium 🥇🥈🥉. Privacy by default: your data is NOT shared until you give explicit consent from the tab. Only aggregate metrics are shared (sessions, volume, streak) — never absolute weight, photos or measurements. Can be disabled at any time.'),
     color:'var(--ora)'
   },
   {
     icon:'✈️',
-    title:'Modalità Trasferta + Notifiche',
-    body:'Configurazione → "✈️ MODALITÀ TRASFERTA" se sei in viaggio: ti chiede se hai una palestra, quanti giorni, quanto tempo, e adatta esercizi (anche bodyweight per stanza/hotel) e dieta. La sezione "🔔 NOTIFICHE" attiva promemoria locali per allenamento, pasti e pesata settimanale.',
+    title:L('Modalità Trasferta + Notifiche','Travel Mode + Notifications'),
+    body:L('Configurazione → "✈️ MODALITÀ TRASFERTA" se sei in viaggio: ti chiede se hai una palestra, quanti giorni, quanto tempo, e adatta esercizi (anche bodyweight per stanza/hotel) e dieta. La sezione "🔔 NOTIFICHE" attiva promemoria locali per allenamento, pasti e pesata settimanale.','Settings → "✈️ TRAVEL MODE" if you\'re traveling: it asks if you have a gym, how many days, how much time, and adapts exercises (including bodyweight for room/hotel) and diet. The "🔔 NOTIFICATIONS" section enables local reminders for workout, meals and weekly weigh-in.'),
     color:'var(--ora)'
   },
   {
     icon:'⚙️',
-    title:'Tab "Configurazione"',
-    body:'Tutte le impostazioni in card separate: profilo, programma, orari, intolleranze, focus, dieta, integratori, preferiti. Ricalcolo coaching AI. Sezione Account & Sicurezza (logout/cancellazione tripla conferma). Sezione "🛡️ Privacy & I Miei Dati" per export JSON GDPR. Sezione "🔌 Integrazioni" per Bluetooth bilance, Apple Health, MyFitnessPal CSV. Buon allenamento! 💪',
+    title:L('Tab "Configurazione"','"Settings" tab'),
+    body:L('Tutte le impostazioni in card separate: profilo, programma, orari, intolleranze, focus, dieta, integratori, preferiti. Ricalcolo coaching AI. Sezione Account & Sicurezza (logout/cancellazione tripla conferma). Sezione "🛡️ Privacy & I Miei Dati" per export JSON GDPR. Sezione "🔌 Integrazioni" per Bluetooth bilance, Apple Health, MyFitnessPal CSV. Buon allenamento! 💪','All settings in separate cards: profile, program, schedules, intolerances, focus, diet, supplements, favorites. AI coaching recalculation. Account & Security section (logout/triple-confirm deletion). "🛡️ Privacy & My Data" section for GDPR JSON export. "🔌 Integrations" section for Bluetooth scales, Apple Health, MyFitnessPal CSV. Enjoy your training! 💪'),
     color:'var(--purp)'
   }
-];
+]; };
+Object.defineProperty(window,'TOUR_STEPS',{get:function(){return window.getTourSteps();},configurable:true});
 
 window.tourStep=0;
 window.startTour=function(){
@@ -9795,7 +9898,7 @@ window.renderTour=function(){
     <div style="background:var(--bg);border:2px solid ${s.color};border-radius:20px;max-width:420px;width:100%;padding:24px;box-shadow:0 0 40px ${s.color}40;">
       <!-- Skip button -->
       <div style="text-align:right;margin-bottom:8px;">
-        <button class="btn-s" style="background:transparent;color:var(--mut);font-size:11px;padding:4px 8px;border:1px solid var(--bord);" onclick="skipTour()">Salta tour ✕</button>
+        <button class="btn-s" style="background:transparent;color:var(--mut);font-size:11px;padding:4px 8px;border:1px solid var(--bord);" onclick="skipTour()">${(window.ST&&ST.lang==='en')?'Skip tour ✕':'Salta tour ✕'}</button>
       </div>
       <!-- Icon -->
       <div style="text-align:center;font-size:64px;margin:8px 0 14px;line-height:1;">${s.icon}</div>
@@ -9809,9 +9912,9 @@ window.renderTour=function(){
       </div>
       <!-- Navigation -->
       <div style="display:flex;gap:8px;align-items:center;">
-        ${(window.tourStep||0)>0?`<button class="btn btn-action" style="flex:1;padding:12px;font-family:'Bebas Neue';font-size:15px;" onclick="tourPrev()">← INDIETRO</button>`:`<div style="flex:1;"></div>`}
+        ${(window.tourStep||0)>0?`<button class="btn btn-action" style="flex:1;padding:12px;font-family:'Bebas Neue';font-size:15px;" onclick="tourPrev()">${(window.ST&&ST.lang==='en')?'← BACK':'← INDIETRO'}</button>`:`<div style="flex:1;"></div>`}
         <div style="font-size:11px;color:var(--mut);padding:0 8px;">${cur} / ${total}</div>
-        <button class="btn" style="flex:1;padding:12px;font-family:'Bebas Neue';font-size:15px;background:${s.color};color:${s.color==='var(--acc)'?'#000':'#fff'};" onclick="tourNext()">${cur===total?'INIZIA! ✓':'AVANTI →'}</button>
+        <button class="btn" style="flex:1;padding:12px;font-family:'Bebas Neue';font-size:15px;background:${s.color};color:${s.color==='var(--acc)'?'#000':'#fff'};" onclick="tourNext()">${cur===total?((window.ST&&ST.lang==='en')?'START! ✓':'INIZIA! ✓'):((window.ST&&ST.lang==='en')?'NEXT →':'AVANTI →')}</button>
       </div>
     </div>
   </div>`;
@@ -10198,7 +10301,7 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
   const __yesterdaySleep = ST.life[__yesterdayKey]?.sleep;
   const sleepDefault = __yesterdaySleep && __yesterdaySleep > 0 ? __yesterdaySleep : 7.5;
   const sleepValue = sleepSavedToday || sleepDefault;
-  const sleepHint = sleepSaved ? `Salvato. Modifica e tocca AGG. per aggiornare.` : (__yesterdaySleep ? `Ieri hai dormito ${__yesterdaySleep}h. Conferma o modifica.` : 'Indica le ore dormite ieri notte (4-12h)');
+  const sleepHint = sleepSaved ? ((window.ST&&ST.lang==='en')?`Saved. Edit and tap UPD. to update.`:`Salvato. Modifica e tocca AGG. per aggiornare.`) : (__yesterdaySleep ? ((window.ST&&ST.lang==='en')?`You slept ${__yesterdaySleep}h yesterday. Confirm or edit.`:`Ieri hai dormito ${__yesterdaySleep}h. Conferma o modifica.`) : ((window.ST&&ST.lang==='en')?'Enter how many hours you slept last night (4-12h)':'Indica le ore dormite ieri notte (4-12h)'));
   const noTraining=(ST.p.sessions||0)===0;
   const todayActs=(ST.activities&&ST.activities[t2])||[];
   const actsKcal=todayActs.reduce((s,a)=>s+(a.kcal||0),0);
@@ -10329,7 +10432,7 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
         <button class="btn" style="padding:14px 8px;background:var(--acc);color:#000;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;border:none;border-radius:12px;" onclick="logMeal('${mealToShow.id}',${PCT_H[mealToShow.id]},${mac.kcal},${mac.prot},${mac.carb},${mac.fat},${mealCustom?mealKcal:'null'})">✓ FATTO</button>
-        <button class="btn" style="padding:14px 8px;background:var(--surf);color:var(--red);border:1.5px solid var(--red);font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;border-radius:12px;" onclick="skipMeal('${mealToShow.id}')">✕ SALTO</button>
+        <button class="btn" style="padding:14px 8px;background:var(--surf);color:var(--red);border:1.5px solid var(--red);font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;border-radius:12px;" onclick="skipMeal('${mealToShow.id}')">${t('h_skip')}</button>
       </div>
       <button onclick="goToMeal('${mealToShow.id}')" style="width:100%;background:transparent;border:none;color:var(--mut);font-size:11px;padding:4px;text-decoration:underline;cursor:pointer;">vedi dettaglio cibi →</button>
     </div>`;
@@ -10499,20 +10602,20 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
 
   // Formatto le date
   const tgtDate = ST.p.targetD ? new Date(ST.p.targetD) : null;
-  const tgtLabel = tgtDate ? tgtDate.toLocaleDateString('it-IT', { day:'numeric', month:'short', year:'2-digit' }) : '—';
+  const tgtLabel = tgtDate ? tgtDate.toLocaleDateString((window.ST&&ST.lang==='en')?'en-GB':'it-IT', { day:'numeric', month:'short', year:'2-digit' }) : '—';
   const etaDate = etaInfo?.etaDate ? new Date(etaInfo.etaDate) : null;
-  const etaLabel = etaDate ? etaDate.toLocaleDateString('it-IT', { day:'numeric', month:'short', year:'2-digit' }) : null;
+  const etaLabel = etaDate ? etaDate.toLocaleDateString((window.ST&&ST.lang==='en')?'en-GB':'it-IT', { day:'numeric', month:'short', year:'2-digit' }) : null;
   const etaDiffDays = etaInfo?.etaDiffDays;
   // SESSIONE 47: messaggio quando la stima reale non è ancora calcolabile
-  let etaPendingMsg = 'Pesati per qualche giorno';
+  let etaPendingMsg = (window.ST&&ST.lang==='en')?'Weigh in for a few days':'Pesati per qualche giorno';
   if (etaInfo == null) {
     // getTargetSummary ha ritornato null o senza etaDate: capisco perché
     const sm = (typeof window.getTargetSummary === 'function') ? window.getTargetSummary(ST.h, ST.p) : null;
-    if (!sm || sm.status === 'insufficient_data') etaPendingMsg = 'Servono più pesate';
-    else if (sm.status === 'reached') etaPendingMsg = '🎯 Obiettivo raggiunto!';
-    else if (sm.status === 'overdue') etaPendingMsg = 'Data superata';
-    else if (sm.status === 'plateau') etaPendingMsg = 'Peso fermo: continua';
-    else etaPendingMsg = 'In calcolo…';
+    if (!sm || sm.status === 'insufficient_data') etaPendingMsg = (window.ST&&ST.lang==='en')?'Need more weigh-ins':'Servono più pesate';
+    else if (sm.status === 'reached') etaPendingMsg = (window.ST&&ST.lang==='en')?'🎯 Goal reached!':'🎯 Obiettivo raggiunto!';
+    else if (sm.status === 'overdue') etaPendingMsg = (window.ST&&ST.lang==='en')?'Date passed':'Data superata';
+    else if (sm.status === 'plateau') etaPendingMsg = (window.ST&&ST.lang==='en')?'Weight stuck: keep going':'Peso fermo: continua';
+    else etaPendingMsg = (window.ST&&ST.lang==='en')?'Calculating…':'In calcolo…';
   }
   // Colore dot ETA: verde se ≤ data target, giallo se +1-21gg, rosso se >21gg
   let etaCol = 'var(--gre)';
@@ -10524,10 +10627,10 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
   const headerHtml=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;padding:0 2px;">
     <div onclick="ST.tab='set';render()" style="width:46px;height:46px;border-radius:50%;background:${theme}25;border:2px solid ${theme}60;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:20px;color:${theme};cursor:pointer;flex-shrink:0;">${AU.user.charAt(0).toUpperCase()}</div>
     <div style="flex:1;min-width:0;">
-      <div style="font-size:10px;font-weight:700;color:${theme};letter-spacing:1.5px;">${ST.p.t==='cut'?'DEFINIZIONE':'MASSA'} · SETT.${pWeek}${isD?' · DELOAD':''}</div>
+      <div style="font-size:10px;font-weight:700;color:${theme};letter-spacing:1.5px;">${ST.p.t==='cut'?((window.ST&&ST.lang==='en')?'CUTTING':'DEFINIZIONE'):((window.ST&&ST.lang==='en')?'BULKING':'MASSA')} · ${(window.ST&&ST.lang==='en')?'WK.':'SETT.'}${pWeek}${isD?' · DELOAD':''}</div>
       <div style="display:flex;align-items:baseline;gap:6px;">
         <span class="bebas" style="font-size:26px;line-height:1;">${cW}<span style="font-size:13px;color:var(--mut);">kg</span></span>
-        <span style="font-size:11px;color:var(--mut);">→ ${ST.p.g}kg · <strong style="color:${theme};">${kgLeft}kg mancanti</strong></span>
+        <span style="font-size:11px;color:var(--mut);">→ ${ST.p.g}kg · <strong style="color:${theme};">${kgLeft}kg ${(window.ST&&ST.lang==='en')?'to go':'mancanti'}</strong></span>
       </div>
     </div>
     ${stk>=2?`<div style="background:rgba(255,104,53,.15);color:var(--ora);padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap;">🔥 ${stk}gg</div>`:''}
@@ -10536,7 +10639,7 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
   <!-- ── PROGRESSO ENHANCED (sessione 26) ── -->
   <div onclick="ST.tab='body';render()" style="background:var(--card);border:1px solid var(--bord);border-radius:14px;padding:11px 13px;margin:0 2px 14px;cursor:pointer;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:10px;letter-spacing:.8px;">
-      <span style="color:var(--mut);font-weight:700;">PROGRESSO OBIETTIVO · ${progressEnh}%</span>
+      <span style="color:var(--mut);font-weight:700;">${(window.ST&&ST.lang==='en')?'GOAL PROGRESS':'PROGRESSO OBIETTIVO'} · ${progressEnh}%</span>
       <span style="color:${theme};font-weight:700;">${doneKg.toFixed(1)}/${totalKg.toFixed(1)} kg</span>
     </div>
     <div style="background:var(--surf);border-radius:99px;height:7px;overflow:hidden;position:relative;">
@@ -10545,15 +10648,15 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
     ${tgtDate ? `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px;font-size:10px;">
       <div style="background:var(--surf);border-radius:8px;padding:6px 8px;">
-        <div style="color:var(--mut);line-height:1.2;">📌 Target scelto</div>
+        <div style="color:var(--mut);line-height:1.2;">📌 ${(window.ST&&ST.lang==='en')?'Chosen target':'Target scelto'}</div>
         <div style="color:var(--text);font-weight:700;">${tgtLabel}</div>
       </div>
       <div style="background:var(--surf);border-radius:8px;padding:6px 8px;border:1px solid ${etaLabel ? etaCol+'30' : 'var(--bord)'};">
         ${etaLabel ? `
-        <div style="color:${etaCol};line-height:1.2;">🎯 Stima reale ${etaDiffDays > 0 ? '<span style="font-size:9px;">(+'+etaDiffDays+'gg)</span>' : etaDiffDays < 0 ? '<span style="font-size:9px;">('+etaDiffDays+'gg)</span>' : '<span style="font-size:9px;">(in tempo)</span>'}</div>
+        <div style="color:${etaCol};line-height:1.2;">🎯 ${(window.ST&&ST.lang==='en')?'Real estimate':'Stima reale'} ${etaDiffDays > 0 ? '<span style="font-size:9px;">(+'+etaDiffDays+((window.ST&&ST.lang==='en')?'d)':'gg)')+'</span>' : etaDiffDays < 0 ? '<span style="font-size:9px;">('+etaDiffDays+((window.ST&&ST.lang==='en')?'d)':'gg)')+'</span>' : '<span style="font-size:9px;">'+((window.ST&&ST.lang==='en')?'(on time)':'(in tempo)')+'</span>'}</div>
         <div style="color:${etaCol};font-weight:700;">${etaLabel}</div>
         ` : `
-        <div style="color:var(--mut);line-height:1.2;">🎯 Stima reale</div>
+        <div style="color:var(--mut);line-height:1.2;">🎯 ${(window.ST&&ST.lang==='en')?'Real estimate':'Stima reale'}</div>
         <div style="color:var(--mut);font-weight:600;font-size:9px;line-height:1.2;margin-top:2px;">${etaPendingMsg}</div>
         `}
       </div>
@@ -10567,7 +10670,7 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
   const todayBlock=`<div style="background:var(--card);border:1px solid var(--bord);border-radius:18px;padding:16px;margin-bottom:10px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
       <div style="font-size:12px;font-weight:700;color:var(--mut);letter-spacing:1.5px;">📊 ${t('h_today_numbers')}</div>
-      <div style="font-size:12px;color:var(--mut);">${now.toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})}</div>
+      <div style="font-size:12px;color:var(--mut);">${now.toLocaleDateString((window.ST&&ST.lang==='en')?'en-GB':'it-IT',{weekday:'short',day:'numeric',month:'short'})}</div>
     </div>
 
     <!-- CALORIE — card grande full-width -->
@@ -10599,7 +10702,7 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
         </div>
         <div style="font-size:13px;color:var(--mut);">${todayActs.length} ${todayActs.length===1?'attività':'attività'} · ${actsMin} minuti totali</div>
       ` : `
-        <div class="bebas" style="font-size:24px;line-height:1;color:var(--mut);margin-bottom:6px;">Nessuna attività</div>
+        <div class="bebas" style="font-size:24px;line-height:1;color:var(--mut);margin-bottom:6px;">${(window.ST&&ST.lang==='en')?'No activity':'Nessuna attività'}</div>
         <div style="font-size:14px;color:var(--blu);font-weight:700;">+ Tocca per tracciare un'attività</div>
       `}
     </div>
@@ -10607,24 +10710,24 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
     <!-- PASSI -->
     <div style="background:var(--surf);border-radius:14px;padding:16px;border:1.5px solid ${stepsSaved?'var(--gre)':'var(--bord)'};margin-bottom:10px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-        <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:24px;">🚶</span><span style="font-size:13px;color:var(--mut);font-weight:700;letter-spacing:1.5px;">PASSI OGGI</span></div>
-        <div class="bebas" style="font-size:24px;color:${stepsSaved?'var(--gre)':'var(--text)'};">${stepsValue.toLocaleString('it-IT')}<span style="font-size:13px;color:var(--mut);"> / ${stepsGoal.toLocaleString('it-IT')}</span></div>
+        <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:24px;">🚶</span><span style="font-size:13px;color:var(--mut);font-weight:700;letter-spacing:1.5px;">${(window.ST&&ST.lang==='en')?'STEPS TODAY':'PASSI OGGI'}</span></div>
+        <div class="bebas" style="font-size:24px;color:${stepsSaved?'var(--gre)':'var(--text)'};">${stepsValue.toLocaleString((window.ST&&ST.lang==='en')?'en-US':'it-IT')}<span style="font-size:13px;color:var(--mut);"> / ${stepsGoal.toLocaleString((window.ST&&ST.lang==='en')?'en-US':'it-IT')}</span></div>
       </div>
       <div style="display:flex;gap:8px;">
-        <input type="number" id="nStep" value="${stepsValue||''}" placeholder="Inserisci passi di oggi" style="margin:0;font-size:15px;padding:14px;text-align:center;flex:1;min-height:50px;border-radius:10px;">
-        <button onclick="logSteps()" style="background:${stepsSaved?'var(--blu)':'var(--gre)'};color:#000;border:none;border-radius:10px;padding:14px 22px;font-size:15px;font-weight:700;cursor:pointer;flex-shrink:0;min-height:50px;min-width:64px;">${stepsSaved?'AGG.':'SALVA'}</button>
+        <input type="number" id="nStep" value="${stepsValue||''}" placeholder="${(window.ST&&ST.lang==='en')?'Enter today\'s steps':'Inserisci passi di oggi'}" style="margin:0;font-size:15px;padding:14px;text-align:center;flex:1;min-height:50px;border-radius:10px;">
+        <button onclick="logSteps()" style="background:${stepsSaved?'var(--blu)':'var(--gre)'};color:#000;border:none;border-radius:10px;padding:14px 22px;font-size:15px;font-weight:700;cursor:pointer;flex-shrink:0;min-height:50px;min-width:64px;">${stepsSaved?((window.ST&&ST.lang==='en')?'UPD.':'AGG.'):((window.ST&&ST.lang==='en')?'SAVE':'SALVA')}</button>
       </div>
     </div>
 
     <!-- ACQUA -->
     <div style="background:var(--surf);border-radius:14px;padding:16px;border:1.5px solid ${todayWater>0?'var(--blu)':'var(--bord)'};margin-bottom:10px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-        <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:24px;">💧</span><span style="font-size:13px;color:var(--mut);font-weight:700;letter-spacing:1.5px;">ACQUA</span></div>
-        <div class="bebas" style="font-size:24px;color:var(--blu);">${todayWater}<span style="font-size:13px;color:var(--mut);"> / ${waterGoal} bicchieri</span></div>
+        <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:24px;">💧</span><span style="font-size:13px;color:var(--mut);font-weight:700;letter-spacing:1.5px;">${(window.ST&&ST.lang==='en')?'WATER':'ACQUA'}</span></div>
+        <div class="bebas" style="font-size:24px;color:var(--blu);">${todayWater}<span style="font-size:13px;color:var(--mut);"> / ${waterGoal} ${(window.ST&&ST.lang==='en')?'glasses':'bicchieri'}</span></div>
       </div>
       <div style="display:flex;gap:8px;">
         <button onclick="logWater(-1)" style="flex:1;background:var(--bg);border:1.5px solid var(--bord);color:var(--mut);border-radius:10px;padding:14px;font-size:22px;font-weight:700;cursor:pointer;min-height:50px;">−</button>
-        <div style="flex:2;display:flex;align-items:center;justify-content:center;background:var(--bg);border-radius:10px;font-size:13px;color:var(--mut);font-weight:600;">${todayWater>=waterGoal?'🎯 Obiettivo!':todayWater>0?`${waterGoal-todayWater} ancora`:'Tocca + per aggiungere'}</div>
+        <div style="flex:2;display:flex;align-items:center;justify-content:center;background:var(--bg);border-radius:10px;font-size:13px;color:var(--mut);font-weight:600;">${todayWater>=waterGoal?((window.ST&&ST.lang==='en')?'🎯 Goal!':'🎯 Obiettivo!'):todayWater>0?`${waterGoal-todayWater} ${(window.ST&&ST.lang==='en')?'to go':'ancora'}`:((window.ST&&ST.lang==='en')?'Tap + to add':'Tocca + per aggiungere')}</div>
         <button onclick="logWater(1)" style="flex:1;background:rgba(96,165,250,.2);border:1.5px solid var(--blu);color:var(--blu);border-radius:10px;padding:14px;font-size:22px;font-weight:700;cursor:pointer;min-height:50px;">+</button>
       </div>
     </div>
@@ -10632,28 +10735,28 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
     <!-- PESO -->
     <div style="background:var(--surf);border-radius:14px;padding:16px;border:1.5px solid ${weightSaved?'var(--gre)':'var(--bord)'};margin-bottom:10px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-        <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:24px;">⚖️</span><span style="font-size:13px;color:var(--mut);font-weight:700;letter-spacing:1.5px;">PESO OGGI</span></div>
+        <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:24px;">⚖️</span><span style="font-size:13px;color:var(--mut);font-weight:700;letter-spacing:1.5px;">${(window.ST&&ST.lang==='en')?'WEIGHT TODAY':'PESO OGGI'}</span></div>
         <div class="bebas" style="font-size:24px;color:${weightSaved?'var(--gre)':'var(--text)'};">${wEntry?wEntry.w:cW}<span style="font-size:13px;color:var(--mut);"> kg</span></div>
       </div>
       <div style="display:flex;gap:8px;">
-        <input type="number" id="nW" value="${wEntry?wEntry.w:''}" placeholder="Es. ${cW}" step=".1" style="margin:0;font-size:15px;padding:14px;text-align:center;flex:1;min-height:50px;border-radius:10px;">
-        <button onclick="logWeight()" style="background:${weightSaved?'var(--blu)':'var(--gre)'};color:#000;border:none;border-radius:10px;padding:14px 22px;font-size:15px;font-weight:700;cursor:pointer;flex-shrink:0;min-height:50px;min-width:64px;">${weightSaved?'AGG.':'SALVA'}</button>
+        <input type="number" id="nW" value="${wEntry?wEntry.w:''}" placeholder="${(window.ST&&ST.lang==='en')?'e.g. ':'Es. '}${cW}" step=".1" style="margin:0;font-size:15px;padding:14px;text-align:center;flex:1;min-height:50px;border-radius:10px;">
+        <button onclick="logWeight()" style="background:${weightSaved?'var(--blu)':'var(--gre)'};color:#000;border:none;border-radius:10px;padding:14px 22px;font-size:15px;font-weight:700;cursor:pointer;flex-shrink:0;min-height:50px;min-width:64px;">${weightSaved?((window.ST&&ST.lang==='en')?'UPD.':'AGG.'):((window.ST&&ST.lang==='en')?'SAVE':'SALVA')}</button>
       </div>
       ${('bluetooth' in navigator) ? `<button onclick="connectBluetoothScale()" style="margin-top:10px;width:100%;padding:12px;background:linear-gradient(135deg,rgba(96,165,250,.15),rgba(96,165,250,.05));border:2px solid var(--blu);color:var(--blu);border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:.3px;">
         <span style="font-size:18px;">📡</span>
-        <span>LEGGI DA BILANCIA BLUETOOTH</span>
+        <span>${(window.ST&&ST.lang==='en')?'READ FROM BLUETOOTH SCALE':'LEGGI DA BILANCIA BLUETOOTH'}</span>
       </button>` : ''}
     </div>
 
     <!-- SONNO -->
     <div style="background:var(--surf);border-radius:14px;padding:16px;border:1.5px solid ${sleepSaved?'var(--purp)':'var(--bord)'};">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-        <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:24px;">😴</span><span style="font-size:13px;color:var(--mut);font-weight:700;letter-spacing:1.5px;">SONNO</span></div>
+        <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:24px;">😴</span><span style="font-size:13px;color:var(--mut);font-weight:700;letter-spacing:1.5px;">${(window.ST&&ST.lang==='en')?'SLEEP':'SONNO'}</span></div>
         <div class="bebas" style="font-size:24px;color:${sleepSaved?'var(--purp)':'var(--text)'};">${sleepValue}<span style="font-size:13px;color:var(--mut);"> h</span></div>
       </div>
       <div style="display:flex;gap:8px;">
-        <input type="number" id="nSleep" value="${sleepSavedToday||''}" placeholder="Es. ${sleepDefault}" step=".5" min="0" max="14" style="margin:0;font-size:15px;padding:14px;text-align:center;flex:1;min-height:50px;border-radius:10px;">
-        <button onclick="logSleepBtn()" style="background:${sleepSaved?'var(--blu)':'var(--purp)'};color:#fff;border:none;border-radius:10px;padding:14px 22px;font-size:15px;font-weight:700;cursor:pointer;flex-shrink:0;min-height:50px;min-width:64px;">${sleepSaved?'AGG.':'SALVA'}</button>
+        <input type="number" id="nSleep" value="${sleepSavedToday||''}" placeholder="${(window.ST&&ST.lang==='en')?'e.g. ':'Es. '}${sleepDefault}" step=".5" min="0" max="14" style="margin:0;font-size:15px;padding:14px;text-align:center;flex:1;min-height:50px;border-radius:10px;">
+        <button onclick="logSleepBtn()" style="background:${sleepSaved?'var(--blu)':'var(--purp)'};color:#fff;border:none;border-radius:10px;padding:14px 22px;font-size:15px;font-weight:700;cursor:pointer;flex-shrink:0;min-height:50px;min-width:64px;">${sleepSaved?((window.ST&&ST.lang==='en')?'UPD.':'AGG.'):((window.ST&&ST.lang==='en')?'SAVE':'SALVA')}</button>
       </div>
       <div style="font-size:11px;color:var(--mut);margin-top:8px;text-align:center;">${sleepHint}</div>
     </div>
@@ -10664,8 +10767,8 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
   // ═══════════════════════════════════════════════════════════
   const bannerHtml = bannerAllDone ? `<div style="background:linear-gradient(135deg,rgba(34,197,94,.12),rgba(34,197,94,.04));border:1.5px solid var(--gre);border-radius:16px;padding:14px 16px;margin-bottom:10px;text-align:center;">
     <div style="font-size:22px;margin-bottom:4px;">🎯</div>
-    <div style="font-size:13px;font-weight:700;color:var(--gre);">OGGI HAI FATTO TUTTO</div>
-    <div style="font-size:11px;color:var(--mut);margin-top:3px;line-height:1.4;">Allenamento, pasti principali, obiettivi del giorno. Complimenti!</div>
+    <div style="font-size:13px;font-weight:700;color:var(--gre);">${(window.ST&&ST.lang==='en')?'ALL DONE TODAY':'OGGI HAI FATTO TUTTO'}</div>
+    <div style="font-size:11px;color:var(--mut);margin-top:3px;line-height:1.4;">${(window.ST&&ST.lang==='en')?'Workout, main meals, daily goals. Well done!':'Allenamento, pasti principali, obiettivi del giorno. Complimenti!'}</div>
   </div>` : '';
 
   // ═══════════════════════════════════════════════════════════
@@ -10698,8 +10801,8 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
       <!-- Card streak -->
       <div onclick="ST.tab='body';render()" style="background:linear-gradient(135deg,rgba(251,191,36,.08),rgba(251,191,36,.02));border:1px solid #fbbf24;border-radius:14px;padding:12px;cursor:pointer;transition:.15s;">
         <div style="font-size:9px;color:#fbbf24;font-weight:800;letter-spacing:1.2px;">🔥 STREAK</div>
-        <div class="bebas" style="font-size:24px;color:var(--text);line-height:1.1;margin-top:2px;">${stk}<span style="font-size:11px;color:var(--mut);"> ${stk===1?'giorno':'giorni'}</span></div>
-        <div style="font-size:10px;color:var(--mut);margin-top:2px;">consecutivi</div>
+        <div class="bebas" style="font-size:24px;color:var(--text);line-height:1.1;margin-top:2px;">${stk}<span style="font-size:11px;color:var(--mut);"> ${stk===1?((window.ST&&ST.lang==='en')?'day':'giorno'):((window.ST&&ST.lang==='en')?'days':'giorni')}</span></div>
+        <div style="font-size:10px;color:var(--mut);margin-top:2px;">${(window.ST&&ST.lang==='en')?'consecutive':'consecutivi'}</div>
       </div>
       <!-- Card kcal oggi -->
       <div onclick="ST.tab='diet';render()" style="background:linear-gradient(135deg,rgba(74,222,128,.08),rgba(74,222,128,.02));border:1px solid var(--gre);border-radius:14px;padding:12px;cursor:pointer;transition:.15s;">
@@ -10731,7 +10834,7 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
       <div style="display:flex;align-items:center;gap:10px;">
         <div style="font-size:24px;">🏖️</div>
         <div style="flex:1;">
-          <div style="font-size:11px;color:var(--blu);font-weight:800;letter-spacing:1px;">MODALITÀ VACANZA · ${daysLeft===0?'ultimo giorno':daysLeft+' giorni rimasti'}</div>
+          <div style="font-size:11px;color:var(--blu);font-weight:800;letter-spacing:1px;">${(window.ST&&ST.lang==='en')?'VACATION MODE':'MODALITÀ VACANZA'} · ${daysLeft===0?((window.ST&&ST.lang==='en')?'last day':'ultimo giorno'):(daysLeft+(((window.ST&&ST.lang==='en'))?' days left':' giorni rimasti'))}</div>
           <div style="font-size:12px;color:var(--text);margin-top:2px;line-height:1.4;">Goditi il riposo! Tracciamo tutto ma senza pressione. Lo streak è preservato.</div>
         </div>
       </div>
@@ -11143,7 +11246,7 @@ window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,to
         </div>
       </div>
       <div style="display:flex;gap:5px;flex-wrap:wrap;">
-        ${w.slots.map(sl=>{const exId=(ST.exPrefs&&ST.exPrefs[sl.k])||defs[sl.k];const ex=EX[exId];return`<div onclick="openSwap('${sl.k}')" style="cursor:pointer;padding:4px 8px;background:var(--surf);border:1px solid var(--bord);border-radius:7px;font-size:10px;color:var(--mut);">${ex?.name?.split('—')[0]?.trim()?.split(' ').slice(0,2).join(' ')||exId} 🔄</div>`;}).join('')}
+        ${w.slots.map(sl=>{const exId=(ST.exPrefs&&ST.exPrefs[sl.k])||defs[sl.k];const ex=EX[exId];const _nm=((window.ST&&ST.lang==='en'&&ex?.nameEn)?ex.nameEn:ex?.name)||exId;return`<div onclick="openSwap('${sl.k}')" style="cursor:pointer;padding:4px 8px;background:var(--surf);border:1px solid var(--bord);border-radius:7px;font-size:10px;color:var(--mut);">${_nm.split('—')[0]?.trim()?.split(' ').slice(0,2).join(' ')||exId} 🔄</div>`;}).join('')}
       </div>
     </div>`;
   }).join('') : ''}
@@ -11202,7 +11305,7 @@ window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,to
           </div>
           <button class="btn-s" style="background:var(--red);color:#fff;padding:4px 8px;font-size:10px;" onclick="deleteActivity('${a.id}')">✕</button>
         </div>`).join('')}
-      ` : `<div style="text-align:center;padding:16px 8px;font-size:12px;color:var(--mut);line-height:1.5;">Nessuna attività registrata oggi.<br>Tocca <strong style="color:var(--blu);">+ AGGIUNGI</strong> per inserire camminata, corsa o sport.</div>`}
+      ` : `<div style="text-align:center;padding:16px 8px;font-size:12px;color:var(--mut);line-height:1.5;">${(window.ST&&ST.lang==='en')?`No activity logged today.<br>Tap <strong style="color:var(--blu);">+ ADD</strong> to add a walk, run or sport.`:`Nessuna attività registrata oggi.<br>Tocca <strong style="color:var(--blu);">+ AGGIUNGI</strong> per inserire camminata, corsa o sport.`}</div>`}
     </div>`;
   })()}
 
@@ -11292,51 +11395,51 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
     </button>
     ${window.showCalcDetail?`
       <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--bord);">
-        <div style="font-size:12px;line-height:1.6;color:var(--mut);margin-bottom:14px;">Tutti i numeri sono calcolati con formule scientifiche standard usate da nutrizionisti. Niente magia, solo matematica adattata ai tuoi dati.</div>
+        <div style="font-size:12px;line-height:1.6;color:var(--mut);margin-bottom:14px;">${(window.ST&&ST.lang==='en')?`All numbers are calculated with standard scientific formulas used by nutritionists. No magic, just math adapted to your data.`:`Tutti i numeri sono calcolati con formule scientifiche standard usate da nutrizionisti. Niente magia, solo matematica adattata ai tuoi dati.`}</div>
 
         <!-- BMR -->
         <div style="background:var(--bg);border-radius:10px;padding:11px 13px;margin-bottom:8px;">
           <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;">
-            <div style="font-size:11px;font-weight:700;color:var(--mut);letter-spacing:1px;">METABOLISMO BASALE (BMR)</div>
+            <div style="font-size:11px;font-weight:700;color:var(--mut);letter-spacing:1px;">${(window.ST&&ST.lang==='en')?`BASAL METABOLISM (BMR)`:`METABOLISMO BASALE (BMR)`}</div>
             <div class="bebas" style="font-size:20px;color:var(--text);">${mac.bmr} kcal</div>
           </div>
-          <div style="font-size:11px;color:var(--mut);line-height:1.5;">È quanto bruci ogni giorno se stessi a letto. <strong style="color:var(--text);">Formula Mifflin-St Jeor</strong>:<br>${sx==='m'?'10×peso + 6.25×altezza − 5×età + 5':'10×peso + 6.25×altezza − 5×età − 161'}<br><span style="opacity:.8;">= 10×${ST.h.length?ST.h[ST.h.length-1].w:'?'} + 6.25×${AU.profile?.ht||170} − 5×${AU.profile?.ag||30} ${sx==='m'?'+ 5':'− 161'} = ${mac.bmr} kcal</span></div>
+          <div style="font-size:11px;color:var(--mut);line-height:1.5;">${(window.ST&&ST.lang==='en')?`It's how much you burn each day if you stayed in bed.`:`È quanto bruci ogni giorno se stessi a letto.`} <strong style="color:var(--text);">${(window.ST&&ST.lang==='en')?`Mifflin-St Jeor formula`:`Formula Mifflin-St Jeor`}</strong>:<br>${(window.ST&&ST.lang==='en')?(sx==='m'?'10×weight + 6.25×height − 5×age + 5':'10×weight + 6.25×height − 5×age − 161'):(sx==='m'?'10×peso + 6.25×altezza − 5×età + 5':'10×peso + 6.25×altezza − 5×età − 161')}<br><span style="opacity:.8;">= 10×${ST.h.length?ST.h[ST.h.length-1].w:'?'} + 6.25×${AU.profile?.ht||170} − 5×${AU.profile?.ag||30} ${sx==='m'?'+ 5':'− 161'} = ${mac.bmr} kcal</span></div>
         </div>
 
         <!-- TDEE -->
         <div style="background:var(--bg);border-radius:10px;padding:11px 13px;margin-bottom:8px;">
           <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;">
-            <div style="font-size:11px;font-weight:700;color:var(--mut);letter-spacing:1px;">DISPENDIO TOTALE (TDEE)</div>
+            <div style="font-size:11px;font-weight:700;color:var(--mut);letter-spacing:1px;">${(window.ST&&ST.lang==='en')?`TOTAL EXPENDITURE (TDEE)`:`DISPENDIO TOTALE (TDEE)`}</div>
             <div class="bebas" style="font-size:20px;color:var(--text);">${mac.tdee} kcal</div>
           </div>
-          <div style="font-size:11px;color:var(--mut);line-height:1.5;">BMR × moltiplicatore attività ${ST.p.sessions===0?'(sedentario 1.20)':ST.p.sessions<=2?'(leggero 1.375)':ST.p.sessions<=4?'(moderato 1.55)':'(intenso 1.725)'} = ${mac.tdeeBase} kcal${mac.extraKcal>0?`<br>+ <strong style="color:var(--blu);">${mac.extraKcal} kcal</strong> da sport outdoor di oggi`:''}<br><span style="opacity:.8;">È quanto bruci in totale in un giorno tipo.</span></div>
+          <div style="font-size:11px;color:var(--mut);line-height:1.5;">${(window.ST&&ST.lang==='en')?`BMR × activity multiplier `:`BMR × moltiplicatore attività `}${(window.ST&&ST.lang==='en')?(ST.p.sessions===0?'(sedentary 1.20)':ST.p.sessions<=2?'(light 1.375)':ST.p.sessions<=4?'(moderate 1.55)':'(intense 1.725)'):(ST.p.sessions===0?'(sedentario 1.20)':ST.p.sessions<=2?'(leggero 1.375)':ST.p.sessions<=4?'(moderato 1.55)':'(intenso 1.725)')} = ${mac.tdeeBase} kcal${mac.extraKcal>0?`<br>+ <strong style="color:var(--blu);">${mac.extraKcal} kcal</strong> ${(window.ST&&ST.lang==='en')?`from today's outdoor sport`:`da sport outdoor di oggi`}`:''}<br><span style="opacity:.8;">${(window.ST&&ST.lang==='en')?`It's how much you burn in total on a typical day.`:`È quanto bruci in totale in un giorno tipo.`}</span></div>
         </div>
 
         <!-- TARGET KCAL -->
         <div style="background:rgba(197,241,53,.06);border-radius:10px;padding:11px 13px;margin-bottom:8px;border:1px solid var(--acc);">
           <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;">
-            <div style="font-size:11px;font-weight:700;color:var(--acc);letter-spacing:1px;">TARGET KCAL OGGI</div>
+            <div style="font-size:11px;font-weight:700;color:var(--acc);letter-spacing:1px;">${(window.ST&&ST.lang==='en')?`TODAY'S CALORIE TARGET`:`TARGET KCAL OGGI`}</div>
             <div class="bebas" style="font-size:22px;color:var(--acc);">${mac.kcal} kcal</div>
           </div>
-          <div style="font-size:11px;color:var(--mut);line-height:1.5;">${ST.p.t==='cut'?`<strong style="color:var(--text);">Definizione</strong>: TDEE − 500 kcal/giorno = deficit per perdere ~0.5 kg/settimana di grasso senza perdere muscolo.`:`<strong style="color:var(--text);">Massa</strong>: TDEE + 300 kcal/giorno = surplus moderato per crescere muscolo limitando il grasso.`}${an?.calAdj?`<br><span style="color:var(--ora);">+ ${an.calAdj>0?'+':''}${an.calAdj} kcal di aggiustamento AI in base ai tuoi progressi reali</span>`:''}</div>
+          <div style="font-size:11px;color:var(--mut);line-height:1.5;">${ST.p.t==='cut'?((window.ST&&ST.lang==='en')?`<strong style="color:var(--text);">Cutting</strong>: TDEE − 500 kcal/day = deficit to lose ~0.5 kg/week of fat without losing muscle.`:`<strong style="color:var(--text);">Definizione</strong>: TDEE − 500 kcal/giorno = deficit per perdere ~0.5 kg/settimana di grasso senza perdere muscolo.`):((window.ST&&ST.lang==='en')?`<strong style="color:var(--text);">Bulking</strong>: TDEE + 300 kcal/day = moderate surplus to build muscle while limiting fat.`:`<strong style="color:var(--text);">Massa</strong>: TDEE + 300 kcal/giorno = surplus moderato per crescere muscolo limitando il grasso.`)}${an?.calAdj?`<br><span style="color:var(--ora);">+ ${an.calAdj>0?'+':''}${an.calAdj} ${(window.ST&&ST.lang==='en')?`kcal AI adjustment based on your real progress`:`kcal di aggiustamento AI in base ai tuoi progressi reali`}</span>`:''}</div>
         </div>
 
         <!-- MACRO -->
         <div style="background:var(--bg);border-radius:10px;padding:11px 13px;margin-bottom:14px;">
-          <div style="font-size:11px;font-weight:700;color:var(--mut);letter-spacing:1px;margin-bottom:8px;">RIPARTIZIONE MACRO</div>
+          <div style="font-size:11px;font-weight:700;color:var(--mut);letter-spacing:1px;margin-bottom:8px;">${(window.ST&&ST.lang==='en')?`MACRO BREAKDOWN`:`RIPARTIZIONE MACRO`}</div>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;">
-            <div style="text-align:center;background:var(--surf);border-radius:8px;padding:8px 4px;"><div class="bebas" style="font-size:18px;color:var(--acc);line-height:1;">${mac.prot}g</div><div style="font-size:9px;color:var(--mut);margin-top:3px;">PROTEINE</div></div>
-            <div style="text-align:center;background:var(--surf);border-radius:8px;padding:8px 4px;"><div class="bebas" style="font-size:18px;color:var(--blu);line-height:1;">${mac.carb}g</div><div style="font-size:9px;color:var(--mut);margin-top:3px;">CARBO</div></div>
-            <div style="text-align:center;background:var(--surf);border-radius:8px;padding:8px 4px;"><div class="bebas" style="font-size:18px;color:var(--yel);line-height:1;">${mac.fat}g</div><div style="font-size:9px;color:var(--mut);margin-top:3px;">GRASSI</div></div>
+            <div style="text-align:center;background:var(--surf);border-radius:8px;padding:8px 4px;"><div class="bebas" style="font-size:18px;color:var(--acc);line-height:1;">${mac.prot}g</div><div style="font-size:9px;color:var(--mut);margin-top:3px;">${(window.ST&&ST.lang==='en')?`PROTEIN`:`PROTEINE`}</div></div>
+            <div style="text-align:center;background:var(--surf);border-radius:8px;padding:8px 4px;"><div class="bebas" style="font-size:18px;color:var(--blu);line-height:1;">${mac.carb}g</div><div style="font-size:9px;color:var(--mut);margin-top:3px;">${(window.ST&&ST.lang==='en')?`CARBS`:`CARBO`}</div></div>
+            <div style="text-align:center;background:var(--surf);border-radius:8px;padding:8px 4px;"><div class="bebas" style="font-size:18px;color:var(--yel);line-height:1;">${mac.fat}g</div><div style="font-size:9px;color:var(--mut);margin-top:3px;">${(window.ST&&ST.lang==='en')?`FATS`:`GRASSI`}</div></div>
           </div>
           <div style="font-size:11px;color:var(--mut);line-height:1.5;">
-            <strong style="color:var(--text);">Proteine</strong>: ${(ST.p.sessions||0)===0?(sx==='f'?1.0:1.2):(sx==='f'?1.8:2.2)}g per kg di peso ${(ST.p.sessions||0)===0?'(senza allenamento)':(sx==='f'?'(donna che si allena)':'(uomo che si allena)')}<br>
-            <strong style="color:var(--text);">Grassi</strong>: ${sx==='f'?1.0:0.8}g per kg di peso (essenziali ormoni)<br>
-            <strong style="color:var(--text);">Carboidrati</strong>: il resto del target kcal — sono il carburante delle prestazioni
+            <strong style="color:var(--text);">${(window.ST&&ST.lang==='en')?'Protein':'Proteine'}</strong>: ${(ST.p.sessions||0)===0?(sx==='f'?1.0:1.2):(sx==='f'?1.8:2.2)}g ${(window.ST&&ST.lang==='en')?'per kg body weight':'per kg di peso'} ${(ST.p.sessions||0)===0?((window.ST&&ST.lang==='en')?'(no training)':'(senza allenamento)'):(sx==='f'?((window.ST&&ST.lang==='en')?'(training woman)':'(donna che si allena)'):((window.ST&&ST.lang==='en')?'(training man)':'(uomo che si allena)'))}<br>
+            <strong style="color:var(--text);">${(window.ST&&ST.lang==='en')?'Fats':'Grassi'}</strong>: ${sx==='f'?1.0:0.8}g ${(window.ST&&ST.lang==='en')?'per kg body weight (essential for hormones)':'per kg di peso (essenziali ormoni)'}<br>
+            <strong style="color:var(--text);">${(window.ST&&ST.lang==='en')?`Carbs`:`Carboidrati`}</strong>: ${(window.ST&&ST.lang==='en')?`the rest of the kcal target — they're the fuel for performance`:`il resto del target kcal — sono il carburante delle prestazioni`}
           </div>
         </div>
 
-        <div style="font-size:10px;color:var(--mut);font-style:italic;line-height:1.5;text-align:center;">💡 Cambiando il tuo peso, altezza, età, sesso o sessioni di allenamento (in Configurazione), tutti i numeri si adattano automaticamente.</div>
+        <div style="font-size:10px;color:var(--mut);font-style:italic;line-height:1.5;text-align:center;">${(window.ST&&ST.lang==='en')?`💡 By changing your weight, height, age, sex or training sessions (in Settings), all numbers adapt automatically.`:`💡 Cambiando il tuo peso, altezza, età, sesso o sessioni di allenamento (in Configurazione), tutti i numeri si adattano automaticamente.`}</div>
       </div>
     `:''}
   </div>
@@ -11805,7 +11908,7 @@ window.renderBody = function(cW,mac,theme,pWeek,sx){
     <button class="flt-btn ${ST.chartFilter===180?'on':''}" onclick="setChartFlt(180)">6 MESI</button>
   </div>
   <div class="g2" style="margin-bottom:10px;">
-    ${[['KG PERSI',`${lost>=0?'-':'+'}${Math.abs(lost).toFixed(1)}kg`,'var(--acc)'],['MANCANTI',Math.abs(ST.p.g-cW).toFixed(1)+' kg','var(--ora)'],['MEDIA 7G',avg7+' kg','var(--blu)'],['SESSIONI',wLogF.length,'var(--purp)']].map(([l,v,col])=>`<div class="card" style="text-align:center;padding:14px;border-top:3px solid ${col};"><div class="bebas" style="font-size:28px;color:${col};line-height:1;">${v}</div><div style="font-size:9px;color:var(--mut);letter-spacing:1.5px;margin-top:2px;">${l}</div></div>`).join('')}
+    ${[[(window.ST&&ST.lang==='en')?'KG LOST':'KG PERSI',`${lost>=0?'-':'+'}${Math.abs(lost).toFixed(1)}kg`,'var(--acc)'],[(window.ST&&ST.lang==='en')?'TO GO':'MANCANTI',Math.abs(ST.p.g-cW).toFixed(1)+' kg','var(--ora)'],[(window.ST&&ST.lang==='en')?'7D AVG':'MEDIA 7G',avg7+' kg','var(--blu)'],[(window.ST&&ST.lang==='en')?'SESSIONS':'SESSIONI',wLogF.length,'var(--purp)']].map(([l,v,col])=>`<div class="card" style="text-align:center;padding:14px;border-top:3px solid ${col};"><div class="bebas" style="font-size:28px;color:${col};line-height:1;">${v}</div><div style="font-size:9px;color:var(--mut);letter-spacing:1.5px;margin-top:2px;">${l}</div></div>`).join('')}
   </div>
 
   <!-- ── CALENDARIO MENSILE COLORATO (sessione 25) ── -->
@@ -11816,7 +11919,7 @@ window.renderBody = function(cW,mac,theme,pWeek,sx){
     const lastOfMonth = new Date(yr, mo, 0);
     const daysInMonth = lastOfMonth.getDate();
     const firstDow = (firstOfMonth.getDay() + 6) % 7; // 0=lun
-    const monthLabel = firstOfMonth.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
+    const monthLabel = firstOfMonth.toLocaleDateString((window.ST&&ST.lang==='en')?'en-GB':'it-IT', { month: 'long', year: 'numeric' });
 
     // Helper: stato di un giorno (workout, sgarro, PR, peso registrato)
     const getDayInfo = (dateStr) => {
@@ -11906,17 +12009,17 @@ window.renderBody = function(cW,mac,theme,pWeek,sx){
         <div class="bebas" style="font-size:16px;color:var(--text);text-transform:capitalize;">📅 ${monthLabel}</div>
         <button onclick="changeCalMonth(1)" style="background:var(--surf);border:1px solid var(--bord);color:var(--text);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:14px;">›</button>
       </div>
-      <div style="font-size:10px;color:var(--mut);text-align:center;margin-bottom:6px;font-style:italic;">Tap su un giorno futuro per impostarlo Train/Riposo</div>
+      <div style="font-size:10px;color:var(--mut);text-align:center;margin-bottom:6px;font-style:italic;">${(window.ST&&ST.lang==='en')?'Tap a future day to set it Train/Rest':'Tap su un giorno futuro per impostarlo Train/Riposo'}</div>
       <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;">
-        ${['L','M','M','G','V','S','D'].map(d => `<div style="text-align:center;font-size:9px;color:var(--mut);font-weight:700;letter-spacing:.5px;padding:3px 0;">${d}</div>`).join('')}
+        ${((window.ST&&ST.lang==='en')?['M','T','W','T','F','S','S']:['L','M','M','G','V','S','D']).map(d => `<div style="text-align:center;font-size:9px;color:var(--mut);font-weight:700;letter-spacing:.5px;padding:3px 0;">${d}</div>`).join('')}
       </div>
       <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;">${cells}</div>
       <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;font-size:10px;color:var(--mut);">
         <div style="display:flex;align-items:center;gap:3px;"><span style="width:8px;height:8px;background:var(--gre);border-radius:50%;display:inline-block;"></span> Workout</div>
-        <div style="display:flex;align-items:center;gap:3px;"><span style="width:8px;height:8px;background:var(--red);border-radius:50%;display:inline-block;"></span> Sgarro</div>
+        <div style="display:flex;align-items:center;gap:3px;"><span style="width:8px;height:8px;background:var(--red);border-radius:50%;display:inline-block;"></span> ${(window.ST&&ST.lang==='en')?'Cheat':'Sgarro'}</div>
         <div style="display:flex;align-items:center;gap:3px;">🏆 PR</div>
-        <div style="display:flex;align-items:center;gap:3px;"><span style="width:8px;height:8px;background:var(--blu);border-radius:50%;display:inline-block;"></span> Peso</div>
-        <div style="display:flex;align-items:center;gap:3px;">📌 Pianificato</div>
+        <div style="display:flex;align-items:center;gap:3px;"><span style="width:8px;height:8px;background:var(--blu);border-radius:50%;display:inline-block;"></span> ${(window.ST&&ST.lang==='en')?'Weight':'Peso'}</div>
+        <div style="display:flex;align-items:center;gap:3px;">📌 ${(window.ST&&ST.lang==='en')?'Planned':'Pianificato'}</div>
       </div>
     </div>`;
   })()}
@@ -12122,7 +12225,7 @@ window.renderBody = function(cW,mac,theme,pWeek,sx){
         const weeksNeeded = Math.abs(remainingKg / trendKgPerWeek);
         daysToGoal = Math.round(weeksNeeded * 7);
         const projTs = now + daysToGoal * day;
-        projDate = new Date(projTs).toLocaleDateString('it-IT', {day:'2-digit',month:'long',year:'numeric'});
+        projDate = new Date(projTs).toLocaleDateString((window.ST&&ST.lang==='en')?'en-GB':'it-IT', {day:'2-digit',month:'long',year:'numeric'});
       }
     }
 
@@ -12327,7 +12430,7 @@ window.renderSocial = function() {
   // ── OPT-IN: se l'utente non ha dato consenso, mostra schermata di scelta ──
   if (!ST.shareLeaderboardConsent) {
     return `<div class="bebas" style="font-size:32px;margin-bottom:6px;">🏆 ${t('so_ranking')}</div>
-    <div style="font-size:13px;color:var(--mut);margin-bottom:18px;">Sezione opzionale per il confronto amichevole con altri utenti FitTracker PRO.</div>
+    <div style="font-size:13px;color:var(--mut);margin-bottom:18px;">${(window.ST&&ST.lang==='en')?`Optional section for friendly comparison with other FitTracker PRO users.`:`Sezione opzionale per il confronto amichevole con altri utenti FitTracker PRO.`}</div>
 
     <div class="card" style="border-color:var(--purp);background:linear-gradient(135deg,rgba(167,139,250,.08),rgba(96,165,250,.04));">
       <div style="text-align:center;font-size:48px;margin-bottom:10px;">🔒</div>
@@ -13277,7 +13380,7 @@ window.renderStatsCalendar = function() {
   now.setMonth(now.getMonth() + offset);
   const year = now.getFullYear();
   const month = now.getMonth();
-  const monthName = now.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
+  const monthName = now.toLocaleDateString((window.ST&&ST.lang==='en')?'en-GB':'it-IT', { month: 'long', year: 'numeric' });
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month+1, 0);
   const daysInMonth = lastDay.getDate();
@@ -13836,15 +13939,16 @@ window.advanceOnboarding = function() {
   render();
 };
 
-window.__onboardingSteps = [
-  { emo:'👋', title:'Benvenuto!', msg:'Sono FitTracker PRO, ti guiderò in pochi passi. Allenamento, alimentazione, progressi: tutto in un\'app.' },
-  { emo:'🏠', title:'La Home', msg:'Trovi sempre lo stato del giorno: pasto, allenamento, peso, kcal, streak. Quattro card cliccabili in alto per accesso rapido.' },
-  { emo:'🏋️', title:'Allenamento', msg:'Tap sulla scheda del giorno. Ti guido serie per serie: peso, reps, riposo. Tracciamento PR automatico.' },
-  { emo:'🥗', title:'Alimentazione', msg:'Pasti calcolati sulle tue intolleranze. Sgarri tracciabili con un tap. Calcoli automatici di proteine/carbo/grassi.' },
-  { emo:'📊', title:'Statistiche Pro', msg:'Confronto periodi, calcolatore 1RM, calendario unificato, top progressi.' },
-  { emo:'🤖', title:'AI Coach', msg:'Alert personalizzati, riepilogo settimana, gestione infortuni, chat AI. Per ogni dubbio.' },
-  { emo:'⚙️', title:'Tutto pronto', msg:'Personalizza profilo, programma, intolleranze, notifiche, tema in Configurazione. Iniziamo!' }
-];
+window.getOnboardingSteps = function(){ var _EN=(window.ST&&ST.lang==='en'); var L=function(it,en){return _EN?en:it;}; return [
+  { emo:'👋', title:L('Benvenuto!','Welcome!'), msg:L('Sono FitTracker PRO, ti guiderò in pochi passi. Allenamento, alimentazione, progressi: tutto in un\'app.','I\'m FitTracker PRO, I\'ll guide you in a few steps. Training, nutrition, progress: all in one app.') },
+  { emo:'🏠', title:L('La Home','The Home'), msg:L('Trovi sempre lo stato del giorno: pasto, allenamento, peso, kcal, streak. Quattro card cliccabili in alto per accesso rapido.','You always find today\'s status: meal, workout, weight, kcal, streak. Four tappable cards at the top for quick access.') },
+  { emo:'🏋️', title:L('Allenamento','Workout'), msg:L('Tap sulla scheda del giorno. Ti guido serie per serie: peso, reps, riposo. Tracciamento PR automatico.','Tap today\'s routine. I guide you set by set: weight, reps, rest. Automatic PR tracking.') },
+  { emo:'🥗', title:L('Alimentazione','Nutrition'), msg:L('Pasti calcolati sulle tue intolleranze. Sgarri tracciabili con un tap. Calcoli automatici di proteine/carbo/grassi.','Meals calculated on your intolerances. Cheats trackable with a tap. Automatic protein/carb/fat calculations.') },
+  { emo:'📊', title:L('Statistiche Pro','Pro Stats'), msg:L('Confronto periodi, calcolatore 1RM, calendario unificato, top progressi.','Period comparison, 1RM calculator, unified calendar, top progress.') },
+  { emo:'🤖', title:L('AI Coach','AI Coach'), msg:L('Alert personalizzati, riepilogo settimana, gestione infortuni, chat AI. Per ogni dubbio.','Personalized alerts, weekly summary, injury management, AI chat. For any question.') },
+  { emo:'⚙️', title:L('Tutto pronto','All set'), msg:L('Personalizza profilo, programma, intolleranze, notifiche, tema in Configurazione. Iniziamo!','Customize profile, program, intolerances, notifications, theme in Settings. Let\'s go!') }
+]; };
+Object.defineProperty(window,'__onboardingSteps',{get:function(){return window.getOnboardingSteps();},configurable:true});
 
 // ═══════════════════════════════════════════════════════════
 // HELP CONTESTUALE PER SEZIONE (sessione 26)
@@ -13852,78 +13956,79 @@ window.__onboardingSteps = [
 // Si attiva col bottone (?) in alto a destra di ogni sezione.
 // AGGIORNARE QUI ogni volta che si aggiungono feature alla sezione.
 // ═══════════════════════════════════════════════════════════
-window.__sectionHelps = {
+window.getSectionHelps = function(){ var _EN=(window.ST&&ST.lang==='en'); var L=function(it,en){return _EN?en:it;}; return {
   home: [
-    { emo:'🏠', title:'La tua Home', msg:'Qui hai il dashboard del giorno. Tutto quello che serve subito sotto gli occhi: peso, calorie, allenamento, prossimo pasto.' },
-    { emo:'📊', title:'Barra obiettivo', msg:'In alto vedi quanto sei vicino al peso target (%), con due date: quella che hai scelto e quella REALE calcolata dall\'app sul tuo ritmo attuale.' },
-    { emo:'🍽️', title:'Card pasto', msg:'La card del pasto attuale è cliccabile: ti porta direttamente al menu del giorno, focalizzato su quel pasto specifico.' },
-    { emo:'💪', title:'Card allenamento', msg:'Tap sul bottone INIZIA per partire. Se oggi vuoi riposare, c\'è "oggi mi riposo" sotto. Il chip 🏋️/🏠 cambia loc al volo.' },
-    { emo:'🔥', title:'Streak', msg:'Il fuoco arancione conta i giorni consecutivi di attività. Si rompe solo se salti completamente un giorno (no peso, no workout, no pasto).' },
-    { emo:'⏰', title:'Banner adattivi', msg:'Banner sonno, pattern sgarri, target da rivedere e vacanza: appaiono solo quando servono, sparisco se non sono utili.' }
+    { emo:'🏠', title:L('La tua Home','Your Home'), msg:L('Qui hai il dashboard del giorno. Tutto quello che serve subito sotto gli occhi: peso, calorie, allenamento, prossimo pasto.','Here\'s your daily dashboard. Everything you need at a glance: weight, calories, workout, next meal.') },
+    { emo:'📊', title:L('Barra obiettivo','Goal bar'), msg:L('In alto vedi quanto sei vicino al peso target (%), con due date: quella che hai scelto e quella REALE calcolata dall\'app sul tuo ritmo attuale.','At the top you see how close you are to your target weight (%), with two dates: the one you chose and the REAL one the app calculates from your current pace.') },
+    { emo:'🍽️', title:L('Card pasto','Meal card'), msg:L('La card del pasto attuale è cliccabile: ti porta direttamente al menu del giorno, focalizzato su quel pasto specifico.','The current meal card is tappable: it takes you straight to the daily menu, focused on that specific meal.') },
+    { emo:'💪', title:L('Card allenamento','Workout card'), msg:L('Tap sul bottone INIZIA per partire. Se oggi vuoi riposare, c\'è "oggi mi riposo" sotto. Il chip 🏋️/🏠 cambia loc al volo.','Tap START to begin. If you want to rest today, there\'s "rest today" below. The 🏋️/🏠 chip switches location on the fly.') },
+    { emo:'🔥', title:L('Streak','Streak'), msg:L('Il fuoco arancione conta i giorni consecutivi di attività. Si rompe solo se salti completamente un giorno (no peso, no workout, no pasto).','The orange flame counts consecutive days of activity. It breaks only if you completely skip a day (no weight, no workout, no meal).') },
+    { emo:'⏰', title:L('Banner adattivi','Adaptive banners'), msg:L('Banner sonno, pattern sgarri, target da rivedere e vacanza: appaiono solo quando servono, spariscono se non sono utili.','Sleep, cheat patterns, target-to-review and vacation banners: they appear only when needed and disappear when not useful.') }
   ],
   work: [
-    { emo:'💪', title:'Sezione Allenamento', msg:'Trovi la scheda di oggi e l\'archivio di tutte le tue sessioni. Le schede sono custom (tue) o auto-generate.' },
-    { emo:'▶️', title:'Avvia un workout', msg:'Tap INIZIA: l\'app ti guida serie per serie con timer riposo, suoni, conteggio reps, suggerimento peso basato sui PR storici.' },
-    { emo:'🏆', title:'Personal Records', msg:'Ogni volta che batti un record (peso O reps a parità di peso) l\'app celebra con suono e badge. La cronologia è in Statistiche.' },
-    { emo:'🔄', title:'Sostituisci esercizi', msg:'Durante il workout puoi sostituire un esercizio con uno simile se attrezzi occupati o infortunio.' },
-    { emo:'✏️', title:'Schede personalizzate', msg:'Crea le tue schede da zero o duplica le pre-impostate. Tap su "Schede" → "+ Nuova scheda".' },
-    { emo:'📦', title:'Esercizi tuoi', msg:'Aggiungi esercizi non presenti nel DB. Compaiono nella tua libreria con badge "tuo".' }
+    { emo:'💪', title:L('Sezione Allenamento','Workout section'), msg:L('Trovi la scheda di oggi e l\'archivio di tutte le tue sessioni. Le schede sono custom (tue) o auto-generate.','You find today\'s routine and the archive of all your sessions. Routines are custom (yours) or auto-generated.') },
+    { emo:'▶️', title:L('Avvia un workout','Start a workout'), msg:L('Tap INIZIA: l\'app ti guida serie per serie con timer riposo, suoni, conteggio reps, suggerimento peso basato sui PR storici.','Tap START: the app guides you set by set with rest timer, sounds, rep counting, weight suggestion based on your PR history.') },
+    { emo:'🏆', title:L('Personal Records','Personal Records'), msg:L('Ogni volta che batti un record (peso O reps a parità di peso) l\'app celebra con suono e badge. La cronologia è in Statistiche.','Every time you hit a record (weight OR reps at equal weight) the app celebrates with a sound and badge. The history is in Stats.') },
+    { emo:'🔄', title:L('Sostituisci esercizi','Swap exercises'), msg:L('Durante il workout puoi sostituire un esercizio con uno simile se attrezzi occupati o infortunio.','During the workout you can swap an exercise for a similar one if equipment is busy or in case of injury.') },
+    { emo:'✏️', title:L('Schede personalizzate','Custom routines'), msg:L('Crea le tue schede da zero o duplica le pre-impostate. Tap su "Schede" → "+ Nuova scheda".','Create your own routines from scratch or duplicate the presets. Tap "Routines" → "+ New routine".') },
+    { emo:'📦', title:L('Esercizi tuoi','Your exercises'), msg:L('Aggiungi esercizi non presenti nel DB. Compaiono nella tua libreria con badge "tuo".','Add exercises not in the DB. They appear in your library with a "yours" badge.') }
   ],
   diet: [
-    { emo:'🥗', title:'Sezione Alimentazione', msg:'Pasti generati su misura: rispettano calorie, intolleranze, allergie, dieta (omni/veg), e bilanciano automaticamente proteine/carbo/grassi.' },
-    { emo:'✓', title:'Conferma o salta', msg:'Per ogni pasto: FATTO ✓ se l\'hai mangiato come previsto, SALTO ✕ se non l\'hai fatto. Niente "in mezzo": per quello usa il sistema sgarro.' },
-    { emo:'🍕', title:'Sgarro/Sostituzione', msg:'Inserisci tutto ciò che mangi extra o diverso. L\'app classifica auto in: SGARRO (oltre +15% del previsto), SOSTITUZIONE (entro range), LEGGERO (sotto -15%).' },
-    { emo:'📷', title:'Barcode scanner', msg:'Per prodotti confezionati: tap "Scansiona codice a barre", inquadra l\'EAN, l\'app pesca i dati da OpenFoodFacts (2M+ prodotti).' },
-    { emo:'⭐', title:'Quick-access', msg:'Quando cerchi un cibo, vedi automaticamente: cibi più frequenti (top 5 usati), recenti, suggeriti per il pasto, e i tuoi combo salvati.' },
-    { emo:'📅', title:'Pianifica settimana', msg:'Card collassabile: vedi i 7 giorni con menu e kcal. I giorni train hanno più carbo, i rest day meno (calorie cycling automatico).' },
-    { emo:'✏️', title:'Personalizza pasti', msg:'Tap "Personalizza questo pasto" per cambiare ingredienti o sostituirli con i tuoi preferiti.' }
+    { emo:'🥗', title:L('Sezione Alimentazione','Nutrition section'), msg:L('Pasti generati su misura: rispettano calorie, intolleranze, allergie, dieta (omni/veg), e bilanciano automaticamente proteine/carbo/grassi.','Tailored meals: they respect calories, intolerances, allergies, diet (omni/veg), and automatically balance protein/carbs/fat.') },
+    { emo:'✓', title:L('Conferma o salta','Confirm or skip'), msg:L('Per ogni pasto: FATTO ✓ se l\'hai mangiato come previsto, SALTO ✕ se non l\'hai fatto. Niente "in mezzo": per quello usa il sistema sgarro.','For each meal: DONE ✓ if you ate it as planned, SKIP ✕ if you didn\'t. Nothing "in between": for that use the cheat system.') },
+    { emo:'🍕', title:L('Sgarro/Sostituzione','Cheat/Replacement'), msg:L('Inserisci tutto ciò che mangi extra o diverso. L\'app classifica auto in: SGARRO (oltre +15% del previsto), SOSTITUZIONE (entro range), LEGGERO (sotto -15%).','Enter anything extra or different you eat. The app auto-classifies as: CHEAT (over +15% of planned), REPLACEMENT (within range), LIGHT (under -15%).') },
+    { emo:'📷', title:L('Barcode scanner','Barcode scanner'), msg:L('Per prodotti confezionati: tap "Scansiona codice a barre", inquadra l\'EAN, l\'app pesca i dati da OpenFoodFacts (2M+ prodotti).','For packaged products: tap "Scan barcode", frame the EAN, the app pulls data from OpenFoodFacts (2M+ products).') },
+    { emo:'⭐', title:L('Quick-access','Quick-access'), msg:L('Quando cerchi un cibo, vedi automaticamente: cibi più frequenti (top 5 usati), recenti, suggeriti per il pasto, e i tuoi combo salvati.','When you search for a food, you automatically see: most frequent foods (top 5 used), recent, suggested for the meal, and your saved combos.') },
+    { emo:'📅', title:L('Pianifica settimana','Plan the week'), msg:L('Card collassabile: vedi i 7 giorni con menu e kcal. I giorni train hanno più carbo, i rest day meno (calorie cycling automatico).','Collapsible card: see the 7 days with menu and kcal. Train days have more carbs, rest days less (automatic calorie cycling).') },
+    { emo:'✏️', title:L('Personalizza pasti','Customize meals'), msg:L('Tap "Personalizza questo pasto" per cambiare ingredienti o sostituirli con i tuoi preferiti.','Tap "Customize this meal" to change ingredients or replace them with your favorites.') }
   ],
   shopping: [
-    { emo:'🛒', title:'Lista della spesa', msg:'Generata automaticamente dai pasti della settimana. Spunta gli articoli mentre fai la spesa.' },
-    { emo:'➕', title:'Aggiungi extra', msg:'Quello che non c\'è nei pasti pianificati lo aggiungi manualmente dal bottone "+ AGGIUNGI".' },
-    { emo:'🗑️', title:'Rimuovi', msg:'Tap su un articolo per rimuoverlo definitivamente dalla settimana. Tornerà se rigeneri.' }
+    { emo:'🛒', title:L('Lista della spesa','Shopping list'), msg:L('Generata automaticamente dai pasti della settimana. Spunta gli articoli mentre fai la spesa.','Automatically generated from the week\'s meals. Check off items as you shop.') },
+    { emo:'➕', title:L('Aggiungi extra','Add extras'), msg:L('Quello che non c\'è nei pasti pianificati lo aggiungi manualmente dal bottone "+ AGGIUNGI".','Whatever isn\'t in the planned meals you add manually with the "+ ADD" button.') },
+    { emo:'🗑️', title:L('Rimuovi','Remove'), msg:L('Tap su un articolo per rimuoverlo definitivamente dalla settimana. Tornerà se rigeneri.','Tap an item to remove it permanently from the week. It comes back if you regenerate.') }
   ],
   measures: [
-    { emo:'📏', title:'Misurazioni corporee', msg:'Registra circonferenze (braccio, vita, fianchi, gamba, polpaccio, torace) per tracciare la composizione corporea oltre al peso.' },
-    { emo:'📈', title:'Trend grafici', msg:'Vedi l\'evoluzione di ogni misura nel tempo: + e − rispetto al baseline. Utile in cut (vita ↓) e bulk (braccio ↑).' },
-    { emo:'📅', title:'Frequenza consigliata', msg:'Misura ogni 2-3 settimane, sempre nelle stesse condizioni (mattina, a digiuno, dopo wc).' }
+    { emo:'📏', title:L('Misurazioni corporee','Body measurements'), msg:L('Registra circonferenze (braccio, vita, fianchi, gamba, polpaccio, torace) per tracciare la composizione corporea oltre al peso.','Record circumferences (arm, waist, hips, leg, calf, chest) to track body composition beyond weight.') },
+    { emo:'📈', title:L('Trend grafici','Trend charts'), msg:L('Vedi l\'evoluzione di ogni misura nel tempo: + e − rispetto al baseline. Utile in cut (vita ↓) e bulk (braccio ↑).','See each measure\'s evolution over time: + and − vs the baseline. Useful in cut (waist ↓) and bulk (arm ↑).') },
+    { emo:'📅', title:L('Frequenza consigliata','Recommended frequency'), msg:L('Misura ogni 2-3 settimane, sempre nelle stesse condizioni (mattina, a digiuno, dopo wc).','Measure every 2-3 weeks, always in the same conditions (morning, fasted, after the bathroom).') }
   ],
   body: [
-    { emo:'📊', title:'Body Analytics', msg:'KPI peso, kg persi/mancanti, media 7gg, sessioni completate. Tutto sul tuo progresso fisico.' },
-    { emo:'🎯', title:'Andamento target', msg:'Card colorata che ti dice se sei in linea, in ritardo, in anticipo o fermo. Con consigli concreti su cosa cambiare.' },
-    { emo:'📅', title:'Calendario mensile', msg:'Griglia 7×N con stato di ogni giorno: 🟢 workout, 🔴 sgarro, 🏆 PR, blu = oggi, pallino blu = peso registrato.' },
-    { emo:'📉', title:'Grafico trend peso', msg:'Linea del peso negli ultimi N giorni (configurabile). Confronto con la traiettoria ideale verso il target.' }
+    { emo:'📊', title:L('Body Analytics','Body Analytics'), msg:L('KPI peso, kg persi/mancanti, media 7gg, sessioni completate. Tutto sul tuo progresso fisico.','Weight KPIs, kg lost/to go, 7-day average, completed sessions. Everything about your physical progress.') },
+    { emo:'🎯', title:L('Andamento target','Target trend'), msg:L('Card colorata che ti dice se sei in linea, in ritardo, in anticipo o fermo. Con consigli concreti su cosa cambiare.','A colored card that tells you if you\'re on track, behind, ahead or stalled. With concrete advice on what to change.') },
+    { emo:'📅', title:L('Calendario mensile','Monthly calendar'), msg:L('Griglia 7×N con stato di ogni giorno: 🟢 workout, 🔴 sgarro, 🏆 PR, blu = oggi, pallino blu = peso registrato.','7×N grid with each day\'s status: 🟢 workout, 🔴 cheat, 🏆 PR, blue = today, blue dot = weight logged.') },
+    { emo:'📉', title:L('Grafico trend peso','Weight trend chart'), msg:L('Linea del peso negli ultimi N giorni (configurabile). Confronto con la traiettoria ideale verso il target.','Weight line over the last N days (configurable). Compared with the ideal trajectory toward the target.') }
   ],
   stats: [
-    { emo:'📊', title:'Statistiche Pro', msg:'Stats avanzate: confronto periodi, calcolatore 1RM, top esercizi in crescita, distribuzione muscoli, heatmap.' },
-    { emo:'🏋️', title:'Calcolatore 1RM', msg:'Inserisci peso×reps recenti, l\'app stima il tuo 1RM (massimale teorico) con formula Brzycki/Epley.' },
-    { emo:'🆚', title:'Confronto periodi', msg:'Confronta gli ultimi 30/60/90 giorni: volume, frequenza, kcal, peso medio. Vedi cosa migliora.' },
-    { emo:'🎯', title:'Top progressi', msg:'Gli esercizi dove sei migliorato di più (+ kg, + reps, + volume). Per capire dove sei più forte.' }
+    { emo:'📊', title:L('Statistiche Pro','Pro Stats'), msg:L('Stats avanzate: confronto periodi, calcolatore 1RM, top esercizi in crescita, distribuzione muscoli, heatmap.','Advanced stats: period comparison, 1RM calculator, top growing exercises, muscle distribution, heatmap.') },
+    { emo:'🏋️', title:L('Calcolatore 1RM','1RM calculator'), msg:L('Inserisci peso×reps recenti, l\'app stima il tuo 1RM (massimale teorico) con formula Brzycki/Epley.','Enter recent weight×reps, the app estimates your 1RM (theoretical max) with the Brzycki/Epley formula.') },
+    { emo:'🆚', title:L('Confronto periodi','Period comparison'), msg:L('Confronta gli ultimi 30/60/90 giorni: volume, frequenza, kcal, peso medio. Vedi cosa migliora.','Compare the last 30/60/90 days: volume, frequency, kcal, average weight. See what improves.') },
+    { emo:'🎯', title:L('Top progressi','Top progress'), msg:L('Gli esercizi dove sei migliorato di più (+ kg, + reps, + volume). Per capire dove sei più forte.','The exercises where you improved the most (+ kg, + reps, + volume). To understand where you\'re strongest.') }
   ],
   coach: [
-    { emo:'🤖', title:'AI Coach', msg:'Alert intelligenti su stallo peso, deficit insufficiente, sovrallenamento, recovery scarso. Riepilogo settimana automatico.' },
-    { emo:'💬', title:'Chat AI', msg:'Domande libere su allenamento, dieta, recovery. L\'AI conosce i tuoi dati e risponde personalizzato.' },
-    { emo:'🤕', title:'Infortuni', msg:'Segnala un infortunio: l\'app adatta automaticamente gli allenamenti per evitare le aree problematiche.' }
+    { emo:'🤖', title:L('AI Coach','AI Coach'), msg:L('Alert intelligenti su stallo peso, deficit insufficiente, sovrallenamento, recovery scarso. Riepilogo settimana automatico.','Smart alerts on weight plateau, insufficient deficit, overtraining, poor recovery. Automatic weekly summary.') },
+    { emo:'💬', title:L('Chat AI','AI Chat'), msg:L('Domande libere su allenamento, dieta, recovery. L\'AI conosce i tuoi dati e risponde personalizzato.','Free questions about training, diet, recovery. The AI knows your data and answers personally.') },
+    { emo:'🤕', title:L('Infortuni','Injuries'), msg:L('Segnala un infortunio: l\'app adatta automaticamente gli allenamenti per evitare le aree problematiche.','Report an injury: the app automatically adapts workouts to avoid the problem areas.') }
   ],
   social: [
-    { emo:'👥', title:'Amici e classifica', msg:'Aggiungi amici tramite username e vedete chi è più costante nella settimana (sessioni, volume, streak).' },
-    { emo:'🏆', title:'Classifica', msg:'Aggiornata in tempo reale: chi alleno di più, chi ha streak più lungo, chi è più vicino al suo obiettivo.' }
+    { emo:'👥', title:L('Amici e classifica','Friends and leaderboard'), msg:L('Aggiungi amici tramite username e vedete chi è più costante nella settimana (sessioni, volume, streak).','Add friends by username and see who\'s most consistent during the week (sessions, volume, streak).') },
+    { emo:'🏆', title:L('Classifica','Leaderboard'), msg:L('Aggiornata in tempo reale: chi alleno di più, chi ha streak più lungo, chi è più vicino al suo obiettivo.','Updated in real time: who trains the most, who has the longest streak, who\'s closest to their goal.') }
   ],
   share: [
-    { emo:'📤', title:'Condividi progressi', msg:'Crea card grafiche con i tuoi PR, foto progresso, traguardi, da condividere su social o WhatsApp.' }
+    { emo:'📤', title:L('Condividi progressi','Share progress'), msg:L('Crea card grafiche con i tuoi PR, foto progresso, traguardi, da condividere su social o WhatsApp.','Create graphic cards with your PRs, progress photos, milestones, to share on social or WhatsApp.') }
   ],
   set: [
-    { emo:'⚙️', title:'Configurazione', msg:'Tutte le impostazioni: profilo, programma, intolleranze, notifiche, tema, app PWA, modalità vacanza.' },
-    { emo:'🎯', title:'Programma', msg:'Cambia obiettivo (cut/bulk/recomp), peso target, data target, sessioni/settimana, durata, location, focus muscolare.' },
-    { emo:'🔔', title:'Notifiche', msg:'8 tipi diversi di promemoria opzionali: allenamento, pasti, peso, sonno, acqua, riposo, check pasto, pesata settimanale.' },
-    { emo:'🏖️', title:'Modalità vacanza', msg:'Sospende alert, deficit e obblighi per N giorni. Streak preservato. Tracking comunque attivo.' }
+    { emo:'⚙️', title:L('Configurazione','Settings'), msg:L('Tutte le impostazioni: profilo, programma, intolleranze, notifiche, tema, app PWA, modalità vacanza.','All settings: profile, program, intolerances, notifications, theme, PWA app, vacation mode.') },
+    { emo:'🎯', title:L('Programma','Program'), msg:L('Cambia obiettivo (cut/bulk/recomp), peso target, data target, sessioni/settimana, durata, location, focus muscolare.','Change goal (cut/bulk/recomp), target weight, target date, sessions/week, duration, location, muscle focus.') },
+    { emo:'🔔', title:L('Notifiche','Notifications'), msg:L('8 tipi diversi di promemoria opzionali: allenamento, pasti, peso, sonno, acqua, riposo, check pasto, pesata settimanale.','8 different types of optional reminders: workout, meals, weight, sleep, water, rest, meal check, weekly weigh-in.') },
+    { emo:'🏖️', title:L('Modalità vacanza','Vacation mode'), msg:L('Sospende alert, deficit e obblighi per N giorni. Streak preservato. Tracking comunque attivo.','Suspends alerts, deficit and obligations for N days. Streak preserved. Tracking still active.') }
   ],
   profile: [
-    { emo:'👤', title:'Profilo', msg:'Riepilogo del tuo profilo: nome, età, peso/altezza, anni allenamento, foto profilo.' },
-    { emo:'📷', title:'Foto profilo', msg:'Carica una foto (max 1MB) dalla galleria. Salvata localmente.' },
-    { emo:'🚪', title:'Logout', msg:'Esce dall\'account. I dati restano salvati sul cloud per il prossimo login.' }
+    { emo:'👤', title:L('Profilo','Profile'), msg:L('Riepilogo del tuo profilo: nome, età, peso/altezza, anni allenamento, foto profilo.','Summary of your profile: name, age, weight/height, training years, profile photo.') },
+    { emo:'📷', title:L('Foto profilo','Profile photo'), msg:L('Carica una foto (max 1MB) dalla galleria. Salvata localmente.','Upload a photo (max 1MB) from your gallery. Saved locally.') },
+    { emo:'🚪', title:L('Logout','Logout'), msg:L('Esce dall\'account. I dati restano salvati sul cloud per il prossimo login.','Logs out of the account. Data stays saved in the cloud for your next login.') }
   ]
-};
+}; };
+Object.defineProperty(window,'__sectionHelps',{get:function(){return window.getSectionHelps();},configurable:true});
 
 window.showSectionHelp = function(sectionId) {
   const steps = window.__sectionHelps?.[sectionId];
@@ -14009,7 +14114,7 @@ window.renderProfile = function() {
 
     <span class="lbl" style="margin-bottom:6px;">SESSO</span>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px;">
-      ${[{id:'m',icon:'👨',lbl:'Uomo'},{id:'f',icon:'👩',lbl:'Donna'}].map(s=>{const isOn=sx===s.id;return`<div class="profile-sx-chip ${isOn?'on':''}" data-sx="${s.id}" style="padding:12px 6px;border-radius:12px;border:2px solid ${isOn?'var(--acc)':'var(--bord)'};background:${isOn?'rgba(197,241,53,.08)':'var(--surf)'};cursor:pointer;text-align:center;transition:.2s;" onclick="pickProfileSxChip(this)"><div style="font-size:20px;margin-bottom:3px;">${s.icon}</div><div style="font-size:11px;font-weight:700;">${s.lbl}</div></div>`;}).join('')}
+      ${[{id:'m',icon:'👨',lbl:(window.ST&&ST.lang==='en')?'Male':'Uomo'},{id:'f',icon:'👩',lbl:(window.ST&&ST.lang==='en')?'Female':'Donna'}].map(s=>{const isOn=sx===s.id;return`<div class="profile-sx-chip ${isOn?'on':''}" data-sx="${s.id}" style="padding:12px 6px;border-radius:12px;border:2px solid ${isOn?'var(--acc)':'var(--bord)'};background:${isOn?'rgba(197,241,53,.08)':'var(--surf)'};cursor:pointer;text-align:center;transition:.2s;" onclick="pickProfileSxChip(this)"><div style="font-size:20px;margin-bottom:3px;">${s.icon}</div><div style="font-size:11px;font-weight:700;">${s.lbl}</div></div>`;}).join('')}
     </div>
 
     <div class="g2">
@@ -14108,7 +14213,7 @@ window.renderSettings = function(mac){
   return`
   <div class="card" style="background:linear-gradient(135deg,#0c1a00,#0a1000);border-color:#1e2d00;padding:18px;margin-bottom:14px;">
     <div class="rc"><div style="width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--acc),#7ab300);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:28px;color:#000;">${AU.user.charAt(0).toUpperCase()}</div>
-    <div><div class="bebas" style="font-size:22px;">${AU.user}</div><div style="font-size:11px;color:var(--mut);">${sx==='f'?'👩 Donna':'👨 Uomo'} · ${AU.profile?.ag||'?'} anni · ${AU.profile?.ht||'?'}cm</div><div style="font-size:11px;color:var(--mut);margin-top:2px;">${ST.wLog.filter(w=>!w.isRest).length} allenamenti · ${streak(ST.wLog)} streak 🔥</div></div></div>
+    <div><div class="bebas" style="font-size:22px;">${AU.user}</div><div style="font-size:11px;color:var(--mut);">${sx==='f'?((window.ST&&ST.lang==='en')?'👩 Female':'👩 Donna'):((window.ST&&ST.lang==='en')?'👨 Male':'👨 Uomo')} · ${AU.profile?.ag||'?'} ${(window.ST&&ST.lang==='en')?'yrs':'anni'} · ${AU.profile?.ht||'?'}cm</div><div style="font-size:11px;color:var(--mut);margin-top:2px;">${ST.wLog.filter(w=>!w.isRest).length} ${(window.ST&&ST.lang==='en')?'workouts':'allenamenti'} · ${streak(ST.wLog)} streak 🔥</div></div></div>
   </div>
 
   ${sectionsMenu}
@@ -14325,12 +14430,12 @@ window.renderSettings = function(mac){
 
   <!-- AI RICALCOLO PIANO (sessione 17: spostato qui dentro Coaching) -->
   <div class="card" style="border-color:var(--acc);">
-    <div class="bebas" style="font-size:20px;color:var(--acc);margin-bottom:6px;">🤖 RICALCOLO COACHING</div>
-    <div style="font-size:12px;color:var(--mut);line-height:1.55;margin-bottom:12px;">Analizza progressi e propone aggiustamenti su calorie, cardio e nutrizione. Funziona anche offline.</div>
+    <div class="bebas" style="font-size:20px;color:var(--acc);margin-bottom:6px;">🤖 ${(window.ST&&ST.lang==='en')?`COACHING RECALC`:`RICALCOLO COACHING`}</div>
+    <div style="font-size:12px;color:var(--mut);line-height:1.55;margin-bottom:12px;">${(window.ST&&ST.lang==='en')?`It analyzes progress and suggests adjustments to calories, cardio and nutrition. Works offline too.`:`Analizza progressi e propone aggiustamenti su calorie, cardio e nutrizione. Funziona anche offline.`}</div>
     ${ST.aiPlan?`<div style="background:rgba(197,241,53,.06);border:1px solid var(--acc);border-radius:10px;padding:12px;margin-bottom:12px;">
       <div style="font-size:11px;color:var(--acc);font-weight:700;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">
-        <span>ULTIMO CONSIGLIO · ${ST.aiPlan.date||''}</span>
-        <span style="font-size:9px;background:${ST.aiPlan.source==='ai'?'rgba(96,165,250,.2)':'rgba(167,139,250,.2)'};color:${ST.aiPlan.source==='ai'?'var(--blu)':'var(--purp)'};padding:2px 7px;border-radius:6px;letter-spacing:.5px;">${ST.aiPlan.source==='ai'?'☁️ AI Cloud':'⚙️ Locale'}</span>
+        <span>${(window.ST&&ST.lang==='en')?`LATEST TIP`:`ULTIMO CONSIGLIO`} · ${ST.aiPlan.date||''}</span>
+        <span style="font-size:9px;background:${ST.aiPlan.source==='ai'?'rgba(96,165,250,.2)':'rgba(167,139,250,.2)'};color:${ST.aiPlan.source==='ai'?'var(--blu)':'var(--purp)'};padding:2px 7px;border-radius:6px;letter-spacing:.5px;">${ST.aiPlan.source==='ai'?'☁️ AI Cloud':((window.ST&&ST.lang==='en')?'⚙️ Local':'⚙️ Locale')}</span>
       </div>
       <div style="font-size:12px;color:var(--text);line-height:1.55;white-space:pre-wrap;">${(ST.aiPlan.advice||'').replace(/</g,'&lt;')}</div>
     </div>`:''}
@@ -14561,7 +14666,7 @@ window.renderSettings = function(mac){
       </div>
       <button class="btn-s" style="width:100%;padding:10px;background:rgba(96,165,250,.1);border:1px solid var(--blu);color:var(--blu);font-size:12px;font-weight:600;border-radius:8px;cursor:pointer;" onclick="importAppleHealth()">📥 IMPORTA DA APPLE HEALTH</button>
       <div style="font-size:10px;color:var(--mut);margin-top:6px;line-height:1.5;">
-        Su iPhone: app <strong>Salute</strong> → tap profilo (in alto a destra) → <strong>Esporta tutti i dati</strong> → estrai il .zip → carica <code>export.xml</code>.
+        ${(window.ST&&ST.lang==='en')?`On iPhone: <strong>Health</strong> app → tap profile (top right) → <strong>Export All Health Data</strong> → extract the .zip → upload <code>export.xml</code>.`:`Su iPhone: app <strong>Salute</strong> → tap profilo (in alto a destra) → <strong>Esporta tutti i dati</strong> → estrai il .zip → carica <code>export.xml</code>.`}
       </div>
     </div>
 
@@ -15090,7 +15195,7 @@ window.render = function() {
                 </div>
               ` : query.length>=2 ? `<div style="text-align:center;padding:14px;font-size:12px;color:var(--mut);">Nessun cibo trovato per "${escapeHtml(query)}". Prova la modalità "Manuale" per aggiungerlo a mano.</div>`
                 : cat ? `<div style="text-align:center;padding:10px;font-size:12px;color:var(--mut);">Nessun cibo nella categoria selezionata.</div>`
-                : `<div style="text-align:center;padding:10px;font-size:11px;color:var(--mut);line-height:1.5;">💡 Digita almeno 2 lettere o seleziona una categoria per cercare tra ${window.FOOD_DB.length} cibi italiani.</div>`}
+                : `<div style="text-align:center;padding:10px;font-size:11px;color:var(--mut);line-height:1.5;">${(window.ST&&ST.lang==='en')?`💡 Type at least 2 letters or select a category to search ${window.FOOD_DB.length} foods.`:`💡 Digita almeno 2 lettere o seleziona una categoria per cercare tra ${window.FOOD_DB.length} cibi italiani.`}</div>`}
               </div>
             `}
           `;
@@ -15394,7 +15499,7 @@ window.render = function() {
         </div>
         <div>
           <div style="font-size:10px;color:var(--mut);font-weight:700;margin-bottom:4px;">NOME RICETTA *</div>
-          <input type="text" maxlength="60" value="${escapeHtml(d.name||'')}" oninput="ST.sheetData.name=this.value" placeholder="Es. Pasta della nonna" style="width:100%;padding:10px;font-size:14px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;color:var(--text);">
+          <input type="text" maxlength="60" value="${escapeHtml(d.name||'')}" oninput="ST.sheetData.name=this.value" placeholder="${(window.ST&&ST.lang==='en')?`e.g. Grandma's pasta`:`Es. Pasta della nonna`}" style="width:100%;padding:10px;font-size:14px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;color:var(--text);">
         </div>
       </div>
 
@@ -15538,8 +15643,8 @@ window.render = function() {
       </div>
 
       <div style="display:flex;gap:6px;">
-        ${idx > 0 ? `<button class="btn btn-action" style="flex:1;padding:12px;" onclick="ST.sheetData.step--;render()">← Indietro</button>` : `<button class="btn btn-action" style="flex:1;padding:12px;" onclick="closeSheet()">${isMini?'Chiudi':'Salta'}</button>`}
-        <button class="btn" style="flex:2;padding:12px;background:var(--acc);color:#000;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;" onclick="advanceOnboarding()">${isLast ? (isMini?'✓ HO CAPITO':'✓ INIZIA') : 'AVANTI →'}</button>
+        ${idx > 0 ? `<button class="btn btn-action" style="flex:1;padding:12px;" onclick="ST.sheetData.step--;render()">${(window.ST&&ST.lang==='en')?'← Back':'← Indietro'}</button>` : `<button class="btn btn-action" style="flex:1;padding:12px;" onclick="closeSheet()">${(window.ST&&ST.lang==='en')?(isMini?'Close':'Skip'):(isMini?'Chiudi':'Salta')}</button>`}
+        <button class="btn" style="flex:2;padding:12px;background:var(--acc);color:#000;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;" onclick="advanceOnboarding()">${isLast ? ((window.ST&&ST.lang==='en')?(isMini?'✓ GOT IT':'✓ START'):(isMini?'✓ HO CAPITO':'✓ INIZIA')) : ((window.ST&&ST.lang==='en')?'NEXT →':'AVANTI →')}</button>
       </div>
     </div></div>`;
   })():
@@ -15784,7 +15889,7 @@ window.render = function() {
         <!-- Header titolo (sticky in alto) -->
         <div style="padding:0 16px 8px;flex-shrink:0;">
           <div class="bebas" style="font-size:22px;margin-bottom:4px;">🔍 SCEGLI DAL DB</div>
-          <div style="font-size:12px;color:var(--mut);line-height:1.4;">${cart.length ? 'Aggiungi altri cibi al carrello o conferma lo sgarro completo qui sopra.' : 'Cerca tra '+(window.FOOD_DB||[]).length+' cibi italiani. Puoi aggiungerne più di uno e contarli come UN solo sgarro.'}</div>
+          <div style="font-size:12px;color:var(--mut);line-height:1.4;">${cart.length ? ((window.ST&&ST.lang==='en')?'Add more foods to the cart or confirm the full cheat above.':'Aggiungi altri cibi al carrello o conferma lo sgarro completo qui sopra.') : ((window.ST&&ST.lang==='en')?('Search '+(window.FOOD_DB||[]).length+' foods. You can add more than one and count them as ONE cheat.'):('Cerca tra '+(window.FOOD_DB||[]).length+' cibi italiani. Puoi aggiungerne più di uno e contarli come UN solo sgarro.'))}</div>
         </div>
 
         <!-- Area scrollabile principale -->
