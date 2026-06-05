@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION55-RECIPES-EN">
+<meta name="ft-version" content="build-SESSION56-WORKOUT-AUTH-EN">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -520,7 +520,7 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
     <div class="spinner"></div>
     <div class="bebas" style="color:var(--text);font-size:28px;letter-spacing:3px;">SYSTEM BOOTING</div>
     <div style="color:var(--mut);font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:1px;">Connessione al Cloud Secure Database...</div>
-    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION55</div>
+    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION56</div>
   </div>
 </div>
 
@@ -5817,11 +5817,841 @@ window.AUTO_TRANS = {
   ": solo se attivata espressamente, condividi username, sessioni allenamento e streak con altri utenti": ": only if explicitly enabled, you share username, workout sessions and streak with other users",
   "I dati vengono conservati finché mantieni l'account attivo. Dopo eliminazione, rimossi entro 30 giorni.": "Data is kept as long as you keep the account active. After deletion, removed within 30 days.",
   "6. I tuoi diritti GDPR (Art. 15-22)": "6. Your GDPR rights (Art. 15-22)",
-  "consulta sempre un professionista": "always consult a professional"
+  "consulta sempre un professionista": "always consult a professional",
+  // ── UI ALLENAMENTO (workout runtime) ──
+  "COMPLETATO!": "COMPLETED!", "SERIE COMPLETATA": "SET COMPLETED", "SALVA E TERMINA": "SAVE & FINISH",
+  "PROSSIMO": "NEXT", "PROSSIMO ESERCIZIO": "NEXT EXERCISE", "serie completate": "sets completed",
+  "secondi": "seconds", "DURATA": "DURATION", "ESEGUI IN ORDINE:": "DO IN ORDER:", "TEMPO:": "TIME:",
+  "TUTORIAL VIDEO": "VIDEO TUTORIAL", "VEDI TUTORIAL VIDEO": "SEE VIDEO TUTORIAL", "REPS FATTE": "REPS DONE",
+  "ATTUALE": "CURRENT", "SOSTITUISCI ESERCIZIO": "SWAP EXERCISE", "SOSTITUISCI QUESTO ESERCIZIO": "SWAP THIS EXERCISE",
+  "I TUOI ESERCIZI PERSONALIZZATI": "YOUR CUSTOM EXERCISES", "LE TUE NOTE": "YOUR NOTES",
+  "SALVA NOTA": "SAVE NOTE", "Modifica nota": "Edit note", "MUSCOLO LAVORATO": "MUSCLE WORKED",
+  "RESPIRAZIONE": "BREATHING", "Aggiungi nota personale (opzionale)": "Add a personal note (optional)",
+  "Prima volta — inserisci il valore reale": "First time — enter the real value",
+  "💡 Nessun peso — allungamento statico, non forzare": "💡 No weight — static stretching, don't force it",
+  "💡 Nessun peso — esegui a corpo libero rispettando i tempi": "💡 No weight — do it bodyweight, respecting the times",
+  "💡 Sforzo massimo nei picchi, recupero attivo negli intervalli": "💡 Maximum effort on the peaks, active recovery in between",
+  "Stesso muscolo, diverso esercizio.": "Same muscle, different exercise.",
+  "PESO USATO (KG)": "WEIGHT USED (KG)", "DURATA (SEC)": "DURATION (SEC)", "RIPETIZIONI": "REPS",
+  "ESECUZIONE": "EXECUTION", "TIPS PROFESSIONALI": "PRO TIPS", "ERRORI COMUNI": "COMMON MISTAKES",
+  "INIZIA SERIE": "START SET", "Suggerite": "Suggested", "TEMPO STIMATO": "ESTIMATED TIME",
+  // ── NOMI MUSCOLARI (mus esercizi) ──
+  "Petto / Tricipiti": "Chest / Triceps", "Tricipiti / Petto Basso": "Triceps / Lower Chest",
+  "Tricipiti": "Triceps", "Tricipite": "Triceps", "Tricipite Lungo": "Long-Head Triceps",
+  "Tricipite/Petto": "Triceps/Chest", "Tricipite (Capo Lungo)": "Triceps (Long Head)",
+  "Deltoidi": "Delts", "Deltoide Mediale": "Lateral Delt", "Deltoide Anteriore": "Front Delt",
+  "Deltoide Posteriore": "Rear Delt", "Deltoide Laterale": "Lateral Delt", "Deltoide Laterale/Trapezio": "Lateral Delt/Traps",
+  "Deltoide Posteriore / Cuffia": "Rear Delt / Rotator Cuff", "Deltoidi (tutti i fasci)": "Delts (all heads)",
+  "Deltoidi Posteriori/Trapezio": "Rear Delts/Traps", "Deltoidi/Trapezio Medio": "Delts/Mid Traps",
+  "Spalle": "Shoulders", "Spalle (deltoide)": "Shoulders (delts)",
+  "Dorsali / Romboidi": "Lats / Rhomboids", "Dorsale / Romboide": "Lat / Rhomboid", "Dorsali / Bicipiti": "Lats / Biceps",
+  "Dorsali Larghi": "Wide Lats", "Dorsali / Trapezio Medio": "Lats / Mid Traps", "Dorsali": "Lats", "Gran Dorsale": "Lats",
+  "Gran Dorsale/Romboidi": "Lats/Rhomboids", "Gran Dorsale/Serrato": "Lats/Serratus",
+  "Lombari / Femorali": "Lower Back / Hamstrings", "Lombari / Dorso": "Lower Back / Back", "Lombari/Femorali": "Lower Back/Hamstrings",
+  "Trapezio Superiore": "Upper Traps", "Trapezio Inferiore": "Lower Traps",
+  "Bicipiti": "Biceps", "Bicipite": "Biceps", "Bicipiti / Avambraccio": "Biceps / Forearm", "Bicipite/Avambraccio": "Biceps/Forearm",
+  "Picco Bicipite": "Biceps Peak", "Bicipite (picco)": "Biceps (peak)", "Bicipite (Capo Lungo)": "Biceps (Long Head)",
+  "Bicipite Brachiale/Brachioradiale": "Brachialis/Brachioradialis",
+  "Glutei": "Glutes", "Grande Gluteo": "Gluteus Maximus", "Glutei (Medio)": "Glutes (Medius)",
+  "Quadricipiti / Glutei": "Quads / Glutes", "Quadricipiti/Glutei": "Quads/Glutes", "Quadricipiti": "Quads", "Quadricipite": "Quad",
+  "Femorali / Glutei": "Hamstrings / Glutes", "Femorali/Glutei": "Hamstrings/Glutes", "Femorali": "Hamstrings",
+  "Glutei/Quadricipiti": "Glutes/Quads", "Glutei / Femorali / Core": "Glutes / Hamstrings / Core", "Glutei/Femorali/Core": "Glutes/Hamstrings/Core",
+  "Gambe / Esplosività": "Legs / Power", "Quadricipiti / Glutei / Core": "Quads / Glutes / Core",
+  "Polpacci": "Calves", "Polpacci (gemello)": "Calves (gastrocnemius)", "Polpacci (soleo)": "Calves (soleus)", "Polpacci/Cardio": "Calves/Cardio",
+  "Core": "Core", "Core (stabilità)": "Core (stability)", "Core/Lombari": "Core/Lower Back",
+  "Core / Addome Inferiore": "Core / Lower Abs", "Core / Addome Completo": "Core / Full Abs",
+  "Addome": "Abs", "Addominali Bassi": "Lower Abs", "Addominali Inferiori": "Lower Abs", "Addome Inferiore": "Lower Abs", "Obliqui": "Obliques",
+  "Cardio Metabolico": "Metabolic Cardio", "Corpo Completo": "Full Body", "Full Body/Cardio": "Full Body/Cardio",
+  "Cardio / Tutto il corpo": "Cardio / Full Body", "Cardio / Core": "Cardio / Core", "Cardio / Polpacci": "Cardio / Calves",
+  "Petto Inferiore": "Lower Chest", "Petto Interno": "Inner Chest", "Petto Alto / Gran Dorsale": "Upper Chest / Lats",
+  "Petto Alto / Spalle": "Upper Chest / Shoulders", "Petto/Esplosiva": "Chest/Power",
+  "Flessori Avambraccio": "Forearm Flexors", "Estensori Avambraccio/Brachioradiale": "Forearm Extensors/Brachioradialis",
+  "Avambracci/Trapezio/Core": "Forearms/Traps/Core", "Avambracci / Presa": "Forearms / Grip",
+  "Quadricipiti/Esplosiva": "Quads/Power", "Flessori Anca": "Hip Flexors", "Toracica/Schiena Alta": "Thoracic/Upper Back",
+  "Tutto il corpo + Cardio": "Full Body + Cardio", "Tutto il corpo": "Full Body",
+  "HIIT (High Intensity Interval Training) = allenamento ad intervalli alta intensità. Alterni brevi periodi di sforzo MASSIMO (es. 30 secondi al 90% delle tue capacità) a periodi di recupero attivo (30s al 50%), ripetuti per 10-20 minuti totali. Brucia molte più calorie del cardio lento (LISS), accelera il metabolismo per 12-24 ore dopo l'allenamento (effetto EPOC = \"afterburn\"), migliora rapidamente la capacità cardiovascolare. È intenso: max 2-3 volte/settimana per non sovrallenarsi.": "HIIT (High Intensity Interval Training) = high-intensity interval training. You alternate short bursts of MAXIMUM effort (e.g. 30 seconds at 90% of your capacity) with periods of active recovery (30s at 50%), repeated for 10-20 minutes total. It burns far more calories than slow cardio (LISS), speeds up your metabolism for 12-24 hours after the workout (the EPOC \"afterburn\" effect), and rapidly improves cardiovascular fitness. It's intense: max 2-3 times a week to avoid overtraining.",
+  "Variante di HIIT che usa solo il peso del corpo, perfetto a casa o in viaggio. Alterna 3 esercizi esplosivi a corpo libero (burpees, mountain climbers, jumping jacks) con brevi recuperi. Allena cardio + muscoli simultaneamente.": "A HIIT variation using only your bodyweight, perfect at home or while traveling. It alternates 3 explosive bodyweight exercises (burpees, mountain climbers, jumping jacks) with short recoveries. It trains cardio + muscles at the same time.",
+  "Il riscaldamento è 5-10 minuti di movimenti leggeri PRIMA di iniziare l'allenamento vero. Serve a portare gradualmente i muscoli e le articolazioni alla temperatura giusta, aumentare il flusso sanguigno e preparare il sistema nervoso allo sforzo. Riduce drasticamente il rischio di strappi, stiramenti e altri infortuni. NON è opzionale: anche chi ha poco tempo dovrebbe dedicarci almeno 3 minuti.": "The warm-up is 5-10 minutes of light movement BEFORE you start the real workout. It gradually brings your muscles and joints to the right temperature, increases blood flow and prepares your nervous system for effort. It dramatically reduces the risk of tears, strains and other injuries. It's NOT optional: even if you're short on time you should give it at least 3 minutes.",
+  "Riscaldamento \"potenziato\" pensato per chi è in fase di definizione (cut). Include 3 minuti di cardio leggero iniziale per attivare il metabolismo e dare il segnale \"brucia grassi\" già prima dei pesi. Aumenta la spesa calorica totale della sessione del 10-15% senza compromettere la performance.": "A \"boosted\" warm-up designed for those in a cutting phase. It includes 3 minutes of light cardio up front to fire up your metabolism and send the \"fat-burning\" signal before you even touch the weights. It raises the session's total calorie burn by 10-15% without hurting performance.",
+  "Riscaldamento mirato alla fase di massa (bulk): meno cardio, più movimenti specifici degli esercizi che farai. Prepara le articolazioni a sostenere carichi pesanti e attiva il sistema nervoso per esprimere forza massimale. Include 1 serie \"vuota\" di squat/affondi per \"pulire\" il pattern motorio.": "A warm-up targeted at a mass (bulk) phase: less cardio, more movements specific to the exercises you're about to do. It prepares your joints to handle heavy loads and primes your nervous system for maximal strength. It includes 1 \"empty\" set of squats/lunges to groove the movement pattern.",
+  "Il defaticamento (cooldown) sono 5-10 minuti di stretching statico DOPO l'allenamento. Serve a far tornare la frequenza cardiaca a livelli normali in modo graduale, ridurre l'accumulo di acido lattico, prevenire i DOMS (dolori muscolari ritardati) e migliorare la flessibilità a lungo termine. Mantenere ogni posizione 30-45 secondi senza forzare.": "The cool-down is 5-10 minutes of static stretching AFTER your workout. It brings your heart rate back to normal gradually, reduces lactic-acid buildup, prevents DOMS (delayed-onset muscle soreness) and improves long-term flexibility. Hold each position 30-45 seconds without forcing it.",
+  "I tuoi dati sono al sicuro nel cloud. Dopo il logout puoi rientrare con la tua email.": "Your data is safe in the cloud. After logging out you can sign back in with your email.",
+  "✓ App installata sul dispositivo": "✓ App installed on your device",
+  "📲 INSTALLA APP SUL DISPOSITIVO": "📲 INSTALL APP ON DEVICE",
+  "AGGIORNA PASSWORD": "UPDATE PASSWORD", "CANCELLA IL MIO ACCOUNT": "DELETE MY ACCOUNT",
+  "Cancellazione <strong>irreversibile</strong>: allenamenti, peso, sgarri, note, schede e PR persi per sempre. Richiede tripla conferma.": "<strong>Irreversible</strong> deletion: workouts, weight, cheats, notes, routines and PRs lost forever. Requires triple confirmation.",
+  "📥 ESPORTA I MIEI DATI (JSON)": "📥 EXPORT MY DATA (JSON)", "📋 INFORMATIVA PRIVACY": "📋 PRIVACY POLICY",
+  "🔄 RIVEDI BANNER PRIVACY": "🔄 REVIEW PRIVACY BANNER",
+  "ACCEDI": "SIGN IN", "REGISTRATI": "SIGN UP", "EMAIL O USERNAME": "EMAIL OR USERNAME",
+  "🔑 Password dimenticata?": "🔑 Forgot password?", "🔑 RECUPERA PASSWORD": "🔑 RECOVER PASSWORD",
+  "Inserisci l'email del tuo account. Ti invieremo un link per reimpostare la password.": "Enter your account email. We'll send you a link to reset your password.",
+  "LA TUA EMAIL": "YOUR EMAIL", "INVIA LINK DI RESET ▸": "SEND RESET LINK ▸", "← Torna al Login": "← Back to Login",
+  "EMAIL (per recupero password)": "EMAIL (for password recovery)", "PASSWORD (min 8 car., 1 num., 1 spec.)": "PASSWORD (min 8 chars, 1 num, 1 special)",
+  "CONFERMA PASSWORD": "CONFIRM PASSWORD", "SEI UN UOMO O UNA DONNA?": "ARE YOU MALE OR FEMALE?",
+  "UOMO": "MALE", "DONNA": "FEMALE", "PESO (KG)": "WEIGHT (KG)", "ALTEZZA (CM)": "HEIGHT (CM)", "ETÀ": "AGE",
+  "CREA ACCOUNT ▸": "CREATE ACCOUNT ▸",
+  "🔒 Database sicuro in Cloud · Ogni account è privato": "🔒 Secure cloud database · Every account is private",
+  "Configura il tuo programma personale. L'AI lo adatterà ogni settimana.": "Set up your personal program. The AI will adapt it every week.",
+  "PESO ATTUALE (KG)": "CURRENT WEIGHT (KG)", "PESO OBIETTIVO (KG)": "GOAL WEIGHT (KG)",
+  "DATA OBIETTIVO (PREVISTA)": "TARGET DATE (EXPECTED)", "STRATEGIA": "STRATEGY",
+  "Definizione (Perdita Grasso)": "Cut (Fat Loss)", "Massa (Aumento Muscolo)": "Bulk (Muscle Gain)",
+  "DOVE TI ALLENI?": "WHERE DO YOU TRAIN?", "🏋️ In Palestra (con attrezzi)": "🏋️ At the Gym (with equipment)",
+  "🏠 A Casa (corpo libero)": "🏠 At Home (bodyweight)", "SESSIONI DI ALLENAMENTO A SETTIMANA": "TRAINING SESSIONS PER WEEK",
+  "0 — Solo Nutrizione &amp; Passi (nessuna palestra)": "0 — Nutrition &amp; Steps only (no gym)",
+  "0 — Solo Nutrizione & Passi (nessuna palestra)": "0 — Nutrition & Steps only (no gym)",
+  "1 sessione/settimana": "1 session/week", "2 sessioni/settimana": "2 sessions/week",
+  "3 sessioni/settimana (consigliato)": "3 sessions/week (recommended)", "4 sessioni/settimana": "4 sessions/week",
+  "5 sessioni/settimana": "5 sessions/week", "6 sessioni/settimana (intenso)": "6 sessions/week (intense)",
+  "Programma solo passi": "Steps-only program",
+  ": il tuo obiettivo sarà camminare 10.000–12.000 passi/giorno + alimentazione controllata. Non avrai esercizi in palestra.": ": your goal will be to walk 10,000–12,000 steps/day + controlled nutrition. You won't have any gym exercises.",
+  "DURATA OGNI SESSIONE": "DURATION OF EACH SESSION", "45 minuti": "45 minutes", "60 minuti (ideale)": "60 minutes (ideal)", "90 minuti": "90 minutes",
+  "SESSIONI CARDIO DI BASE A SETTIMANA": "BASE CARDIO SESSIONS PER WEEK", "0 — Solo pesi": "0 — Weights only",
+  "1 — Leggero": "1 — Light", "2 — Moderato": "2 — Moderate", "3 — Intenso": "3 — Intense",
+  "INTOLLERANZE ALIMENTARI (tocca per selezionare)": "FOOD INTOLERANCES (tap to select)",
+  "FOCUS DI ALLENAMENTO — cosa vuoi sviluppare?": "TRAINING FOCUS — what do you want to develop?",
+  "TIPO DI ALIMENTAZIONE": "DIET TYPE", "Onnivoro": "Omnivore", "Vegetariano": "Vegetarian", "Vegano": "Vegan",
+  "USI INTEGRATORI PROTEICI? (whey, proteine in polvere)": "DO YOU USE PROTEIN SUPPLEMENTS? (whey, protein powder)",
+  "Sì, li uso": "Yes, I use them", "No, solo cibi": "No, just food",
+  "🍽️ I TUOI PIATTI / CIBI PREFERITI (opzionale)": "🍽️ YOUR FAVORITE DISHES / FOODS (optional)",
+  "Scrivi 2-3 piatti o cibi che ami davvero per ciascun pasto. Cercheremo di includerli nel tuo menù, mantenendo comunque il target calorico per il tuo obiettivo. Esempi: \"pasta al pomodoro, bresaola, yogurt greco\". Max 200 caratteri ciascuno.": "Write 2-3 dishes or foods you truly love for each meal. We'll try to include them in your menu while still keeping the calorie target for your goal. Examples: \"pasta with tomato sauce, bresaola, Greek yogurt\". Max 200 characters each.",
+  "🌅 COLAZIONE": "🌅 BREAKFAST", "🍽️ PRANZO": "🍽️ LUNCH", "🌙 CENA": "🌙 DINNER",
+  "ATTIVA IL SISTEMA ▸": "ACTIVATE THE SYSTEM ▸",
+  "5 minuti": "5 minutes", "6 minuti": "6 minutes", "8 minuti": "8 minutes",
+  "📋 Cliccando \"Attiva il sistema\" ti verrà chiesto di accettare il disclaimer medico e l'informativa privacy. L'app non sostituisce il parere di un medico o nutrizionista qualificato.": "📋 By clicking \"Activate the system\" you'll be asked to accept the medical disclaimer and the privacy policy. The app does not replace the advice of a qualified doctor or nutritionist.",
+  "Sdraiati sulla panca, manubrio per mano all'altezza delle orecchie": "Lie on the bench, a dumbbell in each hand at ear height",
+  "Gomiti a 75° dal corpo, non perpendicolari alla schiena": "Elbows at 75° from the body, not perpendicular to your back",
+  "Abbassa lentamente in 2-3 secondi sfiorando il petto": "Lower slowly over 2-3 seconds, grazing your chest",
+  "Spingi esplosivamente verso l'alto": "Push explosively upward",
+  "Scapole retratte e abbassate per tutta la serie": "Shoulder blades retracted and down for the whole set",
+  "Piedi piatti e fermi a terra": "Feet flat and firm on the floor",
+  "Non bloccare completamente i gomiti in cima": "Don't fully lock your elbows at the top",
+  "Impugna il bilancere leggermente più largo delle spalle": "Grip the barbell slightly wider than your shoulders",
+  "Abbassa controllando fino a sfiorare il petto (altezza capezzoli)": "Lower under control until you graze your chest (nipple height)",
+  "Spingi esplosivo e mantieni il controllo": "Push explosively and stay in control",
+  "Piedi fissi a terra per tutta la serie": "Feet planted on the floor for the whole set",
+  "Arco lombare naturale, non esagerato": "Natural lower-back arch, not exaggerated",
+  "Stringi il bilancere al massimo per attivare meglio il petto": "Squeeze the barbell hard to better activate your chest",
+  "Regola la panca a 30-45°": "Set the bench to 30-45°",
+  "Posiziona i manubri all'altezza della clavicola": "Position the dumbbells at collarbone height",
+  "Abbassa controllato fino a quasi toccare le spalle": "Lower under control until you almost touch your shoulders",
+  "Spingi verso l'alto e leggermente verso il centro": "Push up and slightly toward the center",
+  "Più la panca è inclinata più lavora il deltoide anteriore": "The steeper the bench, the more the front delt works",
+  "Mantieni i gomiti a 45-60° dal corpo": "Keep your elbows 45-60° from your body",
+  "Sdraiati, manubri sopra il petto con palme affacciate": "Lie down, dumbbells over your chest with palms facing each other",
+  "Abbassa le braccia ad arco ampio fino al livello del petto": "Lower your arms in a wide arc to chest level",
+  "Senti bene lo stretch al petto in basso": "Feel a good chest stretch at the bottom",
+  "Torna su stringendo il petto — non spingere": "Come back up by squeezing your chest — don't press",
+  "Leggera flessione del gomito per proteggere le articolazioni": "Slight elbow bend to protect the joints",
+  "Peso leggero: questo è un esercizio di allungamento": "Light weight: this is a stretching exercise",
+  "Mani leggermente più larghe delle spalle": "Hands slightly wider than your shoulders",
+  "Corpo perfettamente in linea: testa-spalle-glutei-caviglie": "Body in a perfect line: head-shoulders-glutes-ankles",
+  "Scendi sfiorando il petto a terra": "Lower until your chest grazes the floor",
+  "Spingi esplosivamente fino alla quasi-estensione del gomito": "Push explosively to near-full elbow extension",
+  "Addome contratto per tutta la serie": "Abs braced for the whole set",
+  "Per aumentare la difficoltà: eleva i piedi su una sedia": "To make it harder: elevate your feet on a chair",
+  "Appoggia le mani su una sedia o divano": "Place your hands on a chair or sofa",
+  "Corpo in linea perfetta": "Body in a perfect line",
+  "Scendi fino a sfiorare il rialzo con il petto": "Lower until your chest grazes the surface",
+  "Spingi su": "Push up",
+  "Più il rialzo è alto, più è facile": "The higher the surface, the easier it is",
+  "Utile per i principianti o come riscaldamento": "Useful for beginners or as a warm-up",
+  "Appoggia i piedi su una sedia, le mani a terra": "Place your feet on a chair, hands on the floor",
+  "Corpo in linea": "Body in line",
+  "Scendi fino a sfiorare terra con il mento": "Lower until your chin grazes the floor",
+  "Molto intenso sulle spalle oltre che sul petto alto": "Very intense on the shoulders as well as the upper chest",
+  "Progredisci lentamente": "Progress slowly",
+  "Sdraiato sulla panca, manubri sopra il petto con palme verso l'interno": "Lying on the bench, dumbbells over your chest with palms facing inward",
+  "Gomiti puntati al soffitto — questa è la posizione fissa": "Elbows pointing at the ceiling — this is the fixed position",
+  "Abbassa verso le orecchie piegando SOLO i gomiti": "Lower toward your ears bending ONLY your elbows",
+  "Estendi tornando su senza muovere i gomiti": "Extend back up without moving your elbows",
+  "I gomiti sono il perno — NON si muovono mai": "The elbows are the pivot — they NEVER move",
+  "Peso moderato: tecnica prima di tutto": "Moderate weight: technique first",
+  "In piedi davanti al cavo, presa prona sull'asta": "Standing in front of the cable, overhand grip on the bar",
+  "Gomiti strettamente bloccati ai fianchi": "Elbows locked tight to your sides",
+  "Spingi verso il basso fino alla completa estensione": "Push down to full extension",
+  "Risali controllato senza alzare i gomiti": "Come back up under control without raising your elbows",
+  "Non dondolare il busto — isola il tricipite": "Don't swing your torso — isolate the triceps",
+  "Impugna le parallele, corpo con leggera inclinazione avanti": "Grip the parallel bars, body leaning slightly forward",
+  "Abbassati piegando i gomiti fino a 90°": "Lower by bending your elbows to 90°",
+  "Spingi su tornando alla posizione iniziale": "Push up back to the starting position",
+  "Busto più verticale = più tricipiti": "More upright torso = more triceps",
+  "Evita se hai problemi alle spalle": "Avoid if you have shoulder issues",
+  "Seduto o in piedi, un manubrio a due mani sopra la testa": "Seated or standing, one dumbbell held with both hands overhead",
+  "Abbassa il manubrio dietro la testa piegando i gomiti": "Lower the dumbbell behind your head by bending your elbows",
+  "Estendi tornando su": "Extend back up",
+  "Mantieni i gomiti vicini alla testa tutto il tempo": "Keep your elbows close to your head the whole time",
+  "Appoggia le mani sul bordo di una sedia dietro di te": "Place your hands on the edge of a chair behind you",
+  "Gambe distese avanti (più difficile) o piegate (più facile)": "Legs extended forward (harder) or bent (easier)",
+  "Mantieni la schiena vicina alla sedia": "Keep your back close to the chair",
+  "Seduto o in piedi, manubri all'altezza delle orecchie gomiti a 90°": "Seated or standing, dumbbells at ear height, elbows at 90°",
+  "Spingi i manubri verso il soffitto avvicinandoli sopra la testa": "Push the dumbbells toward the ceiling, bringing them together overhead",
+  "Abbassa controllato tornando a 90°": "Lower under control back to 90°",
+  "Attiva il core — non inarcare la schiena": "Brace your core — don't arch your back",
+  "Spingi dritto su, non in avanti": "Push straight up, not forward",
+  "In piedi, manubri ai fianchi con leggera flessione del gomito": "Standing, dumbbells at your sides with a slight elbow bend",
+  "Alza le braccia lateralmente fino all'altezza delle spalle": "Raise your arms out to the sides up to shoulder height",
+  "Abbassa lentamente in 3 secondi": "Lower slowly over 3 seconds",
+  "Immagina di versare acqua da un secchio in cima al movimento": "Imagine pouring water from a bucket at the top of the movement",
+  "NON usare inerzia: pesi leggeri, tecnica perfetta": "Don't use momentum: light weights, perfect technique",
+  "In piedi, manubri davanti alle cosce palme verso il basso": "Standing, dumbbells in front of your thighs, palms down",
+  "Alza un braccio alla volta fino all'altezza delle spalle": "Raise one arm at a time up to shoulder height",
+  "Abbassa controllato e alterna": "Lower under control and alternate",
+  "Pollice verso l'alto durante il movimento": "Thumb pointing up during the movement",
+  "Evita di oscillare il busto": "Avoid swinging your torso",
+  "Fissa l'elastico all'altezza del viso": "Anchor the band at face height",
+  "Tira verso il viso allargando i gomiti verso l'alto e i lati": "Pull toward your face, spreading your elbows up and out",
+  "Contrai tra le scapole in cima": "Squeeze between your shoulder blades at the top",
+  "Fondamentale per la salute delle spalle": "Essential for shoulder health",
+  "Posizione a V invertita (bacino alto, gambe dritte)": "Inverted-V position (hips high, legs straight)",
+  "Piega i gomiti portando la testa verso terra tra le mani": "Bend your elbows, bringing your head toward the floor between your hands",
+  "Ottimo sostituto del Military Press senza attrezzi": "A great substitute for the Military Press with no equipment",
+  "Usa bottiglie d'acqua piene (0.5-1.5L)": "Use full water bottles (0.5-1.5L)",
+  "Stessa tecnica delle alzate con manubri": "Same technique as dumbbell raises",
+  "Movimento lento e controllato — senti il muscolo lavorare": "Slow, controlled movement — feel the muscle working",
+  "In piedi, bilancere impugnato, busto inclinato a 45°": "Standing, gripping the barbell, torso bent to 45°",
+  "Tira il bilancere verso l'ombelico senza alzare il busto": "Pull the barbell toward your navel without raising your torso",
+  "Stringi bene le scapole in cima": "Squeeze your shoulder blades hard at the top",
+  "Abbassa lentamente controllando il peso": "Lower slowly, controlling the weight",
+  "Schiena SEMPRE piatta — regola principale assoluta": "Back ALWAYS flat — the number-one absolute rule",
+  "Il movimento parte dai gomiti, non dalle mani": "The movement starts from the elbows, not the hands",
+  "Appoggia ginocchio e mano dello stesso lato su una panca": "Place the knee and hand of the same side on a bench",
+  "Tira il manubrio verso l'anca (non verso la spalla)": "Pull the dumbbell toward your hip (not toward your shoulder)",
+  "Abbassa lentamente fino alla piena estensione del braccio": "Lower slowly to full arm extension",
+  "Il gomito deve sfiorare il fianco in cima": "Your elbow should graze your side at the top",
+  "Impugna la sbarra con presa prona, mani leggermente più larghe": "Grip the bar overhand, hands slightly wider",
+  "Parti con le braccia distese e le scapole attive (abbassate)": "Start with arms extended and shoulder blades engaged (down)",
+  "Tira portando il mento sopra la sbarra": "Pull until your chin is above the bar",
+  "Abbassa lentamente in 2-3 secondi": "Lower slowly over 2-3 seconds",
+  "Se non riesci: usa un elastico di assistenza": "If you can't: use an assistance band",
+  "Siediti e blocca le ginocchia sotto i pad": "Sit and lock your knees under the pads",
+  "Impugna la barra leggermente più larga delle spalle": "Grip the bar slightly wider than your shoulders",
+  "Tira la barra verso il mento inclinando leggermente il busto": "Pull the bar toward your chin, leaning your torso back slightly",
+  "Risali lentamente con le braccia quasi distese": "Rise slowly with arms nearly extended",
+  "Immagina di portare i gomiti verso i fianchi": "Imagine driving your elbows toward your sides",
+  "Il movimento deve partire dalla schiena non dalle braccia": "The movement should start from your back, not your arms",
+  "In piedi, pesi davanti alle cosce": "Standing, weights in front of your thighs",
+  "Piega il busto in avanti abbassando i pesi lungo le gambe": "Hinge your torso forward, lowering the weights along your legs",
+  "Ginocchia solo leggermente sbloccate": "Knees only slightly unlocked",
+  "Ritorna su contraendo glutei e femorali": "Come back up by contracting your glutes and hamstrings",
+  "Schiena SEMPRE piatta — è la regola d'oro": "Back ALWAYS flat — it's the golden rule",
+  "Sdraiati a pancia in giù, braccia tese in avanti": "Lie face down, arms extended forward",
+  "Solleva contemporaneamente petto, braccia e gambe da terra": "Simultaneously lift your chest, arms and legs off the floor",
+  "Contrai il dorso e mantieni la posizione": "Contract your back and hold the position",
+  "Respira regolarmente": "Breathe steadily",
+  "Non strattonare il collo — testa in posizione neutra": "Don't yank your neck — keep your head neutral",
+  "Afferra lo stipite di una porta o una colonna solida": "Grab a door frame or a solid post",
+  "Inclinati all'indietro con le braccia tese": "Lean back with your arms extended",
+  "Tira il corpo verso le mani piegando i gomiti": "Pull your body toward your hands by bending your elbows",
+  "Abbassa controllato": "Lower under control",
+  "Usa le gambe per regolare la difficoltà (più vicino = più facile)": "Use your legs to adjust difficulty (closer = easier)",
+  "In piedi, bilancere a presa supina (palme verso l'alto)": "Standing, barbell with an underhand grip (palms up)",
+  "Gomiti bloccati ai fianchi per tutta la serie": "Elbows locked to your sides for the whole set",
+  "Piega portando il bilancere verso le spalle": "Curl, bringing the barbell toward your shoulders",
+  "NON dondolare la schiena — è la regola più importante": "Don't swing your back — it's the most important rule",
+  "In piedi, un manubrio per mano ai fianchi": "Standing, a dumbbell in each hand at your sides",
+  "Porta un manubrio alla volta verso la spalla ruotando il polso": "Bring one dumbbell at a time toward your shoulder, rotating your wrist",
+  "Alterna i lati ad ogni ripetizione": "Alternate sides on each rep",
+  "La rotazione del polso in salita aumenta l'attivazione del bicipite": "Rotating the wrist on the way up increases biceps activation",
+  "Manubri tenuti in verticale (pollice verso l'alto) per tutta la serie": "Dumbbells held vertically (thumb up) for the whole set",
+  "Porta verso la spalla senza ruotare il polso": "Curl toward your shoulder without rotating your wrist",
+  "Ottimo per aumentare lo spessore e la larghezza del braccio": "Great for adding thickness and width to your arm",
+  "Seduto su panca, gomito appoggiato all'interno della coscia": "Seated on a bench, elbow braced against your inner thigh",
+  "Porta il manubrio verso la spalla senza muovere il gomito": "Bring the dumbbell toward your shoulder without moving your elbow",
+  "Abbassa molto lentamente": "Lower very slowly",
+  "Il miglior esercizio per massimizzare il picco del bicipite": "The best exercise to maximize the biceps peak",
+  "Fai passare un asciugamano sotto la coscia": "Loop a towel under your thigh",
+  "Afferra le estremità e tira verso l'alto flettendo il gomito": "Grab the ends and pull up by flexing your elbow",
+  "Contrai per 5-8 secondi": "Contract for 5-8 seconds",
+  "Ripeti variando la posizione del gomito": "Repeat, varying your elbow position",
+  "Tensione massima in assenza di peso": "Maximum tension with no weight",
+  "Spalle appoggiate su una panca, bilancere sul bacino": "Shoulders on a bench, barbell across your hips",
+  "Abbassa i glutei verso terra": "Lower your glutes toward the floor",
+  "Spingi il bacino verso il soffitto contraendo FORTE i glutei in cima": "Drive your hips toward the ceiling, squeezing your glutes HARD at the top",
+  "Tieni 1 secondo di pausa in cima": "Hold a 1-second pause at the top",
+  "In cima: ginocchia a 90°, bacino piatto non iperesteso": "At the top: knees at 90°, hips flat, not hyperextended",
+  "Piedi larghezza spalle, punte leggermente verso l'esterno": "Feet shoulder-width, toes pointed slightly outward",
+  "Scendi come se volessi sederti su una sedia — petto alto": "Lower as if sitting back into a chair — chest up",
+  "Obiettivo: cosce parallele al pavimento": "Goal: thighs parallel to the floor",
+  "Risali spingendo dai talloni": "Rise by pushing through your heels",
+  "Le ginocchia devono seguire la direzione delle punte dei piedi": "Your knees should track in line with your toes",
+  "In piedi, un manubrio per mano": "Standing, a dumbbell in each hand",
+  "Fai un passo avanti ampio": "Take a wide step forward",
+  "Abbassa il ginocchio posteriore verso terra": "Lower your rear knee toward the floor",
+  "Risali tornando in posizione e alterna le gambe": "Rise back to the start and alternate legs",
+  "Il ginocchio anteriore NON deve superare la punta del piede": "Your front knee must NOT go past your toes",
+  "In piedi, manubri davanti alle cosce": "Standing, dumbbells in front of your thighs",
+  "Piega il busto in avanti — i manubri scendono lungo le gambe": "Hinge your torso forward — the dumbbells slide down your legs",
+  "Ginocchia appena sbloccate": "Knees barely unlocked",
+  "Senti lo stretch nei femorali in basso": "Feel the stretch in your hamstrings at the bottom",
+  "Contrai i glutei per tornare in piedi": "Contract your glutes to stand back up",
+  "Non è uno squat — le ginocchia rimangono quasi dritte": "It's not a squat — your knees stay nearly straight",
+  "Sdraiati sulla macchina, talloni sotto il pad": "Lie on the machine, heels under the pad",
+  "Piega le ginocchia portando i talloni verso i glutei": "Bend your knees, bringing your heels toward your glutes",
+  "Contrai al massimo": "Contract fully",
+  "Abbassa lentamente": "Lower slowly",
+  "Contrarre anche i glutei aumenta l'attivazione": "Squeezing your glutes too increases activation",
+  "Sdraiato, ginocchia piegate, piedi a terra": "Lying down, knees bent, feet on the floor",
+  "Spingi il bacino verso l'alto contraendo i glutei": "Drive your hips up, squeezing your glutes",
+  "Tieni 1-2 secondi in cima": "Hold 1-2 seconds at the top",
+  "Per aumentare la difficoltà: esegui con una sola gamba": "To make it harder: do it on one leg",
+  "Scendi in squat a circa 90°": "Drop into a squat to about 90°",
+  "Esplodi verso l'alto saltando il più alto possibile": "Explode upward, jumping as high as possible",
+  "Atterra ammortizzando il peso": "Land softly, absorbing the impact",
+  "Ripeti senza pausa": "Repeat without pausing",
+  "Massima esplosività nella spinta": "Maximum explosiveness on the drive",
+  "Metti le punte dei piedi sul bordo di uno scalino": "Place the balls of your feet on the edge of a step",
+  "Scendi fino a sentire lo stretch nei polpacci": "Lower until you feel the stretch in your calves",
+  "Spingi verso l'alto il più possibile": "Push up as high as you can",
+  "Tieni 1 secondo in cima": "Hold 1 second at the top",
+  "Non trascurare i polpacci": "Don't neglect your calves",
+  "Appoggiati sui gomiti direttamente sotto le spalle": "Rest on your elbows directly under your shoulders",
+  "Corpo in linea perfetta: testa-spalle-fianchi-caviglie": "Body in a perfect line: head-shoulders-hips-ankles",
+  "Addome contratto": "Abs braced",
+  "Non alzare i glutei — il corpo deve essere piatto": "Don't raise your hips — your body must stay flat",
+  "Mani dietro la testa": "Hands behind your head",
+  "Arrotola il busto portando le spalle a 20-30cm da terra": "Curl your torso, lifting your shoulders 20-30cm off the floor",
+  "Il movimento è piccolo e concentrato": "The movement is small and focused",
+  "Seduto, gambe piegate e sollevate da terra": "Seated, legs bent and lifted off the floor",
+  "Busto inclinato a 45°": "Torso leaned back to 45°",
+  "Ruota il busto alternando da destra a sinistra": "Rotate your torso, alternating right to left",
+  "Con un disco o manubrio per progressione": "With a plate or dumbbell for progression",
+  "Sdraiato, mani sotto i glutei per stabilità": "Lying down, hands under your glutes for stability",
+  "Solleva le gambe dritte fino a 90°": "Lift your straight legs to 90°",
+  "Abbassa lentamente senza toccare terra": "Lower slowly without touching the floor",
+  "Ripeti": "Repeat",
+  "Respira fuori quando sollevi le gambe": "Exhale as you lift your legs",
+  "Appoggiati sul gomito laterale sotto la spalla": "Rest on your side forearm, under your shoulder",
+  "Solleva i fianchi da terra": "Lift your hips off the floor",
+  "Tieni la posizione": "Hold the position",
+  "Ripeti dall'altro lato": "Repeat on the other side",
+  "Ottimo per stabilità lombare": "Great for lower-back stability",
+  "Mantieni il 60-65% della FC max": "Stay at 60-65% of max heart rate",
+  "Devi poter tenere una conversazione": "You should be able to hold a conversation",
+  "Ritmo costante per tutta la durata": "Steady pace for the whole duration",
+  "Durata: 25-40 minuti": "Duration: 25-40 minutes",
+  "Brucia principalmente grassi a questa intensità": "Burns mainly fat at this intensity",
+  "FC target: 110-130 bpm": "Target HR: 110-130 bpm",
+  "Riscaldamento 5 minuti (camminata veloce o bici leggera)": "5-minute warm-up (brisk walk or light cycling)",
+  "30 secondi al massimo sforzo (80-90% FC max — devi essere senza fiato)": "30 seconds at max effort (80-90% max HR — you should be out of breath)",
+  "30 secondi di recupero attivo (camminata, jogging leggero)": "30 seconds of active recovery (walking, light jogging)",
+  "Ripeti il ciclo 10-15 volte (totale 10-15 min)": "Repeat the cycle 10-15 times (total 10-15 min)",
+  "Defaticamento 5 min camminata e stretching": "5-min cool-down with walking and stretching",
+  "Molto più efficiente del LISS per il metabolismo (brucia 2x kcal/min)": "Much more efficient than LISS for metabolism (burns 2x kcal/min)",
+  "Max 2-3 volte a settimana — è molto stressante per il sistema nervoso": "Max 2-3 times a week — it's very taxing on the nervous system",
+  "NO HIIT lo stesso giorno di un allenamento pesi intenso": "No HIIT on the same day as an intense weights session",
+  "Devi essere così senza fiato che non riesci a parlare durante i 30s di sforzo": "You should be so out of breath you can't talk during the 30s effort",
+  "Effetto EPOC: continui a bruciare calorie per 12-24h dopo": "EPOC effect: you keep burning calories for 12-24h afterward",
+  "Non per principianti assoluti: prima costruisci base aerobica con LISS": "Not for absolute beginners: build an aerobic base with LISS first",
+  "30s Burpees → 30s Riposo": "30s Burpees → 30s Rest",
+  "30s Mountain Climbers → 30s Riposo": "30s Mountain Climbers → 30s Rest",
+  "30s Jumping Jacks → 30s Riposo": "30s Jumping Jacks → 30s Rest",
+  "Ripeti 5-8 volte (totale 12-20 min)": "Repeat 5-8 times (total 12-20 min)",
+  "Ottimo per bruciare calorie in poco tempo (~200-300 kcal in 15 min)": "Great for burning calories in little time (~200-300 kcal in 15 min)",
+  "Forma corretta prima della velocità: meglio meno reps ma fatte bene": "Proper form before speed: better fewer reps done well",
+  "Se sei principiante inizia con 3 cicli e aumenta gradualmente": "If you're a beginner, start with 3 rounds and build up gradually",
+  "Indossa scarpe ammortizzate per non stressare le ginocchia": "Wear cushioned shoes to avoid stressing your knees",
+  "Sospeso alle parallele con braccia dritte": "Suspended on the parallel bars with arms straight",
+  "Inclina il busto in avanti di ~30° (coinvolge petto)": "Lean your torso forward ~30° (engages the chest)",
+  "Scendi controllato fino a 90° al gomito": "Lower under control to 90° at the elbow",
+  "Risali esplosivo spingendo col petto": "Rise explosively, pushing with your chest",
+  "Inclinazione busto = più petto, verticale = più tricipiti": "Leaning torso = more chest, upright = more triceps",
+  "Non scendere oltre 90° se spalle rigide": "Don't go below 90° if your shoulders are stiff",
+  "Sdraiato a terra con manubri all'altezza del petto": "Lying on the floor with dumbbells at chest height",
+  "Gomiti si fermano quando toccano il pavimento": "Elbows stop when they touch the floor",
+  "Spingi verso l'alto come panca piana": "Press up as in a flat bench press",
+  "Controllato in discesa": "Controlled on the way down",
+  "Ottimo per chi ha problemi alle spalle (range ridotto)": "Great for those with shoulder issues (reduced range)",
+  "Lavora di più sui tricipiti della panca classica": "Works the triceps more than the classic bench press",
+  "Cavi in alto, busto leggermente inclinato in avanti": "Cables set high, torso leaning slightly forward",
+  "Braccia aperte, gomiti leggermente piegati": "Arms open, elbows slightly bent",
+  "Porta le mani davanti al corpo incrociandole": "Bring your hands in front of your body, crossing them",
+  "Stringi il petto nella contrazione": "Squeeze your chest in the contraction",
+  "Stringi al massimo in posizione finale 1-2 secondi": "Squeeze fully in the end position for 1-2 seconds",
+  "Non usare peso eccessivo, senti la contrazione": "Don't use too much weight, feel the contraction",
+  "In piedi o seduto, tieni un disco tra i palmi davanti al petto": "Standing or seated, hold a plate between your palms in front of your chest",
+  "Spingi le mani l'una contro l'altra con forza": "Press your hands hard against each other",
+  "Estendi le braccia in avanti mantenendo la pressione": "Extend your arms forward while keeping the pressure",
+  "Ritorna lento al petto": "Return slowly to your chest",
+  "Serve ipertensione costante tra i palmi": "You need constant tension between your palms",
+  "Ottimo per attivazione petto interno, peso 5-10kg": "Great for inner-chest activation, 5-10kg",
+  "Corda o elastico all'altezza del viso": "Rope or band at face height",
+  "Tira la corda verso il viso con gomiti alti": "Pull the rope toward your face with high elbows",
+  "Separa le due estremità a fine movimento": "Separate the two ends at the end of the movement",
+  "Stringi le scapole e i posteriori": "Squeeze your shoulder blades and rear delts",
+  "Essenziale per salute della spalla": "Essential for shoulder health",
+  "3-4 serie × 15-20 reps con peso leggero": "3-4 sets × 15-20 reps with light weight",
+  "Cavalca il bilancere con presa stretta": "Straddle the barbell with a close grip",
+  "Busto inclinato ~45°": "Torso bent ~45°",
+  "Tira il peso verso l'ombelico": "Pull the weight toward your navel",
+  "Stringi le scapole in alto": "Squeeze your shoulder blades at the top",
+  "Gran base per spessore della schiena": "A great base for back thickness",
+  "Usa presa neutra (palmi verso il basso)": "Use a neutral grip (palms down)",
+  "In piedi con un manubrio per mano lungo i fianchi": "Standing with a dumbbell in each hand along your sides",
+  "Alza le spalle verso le orecchie": "Shrug your shoulders toward your ears",
+  "Contrai il trapezio in alto 1 secondo": "Contract your traps at the top for 1 second",
+  "Niente rotazioni delle spalle": "No shoulder rolling",
+  "Trapezio è un muscolo piccolo: peso moderato, alte reps": "The traps are a small muscle: moderate weight, high reps",
+  "Sdraiato di traverso su panca, solo spalle appoggiate": "Lying across a bench, only your shoulders supported",
+  "Tieni un manubrio con due mani sopra il petto": "Hold a dumbbell with both hands over your chest",
+  "Abbassa dietro la testa in arco controllato": "Lower behind your head in a controlled arc",
+  "Risali attivando il dorsale": "Rise by engaging your lats",
+  "Ottimo per allungare il dorsale": "Great for stretching the lats",
+  "Gomiti leggermente piegati per tutta l'escursione": "Elbows slightly bent through the whole range",
+  "In piedi gambe larghezza spalle, mani dietro la testa": "Standing, feet shoulder-width, hands behind your head",
+  "Incurva leggermente la schiena bassa": "Slightly arch your lower back",
+  "Inclinati in avanti dalle anche (non dalla schiena)": "Hinge forward from your hips (not your back)",
+  "Risali contraendo i glutei": "Rise by contracting your glutes",
+  "Mantieni la schiena neutra, non tonda": "Keep your back neutral, not rounded",
+  "Movimento solo dalle anche": "Movement only from the hips",
+  "Manubri all'altezza del petto, palmi verso di te": "Dumbbells at chest height, palms facing you",
+  "Ruota i palmi in fuori mentre spingi verso l'alto": "Rotate your palms outward as you press up",
+  "Blocca in alto con palmi avanti": "Lock out at the top with palms forward",
+  "Inverti il movimento in discesa": "Reverse the movement on the way down",
+  "Lavora tutti e 3 i fasci del deltoide": "Works all 3 heads of the delt",
+  "Peso moderato, movimento controllato": "Moderate weight, controlled movement",
+  "Bilancere o manubri davanti alle cosce, presa stretta": "Barbell or dumbbells in front of your thighs, close grip",
+  "Tira verso l'alto fino all'altezza del mento": "Pull up to chin height",
+  "Gomiti sempre più alti dei polsi": "Elbows always higher than your wrists",
+  "Discesa controllata": "Controlled descent",
+  "Attenzione: movimento con rischio impingement": "Caution: movement carries an impingement risk",
+  "Se senti fastidio, ferma il movimento al livello del petto": "If you feel discomfort, stop the movement at chest level",
+  "Petto appoggiato a panca inclinata 30-45°": "Chest against an incline bench at 30-45°",
+  "Braccia pendenti con manubri": "Arms hanging with dumbbells",
+  "Alza manubri lateralmente con gomiti leggermente piegati": "Raise the dumbbells out to the sides with elbows slightly bent",
+  "Peso leggero, senti il posteriore": "Light weight, feel the rear delt",
+  "Evita swing con schiena": "Avoid swinging with your back",
+  "Elastico ancorato sopra la testa": "Band anchored above your head",
+  "Impugna con braccia estese in alto": "Grip with arms extended overhead",
+  "Tira le scapole verso il basso senza piegare i gomiti": "Pull your shoulder blades down without bending your elbows",
+  "Mantieni 2 sec, poi rilascia": "Hold 2 sec, then release",
+  "Movimento isolato e piccolo": "An isolated, small movement",
+  "Ottimo per postura e salute spalla": "Great for posture and shoulder health",
+  "Sdraiato a pancia in giù su panca inclinata bassa": "Lying face down on a low incline bench",
+  "Forma Y con braccia estese sopra la testa, alza": "Form a Y with arms extended overhead, raise",
+  "Forma T con braccia laterali, alza": "Form a T with arms out to the sides, raise",
+  "Forma W con braccia piegate a 90°, alza": "Form a W with arms bent at 90°, raise",
+  "10 reps per ciascuna forma": "10 reps for each shape",
+  "Postura e mobilità spalla, nessun peso o leggero": "Posture and shoulder mobility, no weight or light",
+  "In piedi con manubri ai fianchi, palmi verso l'interno": "Standing with dumbbells at your sides, palms facing inward",
+  "Curl mantenendo palmi affiancati (non ruotare)": "Curl keeping your palms facing each other (don't rotate)",
+  "Alza fino all'altezza delle spalle": "Raise to shoulder height",
+  "Ottimo per spessore del braccio (brachiale)": "Great for arm thickness (brachialis)",
+  "Non dondolare il busto": "Don't swing your torso",
+  "Braccia appoggiate sulla panca Scott, ascelle al bordo": "Arms resting on the preacher bench, armpits at the edge",
+  "Manubrio o bilancere EZ": "Dumbbell or EZ bar",
+  "Curl completo senza staccare i gomiti": "Full curl without lifting your elbows",
+  "Non estendere completamente in basso (tensione continua)": "Don't fully extend at the bottom (constant tension)",
+  "Movimento isolato, elimina lo swing": "Isolated movement, eliminates swinging",
+  "Peso moderato, forma pulita": "Moderate weight, clean form",
+  "Cavo basso, impugnatura EZ o corda": "Low cable, EZ handle or rope",
+  "In piedi, gomiti fissi ai fianchi": "Standing, elbows fixed at your sides",
+  "Curl fino alla contrazione massima": "Curl to maximum contraction",
+  "Discesa lenta in 3 secondi": "Slow descent over 3 seconds",
+  "Tensione continua, mai scarico": "Constant tension, never slack",
+  "Stringi in cima 1 secondo": "Squeeze at the top for 1 second",
+  "Manubri ai fianchi, palmi avanti": "Dumbbells at your sides, palms forward",
+  "Curl classico in alto": "Classic curl at the top",
+  "In cima ruota i palmi verso il basso": "At the top, rotate your palms down",
+  "Abbassa lentamente con palmi in giù": "Lower slowly with palms down",
+  "Combina curl e reverse curl": "Combines a curl and a reverse curl",
+  "Lavora anche avambraccio e brachioradiale": "Also works the forearm and brachioradialis",
+  "Cavo alto con corda, gomiti ai fianchi": "High cable with rope, elbows at your sides",
+  "Separa le estremità della corda in fondo": "Separate the rope ends at the bottom",
+  "Ritorno controllato": "Controlled return",
+  "Gomiti fissi, non muovere le spalle": "Elbows fixed, don't move your shoulders",
+  "Stringi in basso 1 secondo": "Squeeze at the bottom for 1 second",
+  "Sdraiato su panca, bilancere EZ sopra il petto": "Lying on a bench, EZ bar over your chest",
+  "Piega solo i gomiti, abbassa verso la fronte": "Bend only your elbows, lower toward your forehead",
+  "Estendi le braccia verso l'alto": "Extend your arms upward",
+  "Gomiti rimangono fermi": "Elbows stay still",
+  "Chiamato skull crusher perché se molli va sulla fronte — attenzione": "Called the skull crusher because if you slip it hits your forehead — careful",
+  "Peso moderato, forma impeccabile": "Moderate weight, flawless form",
+  "Busto inclinato 45°, manubrio per mano": "Torso bent 45°, a dumbbell in each hand",
+  "Gomito piegato a 90°, braccio parallelo al busto": "Elbow bent at 90°, upper arm parallel to your torso",
+  "Estendi indietro il braccio": "Extend your arm back",
+  "Stringi il tricipite in cima": "Squeeze the triceps at the top",
+  "Gomito fisso all'altezza del tronco": "Elbow fixed at torso height",
+  "Movimento solo dall'avambraccio": "Movement only from the forearm",
+  "Panca piana con presa larghezza spalle": "Flat bench with a shoulder-width grip",
+  "Gomiti vicino ai fianchi durante la discesa": "Elbows close to your sides on the way down",
+  "Tocca leggermente il petto": "Lightly touch your chest",
+  "Spingi esplosivo verso l'alto": "Push explosively upward",
+  "Ottimo per forza dei tricipiti": "Great for triceps strength",
+  "Presa non troppo stretta (no polsi)": "Grip not too narrow (protect your wrists)",
+  "Seduto alla macchina, piedi larghezza spalle su pedana": "Seated at the machine, feet shoulder-width on the platform",
+  "Piega ginocchia fino a 90°": "Bend your knees to 90°",
+  "Spingi con i talloni per estendere": "Push through your heels to extend",
+  "Non bloccare ginocchia in cima": "Don't lock your knees at the top",
+  "Piedi più alti = più glutei, più bassi = più quad": "Feet higher = more glutes, lower = more quads",
+  "Mantieni la schiena attaccata allo schienale": "Keep your back against the backrest",
+  "Bilancere in presa incrociata davanti alle spalle": "Barbell in a cross grip in front of your shoulders",
+  "Gomiti alti, petto in fuori": "Elbows high, chest out",
+  "Scendi in squat profondo": "Drop into a deep squat",
+  "Risali mantenendo busto eretto": "Rise keeping your torso upright",
+  "Enfatizza quadricipite, meno schiena della back squat": "Emphasizes the quads, less back than the back squat",
+  "Mobilità polsi e spalle necessaria": "Wrist and shoulder mobility required",
+  "Alla macchina hack squat, schiena appoggiata": "At the hack squat machine, back supported",
+  "Piedi larghezza spalle": "Feet shoulder-width",
+  "Scendi a 90° o più": "Lower to 90° or more",
+  "Spingi per risalire": "Push to rise",
+  "Posizione fissa, isola bene i quadricipiti": "Fixed position, isolates the quads well",
+  "Piedi più avanti = più quadricipiti, più indietro = più glutei": "Feet forward = more quads, back = more glutes",
+  "Piede destro su panca alta circa 40cm": "Right foot on a bench about 40cm high",
+  "Spingi col tallone destro per salire": "Push through your right heel to step up",
+  "Porta ginocchio sinistro verso il petto in cima": "Drive your left knee toward your chest at the top",
+  "Scendi controllato": "Lower under control",
+  "Usa manubri per aumentare il carico": "Use dumbbells to add load",
+  "Non spingere con la gamba a terra, usa solo quella sopra": "Don't push with the grounded leg, use only the top one",
+  "In piedi con manubri ai fianchi": "Standing with dumbbells at your sides",
+  "Fai un passo avanti lungo, piega entrambe le ginocchia": "Take a long step forward, bend both knees",
+  "Spingi dal tallone avanti per portarti a quello opposto": "Push off your front heel to move into the next step",
+  "Continua alternando gambe": "Continue alternating legs",
+  "Ginocchio anteriore non supera la punta del piede": "Front knee doesn't go past your toes",
+  "Busto sempre eretto": "Torso always upright",
+  "Spalle appoggiate a panca, bilancere sui fianchi": "Shoulders on a bench, barbell across your hips",
+  "Piedi larghezza spalle, ginocchia piegate": "Feet shoulder-width, knees bent",
+  "Spingi i fianchi verso l'alto fino all'allineamento": "Drive your hips up until aligned",
+  "Stringi i glutei 2 secondi in cima": "Squeeze your glutes for 2 seconds at the top",
+  "Esercizio RE per costruire glutei": "A go-to exercise for building glutes",
+  "Imbottisci il bilancere con asciugamano per evitare dolore": "Pad the barbell with a towel to avoid discomfort",
+  "Manubri davanti alle cosce, gambe leggermente piegate": "Dumbbells in front of your thighs, legs slightly bent",
+  "Inclinati in avanti dalle anche (non schiena)": "Hinge forward from your hips (not your back)",
+  "Scendi fino a sentire allungamento femorali": "Lower until you feel a hamstring stretch",
+  "Schiena sempre dritta, non incurvata": "Back always straight, not rounded",
+  "Peso sui talloni": "Weight on your heels",
+  "Piede posteriore appoggiato a panca dietro": "Rear foot resting on a bench behind you",
+  "Piede anteriore in posizione da affondo lungo": "Front foot in a long lunge position",
+  "Scendi piegando il ginocchio anteriore": "Lower by bending your front knee",
+  "Risali spingendo col tallone anteriore": "Rise by pushing through your front heel",
+  "Un peso per volta, una gamba per volta": "One weight at a time, one leg at a time",
+  "Ottimo per correggere asimmetrie": "Great for correcting imbalances",
+  "A quattro zampe, ginocchia sotto i fianchi": "On all fours, knees under your hips",
+  "Estendi una gamba indietro e in alto": "Extend one leg back and up",
+  "Stringi il gluteo in cima": "Squeeze your glute at the top",
+  "Ritorno controllato senza toccare terra": "Controlled return without touching the floor",
+  "Non inarcare la schiena": "Don't arch your back",
+  "Puoi aggiungere cavigliera o elastico per carico": "You can add an ankle weight or band for load",
+  "In piedi su bordo gradino, talloni sospesi": "Standing on the edge of a step, heels off the edge",
+  "Manubri ai fianchi per carico": "Dumbbells at your sides for load",
+  "Alzati sulle punte al massimo": "Rise onto your toes as high as possible",
+  "Scendi fino al massimo stretch": "Lower to the deepest stretch",
+  "Range completo: giù fino in fondo, su fino in punta": "Full range: all the way down, all the way up on your toes",
+  "Polpacci amano alte reps: 15-20": "Calves love high reps: 15-20",
+  "Seduto con peso sulle ginocchia": "Seated with weight on your knees",
+  "Piedi sull'estremità di un rialzo": "Feet on the edge of a raised surface",
+  "Alza i talloni al massimo": "Raise your heels as high as possible",
+  "Posizione seduta isola il soleo": "The seated position isolates the soleus",
+  "Contrai in alto 1 sec prima di scendere": "Contract at the top for 1 sec before lowering",
+  "In piedi piegato in avanti a 90° con mani appoggiate": "Standing bent forward at 90° with hands supported",
+  "Peso sulla schiena/fianchi o compagno seduto": "Weight on your back/hips or a partner seated",
+  "Alzati sulle punte": "Rise onto your toes",
+  "Scendi al massimo stretch": "Lower to the deepest stretch",
+  "Allungamento completo = massima crescita": "Full stretch = maximum growth",
+  "Serie lunghe da 20-25 reps": "Long sets of 20-25 reps",
+  "Sospeso alla sbarra, braccia dritte": "Hanging from the bar, arms straight",
+  "Alza le gambe tese fino a 90° col busto": "Raise your straight legs to 90° with your torso",
+  "Controlla la discesa senza oscillare": "Control the descent without swinging",
+  "Tieni 1 sec in alto": "Hold 1 sec at the top",
+  "Avanzato, richiede forza addominale": "Advanced, requires core strength",
+  "Se troppo difficile, piega le ginocchia": "If too hard, bend your knees",
+  "Sdraiato sulla schiena, braccia in alto, ginocchia piegate a 90°": "Lying on your back, arms up, knees bent at 90°",
+  "Estendi braccio destro e gamba sinistra contemporaneamente": "Extend your right arm and left leg at the same time",
+  "Torna al centro": "Return to the center",
+  "Alterna lato": "Alternate sides",
+  "Schiena sempre attaccata al pavimento": "Back always pressed to the floor",
+  "Movimento lento e controllato": "Slow, controlled movement",
+  "A quattro zampe, schiena neutra": "On all fours, neutral back",
+  "Tieni 2 sec in posizione": "Hold 2 sec in position",
+  "Torna e cambia lato": "Return and switch sides",
+  "Non ruotare i fianchi": "Don't rotate your hips",
+  "Perfetto per stabilità e mal di schiena": "Perfect for stability and back pain",
+  "Sdraiato sul fianco, appoggio su avambraccio": "Lying on your side, supported on your forearm",
+  "Alza i fianchi allineando corpo": "Lift your hips, aligning your body",
+  "Mantieni la posizione": "Hold the position",
+  "Esegui stesso tempo per lato": "Hold the same time per side",
+  "Corpo perfettamente allineato": "Body perfectly aligned",
+  "Non far cadere i fianchi": "Don't let your hips drop",
+  "Posizione di plank alta": "High plank position",
+  "Porta alternatamente le ginocchia al petto a ritmo rapido": "Drive your knees to your chest alternately at a fast pace",
+  "Mantieni il plank senza far oscillare i fianchi": "Hold the plank without swinging your hips",
+  "30-60 secondi continuo": "30-60 seconds continuous",
+  "Alta frequenza cardiaca in poco tempo": "High heart rate in little time",
+  "Core contratto tutto il tempo": "Core braced the whole time",
+  "Corda a lunghezza giusta (manici ~ascelle)": "Rope at the right length (handles ~armpit height)",
+  "Salti piccoli sui polpacci": "Small jumps on the balls of your feet",
+  "Mantieni ritmo costante": "Keep a steady rhythm",
+  "30 sec-3 min in base al livello": "30 sec-3 min depending on your level",
+  "Brucia 10-15 kcal/minuto": "Burns 10-15 kcal/minute",
+  "Ottimo warm-up ma anche HIIT": "Great as a warm-up but also for HIIT",
+  "Corde pesanti ancorate, una per mano": "Heavy ropes anchored, one in each hand",
+  "Onde alternate o simultanee": "Alternating or simultaneous waves",
+  "Squat leggero per stabilità": "Light squat for stability",
+  "20-40 sec di scarica intensa": "20-40 sec of intense effort",
+  "Coinvolge spalle, core, gambe": "Works the shoulders, core, legs",
+  "Ottimo finisher fine allenamento": "A great finisher at the end of a workout",
+  "Seduto con avambracci appoggiati sulle cosce": "Seated with forearms resting on your thighs",
+  "Manubri con palmi verso l'alto": "Dumbbells with palms up",
+  "Piega i polsi facendo scendere i manubri": "Bend your wrists, letting the dumbbells drop",
+  "Arrotola in su contraendo": "Curl up by contracting",
+  "Solo movimento dei polsi": "Wrist movement only",
+  "Alte reps 15-20": "High reps 15-20",
+  "In piedi, bilancere con presa prona (palmi giù)": "Standing, barbell with an overhand grip (palms down)",
+  "Curl mantenendo i polsi fermi": "Curl keeping your wrists steady",
+  "Discesa lenta": "Slow descent",
+  "Peso inferiore al curl normale": "Less weight than a regular curl",
+  "Ottimo per forza presa": "Great for grip strength",
+  "Manubri pesanti ai fianchi": "Heavy dumbbells at your sides",
+  "Cammina con postura eretta 20-40 metri": "Walk with upright posture for 20-40 meters",
+  "Passi piccoli, movimento controllato": "Small steps, controlled movement",
+  "Non appoggiare i pesi a metà": "Don't set the weights down partway",
+  "Ottimo per forza di presa e stabilizzatori": "Great for grip strength and stabilizers",
+  "Peso: 50-75% del tuo peso corporeo": "Weight: 50-75% of your bodyweight",
+  "Davanti a un rialzo alto 40-60cm": "In front of a 40-60cm box",
+  "Carica flettendo ginocchia": "Load up by bending your knees",
+  "Salta esplosivo atterrando dolcemente sul box": "Jump explosively, landing softly on the box",
+  "Risali eretto e scendi camminando": "Stand up tall and step back down",
+  "Mai scendere saltando (rischio ginocchia)": "Never jump back down (knee risk)",
+  "Altezza scegliila con cautela": "Choose the height carefully",
+  "Kettlebell davanti a te, gambe leggermente piegate": "Kettlebell in front of you, legs slightly bent",
+  "Inclinati dalle anche, porta kb tra le gambe": "Hinge from your hips, swing the kettlebell between your legs",
+  "Spingi forte coi fianchi portando kb all'altezza spalle": "Drive hard with your hips, bringing the kettlebell to shoulder height",
+  "Controlla il ritorno tra le gambe": "Control the return between your legs",
+  "Potenza dalle anche, non dalle spalle": "Power from the hips, not the shoulders",
+  "Braccia sono solo pendoli": "Your arms are just pendulums",
+  "Posizione di flessione": "Push-up position",
+  "Spingi esplosivo staccando le mani dal pavimento": "Push explosively, lifting your hands off the floor",
+  "Atterra morbido e incatena": "Land softly and chain into the next rep",
+  "Esercizio avanzato": "Advanced exercise",
+  "Se troppo, resta su push-up normali": "If too much, stick to regular push-ups",
+  "In piedi, piegati e appoggia le mani a terra": "Standing, bend down and place your hands on the floor",
+  "Salta indietro in posizione di plank": "Jump back into a plank position",
+  "Flessione facoltativa": "Optional push-up",
+  "Salta avanti e in alto con braccia sopra": "Jump forward and up with arms overhead",
+  "Esercizio completissimo ma stancante": "A very complete but exhausting exercise",
+  "Ritmo regolare più importante della velocità": "A steady rhythm matters more than speed",
+  "In affondo alto, ginocchio posteriore a terra": "In a high lunge, rear knee on the floor",
+  "Spingi i fianchi in avanti": "Push your hips forward",
+  "Mantieni 30-45 secondi": "Hold for 30-45 seconds",
+  "Alterna gamba": "Switch legs",
+  "Importante per chi sta seduto molte ore": "Important for those who sit for many hours",
+  "Senti stretch, non dolore": "Feel a stretch, not pain",
+  "A quattro zampe": "On all fours",
+  "Mano dietro la testa": "Hand behind your head",
+  "Ruota gomito verso soffitto, guarda in alto": "Rotate your elbow toward the ceiling, look up",
+  "Poi giù verso il braccio opposto, 10 reps": "Then down toward the opposite arm, 10 reps",
+  "Ottimo pre-allenamento spalle/panca": "Great before a shoulder/bench session",
+  "Migliora postura": "Improves posture",
+  "Siediti alla pec deck con schiena ben aderente": "Sit at the pec deck with your back firmly against the pad",
+  "Avambracci sulle imbottiture, gomiti a 90°": "Forearms on the pads, elbows at 90°",
+  "Avvicina i gomiti davanti al petto stringendo": "Bring your elbows together in front of your chest, squeezing",
+  "Torna controllato senza superare le spalle dietro": "Return under control without going past your shoulders",
+  "Stringi forte al centro, mantieni 1 secondo": "Squeeze hard in the center, hold 1 second",
+  "Schiena sempre attaccata allo schienale": "Back always against the backrest",
+  "Sdraiato traversalmente sulla panca, manubrio a due mani sopra il petto": "Lying across the bench, a dumbbell held with both hands over your chest",
+  "Abbassa il manubrio dietro la testa con braccia leggermente piegate": "Lower the dumbbell behind your head with arms slightly bent",
+  "Senti lo stretch a costole/petto": "Feel the stretch across your ribs/chest",
+  "Torna su senza spingere con le spalle": "Come back up without pressing with your shoulders",
+  "Glutei leggermente bassi per stabilizzare": "Hips slightly low to stabilize",
+  "Bilanciere fissato a terra, impugna l'estremità libera con una mano": "Barbell anchored to the floor, grip the free end with one hand",
+  "In ginocchio o in piedi, spingi verso l'alto-fuori dal corpo": "Kneeling or standing, press up and out away from your body",
+  "Estendi senza bloccare il gomito": "Extend without locking your elbow",
+  "Torna controllato": "Return under control",
+  "Ottimo per dolori alla spalla — angolo di lavoro più gentile": "Great for shoulder pain — a gentler working angle",
+  "Alterna lato per simmetria": "Alternate sides for symmetry",
+  "Seduto alla macchina cavo, piedi sulla pedana": "Seated at the cable machine, feet on the platform",
+  "Schiena dritta, tira l'impugnatura verso l'addome": "Back straight, pull the handle toward your abdomen",
+  "Stringi le scapole insieme alla fine del movimento": "Squeeze your shoulder blades together at the end of the movement",
+  "Torna controllato in 3 secondi": "Return under control over 3 seconds",
+  "Niente spinta col busto: solo braccia e schiena": "No pushing with your torso: only arms and back",
+  "Petto in fuori, mai schiena curva": "Chest out, never a rounded back",
+  "Seduto alla macchina, ginocchia sotto il rullo": "Seated at the machine, knees under the pad",
+  "Impugnatura larga, tira l'asta verso il petto alto": "Wide grip, pull the bar toward your upper chest",
+  "Gomiti spingono verso il basso e indietro": "Elbows drive down and back",
+  "Torna lento all'estensione completa": "Return slowly to full extension",
+  "Mai dietro il collo: lesioni cuffia": "Never behind the neck: rotator-cuff injuries",
+  "Petto in fuori, schiena leggermente arcuata": "Chest out, back slightly arched",
+  "Petto appoggiato su panca inclinata 30°": "Chest against a 30° incline bench",
+  "Manubri a braccia distese verso il basso": "Dumbbells with arms extended downward",
+  "Tira i manubri verso i fianchi, gomiti vicini al corpo": "Pull the dumbbells toward your hips, elbows close to your body",
+  "Stringi le scapole alla fine": "Squeeze your shoulder blades at the end",
+  "Ottima alternativa al rematore classico se hai la lombare debole": "A great alternative to the classic row if you have a weak lower back",
+  "Niente swing: solo schiena": "No swinging: only your back",
+  "Seduto su panca con schienale": "Seated on a bench with a backrest",
+  "Manubri all'altezza delle orecchie": "Dumbbells at ear height",
+  "Spingi verso l'alto fino quasi alla completa estensione": "Press up to near-full extension",
+  "Abbassa lento alle orecchie": "Lower slowly to your ears",
+  "Schiena ferma allo schienale": "Back firmly against the backrest",
+  "Mai bloccare i gomiti in cima": "Never lock your elbows at the top",
+  "Cavo basso, impugna il manico con la mano opposta": "Low cable, grip the handle with the opposite hand",
+  "Braccio quasi disteso, alza lateralmente fino all'altezza della spalla": "Arm nearly extended, raise out to the side up to shoulder height",
+  "Mantieni leggera flessione del gomito": "Keep a slight elbow bend",
+  "Lavora sul controllo, non sul peso": "Work on control, not on weight",
+  "Mai oltre l'orizzontale": "Never above horizontal",
+  "Elastico fissato all'altezza del viso, presa pronata": "Band anchored at face height, overhand grip",
+  "Tira verso il viso allargando i gomiti": "Pull toward your face, spreading your elbows",
+  "Stringi forte a fine movimento": "Squeeze hard at the end of the movement",
+  "Torna lento": "Return slowly",
+  "Fondamentale per salute della spalla": "Essential for shoulder health",
+  "3 serie da 15-20 reps a fine ogni allenamento": "3 sets of 15-20 reps at the end of each workout",
+  "Bilanciere a presa supina, gomiti dietro al busto": "Barbell with an underhand grip, elbows behind your torso",
+  "Trascina il bilanciere lungo il corpo verso l'alto": "Drag the barbell up along your body",
+  "I gomiti vanno indietro durante la salita": "Your elbows move back during the lift",
+  "Movimento corto: il bilanciere non sale oltre l'ombelico": "Short movement: the barbell doesn't rise past your navel",
+  "Stimola di più il capo lungo del bicipite": "Emphasizes the long head of the biceps",
+  "Petto appoggiato su panca inclinata 60°, faccia in giù": "Chest against a 60° incline bench, face down",
+  "Manubri o bilanciere appesi": "Dumbbells or barbell hanging",
+  "Curl mantenendo i gomiti davanti al corpo": "Curl keeping your elbows in front of your body",
+  "Stringi forte in alto": "Squeeze hard at the top",
+  "Massimo isolamento del bicipite": "Maximum biceps isolation",
+  "Peso leggero per controllo perfetto": "Light weight for perfect control",
+  "Cavo basso, corda dietro la testa con due mani": "Low cable, rope behind your head with both hands",
+  "Estendi i gomiti verso l'alto e indietro": "Extend your elbows up and back",
+  "Mantieni i gomiti vicini alla testa": "Keep your elbows close to your head",
+  "Stretch massimo del tricipite": "Maximum triceps stretch",
+  "Schiena dritta, busto leggermente avanti": "Back straight, torso slightly forward",
+  "Tieni un manubrio o kettlebell verticale al petto": "Hold a dumbbell or kettlebell vertically at your chest",
+  "Piedi larghezza spalle, punte leggermente in fuori": "Feet shoulder-width, toes slightly out",
+  "Scendi dritto fino a femori paralleli a terra": "Lower straight down until your thighs are parallel to the floor",
+  "Petto su, schiena dritta": "Chest up, back straight",
+  "Ottimo per chi ha problemi alla lombare con back squat": "Great for those with lower-back issues from back squats",
+  "Seduto, piedi sotto il rullo": "Seated, feet under the pad",
+  "Estendi le gambe fino quasi alla completa estensione": "Extend your legs to near-full extension",
+  "Tieni 1 secondo in alto": "Hold 1 second at the top",
+  "Torna lento in 3 secondi": "Return slowly over 3 seconds",
+  "Non bloccare le ginocchia in alto": "Don't lock your knees at the top",
+  "Schiena attaccata allo schienale": "Back against the backrest",
+  "Sdraiato a pancia in giù, caviglie sotto il rullo": "Lying face down, ankles under the pad",
+  "Stringi i femorali in alto": "Squeeze your hamstrings at the top",
+  "Bacino aderente alla panca": "Hips pressed to the bench",
+  "Movimento lento, mai a strappi": "Slow movement, never jerky",
+  "Piedi larghezza spalle, kettlebell tra le gambe": "Feet shoulder-width, kettlebell between your legs",
+  "Inclina il busto avanti, oscilla la kettlebell tra le gambe": "Hinge your torso forward, swing the kettlebell between your legs",
+  "Estendi le anche esplosivamente fino all'altezza degli occhi": "Extend your hips explosively until the kettlebell reaches eye height",
+  "Lascia scendere e ripeti": "Let it swing back down and repeat",
+  "Spinta dai glutei, NON dalle braccia": "Drive from the glutes, NOT the arms",
+  "Schiena sempre dritta, mai curva": "Back always straight, never rounded",
+  "In piedi con manubri ai lati o senza peso": "Standing with dumbbells at your sides or no weight",
+  "Fai un passo lungo avanti, scendi col ginocchio posteriore quasi a terra": "Take a long step forward, lowering your rear knee almost to the floor",
+  "Spingi sul tallone anteriore per alzarti e fai il passo successivo": "Push through your front heel to rise and take the next step",
+  "Continua per tutta la lunghezza prevista": "Continue for the planned distance",
+  "Ginocchio anteriore allineato col piede, mai dentro": "Front knee in line with your foot, never caving in",
+  "Busto eretto, sguardo avanti": "Torso upright, eyes forward",
+  "Posizionati davanti a una panca o cassa con bilanciere o manubri": "Position yourself in front of a bench or box with a barbell or dumbbells",
+  "Scendi controllando fino a sederti brevemente sulla cassa": "Lower under control until you briefly sit on the box",
+  "Mantieni la tensione, NON rilassarti": "Keep the tension, do NOT relax",
+  "Risali esplosivo": "Rise explosively",
+  "Insegna a controllare la fase eccentrica": "Teaches you to control the eccentric phase",
+  "Cassa all'altezza dove i femori sono paralleli al pavimento": "Box at the height where your thighs are parallel to the floor",
+  "Sdraiato sulla schiena, gambe distese e braccia oltre la testa": "Lying on your back, legs extended and arms overhead",
+  "Solleva spalle e gambe da terra": "Lift your shoulders and legs off the floor",
+  "Mantieni la posizione tenendo la lombare schiacciata a terra": "Hold the position, keeping your lower back pressed to the floor",
+  "Se la lombare si stacca → piega le gambe": "If your lower back lifts → bend your legs",
+  "Posizione fondamentale per ginnastica": "A foundational position for gymnastics",
+  "Appeso a una sbarra, presa larghezza spalle": "Hanging from a bar, shoulder-width grip",
+  "Porta le ginocchia al petto controllato": "Bring your knees to your chest under control",
+  "Scendi lento, niente swing": "Lower slowly, no swinging",
+  "Niente slancio: solo addominali": "No momentum: only your abs",
+  "Versione facilitata: sulla parallel bar (gomiti)": "Easier version: on the parallel bars (elbows)",
+  "In ginocchio, mani sulla ruota": "Kneeling, hands on the wheel",
+  "Rotola in avanti distendendo il corpo": "Roll forward, extending your body",
+  "Mantieni la lombare neutra (no archi)": "Keep your lower back neutral (no arching)",
+  "Torna in posizione contraendo l'addome": "Return to position by contracting your abs",
+  "Esercizio molto difficile, partire piccoli": "A very hard exercise, start small",
+  "Mai inarcare la schiena": "Never arch your back",
+  "In piedi, scendi in posizione plank": "Standing, drop into a plank position",
+  "Fai un piegamento": "Do a push-up",
+  "Risali in posizione plank, salta riportando i piedi alle mani": "Return to plank, then jump your feet back to your hands",
+  "Salta in alto con braccia sopra": "Jump up with arms overhead",
+  "Esercizio completo cardio + forza": "A complete cardio + strength exercise",
+  "Modula intensità: senza piegamento o senza salto": "Adjust intensity: skip the push-up or the jump",
+  "Posizione di plank con braccia distese": "Plank position with arms extended",
+  "Alterna velocemente le gambe portando le ginocchia al petto": "Quickly alternate your legs, driving your knees to your chest",
+  "Mantieni la posizione del busto stabile": "Keep your torso position stable",
+  "Respira ritmicamente": "Breathe rhythmically",
+  "Veloci ma controllati": "Fast but controlled",
+  "30 secondi → 30 secondi pausa": "30 seconds → 30 seconds rest",
+  "Corda di lunghezza adatta": "A rope of the right length",
+  "Salti piccoli, atterraggio sulle punte": "Small jumps, landing on the balls of your feet",
+  "Polsi muovono la corda, non spalle": "Your wrists move the rope, not your shoulders",
+  "Mantieni un ritmo costante": "Keep a steady rhythm",
+  "Brucia ~10 kcal/min": "Burns ~10 kcal/min",
+  "Ottimo riscaldamento o cardio finisher": "A great warm-up or cardio finisher",
+  "Siediti sulla bici a aria": "Sit on the air bike",
+  "Pedala con braccia e gambe simultaneamente": "Pedal with your arms and legs at the same time",
+  "Resistenza si adatta alla tua forza": "Resistance adapts to your effort",
+  "Sprint o ritmo costante": "Sprints or a steady pace",
+  "Ottimo per HIIT: 20 sec sprint / 40 sec recupero": "Great for HIIT: 20 sec sprint / 40 sec recovery",
+  "Brucia ~15-20 kcal/min": "Burns ~15-20 kcal/min",
+  "Appeso a una sbarra a braccia distese": "Hanging from a bar with arms extended",
+  "Mantieni la posizione il più a lungo possibile": "Hold the position as long as possible",
+  "Spalle attive (non rilassate completamente)": "Shoulders engaged (not fully relaxed)",
+  "Respira normalmente": "Breathe normally",
+  "Costruisce presa per stacchi e trazioni": "Builds grip for deadlifts and pull-ups",
+  "Obiettivo: 60 secondi continuativi": "Goal: 60 continuous seconds",
+  "Tieni 1-2 dischi tra pollice e dita": "Hold 1-2 plates between your thumb and fingers",
+  "Mantieni la presa il più a lungo possibile": "Hold the grip as long as possible",
+  "Braccia distese ai lati": "Arms extended at your sides",
+  "Cambia mano alla fine": "Switch hands at the end",
+  "Costruisce la \"pinch grip\", utile in molti sport": "Builds pinch grip, useful in many sports",
+  "Inizia con un disco da 10kg": "Start with a 10kg plate",
+  "Cavo basso fissato a una caviglia": "Low cable attached to an ankle",
+  "Mani su appoggio per stabilizzazione": "Hands on a support to stabilize",
+  "Estendi la gamba indietro mantenendo il ginocchio leggermente piegato": "Extend your leg back while keeping a slight knee bend",
+  "Stringi il gluteo in alto": "Squeeze your glute at the top",
+  "Niente arching della schiena": "No arching of the back",
+  "Sdraiato sul fianco, ginocchia piegate a 90°": "Lying on your side, knees bent at 90°",
+  "Mantenendo i piedi uniti, apri il ginocchio superiore": "Keeping your feet together, open your top knee",
+  "Stringi il gluteo medio in alto": "Squeeze your gluteus medius at the top",
+  "Ottimo per stabilità del bacino": "Great for hip stability",
+  "Aggiunge banda elastica per intensità": "Add a resistance band for intensity",
+  "1 min — Jumping Jacks (saltelli con braccia e gambe allargate)": "1 min — Jumping Jacks (hop with arms and legs spread)",
+  "1 min — Arm Circles (rotazioni delle braccia avanti e indietro)": "1 min — Arm Circles (forward and backward)",
+  "1 min — Leg Swings (oscillazioni delle gambe avanti/indietro e laterali)": "1 min — Leg Swings (front/back and side to side)",
+  "1 min — Hip Circles (rotazioni delle anche in cerchio)": "1 min — Hip Circles (circular hip rotations)",
+  "1 min — Torso Rotations (rotazioni del busto con mani alle spalle)": "1 min — Torso Rotations (with hands on your shoulders)",
+  "Il riscaldamento riduce le lesioni del 50% — non saltarlo mai": "Warming up cuts injuries by 50% — never skip it",
+  "Aumenta gradualmente l'intensità nei primi 5 minuti": "Gradually increase intensity over the first 5 minutes",
+  "Il corpo deve essere sudato leggermente prima di iniziare a caricare": "Your body should be lightly sweating before you start loading up",
+  "Se hai freddo o sei rigido, allunga il riscaldamento a 8-10 minuti": "If you're cold or stiff, extend the warm-up to 8-10 minutes",
+  "Movimenti dinamici (rotazioni, slanci) NO statici (stretching tenuto)": "Dynamic movements (rotations, swings), NOT static (held stretches)",
+  "3 min — Camminata veloce o bici leggera (50-55% FC max)": "3 min — Brisk walk or light cycling (50-55% max HR)",
+  "1 min — Jumping Jacks": "1 min — Jumping Jacks",
+  "1 min — Arm Circles": "1 min — Arm Circles",
+  "1 min — Leg Swings": "1 min — Leg Swings",
+  "1 min — Hip Circles": "1 min — Hip Circles",
+  "1 min — Jump Rope o Marcia sul posto veloce": "1 min — Jump Rope or fast marching in place",
+  "Per la definizione: 3 minuti di cardio leggero prima dei pesi accelera il metabolismo fin dall'inizio": "For a cut: 3 minutes of light cardio before weights speeds up your metabolism from the start",
+  "Non esaurirti — il cardio di riscaldamento è leggero, non intenso": "Don't exhaust yourself — warm-up cardio is light, not intense",
+  "Devi essere caldo ma fresco, non stanco": "You should be warm but fresh, not tired",
+  "Bevi 200-300ml di acqua prima di iniziare": "Drink 200-300ml of water before you start",
+  "2 min — Camminata veloce o bici molto leggera": "2 min — Brisk walk or very light cycling",
+  "1 min — Rotazioni delle spalle e circoli con le braccia": "1 min — Shoulder rolls and arm circles",
+  "1 min — Squat a corpo libero lenti (non carichi)": "1 min — Slow bodyweight squats (no load)",
+  "1 min — Affondi alternarti lenti": "1 min — Slow alternating lunges",
+  "1 min — Plank 30 sec + Cat-Cow Stretch": "1 min — Plank 30 sec + Cat-Cow Stretch",
+  "Per la massa: il riscaldamento specifico prepara i muscoli a sollevare carichi pesanti": "For mass: a specific warm-up prepares your muscles to lift heavy loads",
+  "Esegui 1 serie di riscaldamento leggera di ogni esercizio prima di caricare il peso vero": "Do 1 light warm-up set of each exercise before loading the real weight",
+  "Per esercizi pesanti (squat/panca/stacco) fai 2-3 serie progressive: 40% → 60% → 80% del peso target": "For heavy exercises (squat/bench/deadlift) do 2-3 ramp-up sets: 40% → 60% → 80% of your target weight",
+  "Mai partire subito col massimo: rischio infortunio enorme": "Never start with your max right away: huge injury risk",
+  "45 sec — Child's Pose: inginocchiati, porta le braccia in avanti e la testa a terra": "45 sec — Child's Pose: kneel, reach your arms forward and your head to the floor",
+  "45 sec — Quad Stretch: in piedi, porta il piede verso il gluteo tenendo la caviglia": "45 sec — Quad Stretch: standing, pull your foot toward your glute, holding your ankle",
+  "45 sec — Chest Opener: mani intrecciate dietro la schiena, apri il petto verso l'alto": "45 sec — Chest Opener: hands clasped behind your back, open your chest upward",
+  "45 sec — Hamstring Stretch: seduto, gambe dritte, raggiungi le punte dei piedi": "45 sec — Hamstring Stretch: seated, legs straight, reach for your toes",
+  "45 sec — Pigeon Pose (o Figura 4): allungamento intenso dei flessori dell'anca": "45 sec — Pigeon Pose (or Figure 4): an intense hip-flexor stretch",
+  "45 sec — Spinal Twist: seduto, ruota il busto con un ginocchio piegato al petto": "45 sec — Spinal Twist: seated, rotate your torso with one knee bent to your chest",
+  "Lo stretching post-workout migliora il recupero del 30%": "Post-workout stretching improves recovery by 30%",
+  "Ogni posizione si mantiene 30-45 secondi — senti lo stretch, mai dolore": "Hold each position 30-45 seconds — feel the stretch, never pain",
+  "Respira profondamente durante ogni posizione: l'espirazione aiuta il rilassamento muscolare": "Breathe deeply in each position: exhaling helps your muscles relax",
+  "Non rimandare: lo stretching va fatto caldo, subito dopo l'allenamento": "Don't put it off: stretch while warm, right after your workout",
+  "NO stretching statico PRIMA del workout — riduce la forza del 5-10%": "NO static stretching BEFORE your workout — it reduces strength by 5-10%",
+  "Spingi verso il basso fino all'estensione completa": "Push down to full extension"
 };
 
 // Funzione che traduce il testo visibile di un frammento HTML quando lang===en.
 // Sostituisce solo testo tra > e < per non toccare attributi/codice.
+// Helper workout: applica autoTranslate all'HTML dell'allenamento (che usa root.innerHTML diretto, fuori dal render principale)
+window.__WOT = function(h){ return (typeof window.autoTranslate==='function') ? window.autoTranslate(h) : h; };
+
 window.autoTranslate = function(htmlStr) {
   if (!window.ST || ST.lang !== 'en') return htmlStr;
   if (!htmlStr || typeof htmlStr !== 'string') return htmlStr;
@@ -6308,7 +7138,9 @@ window.doLogout=async function(){
     await saveU();
     await window.FBAuth.signOut();
     AU.user=null;AU.profile=null;
+    const __lang=ST.lang, __langChosen=ST.langChosen;  // preserva la lingua scelta anche dopo il logout
     Object.assign(ST,defST());
+    ST.lang=__lang; ST.langChosen=__langChosen;
     currentDateStr=getToday();
     render();
   }catch(e){console.warn('logout',e);}
@@ -6421,7 +7253,7 @@ window.exportMyData = function() {
 window.doDeleteAccount=async function(){
   // ═══ CANCELLAZIONE ACCOUNT ULTRA-SICURA (3 step) ═══
   // Step 1: avvertimento iniziale forte
-  const step1 = confirm(
+  const step1 = confirm(LL(
     '⚠️ ATTENZIONE: STAI PER CANCELLARE IL TUO ACCOUNT\n\n' +
     'Questa azione è IRREVERSIBILE. Verranno eliminati:\n' +
     '• Tutti i tuoi dati di allenamento e nutrizione\n' +
@@ -6430,37 +7262,56 @@ window.doDeleteAccount=async function(){
     '• Le note esercizio salvate\n' +
     '• Le schede personalizzate\n\n' +
     'I dati NON potranno essere recuperati in futuro.\n\n' +
-    'Vuoi procedere?'
-  );
+    'Vuoi procedere?',
+    '⚠️ WARNING: YOU ARE ABOUT TO DELETE YOUR ACCOUNT\n\n' +
+    'This action is IRREVERSIBLE. The following will be deleted:\n' +
+    '• All your workout and nutrition data\n' +
+    '• Your weight history, measurements, cheats\n' +
+    '• The personal records (PRs) you reached\n' +
+    '• Your saved exercise notes\n' +
+    '• Your custom routines\n\n' +
+    'The data will NOT be recoverable in the future.\n\n' +
+    'Do you want to proceed?'
+  ));
   if (!step1) return;
 
   // Step 2: re-inserimento email per conferma identità
   const currentEmail = window.FBAuth?.auth?.currentUser?.email || '';
-  const inputEmail = prompt(
+  const inputEmail = prompt(LL(
     '🔒 CONFERMA IDENTITÀ (1/2)\n\n' +
     'Per procedere reinserisci la TUA EMAIL completa.\n' +
-    'Questo evita cancellazioni accidentali.'
-  );
+    'Questo evita cancellazioni accidentali.',
+    '🔒 IDENTITY CONFIRMATION (1/2)\n\n' +
+    'To proceed, re-enter YOUR full EMAIL.\n' +
+    'This prevents accidental deletions.'
+  ));
   if (!inputEmail) return;
   if (inputEmail.trim().toLowerCase() !== currentEmail.toLowerCase()) {
     return alert(LL('❌ Email non corrispondente. Cancellazione annullata per sicurezza.','❌ Email does not match. Deletion cancelled for safety.'));
   }
 
   // Step 3: re-inserimento password
-  const pw = prompt(
+  const pw = prompt(LL(
     '🔒 CONFERMA IDENTITÀ (2/2)\n\n' +
-    'Inserisci la tua PASSWORD attuale per autorizzare la cancellazione.'
-  );
+    'Inserisci la tua PASSWORD attuale per autorizzare la cancellazione.',
+    '🔒 IDENTITY CONFIRMATION (2/2)\n\n' +
+    'Enter your current PASSWORD to authorize the deletion.'
+  ));
   if (!pw) return;
 
   // Step 4: parola magica "CANCELLA" per evitare anche pressioni distratte
-  const magicWord = prompt(
+  const __magicTarget = LL('CANCELLA','DELETE');
+  const magicWord = prompt(LL(
     '⚠️ ULTIMA CONFERMA\n\n' +
     'Per essere SICURI al 100%, scrivi la parola:\n\n' +
     'CANCELLA\n\n' +
-    '(in maiuscolo, esattamente come scritto sopra)'
-  );
-  if (magicWord !== 'CANCELLA') {
+    '(in maiuscolo, esattamente come scritto sopra)',
+    '⚠️ FINAL CONFIRMATION\n\n' +
+    'To be 100% SURE, type the word:\n\n' +
+    'DELETE\n\n' +
+    '(in uppercase, exactly as written above)'
+  ));
+  if (magicWord !== __magicTarget) {
     return alert(LL('❌ Parola non corretta. Account NON cancellato. I tuoi dati sono al sicuro.','❌ Wrong word. Account NOT deleted. Your data is safe.'));
   }
 
@@ -6475,8 +7326,8 @@ window.doDeleteAccount=async function(){
   }catch(e){
     // Errore comune: password sbagliata
     const msg = e?.code === 'auth/wrong-password' || e?.code === 'auth/invalid-credential'
-      ? '❌ Password errata. Account NON cancellato.'
-      : '❌ Errore: ' + __fbErr(e);
+      ? LL('❌ Password errata. Account NON cancellato.','❌ Wrong password. Account NOT deleted.')
+      : LL('❌ Errore: ','❌ Error: ') + __fbErr(e);
     alert(msg);
   }
 };
@@ -10322,30 +11173,30 @@ window.renderAuth = function(root){
       </div>
       <style>@keyframes authLoad { 0%{left:-30%} 100%{left:100%} }</style>
     </div>`;
-    root.innerHTML = `<div style="max-width:500px;margin:60px auto 0;padding:0 20px;">${content}</div>`;
+    root.innerHTML = __WOT(`<div style="max-width:500px;margin:60px auto 0;padding:0 20px;">${content}</div>`);
     return;
   }
   if(AU.tab==='forgot'){
-    content=`<div class="card"><div class="bebas" style="font-size:20px;color:var(--ora);margin-bottom:8px;">🔑 RECUPERA PASSWORD</div><div style="font-size:13px;color:var(--mut);margin-bottom:14px;">Inserisci l'email del tuo account. Ti invieremo un link per reimpostare la password.</div><span class="lbl">LA TUA EMAIL</span><input id="fgE" type="email" autocomplete="email" placeholder="es. mario@email.it"><button class="btn" onclick="doForgotStep1()">INVIA LINK DI RESET ▸</button><div style="text-align:center;margin-top:12px;"><span onclick="AU.tab='login';AU.msg='';render()" style="font-size:13px;color:var(--mut);cursor:pointer;text-decoration:underline;">← Torna al Login</span></div></div>`;
+    content=`<div class="card"><div class="bebas" style="font-size:20px;color:var(--ora);margin-bottom:8px;">🔑 RECUPERA PASSWORD</div><div style="font-size:13px;color:var(--mut);margin-bottom:14px;">Inserisci l'email del tuo account. Ti invieremo un link per reimpostare la password.</div><span class="lbl">LA TUA EMAIL</span><input id="fgE" type="email" autocomplete="email" placeholder="${LL('es. mario@email.it','e.g. mario@email.com')}"><button class="btn" onclick="doForgotStep1()">INVIA LINK DI RESET ▸</button><div style="text-align:center;margin-top:12px;"><span onclick="AU.tab='login';AU.msg='';render()" style="font-size:13px;color:var(--mut);cursor:pointer;text-decoration:underline;">← Torna al Login</span></div></div>`;
   } else {
     content=`<div style="display:flex;background:var(--surf);border-radius:12px;padding:3px;margin-bottom:14px;"><button class="atab ${AU.tab==='login'?'on':''}" onclick="AU.tab='login';AU.msg='';render()">ACCEDI</button><button class="atab ${AU.tab==='reg'?'on':''}" onclick="AU.tab='reg';AU.msg='';render()">REGISTRATI</button></div> ${AU.tab==='login'?`<div class="card">
-    <span class="lbl">EMAIL O USERNAME</span><input id="lU" placeholder="La tua email o username" autocomplete="username">
-    <span class="lbl">PASSWORD</span><div class="pw-wrap"><input id="lP" type="password" placeholder="Password" autocomplete="current-password"><span class="pw-eye" onclick="togglePw(this)">👁️</span></div>
+    <span class="lbl">EMAIL O USERNAME</span><input id="lU" placeholder="${LL('La tua email o username','Your email or username')}" autocomplete="username">
+    <span class="lbl">PASSWORD</span><div class="pw-wrap"><input id="lP" type="password" placeholder="${LL('Password','Password')}" autocomplete="current-password"><span class="pw-eye" onclick="togglePw(this)">👁️</span></div>
     <button class="btn" onclick="doLogin()">ACCEDI</button>
     <div style="text-align:center;margin-top:12px;"><span onclick="AU.tab='forgot';AU.fgStep=1;AU.msg='';render()" style="font-size:13px;color:var(--mut);cursor:pointer;text-decoration:underline;">🔑 Password dimenticata?</span></div>
     </div>`:`<div class="card">
     <span class="lbl">USERNAME</span>
-    <input id="aU" placeholder="Scegli un username" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9_]/g,'')">
-    <span class="lbl">EMAIL (per recupero password)</span><input id="aE" type="email" placeholder="La tua vera email">
-    <span class="lbl">PASSWORD (min 8 car., 1 num., 1 spec.)</span><div class="pw-wrap"><input id="aP" type="password" placeholder="Crea una password forte"><span class="pw-eye" onclick="togglePw(this)">👁️</span></div>
-    <span class="lbl">CONFERMA PASSWORD</span><div class="pw-wrap"><input id="aP2" type="password" placeholder="Ripeti la password"><span class="pw-eye" onclick="togglePw(this)">👁️</span></div>
+    <input id="aU" placeholder="${LL('Scegli un username','Choose a username')}" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9_]/g,'')">
+    <span class="lbl">EMAIL (per recupero password)</span><input id="aE" type="email" placeholder="${LL('La tua vera email','Your real email')}">
+    <span class="lbl">PASSWORD (min 8 car., 1 num., 1 spec.)</span><div class="pw-wrap"><input id="aP" type="password" placeholder="${LL('Crea una password forte','Create a strong password')}"><span class="pw-eye" onclick="togglePw(this)">👁️</span></div>
+    <span class="lbl">CONFERMA PASSWORD</span><div class="pw-wrap"><input id="aP2" type="password" placeholder="${LL('Ripeti la password','Repeat the password')}"><span class="pw-eye" onclick="togglePw(this)">👁️</span></div>
     <span class="lbl" style="margin-bottom:8px;">SEI UN UOMO O UNA DONNA?</span>
     <div style="display:flex;gap:8px;margin-bottom:10px;">
     <button class="sx-btn on" data-sx="m" onclick="pickSex(this)"><div style="font-size:24px;margin-bottom:4px;">👨</div><div style="font-size:13px;font-weight:700;">UOMO</div></button>
     <button class="sx-btn" data-sx="f" onclick="pickSex(this)"><div style="font-size:24px;margin-bottom:4px;">👩</div><div style="font-size:13px;font-weight:700;">DONNA</div></button>
     </div>
-    <div class="g2"><div><span class="lbl">PESO (KG)</span><input id="aW" type="number" step=".1" placeholder="Es. 75"></div><div><span class="lbl">ALTEZZA (CM)</span><input id="aH" type="number" placeholder="Es. 175"></div></div>
-    <div class="g2"><div><span class="lbl">ETÀ</span><input id="aA" type="number" placeholder="Es. 28"></div></div>
+    <div class="g2"><div><span class="lbl">PESO (KG)</span><input id="aW" type="number" step=".1" placeholder="${LL('Es. 75','e.g. 75')}"></div><div><span class="lbl">ALTEZZA (CM)</span><input id="aH" type="number" placeholder="${LL('Es. 175','e.g. 175')}"></div></div>
+    <div class="g2"><div><span class="lbl">ETÀ</span><input id="aA" type="number" placeholder="${LL('Es. 28','e.g. 28')}"></div></div>
     <button class="btn" style="margin-top:16px" onclick="doReg()">CREA ACCOUNT ▸</button>
     </div>`}`;
   }
@@ -10359,17 +11210,17 @@ window.renderAuth = function(root){
     ? 'background:rgba(96,165,250,.1);border:1px solid var(--blu);border-radius:10px;padding:11px 13px;font-size:13px;color:var(--blu);margin-bottom:12px;'
     : '';
   const __msgClass = (__msgIsSuccess || __msgIsInfo) ? '' : 'err-box';
-  root.innerHTML=`<div class="auth-w"> <div style="text-align:center;margin-bottom:24px;"> <div class="bebas" style="font-size:60px;color:var(--acc);line-height:.85;letter-spacing:3px;">FIT</div> <div class="bebas" style="font-size:60px;color:var(--text);line-height:.85;letter-spacing:3px;">TRACKER</div> <div class="bebas" style="font-size:60px;color:var(--text);line-height:.85;letter-spacing:3px;">PRO</div> <div style="font-size:10px;color:var(--mut);letter-spacing:3px;margin-top:10px;">ADAPTIVE AI COACH · MULTI-USER</div> </div> <div style="width:100%;max-width:380px;"> ${AU.msg?`<div class="${__msgClass}" style="${__msgStyle}">${AU.msg}</div>`:''}
+  root.innerHTML=__WOT(`<div class="auth-w"> <div style="text-align:center;margin-bottom:24px;"> <div class="bebas" style="font-size:60px;color:var(--acc);line-height:.85;letter-spacing:3px;">FIT</div> <div class="bebas" style="font-size:60px;color:var(--text);line-height:.85;letter-spacing:3px;">TRACKER</div> <div class="bebas" style="font-size:60px;color:var(--text);line-height:.85;letter-spacing:3px;">PRO</div> <div style="font-size:10px;color:var(--mut);letter-spacing:3px;margin-top:10px;">ADAPTIVE AI COACH · MULTI-USER</div> </div> <div style="width:100%;max-width:380px;"> ${AU.msg?`<div class="${__msgClass}" style="${__msgStyle}">${AU.msg}</div>`:''}
   ${content}
   <div style="text-align:center;margin-top:12px;font-size:11px;color:var(--mut);">🔒 Database sicuro in Cloud · Ogni account è privato</div>
-  </div></div>`;
+  </div></div>`);
 }
 // ─── § 15. RENDER VIEWS: renderSetup, renderHome, renderWork, ecc. ─────────
 window.renderSetup = function(){
   const defDate=new Date(new Date().getTime()+12*7*864e5).toISOString().split('T')[0];
   const cW=ST.h.length?ST.h[ST.h.length-1].w:70;
   const sx=AU.profile?.sx||'m';
-  return`<div style="padding:10px 0 0;"> <div class="bebas" style="font-size:36px;color:var(--acc);margin-bottom:4px;">CIAO ${AU.user.toUpperCase()}!</div> <div style="color:var(--mut);font-size:13px;margin-bottom:16px;">Configura il tuo programma personale. L'AI lo adatterà ogni settimana.</div> <div class="card"> <span class="lbl">PESO ATTUALE (KG)</span><input type="number" id="iW" value="${cW}" step=".1"> <span class="lbl">PESO OBIETTIVO (KG)</span><input type="number" id="gW" placeholder="Es. ${sx==='f'?'60':'78'} — inserisci il tuo obiettivo" step=".1"> <span class="lbl">DATA OBIETTIVO (PREVISTA)</span><input type="date" id="iDate" value="${defDate}"> <span class="lbl">STRATEGIA</span> <select id="iT"><option value="cut">Definizione (Perdita Grasso)</option><option value="bulk">Massa (Aumento Muscolo)</option></select> <div id="wrapLoc"><span class="lbl">DOVE TI ALLENI?</span> <select id="iLoc"><option value="gym" selected>🏋️ In Palestra (con attrezzi)</option><option value="home">🏠 A Casa (corpo libero)</option></select></div> <span class="lbl">SESSIONI DI ALLENAMENTO A SETTIMANA</span> <select id="iSess" onchange="toggleSessVisibility()"> <option value="0">0 — Solo Nutrizione &amp; Passi (nessuna palestra)</option> <option value="1">1 sessione/settimana</option> <option value="2">2 sessioni/settimana</option> <option value="3" selected>3 sessioni/settimana (consigliato)</option> <option value="4">4 sessioni/settimana</option> <option value="5">5 sessioni/settimana</option> <option value="6">6 sessioni/settimana (intenso)</option> </select><div id="stepsInfoReg" style="display:none;background:rgba(74,222,128,.05);border-left:3px solid var(--gre);padding:10px 12px;border-radius:0 10px 10px 0;margin:6px 0 12px;font-size:12px;color:var(--text);line-height:1.5;">🚶 <strong>Programma solo passi</strong>: il tuo obiettivo sarà camminare 10.000–12.000 passi/giorno + alimentazione controllata. Non avrai esercizi in palestra.</div> <div id="wrapDur"><span class="lbl">DURATA OGNI SESSIONE</span> <select id="iDur"><option value="45">45 minuti</option><option value="60" selected>60 minuti (ideale)</option><option value="90">90 minuti</option></select></div> <div id="wrapCardio"><span class="lbl">SESSIONI CARDIO DI BASE A SETTIMANA</span> <select id="iCardio"><option value="0">0 — Solo pesi</option><option value="1" selected>1 — Leggero</option><option value="2">2 — Moderato</option><option value="3">3 — Intenso</option></select></div> <span class="lbl" style="margin-bottom:8px;">INTOLLERANZE ALIMENTARI (tocca per selezionare)</span> <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;"> ${INTOL_LIST.map(i=>`<span class="intol-chip" data-id="${i.id}" onclick="this.classList.toggle('on')">${i.icon} ${i.label}</span>`).join('')}
+  return`<div style="padding:10px 0 0;"> <div class="bebas" style="font-size:36px;color:var(--acc);margin-bottom:4px;">${LL('CIAO','HI')} ${AU.user.toUpperCase()}!</div> <div style="color:var(--mut);font-size:13px;margin-bottom:16px;">Configura il tuo programma personale. L'AI lo adatterà ogni settimana.</div> <div class="card"> <span class="lbl">PESO ATTUALE (KG)</span><input type="number" id="iW" value="${cW}" step=".1"> <span class="lbl">PESO OBIETTIVO (KG)</span><input type="number" id="gW" placeholder="${LL('Es.','e.g.')} ${sx==='f'?'60':'78'} — ${LL('inserisci il tuo obiettivo','enter your goal')}" step=".1"> <span class="lbl">DATA OBIETTIVO (PREVISTA)</span><input type="date" id="iDate" value="${defDate}"> <span class="lbl">STRATEGIA</span> <select id="iT"><option value="cut">Definizione (Perdita Grasso)</option><option value="bulk">Massa (Aumento Muscolo)</option></select> <div id="wrapLoc"><span class="lbl">DOVE TI ALLENI?</span> <select id="iLoc"><option value="gym" selected>🏋️ In Palestra (con attrezzi)</option><option value="home">🏠 A Casa (corpo libero)</option></select></div> <span class="lbl">SESSIONI DI ALLENAMENTO A SETTIMANA</span> <select id="iSess" onchange="toggleSessVisibility()"> <option value="0">0 — Solo Nutrizione &amp; Passi (nessuna palestra)</option> <option value="1">1 sessione/settimana</option> <option value="2">2 sessioni/settimana</option> <option value="3" selected>3 sessioni/settimana (consigliato)</option> <option value="4">4 sessioni/settimana</option> <option value="5">5 sessioni/settimana</option> <option value="6">6 sessioni/settimana (intenso)</option> </select><div id="stepsInfoReg" style="display:none;background:rgba(74,222,128,.05);border-left:3px solid var(--gre);padding:10px 12px;border-radius:0 10px 10px 0;margin:6px 0 12px;font-size:12px;color:var(--text);line-height:1.5;">🚶 <strong>Programma solo passi</strong>: il tuo obiettivo sarà camminare 10.000–12.000 passi/giorno + alimentazione controllata. Non avrai esercizi in palestra.</div> <div id="wrapDur"><span class="lbl">DURATA OGNI SESSIONE</span> <select id="iDur"><option value="45">45 minuti</option><option value="60" selected>60 minuti (ideale)</option><option value="90">90 minuti</option></select></div> <div id="wrapCardio"><span class="lbl">SESSIONI CARDIO DI BASE A SETTIMANA</span> <select id="iCardio"><option value="0">0 — Solo pesi</option><option value="1" selected>1 — Leggero</option><option value="2">2 — Moderato</option><option value="3">3 — Intenso</option></select></div> <span class="lbl" style="margin-bottom:8px;">INTOLLERANZE ALIMENTARI (tocca per selezionare)</span> <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;"> ${INTOL_LIST.map(i=>`<span class="intol-chip" data-id="${i.id}" onclick="this.classList.toggle('on')">${i.icon} ${i.label}</span>`).join('')}
   <div id="wrapFocus">
   <span class="lbl" style="margin-bottom:8px;">FOCUS DI ALLENAMENTO — cosa vuoi sviluppare?</span>
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:14px;">
@@ -10389,11 +11240,11 @@ window.renderSetup = function(){
   <span class="lbl" style="margin-bottom:8px;">🍽️ I TUOI PIATTI / CIBI PREFERITI (opzionale)</span>
   <div style="font-size:11px;color:var(--mut);line-height:1.5;margin-bottom:10px;">Scrivi 2-3 piatti o cibi che ami davvero per ciascun pasto. Cercheremo di includerli nel tuo menù, mantenendo comunque il target calorico per il tuo obiettivo. Esempi: "pasta al pomodoro, bresaola, yogurt greco". Max 200 caratteri ciascuno.</div>
   <span class="lbl" style="margin-bottom:4px;">🌅 COLAZIONE</span>
-  <textarea id="iFavCol" maxlength="200" rows="2" placeholder="Es. cappuccino, cornetto, fette biscottate con marmellata" style="margin-bottom:10px;font-size:13px;"></textarea>
+  <textarea id="iFavCol" maxlength="200" rows="2" placeholder="${LL('Es. cappuccino, cornetto, fette biscottate con marmellata','e.g. cappuccino, croissant, rusks with jam')}" style="margin-bottom:10px;font-size:13px;"></textarea>
   <span class="lbl" style="margin-bottom:4px;">🍽️ PRANZO</span>
-  <textarea id="iFavPra" maxlength="200" rows="2" placeholder="Es. pasta al pomodoro, insalata di pollo, bresaola" style="margin-bottom:10px;font-size:13px;"></textarea>
+  <textarea id="iFavPra" maxlength="200" rows="2" placeholder="${LL('Es. pasta al pomodoro, insalata di pollo, bresaola','e.g. tomato pasta, chicken salad, bresaola')}" style="margin-bottom:10px;font-size:13px;"></textarea>
   <span class="lbl" style="margin-bottom:4px;">🌙 CENA</span>
-  <textarea id="iFavCen" maxlength="200" rows="2" placeholder="Es. pesce alla griglia, uova, verdure di stagione" style="margin-bottom:14px;font-size:13px;"></textarea>
+  <textarea id="iFavCen" maxlength="200" rows="2" placeholder="${LL('Es. pesce alla griglia, uova, verdure di stagione','e.g. grilled fish, eggs, seasonal vegetables')}" style="margin-bottom:14px;font-size:13px;"></textarea>
   <div style="background:rgba(255,104,53,.05);border-left:3px solid var(--ora);border-radius:0 10px 10px 0;padding:10px 12px;margin-bottom:10px;font-size:11px;color:var(--mut);line-height:1.5;">📋 Cliccando "Attiva il sistema" ti verrà chiesto di accettare il disclaimer medico e l'informativa privacy. L'app non sostituisce il parere di un medico o nutrizionista qualificato.</div>
   <button class="btn" onclick="initProgram()">ATTIVA IL SISTEMA ▸</button>
   </div></div>`;
@@ -14267,11 +15118,11 @@ window.renderProfile = function() {
   <div class="card" style="border-color:var(--purp);">
     <div class="bebas" style="font-size:18px;color:var(--purp);margin-bottom:10px;">🔑 CAMBIA PASSWORD</div>
     <span class="lbl">PASSWORD ATTUALE</span>
-    <div class="pw-wrap"><input type="password" id="cpCur" placeholder="Password attuale"><span class="pw-eye" onclick="togglePw(this)">👁️</span></div>
+    <div class="pw-wrap"><input type="password" id="cpCur" placeholder="${LL('Password attuale','Current password')}"><span class="pw-eye" onclick="togglePw(this)">👁️</span></div>
     <span class="lbl">NUOVA PASSWORD</span>
-    <div class="pw-wrap"><input type="password" id="cpNew" placeholder="Min 8 car., 1 num, 1 spec."><span class="pw-eye" onclick="togglePw(this)">👁️</span></div>
+    <div class="pw-wrap"><input type="password" id="cpNew" placeholder="${LL('Min 8 car., 1 num, 1 spec.','Min 8 chars, 1 num, 1 special')}"><span class="pw-eye" onclick="togglePw(this)">👁️</span></div>
     <span class="lbl">${t('c_confirm')}</span>
-    <div class="pw-wrap"><input type="password" id="cpNew2" placeholder="Ripeti la nuova password"><span class="pw-eye" onclick="togglePw(this)">👁️</span></div>
+    <div class="pw-wrap"><input type="password" id="cpNew2" placeholder="${LL('Ripeti la nuova password','Repeat the new password')}"><span class="pw-eye" onclick="togglePw(this)">👁️</span></div>
     <button class="btn-s btn-purp" style="width:100%;padding:13px;font-family:'Bebas Neue';font-size:16px;letter-spacing:1px;" onclick="doChangePassword()">AGGIORNA PASSWORD</button>
   </div>
 
@@ -14919,32 +15770,32 @@ window.render = function() {
     const exUnit = getExerciseUnit(ex);  // PUNTO 7: kg/sec/reps
     const sug=getSuggest(ex.id,ST.wHistory||{},exUnit);
     if(ST.woPhase==='rest'){
-      root.innerHTML=`<div class="wo"><div class="wo-head"><div><div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;text-transform:uppercase;">${escapeHtml(wo.name)} · Es. ${ST.step+1}/${wo.exercises.length}</div><div class="bebas" style="font-size:18px;color:var(--blu);">${t('wo_rest_pause')} — ${t('wo_set_of')} ${ST.currentSet}/${totalSets}</div></div><button class="btn-s btn-action" onclick="skipRest()">${t('wo_skip')} ▸</button></div>
+      root.innerHTML=__WOT(`<div class="wo"><div class="wo-head"><div><div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;text-transform:uppercase;">${escapeHtml(wo.name)} · ${LL('Es.','Ex.')} ${ST.step+1}/${wo.exercises.length}</div><div class="bebas" style="font-size:18px;color:var(--blu);">${t('wo_rest_pause')} — ${t('wo_set_of')} ${ST.currentSet}/${totalSets}</div></div><button class="btn-s btn-action" onclick="skipRest()">${t('wo_skip')} ▸</button></div>
       <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;">
         ${window.__lastPRMsg?`<div style="background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#000;padding:12px 18px;border-radius:14px;font-weight:800;font-size:14px;letter-spacing:.5px;margin-bottom:18px;box-shadow:0 4px 24px rgba(251,191,36,.4);text-align:center;animation:prPulse 1.5s ease-out;max-width:90%;">${escapeHtml(window.__lastPRMsg)}</div><style>@keyframes prPulse{0%{transform:scale(.5);opacity:0}50%{transform:scale(1.1);opacity:1}100%{transform:scale(1);opacity:1}}</style>`:''}
         <div class="tmr-ring tmr-ring-rest"><div id="tmrUI" style="font-size:78px;font-family:monospace;font-weight:700;color:var(--blu);">${ST.tmr}</div><div style="font-size:12px;color:var(--mut);">secondi</div></div>
         <div style="margin-top:24px;text-align:center;"><div style="font-size:13px;color:var(--mut);margin-bottom:6px;">${t('wo_next_set')}:</div><div class="bebas" style="font-size:28px;color:var(--text);">${t('wo_set_of')} ${ST.currentSet+1} ${t('wo_of')} ${totalSets}</div><div style="font-size:14px;color:${wo.col||'var(--acc)'};margin-top:4px;font-weight:700;">${escapeHtml(ex.name)}</div></div>
         <div style="display:flex;gap:10px;margin-top:20px;">${Array(totalSets).fill(0).map((_,i)=>`<div class="set-dot ${i<ST.currentSet?'done':i===ST.currentSet?'current':''}"></div>`).join('')}</div>
       </div>
-      <div style="padding:14px;border-top:1px solid var(--bord);"><button class="btn btn-action" style="width:100%;height:60px;font-size:18px;" onclick="skipRest()">${t('wo_skip_rest')}</button></div></div>`;return;
+      <div style="padding:14px;border-top:1px solid var(--bord);"><button class="btn btn-action" style="width:100%;height:60px;font-size:18px;" onclick="skipRest()">${t('wo_skip_rest')}</button></div></div>`);return;
     }
     if(ST.woPhase==='exercise_done'){
       const isLastEx=ST.step>=wo.exercises.length-1;
       const nextEx=!isLastEx?wo.exercises[ST.step+1]:null;
-      root.innerHTML=`<div class="wo"><div class="wo-head"><div><div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;text-transform:uppercase;">${escapeHtml(wo.name)} · Es. ${ST.step+1}/${wo.exercises.length}</div><div class="bebas" style="font-size:18px;color:var(--acc);">✅ COMPLETATO!</div></div><button class="btn-s btn-action" onclick="closeWo()">✕ ESCI</button></div>
+      root.innerHTML=__WOT(`<div class="wo"><div class="wo-head"><div><div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;text-transform:uppercase;">${escapeHtml(wo.name)} · ${LL('Es.','Ex.')} ${ST.step+1}/${wo.exercises.length}</div><div class="bebas" style="font-size:18px;color:var(--acc);">✅ COMPLETATO!</div></div><button class="btn-s btn-action" onclick="closeWo()">✕ ESCI</button></div>
       <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;">
         <div style="font-size:48px;margin-bottom:12px;">💪</div><div class="bebas" style="font-size:32px;color:var(--acc);line-height:1;margin-bottom:6px;">${escapeHtml(ex.name.split('—')[0].trim())}</div><div style="font-size:14px;color:var(--mut);margin-bottom:20px;">${totalSets} serie completate</div>
         <div style="display:flex;gap:10px;margin-bottom:28px;">${Array(totalSets).fill(0).map(()=>'<div class="set-dot done"></div>').join('')}</div>
         ${isLastEx?`<div class="card" style="width:100%;padding:20px;text-align:center;"><div class="bebas" style="font-size:28px;color:var(--acc);margin-bottom:4px;">🏆 ${t('w_done_title')}</div></div>`:`<div class="card" style="width:100%;padding:16px;"><div style="font-size:11px;color:var(--mut);margin-bottom:8px;font-weight:700;letter-spacing:1px;">${t('w_done_title')==='WORKOUT COMPLETE!'?'NEXT EXERCISE':'PROSSIMO ESERCIZIO'}</div><div class="bebas" style="font-size:22px;color:var(--text);">${escapeHtml(nextEx?.name||'')}</div></div>`}
       </div>
-      <div style="padding:14px;border-top:1px solid var(--bord);"><button class="btn" style="height:68px;font-size:22px;background:${isLastEx?'var(--gre)':wo.col||'var(--acc)'};" onclick="advanceExercise()">${isLastEx?'🏁 SALVA E TERMINA':'➡️ PROSSIMO'}</button></div></div>`;return;
+      <div style="padding:14px;border-top:1px solid var(--bord);"><button class="btn" style="height:68px;font-size:22px;background:${isLastEx?'var(--gre)':wo.col||'var(--acc)'};" onclick="advanceExercise()">${isLastEx?'🏁 SALVA E TERMINA':'➡️ PROSSIMO'}</button></div></div>`);return;
     }
     const isActive=ST.woPhase==='active';
     // Calcolo kcal live in base a durata trascorsa + volume corrente
     const __cW = currentWeightKg();
     const __durMin = ST.workoutStartTs ? Math.max(1, Math.round((Date.now() - ST.workoutStartTs) / 60000)) : (ST.p.dur || 60);
     const __kcalLive = estimateWorkoutKcal(__durMin, __cW, ST.currVol);
-    root.innerHTML=`<div class="wo"><div class="wo-head"><div><div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;text-transform:uppercase;">${escapeHtml(wo.name)} · Es. ${ST.step+1}/${wo.exercises.length}</div><div class="bebas" style="font-size:20px;color:${wo.col||theme};">${escapeHtml(ex.name)}</div></div><button class="btn-s btn-action" onclick="closeWo()">✕ ESCI</button></div>
+    root.innerHTML=__WOT(`<div class="wo"><div class="wo-head"><div><div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;text-transform:uppercase;">${escapeHtml(wo.name)} · ${LL('Es.','Ex.')} ${ST.step+1}/${wo.exercises.length}</div><div class="bebas" style="font-size:20px;color:${wo.col||theme};">${escapeHtml(ex.name)}</div></div><button class="btn-s btn-action" onclick="closeWo()">✕ ESCI</button></div>
     <div class="bw" style="height:4px;border-radius:0;"><div class="bf" style="width:${((ST.step)/(wo.exercises.length)*100).toFixed(0)}%;height:4px;background:${wo.col||theme};border-radius:0;"></div></div>
     <div style="display:flex;gap:8px;padding:8px 14px;background:var(--surf);border-bottom:1px solid var(--bord);">
       <div style="flex:1;text-align:center;"><div style="font-size:9px;color:var(--mut);font-weight:700;letter-spacing:1px;">⏱ DURATA</div><div class="bebas" style="font-size:18px;color:var(--text);line-height:1.1;">${__durMin}<span style="font-size:11px;color:var(--mut);">min</span></div></div>
@@ -14956,15 +15807,15 @@ window.render = function() {
       <div style="background:${isActive?'rgba(74,222,128,.07)':'rgba(197,241,53,.05)'};border:1.5px solid ${isActive?'var(--gre)':wo.col||'var(--acc)'};border-radius:14px;padding:18px;margin-bottom:14px;text-align:center;box-shadow:${isActive?'0 0 20px rgba(74,222,128,0.2)':'none'};transition:0.3s;">
         <div style="font-size:12px;color:var(--mut);font-weight:700;letter-spacing:2px;margin-bottom:6px;">${isActive?t('wo_in_progress'):t('wo_next_set')}</div>
         <div class="bebas" style="font-size:52px;line-height:1;color:${isActive?'var(--gre)':wo.col||'var(--acc)'};">${ST.currentSet+1}<span style="font-size:20px;color:var(--mut);"> / ${totalSets}</span></div>
-        <div class="bebas" style="font-size:28px;color:var(--text);margin-top:4px;">${ex.reps} <span style="font-size:14px;color:var(--mut);">reps${isTimeExercise?' (o sec)':''}</span></div>
-        ${ex.rest?`<div style="font-size:12px;color:var(--blu);margin-top:6px;">⏱ Riposo dopo: ${ex.rest}s (automatico)</div>`:''}
+        <div class="bebas" style="font-size:28px;color:var(--text);margin-top:4px;">${ex.reps} <span style="font-size:14px;color:var(--mut);">reps${isTimeExercise?LL(' (o sec)',' (or sec)'):''}</span></div>
+        ${ex.rest?`<div style="font-size:12px;color:var(--blu);margin-top:6px;">⏱ ${LL('Riposo dopo:','Rest after:')} ${ex.rest}s ${LL('(automatico)','(automatic)')}</div>`:''}
         ${isActive?`<div style="margin-top:10px;padding:8px 16px;background:rgba(74,222,128,.1);border-radius:8px;display:inline-block;"><span style="font-size:11px;color:var(--gre);font-weight:700;">TEMPO: </span><span id="setTmrUI" style="font-family:monospace;font-size:18px;font-weight:700;color:var(--gre);">00:00</span></div>`:''}
       </div>
       <div style="display:flex;gap:8px;justify-content:center;margin-bottom:14px;">${Array(totalSets).fill(0).map((_,i)=>`<div class="set-dot ${i<ST.currentSet?'done':i===ST.currentSet?'current':''}"></div>`).join('')}</div>
 
       ${(ex.isWarmup||ex.isCooldown||(ex.t==='cardio' && ex.steps?.length))?`
       <div class="card" style="padding:14px;background:${ex.isWarmup?'rgba(197,241,53,.04)':ex.isCooldown?'rgba(167,139,250,.04)':'rgba(255,68,68,.04)'};border-color:${ex.isWarmup?'var(--acc)':ex.isCooldown?'var(--purp)':'var(--red)'};">
-        <div style="font-size:12px;color:${ex.isWarmup?'var(--acc)':ex.isCooldown?'var(--purp)':'var(--red)'};font-weight:700;letter-spacing:1px;margin-bottom:8px;">⏱ TEMPO STIMATO: ${ex.reps}</div>
+        <div style="font-size:12px;color:${ex.isWarmup?'var(--acc)':ex.isCooldown?'var(--purp)':'var(--red)'};font-weight:700;letter-spacing:1px;margin-bottom:8px;">⏱ ${LL('TEMPO STIMATO:','ESTIMATED TIME:')} ${ex.reps}</div>
 
         ${ex.steps?.length ? `
         <!-- SESSIONE 29: steps visibili direttamente nella card durante esecuzione -->
@@ -14978,7 +15829,7 @@ window.render = function() {
 
         ${ex.whatIs ? `
         <details style="margin-top:8px;">
-          <summary style="cursor:pointer;font-size:11px;color:var(--blu);font-weight:700;letter-spacing:.5px;padding:6px 0;list-style:none;">❓ Cos'è e a cosa serve →</summary>
+          <summary style="cursor:pointer;font-size:11px;color:var(--blu);font-weight:700;letter-spacing:.5px;padding:6px 0;list-style:none;">${LL("❓ Cos'è e a cosa serve →",'❓ What it is and what it is for →')}</summary>
           <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-top:6px;padding:8px 10px;background:rgba(96,165,250,.05);border-radius:8px;">${ex.whatIs}</div>
         </details>` : ''}
 
@@ -14998,7 +15849,7 @@ window.render = function() {
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
             <div>
               <div style="font-size:11px;color:var(--mut);font-weight:800;letter-spacing:1.5px;">${unitLabel}</div>
-              ${lastUser.val ? `<div style="font-size:11px;color:var(--blu);margin-top:2px;">📊 Ultima volta (${lastDateLabel}): <strong style="color:var(--text);">${lastUser.val}${exUnit==='sec'?'s':exUnit==='reps'?' reps':'kg'}${lastUser.reps?' × '+lastUser.reps+' reps':''}</strong></div>` : `<div style="font-size:11px;color:var(--mut);margin-top:2px;font-style:italic;">Prima volta — inserisci il valore reale</div>`}
+              ${lastUser.val ? `<div style="font-size:11px;color:var(--blu);margin-top:2px;">📊 ${LL('Ultima volta','Last time')} (${lastDateLabel}): <strong style="color:var(--text);">${lastUser.val}${exUnit==='sec'?'s':exUnit==='reps'?' reps':'kg'}${lastUser.reps?' × '+lastUser.reps+' reps':''}</strong></div>` : `<div style="font-size:11px;color:var(--mut);margin-top:2px;font-style:italic;">Prima volta — inserisci il valore reale</div>`}
               ${sug.val && sug.val !== lastUser.val ? `<div style="font-size:11px;color:var(--ora);margin-top:2px;">💡 ${sug.hint}</div>` : ''}
             </div>
           </div>
@@ -15011,7 +15862,7 @@ window.render = function() {
             </div>
             <input type="number" id="wkReps" placeholder="${parseMeanReps(ex.reps)}" step="1" min="1" max="50" value="${prefillReps}" oninput="if(!ST.draftReps)ST.draftReps={};ST.draftReps['${ex.id}']=this.value;" style="margin:0;font-size:22px;font-weight:700;text-align:center;width:90px;flex-shrink:0;height:48px;">
           </div>` : ''}
-          ${exUnit==='sec'&&ST.setElapsed>0?`<div style="font-size:11px;color:var(--blu);text-align:center;margin-top:8px;padding:6px;background:rgba(96,165,250,.06);border-radius:6px;">⏱ Timer corrente: ${ST.setElapsed}s</div>`:''}
+          ${exUnit==='sec'&&ST.setElapsed>0?`<div style="font-size:11px;color:var(--blu);text-align:center;margin-top:8px;padding:6px;background:rgba(96,165,250,.06);border-radius:6px;">⏱ ${LL('Timer corrente:','Current timer:')} ${ST.setElapsed}s</div>`:''}
         </div>
 
         <!-- Bottone sostituisci esercizio: visibile SOLO prima della prima serie (sessione 19) -->
@@ -15166,7 +16017,7 @@ window.render = function() {
           <button class="btn btn-action" style="width:100%;padding:12px;margin-top:10px;" onclick="closeSheet()">${t('c_cancel')}</button>
         </div></div>`;
       })() : ''
-    );
+    ));
     // ── RIPRISTINA SCROLL WORKOUT (sessione 16) ──
     // Quando l'utente espande sezioni come "Errori comuni", il render distrugge il DOM
     // e lo scroll si resetta. Ripristino la posizione precedente del container scrollabile.
