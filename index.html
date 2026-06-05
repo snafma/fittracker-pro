@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION54-DEEP-IT-AUDIT">
+<meta name="ft-version" content="build-SESSION55-RECIPES-EN">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -520,7 +520,7 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
     <div class="spinner"></div>
     <div class="bebas" style="color:var(--text);font-size:28px;letter-spacing:3px;">SYSTEM BOOTING</div>
     <div style="color:var(--mut);font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:1px;">Connessione al Cloud Secure Database...</div>
-    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION54</div>
+    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION55</div>
   </div>
 </div>
 
@@ -2634,10 +2634,10 @@ window.startVacation = async function() {
   const today = new Date();
   const endDefault = new Date(today);
   endDefault.setDate(endDefault.getDate() + 7);
-  const startStr = prompt('Quando inizi la vacanza? (formato AAAA-MM-GG)', today.toISOString().slice(0,10));
+  const startStr = prompt(LL('Quando inizi la vacanza? (formato AAAA-MM-GG)','When does your vacation start? (format YYYY-MM-DD)'), today.toISOString().slice(0,10));
   if (!startStr) return;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(startStr)) return alert(LL('Formato data non valido','Invalid date format'));
-  const endStr = prompt('Quando finisce la vacanza? (formato AAAA-MM-GG)', endDefault.toISOString().slice(0,10));
+  const endStr = prompt(LL('Quando finisce la vacanza? (formato AAAA-MM-GG)','When does your vacation end? (format YYYY-MM-DD)'), endDefault.toISOString().slice(0,10));
   if (!endStr) return;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(endStr)) return alert(LL('Formato data non valido','Invalid date format'));
   if (endStr < startStr) return alert(LL('La data fine non può essere prima della data inizio','The end date cannot be before the start date'));
@@ -4343,7 +4343,7 @@ window.buildMeals=function(macros,intol=[],sex='m',isRestDay=false,diet='omnivor
       if (ctx.includes('uova') || ctx.includes('toast') || ctx.includes('colaz')) {
         // Colazione: aggiungo frutta secca o pane
         const grams = Math.round(stillMissing / 5.8 / 5) * 5; // mandorle 5.8 kcal/g
-        extraItem = grams >= 10 ? `${grams}g Mandorle o noci (~${grams*6} kcal)` : null;
+        extraItem = grams >= 10 ? `${grams}g ${LL('Mandorle o noci','Almonds or walnuts')} (~${grams*6} kcal)` : null;
       } else if (ctx.includes('pesce') || ctx.includes('legumi') || ctx.includes('cena') || ctx.includes('carne')) {
         // Cena: aggiungo pane o patate
         const grams = Math.round(stillMissing / 2.5 / 10) * 10;
@@ -4411,475 +4411,475 @@ window.RECIPE_DB=[
   // ─── COLAZIONI ───
   {id:'col_yogurt_avena',k:['yogurt','avena'],t:'🥣 Bowl Yogurt & Avena',time:'5 min',
     desc:'Colazione veloce ricca di proteine e fibre.',
-    steps:['In una ciotola versa lo yogurt greco 0%','Aggiungi i fiocchi d\'avena, mescolando per ammorbidirli','Spezzetta sopra le mandorle (o aggiungi 1 frutto se intolleranza)','Completa con caffè o tè verde caldo']},
+    steps:['In una ciotola versa lo yogurt greco 0%','Aggiungi i fiocchi d\'avena, mescolando per ammorbidirli','Spezzetta sopra le mandorle (o aggiungi 1 frutto se intolleranza)','Completa con caffè o tè verde caldo'],tEn:'🥣 Yogurt & Oats Bowl',descEn:'Quick breakfast rich in protein and fiber.',stepsEn:['Pour the 0% Greek yogurt into a bowl','Add the oats, stirring to soften them','Crumble the almonds on top (or add 1 fruit if intolerant)','Finish with hot coffee or green tea']},
   {id:'col_proteica_classica',k:['ricotta','fiocchi di latte','proteica'],t:'🧀 Colazione Proteica Classica',time:'4 min',
     desc:'Ideale per giorni di allenamento, proteine pulite.',
-    steps:['Pesa la ricotta o i fiocchi di latte 0% in una ciotola','Tosta la fetta di pane integrale','Spezzetta il cioccolato fondente 85% sopra ricotta','Servi con caffè amaro per attivare il metabolismo']},
+    steps:['Pesa la ricotta o i fiocchi di latte 0% in una ciotola','Tosta la fetta di pane integrale','Spezzetta il cioccolato fondente 85% sopra ricotta','Servi con caffè amaro per attivare il metabolismo'],tEn:'🧀 Classic Protein Breakfast',descEn:'Ideal for training days, clean protein.',stepsEn:['Weigh the 0% ricotta or cottage cheese into a bowl','Toast the slice of whole-grain bread','Crumble 85% dark chocolate over the ricotta','Serve with black coffee to kick-start your metabolism']},
   {id:'col_uova_toast',k:['uova','toast','strapazzate'],t:'🍳 Uova Strapazzate & Toast',time:'7 min',
     desc:'Colazione salata ricca di proteine biologiche.',
-    steps:['Sbatti 2 uova in una ciotola con un pizzico di sale','Scalda una padella antiaderente senza grassi (o pochissimo olio)','Versa le uova e mescola continuamente per 2 minuti','Tosta il pane integrale, servi con frutto e caffè']},
+    steps:['Sbatti 2 uova in una ciotola con un pizzico di sale','Scalda una padella antiaderente senza grassi (o pochissimo olio)','Versa le uova e mescola continuamente per 2 minuti','Tosta il pane integrale, servi con frutto e caffè'],tEn:'🍳 Scrambled Eggs & Toast',descEn:'Savory breakfast rich in high-quality protein.',stepsEn:['Beat 2 eggs in a bowl with a pinch of salt','Heat a non-stick pan with no fat (or very little oil)','Pour in the eggs and stir continuously for 2 minutes','Toast the whole-grain bread, serve with fruit and coffee']},
   {id:'col_shaker',k:['shaker','whey','proteica con shaker'],t:'🥛 Colazione con Shaker',time:'2 min',
     desc:'Massima velocità, ottima per chi va di corsa.',
-    steps:['Riempi lo shaker con 250ml acqua fredda','Aggiungi 30g whey/isolate gusto a scelta','Agita bene per 30 secondi','Tosta il pane integrale, completa con caffè e cioccolato fondente']},
+    steps:['Riempi lo shaker con 250ml acqua fredda','Aggiungi 30g whey/isolate gusto a scelta','Agita bene per 30 secondi','Tosta il pane integrale, completa con caffè e cioccolato fondente'],tEn:'🥛 Shaker Breakfast',descEn:'Maximum speed, great for those in a rush.',stepsEn:['Fill the shaker with 250ml cold water','Add 30g whey/isolate, flavor of your choice','Shake well for 30 seconds','Toast the whole-grain bread, finish with coffee and dark chocolate']},
   {id:'col_vegana',k:['vegana','soia','plant'],t:'🌱 Colazione Plant-Based',time:'5 min',
     desc:'Vegana ad alto potere saziante.',
-    steps:['Versa lo yogurt di soia in una ciotola','Aggiungi avena (o riso soffiato se senza glutine)','Affetta la banana sopra','Completa con caffè o tè verde']},
+    steps:['Versa lo yogurt di soia in una ciotola','Aggiungi avena (o riso soffiato se senza glutine)','Affetta la banana sopra','Completa con caffè o tè verde'],tEn:'🌱 Plant-Based Breakfast',descEn:'Vegan and highly filling.',stepsEn:['Pour the soy yogurt into a bowl','Add oats (or puffed rice if gluten-free)','Slice the banana on top','Finish with coffee or green tea']},
 
   // ─── PRANZI ───
   {id:'pra_pollo_riso',k:['pollo','riso'],t:'🍗 Pollo + Riso in Padella',time:'25 min',
     desc:'Il pasto post-allenamento per eccellenza.',
-    steps:['Cuoci il riso in acqua bollente salata (12-13 min)','Taglia il petto di pollo a strisce','Scalda olio EVO in padella, rosola pollo 6-7 min','Sala, pepa, aggiungi un goccio di limone','Servi con verdure crude o cotte a piacere']},
+    steps:['Cuoci il riso in acqua bollente salata (12-13 min)','Taglia il petto di pollo a strisce','Scalda olio EVO in padella, rosola pollo 6-7 min','Sala, pepa, aggiungi un goccio di limone','Servi con verdure crude o cotte a piacere'],tEn:'🍗 Pan-Fried Chicken + Rice',descEn:'The ultimate post-workout meal.',stepsEn:['Cook the rice in salted boiling water (12-13 min)','Cut the chicken breast into strips','Heat EVO oil in a pan, sear the chicken 6-7 min','Salt, pepper, add a splash of lemon','Serve with raw or cooked vegetables to taste']},
   {id:'pra_tonno_riso',k:['tonno','riso'],t:'🐟 Bowl di Tonno e Riso',time:'15 min',
     desc:'Velocissimo, omega-3 e proteine.',
-    steps:['Cuoci il riso al dente (può essere preparato la sera prima)','Sgocciola il tonno al naturale','In una bowl: riso freddo, tonno, pomodorini, insalata','Condisci con olio EVO, sale e basilico fresco']},
+    steps:['Cuoci il riso al dente (può essere preparato la sera prima)','Sgocciola il tonno al naturale','In una bowl: riso freddo, tonno, pomodorini, insalata','Condisci con olio EVO, sale e basilico fresco'],tEn:'🐟 Tuna and Rice Bowl',descEn:'Super quick, omega-3 and protein.',stepsEn:['Cook the rice al dente (can be made the night before)','Drain the tuna in water','In a bowl: cold rice, tuna, cherry tomatoes, salad','Dress with EVO oil, salt and fresh basil']},
   {id:'pra_manzo_patate',k:['manzo','tagliata','patate'],t:'🥩 Tagliata di Manzo & Patate',time:'30 min',
     desc:'Domenicale ma pulito, ferro e proteine top.',
-    steps:['Lessa le patate intere con buccia (20 min) poi sbuccia e taglia','Scalda una griglia o padella di ghisa rovente','Cuoci la tagliata 2 min per lato (mantieni rosa al centro)','Lascia riposare 3 min, taglia a fettine, sale grosso','Servi con patate e verdure grigliate, olio EVO a crudo']},
+    steps:['Lessa le patate intere con buccia (20 min) poi sbuccia e taglia','Scalda una griglia o padella di ghisa rovente','Cuoci la tagliata 2 min per lato (mantieni rosa al centro)','Lascia riposare 3 min, taglia a fettine, sale grosso','Servi con patate e verdure grigliate, olio EVO a crudo'],tEn:'🥩 Beef Tagliata & Potatoes',descEn:'Sunday-style but clean, top iron and protein.',stepsEn:['Boil the potatoes whole with skin (20 min) then peel and cut','Heat a grill or cast-iron pan until smoking hot','Cook the steak 2 min per side (keep pink in the center)','Let it rest 3 min, slice thin, coarse salt','Serve with potatoes and grilled vegetables, raw EVO oil']},
   {id:'pra_pasta_uova',k:['pasta','uova'],t:'🥚 Pasta con Uova Sode & Insalata',time:'15 min',
     desc:'Carbonara-style ma sana e veloce.',
-    steps:['Cuoci la pasta integrale al dente','Nel frattempo soda 3 uova in acqua bollente (8 min)','Scola pasta, condisci con olio EVO e parmigiano','Servi con uova affettate sopra e insalata mista']},
+    steps:['Cuoci la pasta integrale al dente','Nel frattempo soda 3 uova in acqua bollente (8 min)','Scola pasta, condisci con olio EVO e parmigiano','Servi con uova affettate sopra e insalata mista'],tEn:'🥚 Pasta with Boiled Eggs & Salad',descEn:'Carbonara-style but healthy and quick.',stepsEn:['Cook the whole-grain pasta al dente','Meanwhile boil 3 eggs in boiling water (8 min)','Drain pasta, dress with EVO oil and parmesan','Serve with sliced eggs on top and mixed salad']},
   {id:'pra_legumi_cereali',k:['legumi','lenticchie','ceci','farro'],t:'🫘 Bowl di Legumi & Cereali',time:'20 min',
     desc:'Vegana, completa, con tutti gli aminoacidi essenziali.',
-    steps:['Cuoci il farro in acqua bollente salata (15 min)','Scalda i legumi cotti in padella con olio e rosmarino','Unisci farro e legumi nella bowl','Aggiungi verdure di stagione, olio EVO e una spruzzata di limone']},
+    steps:['Cuoci il farro in acqua bollente salata (15 min)','Scalda i legumi cotti in padella con olio e rosmarino','Unisci farro e legumi nella bowl','Aggiungi verdure di stagione, olio EVO e una spruzzata di limone'],tEn:'🫘 Legume & Grain Bowl',descEn:'Vegan, complete, with all essential amino acids.',stepsEn:['Cook the farro in salted boiling water (15 min)','Heat the cooked legumes in a pan with oil and rosemary','Combine farro and legumes in the bowl','Add seasonal vegetables, EVO oil and a squeeze of lemon']},
   {id:'pra_tofu',k:['tofu','tofu grigliato'],t:'🟡 Tofu Grigliato con Riso Basmati',time:'20 min',
     desc:'Vegana, ricca di proteine vegetali.',
-    steps:['Marina il tofu 10 min con salsa di soia, zenzero, aglio','Cuoci il riso basmati (12 min)','Griglia il tofu in padella rovente 3 min per lato','Servi con verdure miste saltate e riso']},
+    steps:['Marina il tofu 10 min con salsa di soia, zenzero, aglio','Cuoci il riso basmati (12 min)','Griglia il tofu in padella rovente 3 min per lato','Servi con verdure miste saltate e riso'],tEn:'🟡 Grilled Tofu with Basmati Rice',descEn:'Vegan, rich in plant protein.',stepsEn:['Marinate the tofu 10 min with soy sauce, ginger, garlic','Cook the basmati rice (12 min)','Grill the tofu in a hot pan 3 min per side','Serve with mixed sautéed vegetables and rice']},
 
   // ─── CENE ───
   {id:'cen_pesce_bianco',k:['pesce bianco','merluzzo','orata','branzino'],t:'🐟 Pesce Bianco al Forno',time:'25 min',
     desc:'Cena leggera, digeribile, omega-3.',
-    steps:['Preriscalda il forno a 200°C','Disponi il pesce in teglia con carta forno','Condisci con olio EVO, limone, prezzemolo, sale','Inforna 15-18 min (varia se pesce intero o filetto)','Servi con verdure cotte e pane integrale']},
+    steps:['Preriscalda il forno a 200°C','Disponi il pesce in teglia con carta forno','Condisci con olio EVO, limone, prezzemolo, sale','Inforna 15-18 min (varia se pesce intero o filetto)','Servi con verdure cotte e pane integrale'],tEn:'🐟 Baked White Fish',descEn:'Light, digestible dinner, omega-3.',stepsEn:['Preheat the oven to 200°C','Place the fish on a baking tray with parchment paper','Season with EVO oil, lemon, parsley, salt','Bake 15-18 min (varies for whole fish or fillet)','Serve with cooked vegetables and whole-grain bread']},
   {id:'cen_carne_magra',k:['pollo','tacchino','carne magra'],t:'🥩 Carne Magra alla Griglia',time:'20 min',
     desc:'Versatile e proteica, perfetta per il recupero.',
-    steps:['Scalda la griglia o padella di ghisa rovente','Cuoci la carne 3-4 min per lato (dipende dallo spessore)','Sala SOLO a fine cottura per non disidratare','Servi con verdure grigliate e pane integrale o patate']},
+    steps:['Scalda la griglia o padella di ghisa rovente','Cuoci la carne 3-4 min per lato (dipende dallo spessore)','Sala SOLO a fine cottura per non disidratare','Servi con verdure grigliate e pane integrale o patate'],tEn:'🥩 Grilled Lean Meat',descEn:'Versatile and protein-rich, perfect for recovery.',stepsEn:['Heat the grill or cast-iron pan until smoking hot','Cook the meat 3-4 min per side (depends on thickness)','Salt ONLY at the end to avoid drying it out','Serve with grilled vegetables and whole-grain bread or potatoes']},
   {id:'cen_legumi_uova',k:['legumi','uova alla coque','lenticchie'],t:'🫘 Legumi & Uova alla Coque',time:'15 min',
     desc:'Plant-forward con proteine biologiche.',
-    steps:['Scalda i legumi cotti in padella con olio e aglio','Cuoci 2 uova in acqua bollente per 5 min (coque)','Taglia le verdure a julienne e saltale brevemente','Servi tutto insieme con pane integrale a parte']},
+    steps:['Scalda i legumi cotti in padella con olio e aglio','Cuoci 2 uova in acqua bollente per 5 min (coque)','Taglia le verdure a julienne e saltale brevemente','Servi tutto insieme con pane integrale a parte'],tEn:'🫘 Legumes & Soft-Boiled Eggs',descEn:'Plant-forward with high-quality protein.',stepsEn:['Heat the cooked legumes in a pan with oil and garlic','Cook 2 eggs in boiling water for 5 min (soft-boiled)','Julienne the vegetables and sauté briefly','Serve everything together with whole-grain bread on the side']},
   {id:'cen_tofu_verdure',k:['tofu','tempeh','wok'],t:'🟡 Wok di Tofu & Verdure',time:'20 min',
     desc:'Veloce, colorato, vegano completo.',
-    steps:['Taglia tofu a cubetti e saltalo in wok rovente con poco olio','Aggiungi verdure colorate (peperoni, zucchine, broccoli)','Cuoci a fuoco alto 5-6 min mescolando','Insaporisci con salsa di soia, zenzero, semi di sesamo','Servi con pane integrale o patate lesse']},
+    steps:['Taglia tofu a cubetti e saltalo in wok rovente con poco olio','Aggiungi verdure colorate (peperoni, zucchine, broccoli)','Cuoci a fuoco alto 5-6 min mescolando','Insaporisci con salsa di soia, zenzero, semi di sesamo','Servi con pane integrale o patate lesse'],tEn:'🟡 Tofu & Vegetable Wok',descEn:'Quick, colorful, fully vegan.',stepsEn:['Cut the tofu into cubes and stir-fry in a hot wok with a little oil','Add colorful vegetables (peppers, zucchini, broccoli)','Cook over high heat 5-6 min, stirring','Flavor with soy sauce, ginger, sesame seeds','Serve with whole-grain bread or boiled potatoes']},
   {id:'cen_ricotta_verdure',k:['ricotta','insalata abbondante'],t:'🥛 Insalatona con Ricotta',time:'10 min',
     desc:'Cena leggera in serate calde.',
-    steps:['Lava e asciuga insalata mista, condiscila','Sbriciola la ricotta sopra l\'insalata','Aggiungi pomodorini, cetrioli, semi di lino','Servi con due fette di pane integrale e olio EVO a crudo']},
+    steps:['Lava e asciuga insalata mista, condiscila','Sbriciola la ricotta sopra l\'insalata','Aggiungi pomodorini, cetrioli, semi di lino','Servi con due fette di pane integrale e olio EVO a crudo'],tEn:'🥛 Big Salad with Ricotta',descEn:'Light dinner on warm evenings.',stepsEn:['Wash and dry mixed salad, dress it','Crumble the ricotta over the salad','Add cherry tomatoes, cucumbers, flax seeds','Serve with two slices of whole-grain bread and raw EVO oil']},
 
   // ─── SPUNTINI ───
   {id:'sp1_frutta_noci',k:['frutta','noci','mandorle'],t:'🥜 Frutta & Frutta Secca',time:'1 min',
     desc:'Spuntino completo: zuccheri buoni + grassi sazianti.',
-    steps:['Prendi una mela o pera di stagione','Lava sotto l\'acqua, mangia con la buccia per le fibre','Accompagna con noci o mandorle al naturale (non salate)','Bevi un tè verde caldo per amplificare l\'effetto saziante']},
+    steps:['Prendi una mela o pera di stagione','Lava sotto l\'acqua, mangia con la buccia per le fibre','Accompagna con noci o mandorle al naturale (non salate)','Bevi un tè verde caldo per amplificare l\'effetto saziante'],tEn:'🥜 Fruit & Nuts',descEn:'Complete snack: good sugars + filling fats.',stepsEn:['Grab a seasonal apple or pear','Wash under water, eat with the skin for the fiber','Pair with plain (unsalted) walnuts or almonds','Drink a hot green tea to boost the filling effect']},
   {id:'sp1_yogurt_pomeridiano',k:['yogurt pomeridiano','yogurt'],t:'🥛 Yogurt Pomeridiano',time:'2 min',
     desc:'Spezzafame proteico tra pranzo e cena.',
-    steps:['Versa lo yogurt greco 0% in una ciotolina','Affetta un kiwi sopra (o altro frutto di stagione)','Aggiungi opzionalmente 5g semi di chia','Mangia lentamente per massimizzare la sazietà']},
+    steps:['Versa lo yogurt greco 0% in una ciotolina','Affetta un kiwi sopra (o altro frutto di stagione)','Aggiungi opzionalmente 5g semi di chia','Mangia lentamente per massimizzare la sazietà'],tEn:'🥛 Afternoon Yogurt',descEn:'Protein snack between lunch and dinner.',stepsEn:['Pour the 0% Greek yogurt into a small bowl','Slice a kiwi on top (or another seasonal fruit)','Optionally add 5g chia seeds','Eat slowly to maximize satiety']},
   {id:'sp1_fiocchi',k:['fiocchi di latte'],t:'🥛 Fiocchi di Latte & Frutta',time:'2 min',
     desc:'Caseina a lento rilascio, ottimo prima del workout pomeridiano.',
-    steps:['Pesa i fiocchi di latte in una ciotola','Affetta il kiwi a fettine','Mescola e gusta a temperatura ambiente']},
+    steps:['Pesa i fiocchi di latte in una ciotola','Affetta il kiwi a fettine','Mescola e gusta a temperatura ambiente'],tEn:'🥛 Cottage Cheese & Fruit',descEn:'Slow-release casein, great before an afternoon workout.',stepsEn:['Weigh the cottage cheese into a bowl','Slice the kiwi','Mix and enjoy at room temperature']},
   {id:'sp2_preworkout',k:['pre-workout','pre wo','banana'],t:'⚡ Pre-Workout Carboidrati',time:'2 min',
     desc:'Energia rapida 30-45 min prima dell\'allenamento.',
-    steps:['Mangia la banana intera (non frullata, le fibre rallentano)','Tosta la fetta di pane integrale','Spalma 1 cucchiaino di miele','Caffè nero opzionale per stimolo neuromuscolare']},
+    steps:['Mangia la banana intera (non frullata, le fibre rallentano)','Tosta la fetta di pane integrale','Spalma 1 cucchiaino di miele','Caffè nero opzionale per stimolo neuromuscolare'],tEn:'⚡ Pre-Workout Carbs',descEn:'Quick energy 30-45 min before training.',stepsEn:['Eat the whole banana (not blended, fiber slows it down)','Toast the slice of whole-grain bread','Spread 1 teaspoon of honey','Black coffee optional for a neuromuscular boost']},
   {id:'sp2_preworkout_shaker',k:['pre-wo proteico','shaker','whey'],t:'⚡ Pre-WO Proteico (Shaker)',time:'2 min',
     desc:'Per chi vuole anche un boost proteico immediato.',
-    steps:['Riempi lo shaker con 250ml acqua','Aggiungi 20g whey gusto neutro o cioccolato','Aggiungi 5g avena per carboidrati a rilascio medio','Mangia la banana a parte, poi vai in palestra']},
+    steps:['Riempi lo shaker con 250ml acqua','Aggiungi 20g whey gusto neutro o cioccolato','Aggiungi 5g avena per carboidrati a rilascio medio','Mangia la banana a parte, poi vai in palestra'],tEn:'⚡ Protein Pre-WO (Shaker)',descEn:'For those who also want an immediate protein boost.',stepsEn:['Fill the shaker with 250ml water','Add 20g neutral or chocolate whey','Add 5g oats for medium-release carbs','Eat the banana separately, then head to the gym']},
   {id:'sp2_preworkout_cibo',k:['pre-wo cibo solido','yogurt'],t:'🍶 Pre-WO Solido',time:'3 min',
     desc:'Versione "vera colazione" per workout serali.',
-    steps:['Versa yogurt greco 0% in ciotola','Aggiungi 5g avena e 1 cucchiaino miele','Affetta una banana sopra','Mangia 60-90 min prima del workout per massima energia']},
+    steps:['Versa yogurt greco 0% in ciotola','Aggiungi 5g avena e 1 cucchiaino miele','Affetta una banana sopra','Mangia 60-90 min prima del workout per massima energia'],tEn:'🍶 Solid Pre-WO',descEn:'A \'real breakfast\' version for evening workouts.',stepsEn:['Pour 0% Greek yogurt into a bowl','Add 5g oats and 1 teaspoon honey','Slice a banana on top','Eat 60-90 min before the workout for maximum energy']},
 
   // ─── EXTRA / VARIETÀ ───
   {id:'pra_pasta_pomodoro_pollo',k:['pasta','pomodoro','pollo'],t:'🍝 Pasta Pollo & Pomodoro',time:'25 min',
     desc:'Variazione classica italiana con proteine.',
-    steps:['Cuoci la pasta integrale al dente','Salta il pollo a cubetti in padella con olio EVO','Aggiungi passata di pomodoro e basilico, sobbolli 5 min','Unisci la pasta scolata e mescola','Spolvera parmigiano e servi caldo']},
+    steps:['Cuoci la pasta integrale al dente','Salta il pollo a cubetti in padella con olio EVO','Aggiungi passata di pomodoro e basilico, sobbolli 5 min','Unisci la pasta scolata e mescola','Spolvera parmigiano e servi caldo'],tEn:'🍝 Chicken & Tomato Pasta',descEn:'Classic Italian variation with protein.',stepsEn:['Cook the whole-grain pasta al dente','Sauté the diced chicken in a pan with EVO oil','Add tomato passata and basil, simmer 5 min','Add the drained pasta and stir','Sprinkle parmesan and serve hot']},
   {id:'cen_salmone_verdure',k:['salmone','verdure cotte'],t:'🐟 Salmone in Padella & Verdure',time:'15 min',
     desc:'Omega-3 al massimo, super sazianti.',
-    steps:['Scalda padella antiaderente a fuoco medio-alto','Cuoci salmone con pelle in basso 4 min','Gira e cuoci altri 2 min, sala a fine cottura','Servi con verdure al vapore e olio EVO a crudo','Spruzza limone fresco prima di mangiare']},
+    steps:['Scalda padella antiaderente a fuoco medio-alto','Cuoci salmone con pelle in basso 4 min','Gira e cuoci altri 2 min, sala a fine cottura','Servi con verdure al vapore e olio EVO a crudo','Spruzza limone fresco prima di mangiare'],tEn:'🐟 Pan-Seared Salmon & Vegetables',descEn:'Maximum omega-3, super filling.',stepsEn:['Heat a non-stick pan over medium-high heat','Cook the salmon skin-side down 4 min','Flip and cook 2 more min, salt at the end','Serve with steamed vegetables and raw EVO oil','Squeeze fresh lemon before eating']},
   {id:'pra_quinoa_bowl',k:['quinoa','bowl'],t:'🥗 Quinoa Bowl Mediterranea',time:'20 min',
     desc:'Proteine vegetali complete con tutti gli aminoacidi.',
-    steps:['Cuoci la quinoa in acqua salata (15 min)','Scalda i ceci cotti con paprika e cumino','Componi la bowl: quinoa, ceci, pomodorini, feta','Condisci con olio EVO, limone, origano']},
+    steps:['Cuoci la quinoa in acqua salata (15 min)','Scalda i ceci cotti con paprika e cumino','Componi la bowl: quinoa, ceci, pomodorini, feta','Condisci con olio EVO, limone, origano'],tEn:'🥗 Mediterranean Quinoa Bowl',descEn:'Complete plant protein with all amino acids.',stepsEn:['Cook the quinoa in salted water (15 min)','Heat the cooked chickpeas with paprika and cumin','Assemble the bowl: quinoa, chickpeas, cherry tomatoes, feta','Dress with EVO oil, lemon, oregano']},
   {id:'cen_frittata_verdure',k:['frittata','uova','zucchine'],t:'🍳 Frittata di Verdure',time:'20 min',
     desc:'Cena svuota-frigo, proteica e veloce.',
-    steps:['Salta le verdure tagliate (zucchine, peperoni) in padella','Sbatti 3 uova con sale e parmigiano','Versa sulle verdure, cuoci 5 min a fuoco basso coperto','Gira con un piatto e cuoci altri 3 min','Servi con insalata e pane integrale']},
+    steps:['Salta le verdure tagliate (zucchine, peperoni) in padella','Sbatti 3 uova con sale e parmigiano','Versa sulle verdure, cuoci 5 min a fuoco basso coperto','Gira con un piatto e cuoci altri 3 min','Servi con insalata e pane integrale'],tEn:'🍳 Vegetable Frittata',descEn:'Clear-out-the-fridge dinner, protein-rich and quick.',stepsEn:['Sauté the chopped vegetables (zucchini, peppers) in a pan','Beat 3 eggs with salt and parmesan','Pour over the vegetables, cook 5 min covered over low heat','Flip with a plate and cook 3 more min','Serve with salad and whole-grain bread']},
   {id:'col_pancakes_proteici',k:['pancakes','proteici','avena'],t:'🥞 Pancakes Proteici',time:'10 min',
     desc:'Variazione divertente per la colazione del weekend.',
-    steps:['In un frullatore: 1 banana, 2 uova, 30g avena, 15g whey','Frulla fino a ottenere pastella liscia','Cuoci in padella antiaderente piccoli pancakes (1 min per lato)','Servi con yogurt greco e cannella']},
+    steps:['In un frullatore: 1 banana, 2 uova, 30g avena, 15g whey','Frulla fino a ottenere pastella liscia','Cuoci in padella antiaderente piccoli pancakes (1 min per lato)','Servi con yogurt greco e cannella'],tEn:'🥞 Protein Pancakes',descEn:'A fun variation for weekend breakfast.',stepsEn:['In a blender: 1 banana, 2 eggs, 30g oats, 15g whey','Blend until you get a smooth batter','Cook small pancakes in a non-stick pan (1 min per side)','Serve with Greek yogurt and cinnamon']},
   {id:'pra_orzotto',k:['orzotto','orzo','funghi'],t:'🍚 Orzotto ai Funghi',time:'30 min',
     desc:'Alternativa al risotto, più ricco di fibre.',
-    steps:['Sciacqua l\'orzo perlato sotto acqua corrente','Cuoci in brodo vegetale 25-30 min mescolando','Salta funghi separatamente con aglio e prezzemolo','Unisci alla fine, manteca con un filo d\'olio EVO']},
+    steps:['Sciacqua l\'orzo perlato sotto acqua corrente','Cuoci in brodo vegetale 25-30 min mescolando','Salta funghi separatamente con aglio e prezzemolo','Unisci alla fine, manteca con un filo d\'olio EVO'],tEn:'🍚 Mushroom Barley Risotto',descEn:'An alternative to risotto, richer in fiber.',stepsEn:['Rinse the pearl barley under running water','Cook in vegetable broth 25-30 min, stirring','Sauté mushrooms separately with garlic and parsley','Combine at the end, finish with a drizzle of EVO oil']},
   {id:'cen_pollo_curry',k:['pollo','curry'],t:'🍛 Pollo al Curry Light',time:'25 min',
     desc:'Variazione esotica con pochi grassi.',
-    steps:['Taglia il pollo a cubetti, rosola in padella','Aggiungi 200ml latte di cocco light e 1 cucchiaino curry','Sobbolli 10 min finché il pollo è morbido','Servi con riso basmati e foglie di coriandolo fresco']},
+    steps:['Taglia il pollo a cubetti, rosola in padella','Aggiungi 200ml latte di cocco light e 1 cucchiaino curry','Sobbolli 10 min finché il pollo è morbido','Servi con riso basmati e foglie di coriandolo fresco'],tEn:'🍛 Light Chicken Curry',descEn:'An exotic variation with little fat.',stepsEn:['Cut the chicken into cubes, brown in a pan','Add 200ml light coconut milk and 1 teaspoon curry','Simmer 10 min until the chicken is tender','Serve with basmati rice and fresh coriander leaves']},
 
   // ─── COLAZIONI v2 ───
   {id:'col_porridge',k:['porridge','avena'],t:'🥣 Porridge Caldo Cremoso',time:'8 min',
     desc:'Colazione invernale che riscalda e sazia.',
-    steps:['Versa 250ml di latte (anche vegetale) in pentolino','Aggiungi 50g avena, mescola','Cuoci a fuoco basso 5-6 min mescolando','Spegni, aggiungi 1 cucchiaino miele, cannella, e frutti di bosco']},
+    steps:['Versa 250ml di latte (anche vegetale) in pentolino','Aggiungi 50g avena, mescola','Cuoci a fuoco basso 5-6 min mescolando','Spegni, aggiungi 1 cucchiaino miele, cannella, e frutti di bosco'],tEn:'🥣 Creamy Hot Porridge',descEn:'A winter breakfast that warms and fills you up.',stepsEn:['Pour 250ml of milk (plant-based is fine) into a small pot','Add 50g oats, stir','Cook over low heat 5-6 min, stirring','Turn off, add 1 teaspoon honey, cinnamon, and berries']},
   {id:'col_overnight_oats',k:['overnight','avena','frigo'],t:'🌙 Overnight Oats (la sera prima)',time:'2 min + notte',
     desc:'Da preparare la sera, pronto al mattino.',
-    steps:['In barattolo: 50g avena + 200ml latte/yogurt','Aggiungi 1 cucchiaino miele e cannella','Chiudi e tieni in frigo 8h o tutta la notte','Al mattino guarnisci con frutta fresca e mandorle']},
+    steps:['In barattolo: 50g avena + 200ml latte/yogurt','Aggiungi 1 cucchiaino miele e cannella','Chiudi e tieni in frigo 8h o tutta la notte','Al mattino guarnisci con frutta fresca e mandorle'],tEn:'🌙 Overnight Oats (the night before)',descEn:'Prepare it in the evening, ready in the morning.',stepsEn:['In a jar: 50g oats + 200ml milk/yogurt','Add 1 teaspoon honey and cinnamon','Close and keep in the fridge 8h or overnight','In the morning top with fresh fruit and almonds']},
   {id:'col_french_toast',k:['french toast','uova','pane'],t:'🍞 French Toast Proteico',time:'8 min',
     desc:'Variante dolce-salata con poco zucchero.',
-    steps:['Sbatti 2 uova con 50ml latte e cannella','Inzuppa 2 fette di pane integrale 30 sec per lato','Cuoci in padella antiaderente 2 min per lato','Servi con yogurt greco e frutta']},
+    steps:['Sbatti 2 uova con 50ml latte e cannella','Inzuppa 2 fette di pane integrale 30 sec per lato','Cuoci in padella antiaderente 2 min per lato','Servi con yogurt greco e frutta'],tEn:'🍞 Protein French Toast',descEn:'A sweet-savory version with little sugar.',stepsEn:['Beat 2 eggs with 50ml milk and cinnamon','Soak 2 slices of whole-grain bread 30 sec per side','Cook in a non-stick pan 2 min per side','Serve with Greek yogurt and fruit']},
   {id:'col_smoothie_bowl',k:['smoothie','bowl','frullato'],t:'🍓 Smoothie Bowl',time:'5 min',
     desc:'Frullato denso da mangiare col cucchiaio.',
-    steps:['Frulla 1 banana congelata + 100g frutti rossi + 100ml latte','Versa in ciotola, deve essere denso','Aggiungi sopra: granola, mandorle, semi di chia','Mescola e mangia subito']},
+    steps:['Frulla 1 banana congelata + 100g frutti rossi + 100ml latte','Versa in ciotola, deve essere denso','Aggiungi sopra: granola, mandorle, semi di chia','Mescola e mangia subito'],tEn:'🍓 Smoothie Bowl',descEn:'A thick smoothie to eat with a spoon.',stepsEn:['Blend 1 frozen banana + 100g red berries + 100ml milk','Pour into a bowl, it should be thick','Top with: granola, almonds, chia seeds','Stir and eat immediately']},
   {id:'col_uova_avocado',k:['uova','avocado','toast'],t:'🥑 Avocado Toast con Uovo',time:'10 min',
     desc:'Colazione moderna ricca di grassi buoni.',
-    steps:['Tosta 1 fetta di pane integrale','Schiaccia ½ avocado con sale e limone','Spalma sul pane','Sopra: 1 uovo in camicia o strapazzato']},
+    steps:['Tosta 1 fetta di pane integrale','Schiaccia ½ avocado con sale e limone','Spalma sul pane','Sopra: 1 uovo in camicia o strapazzato'],tEn:'🥑 Avocado Toast with Egg',descEn:'A modern breakfast rich in good fats.',stepsEn:['Toast 1 slice of whole-grain bread','Mash ½ avocado with salt and lemon','Spread it on the bread','On top: 1 poached or scrambled egg']},
 
   // ─── PRIMI PIATTI v2 ───
   {id:'pra_carbonara_light',k:['carbonara','pasta','uova'],t:'🍝 Carbonara Light',time:'15 min',
     desc:'Versione alleggerita ma fedele al gusto.',
-    steps:['Cuoci 80g spaghetti in acqua salata','Sbatti 1 uovo intero + 1 tuorlo + 30g pecorino','Rosola 30g guanciale tagliato a listarelle senza olio','Scola la pasta tenendo 2 cucchiai d\'acqua','Spegni, manteca con uova fuori dal fuoco aggiungendo acqua di cottura','Aggiungi guanciale e pepe, servi subito']},
+    steps:['Cuoci 80g spaghetti in acqua salata','Sbatti 1 uovo intero + 1 tuorlo + 30g pecorino','Rosola 30g guanciale tagliato a listarelle senza olio','Scola la pasta tenendo 2 cucchiai d\'acqua','Spegni, manteca con uova fuori dal fuoco aggiungendo acqua di cottura','Aggiungi guanciale e pepe, servi subito'],tEn:'🍝 Light Carbonara',descEn:'A lightened-up version, faithful to the taste.',stepsEn:['Cook 80g spaghetti in salted water','Beat 1 whole egg + 1 yolk + 30g pecorino','Brown 30g guanciale cut into strips with no oil','Drain the pasta keeping 2 tablespoons of water','Turn off the heat, toss with the eggs off the flame adding cooking water','Add guanciale and pepper, serve immediately']},
   {id:'pra_amatriciana',k:['amatriciana','pasta','guanciale','pomodoro'],t:'🍝 Bucatini all\'Amatriciana',time:'20 min',
     desc:'Classico romano, intenso e saporito.',
-    steps:['Taglia 50g guanciale a listarelle, rosola in padella','Sfuma con un cucchiaio di vino bianco','Aggiungi 200g passata di pomodoro e peperoncino','Cuoci 80g bucatini, scola al dente','Manteca in padella, completa con pecorino']},
+    steps:['Taglia 50g guanciale a listarelle, rosola in padella','Sfuma con un cucchiaio di vino bianco','Aggiungi 200g passata di pomodoro e peperoncino','Cuoci 80g bucatini, scola al dente','Manteca in padella, completa con pecorino'],tEn:'🍝 Bucatini all\'Amatriciana',descEn:'A Roman classic, intense and tasty.',stepsEn:['Cut 50g guanciale into strips, brown in a pan','Deglaze with a tablespoon of white wine','Add 200g tomato passata and chili pepper','Cook 80g bucatini, drain al dente','Toss in the pan, finish with pecorino']},
   {id:'pra_cacio_pepe',k:['cacio','pepe','pasta'],t:'🍝 Cacio e Pepe',time:'12 min',
     desc:'3 ingredienti, tecnica perfetta.',
-    steps:['Cuoci 80g tonnarelli in acqua poco salata','In una ciotola: 50g pecorino grattugiato + pepe nero macinato fresco','Aggiungi 2 cucchiai di acqua di cottura nel pecorino, mescola fino a crema','Scola la pasta, manteca subito col pecorino fuori dal fuoco','Aggiungi altro pepe e servi']},
+    steps:['Cuoci 80g tonnarelli in acqua poco salata','In una ciotola: 50g pecorino grattugiato + pepe nero macinato fresco','Aggiungi 2 cucchiai di acqua di cottura nel pecorino, mescola fino a crema','Scola la pasta, manteca subito col pecorino fuori dal fuoco','Aggiungi altro pepe e servi'],tEn:'🍝 Cacio e Pepe',descEn:'3 ingredients, perfect technique.',stepsEn:['Cook 80g tonnarelli in lightly salted water','In a bowl: 50g grated pecorino + freshly ground black pepper','Add 2 tablespoons of cooking water to the pecorino, stir to a cream','Drain the pasta, toss immediately with the pecorino off the heat','Add more pepper and serve']},
   {id:'pra_pesto_genovese',k:['pesto','genovese','pasta'],t:'🌿 Pasta al Pesto Genovese',time:'12 min',
     desc:'Profumi liguri in 12 minuti.',
-    steps:['Cuoci 80g trofie o linguine in acqua salata','In ultimi 4 min aggiungi 50g fagiolini e 1 patata piccola a cubetti','Scola e condisci con 30g pesto genovese','Manteca con 1 cucchiaio acqua di cottura']},
+    steps:['Cuoci 80g trofie o linguine in acqua salata','In ultimi 4 min aggiungi 50g fagiolini e 1 patata piccola a cubetti','Scola e condisci con 30g pesto genovese','Manteca con 1 cucchiaio acqua di cottura'],tEn:'🌿 Pasta with Genovese Pesto',descEn:'Ligurian flavors in 12 minutes.',stepsEn:['Cook 80g trofie or linguine in salted water','In the last 4 min add 50g green beans and 1 small diced potato','Drain and dress with 30g Genovese pesto','Toss with 1 tablespoon of cooking water']},
   {id:'pra_pasta_pomodoro',k:['pasta','pomodoro','semplice'],t:'🍅 Pasta al Pomodoro Classica',time:'20 min',
     desc:'Il sapore vero della cucina italiana.',
-    steps:['Soffriggi 1 spicchio aglio in olio EVO','Aggiungi 200g passata, sale, basilico','Cuoci 15 min a fuoco medio','Cuoci 80g pasta, scola e manteca col sugo','Completa con basilico fresco e parmigiano']},
+    steps:['Soffriggi 1 spicchio aglio in olio EVO','Aggiungi 200g passata, sale, basilico','Cuoci 15 min a fuoco medio','Cuoci 80g pasta, scola e manteca col sugo','Completa con basilico fresco e parmigiano'],tEn:'🍅 Classic Tomato Pasta',descEn:'The true taste of Italian cooking.',stepsEn:['Sauté 1 clove of garlic in EVO oil','Add 200g passata, salt, basil','Cook 15 min over medium heat','Cook 80g pasta, drain and toss with the sauce','Finish with fresh basil and parmesan']},
   {id:'pra_risotto_zafferano',k:['risotto','zafferano','milanese'],t:'🌾 Risotto allo Zafferano',time:'25 min',
     desc:'Il classico milanese.',
-    steps:['Tosta 80g riso carnaroli in pentola','Sfuma con vino bianco','Aggiungi brodo bollente poco alla volta mescolando','A metà cottura aggiungi 1 bustina zafferano sciolta in brodo','Cuoci 18 min, manteca con burro e parmigiano fuori fuoco']},
+    steps:['Tosta 80g riso carnaroli in pentola','Sfuma con vino bianco','Aggiungi brodo bollente poco alla volta mescolando','A metà cottura aggiungi 1 bustina zafferano sciolta in brodo','Cuoci 18 min, manteca con burro e parmigiano fuori fuoco'],tEn:'🌾 Saffron Risotto',descEn:'The Milanese classic.',stepsEn:['Toast 80g carnaroli rice in a pot','Deglaze with white wine','Add boiling broth a little at a time, stirring','Halfway through cooking add 1 sachet of saffron dissolved in broth','Cook 18 min, finish with butter and parmesan off the heat']},
   {id:'pra_pasta_tonno',k:['pasta','tonno','olive'],t:'🐟 Pasta Tonno e Olive',time:'15 min',
     desc:'Veloce e saporita.',
-    steps:['Cuoci 80g pasta','In padella: aglio, peperoncino, 80g tonno sgocciolato, olive nere','Aggiungi mezzo bicchiere di acqua di cottura','Manteca la pasta in padella','Completa con prezzemolo']},
+    steps:['Cuoci 80g pasta','In padella: aglio, peperoncino, 80g tonno sgocciolato, olive nere','Aggiungi mezzo bicchiere di acqua di cottura','Manteca la pasta in padella','Completa con prezzemolo'],tEn:'🐟 Tuna and Olive Pasta',descEn:'Quick and tasty.',stepsEn:['Cook 80g pasta','In a pan: garlic, chili, 80g drained tuna, black olives','Add half a glass of cooking water','Toss the pasta in the pan','Finish with parsley']},
   {id:'pra_pasta_zucchine',k:['pasta','zucchine','estate'],t:'🥒 Pasta con Zucchine',time:'18 min',
     desc:'Estiva, leggera e veloce.',
-    steps:['Affetta 200g zucchine, salta in padella con aglio EVO 8 min','Cuoci 80g pasta','Scola e unisci alle zucchine','Aggiungi parmigiano e basilico','Mescola e servi']},
+    steps:['Affetta 200g zucchine, salta in padella con aglio EVO 8 min','Cuoci 80g pasta','Scola e unisci alle zucchine','Aggiungi parmigiano e basilico','Mescola e servi'],tEn:'🥒 Pasta with Zucchini',descEn:'Summery, light and quick.',stepsEn:['Slice 200g zucchini, sauté in a pan with garlic and EVO 8 min','Cook 80g pasta','Drain and combine with the zucchini','Add parmesan and basil','Stir and serve']},
   {id:'pra_lasagne_light',k:['lasagne','besciamella','classico'],t:'🍝 Lasagne alla Bolognese (light)',time:'90 min',
     desc:'Versione casalinga classica.',
-    steps:['Prepara ragù: soffriggi sedano-carote-cipolla, aggiungi 300g macinato magro, sfuma con vino','Aggiungi passata e cuoci 60 min','Prepara besciamella light con latte parz. scremato','Strato per strato in teglia: ragù, sfoglia, besciamella, parmigiano','Inforna 30 min a 180°C']},
+    steps:['Prepara ragù: soffriggi sedano-carote-cipolla, aggiungi 300g macinato magro, sfuma con vino','Aggiungi passata e cuoci 60 min','Prepara besciamella light con latte parz. scremato','Strato per strato in teglia: ragù, sfoglia, besciamella, parmigiano','Inforna 30 min a 180°C'],tEn:'🍝 Bolognese Lasagna (light)',descEn:'A classic homemade version.',stepsEn:['Make the ragù: sauté celery-carrot-onion, add 300g lean mince, deglaze with wine','Add passata and cook 60 min','Make a light béchamel with semi-skimmed milk','Layer by layer in a dish: ragù, pasta sheet, béchamel, parmesan','Bake 30 min at 180°C']},
   {id:'pra_orecchiette_cime',k:['orecchiette','cime di rapa','pugliese'],t:'🍝 Orecchiette con Cime di Rapa',time:'20 min',
     desc:'Pugliese DOP.',
-    steps:['Lessa 80g orecchiette insieme a 200g cime di rapa pulite','Soffriggi aglio, peperoncino, e 2 acciughe sott\'olio in padella','Scola pasta+verdure e salta in padella 2 min','Servi con pangrattato tostato sopra']},
+    steps:['Lessa 80g orecchiette insieme a 200g cime di rapa pulite','Soffriggi aglio, peperoncino, e 2 acciughe sott\'olio in padella','Scola pasta+verdure e salta in padella 2 min','Servi con pangrattato tostato sopra'],tEn:'🍝 Orecchiette with Turnip Tops',descEn:'Apulian DOP.',stepsEn:['Boil 80g orecchiette together with 200g cleaned turnip tops','Sauté garlic, chili, and 2 oil-packed anchovies in a pan','Drain pasta+greens and toss in the pan 2 min','Serve with toasted breadcrumbs on top']},
   {id:'pra_pasta_norma',k:['norma','melanzane','siciliana'],t:'🍆 Pasta alla Norma',time:'30 min',
     desc:'Capolavoro siciliano.',
-    steps:['Friggi 1 melanzana a cubetti in olio (o cuoci al forno)','In altra padella: pomodoro pelato cotto 15 min con basilico','Cuoci 80g pasta corta, scola','Manteca con sugo e melanzane','Completa con ricotta salata grattugiata']},
+    steps:['Friggi 1 melanzana a cubetti in olio (o cuoci al forno)','In altra padella: pomodoro pelato cotto 15 min con basilico','Cuoci 80g pasta corta, scola','Manteca con sugo e melanzane','Completa con ricotta salata grattugiata'],tEn:'🍆 Pasta alla Norma',descEn:'A Sicilian masterpiece.',stepsEn:['Fry 1 diced eggplant in oil (or bake it)','In another pan: peeled tomatoes cooked 15 min with basil','Cook 80g short pasta, drain','Toss with sauce and eggplant','Finish with grated salted ricotta']},
   {id:'pra_minestrone',k:['minestrone','verdure','zuppa'],t:'🥕 Minestrone di Verdure',time:'45 min',
     desc:'Zuppa nutriente, leggera, ottima d\'inverno.',
-    steps:['Taglia: 1 carota, 1 zucchina, 1 patata, 1 cipolla, 1 pomodoro, 1 manciata fagiolini','Soffriggi cipolla in olio EVO','Aggiungi tutte le verdure e copri di brodo vegetale','Cuoci 30-35 min','Aggiungi 50g pasta corta o fagioli ultimi 10 min']},
+    steps:['Taglia: 1 carota, 1 zucchina, 1 patata, 1 cipolla, 1 pomodoro, 1 manciata fagiolini','Soffriggi cipolla in olio EVO','Aggiungi tutte le verdure e copri di brodo vegetale','Cuoci 30-35 min','Aggiungi 50g pasta corta o fagioli ultimi 10 min'],tEn:'🥕 Vegetable Minestrone',descEn:'A nourishing, light soup, great in winter.',stepsEn:['Chop: 1 carrot, 1 zucchini, 1 potato, 1 onion, 1 tomato, a handful of green beans','Sauté the onion in EVO oil','Add all the vegetables and cover with vegetable broth','Cook 30-35 min','Add 50g short pasta or beans in the last 10 min']},
 
   // ─── SECONDI v2 ───
   {id:'cen_orata_forno',k:['orata','forno','pesce'],t:'🐟 Orata al Forno con Patate',time:'40 min',
     desc:'Pesce al forno classico mediterraneo.',
-    steps:['Pulisci 1 orata (350g), incidi la pelle','Affetta 200g patate sottili, condisci con olio, sale, rosmarino','In teglia: patate sotto, orata sopra','Aggiungi pomodorini, olive, capperi','Inforna a 180°C per 25-30 min']},
+    steps:['Pulisci 1 orata (350g), incidi la pelle','Affetta 200g patate sottili, condisci con olio, sale, rosmarino','In teglia: patate sotto, orata sopra','Aggiungi pomodorini, olive, capperi','Inforna a 180°C per 25-30 min'],tEn:'🐟 Baked Sea Bream with Potatoes',descEn:'A classic Mediterranean baked fish.',stepsEn:['Clean 1 sea bream (350g), score the skin','Thinly slice 200g potatoes, season with oil, salt, rosemary','In a tray: potatoes underneath, sea bream on top','Add cherry tomatoes, olives, capers','Bake at 180°C for 25-30 min']},
   {id:'cen_salmone_padella',k:['salmone','padella'],t:'🍣 Salmone in Padella al Limone',time:'12 min',
     desc:'Veloce e ricco di omega-3.',
-    steps:['Asciuga il filetto di salmone, sala','Scalda padella antiaderente con poco olio','Cuoci salmone lato pelle 4-5 min, gira 2 min','Sfuma con succo di mezzo limone','Servi con verdure cotte o insalata']},
+    steps:['Asciuga il filetto di salmone, sala','Scalda padella antiaderente con poco olio','Cuoci salmone lato pelle 4-5 min, gira 2 min','Sfuma con succo di mezzo limone','Servi con verdure cotte o insalata'],tEn:'🍣 Pan-Seared Salmon with Lemon',descEn:'Quick and rich in omega-3.',stepsEn:['Pat the salmon fillet dry, salt it','Heat a non-stick pan with a little oil','Cook salmon skin-side 4-5 min, flip 2 min','Deglaze with the juice of half a lemon','Serve with cooked vegetables or salad']},
   {id:'cen_polpette_pomodoro',k:['polpette','pomodoro'],t:'🍝 Polpette al Pomodoro',time:'30 min',
     desc:'Ricetta della nonna.',
-    steps:['Mescola 200g macinato magro + 1 uovo + 30g pangrattato + parmigiano + sale','Forma 8-10 polpette piccole','Soffriggi aglio, aggiungi 200g passata e basilico','Tuffa polpette nel sugo, cuoci 15 min','Servi con pane bruschetta']},
+    steps:['Mescola 200g macinato magro + 1 uovo + 30g pangrattato + parmigiano + sale','Forma 8-10 polpette piccole','Soffriggi aglio, aggiungi 200g passata e basilico','Tuffa polpette nel sugo, cuoci 15 min','Servi con pane bruschetta'],tEn:'🍝 Meatballs in Tomato Sauce',descEn:'Grandma\'s recipe.',stepsEn:['Mix 200g lean mince + 1 egg + 30g breadcrumbs + parmesan + salt','Form 8-10 small meatballs','Sauté garlic, add 200g passata and basil','Drop the meatballs into the sauce, cook 15 min','Serve with bruschetta bread']},
   {id:'cen_pollo_limone',k:['pollo','limone','padella'],t:'🍋 Petto di Pollo al Limone',time:'15 min',
     desc:'Profumato, magro, veloce.',
-    steps:['Taglia pollo a fettine sottili, infarina leggermente','Scalda olio in padella, rosola pollo 3 min per lato','Sfuma con succo di 1 limone + brodo','Cuoci 5 min finché si forma cremina','Servi con prezzemolo']},
+    steps:['Taglia pollo a fettine sottili, infarina leggermente','Scalda olio in padella, rosola pollo 3 min per lato','Sfuma con succo di 1 limone + brodo','Cuoci 5 min finché si forma cremina','Servi con prezzemolo'],tEn:'🍋 Lemon Chicken Breast',descEn:'Fragrant, lean, quick.',stepsEn:['Cut chicken into thin slices, lightly flour','Heat oil in a pan, sear chicken 3 min per side','Deglaze with the juice of 1 lemon + broth','Cook 5 min until a creamy sauce forms','Serve with parsley']},
   {id:'cen_tagliata_rucola',k:['tagliata','rucola','manzo'],t:'🥩 Tagliata di Manzo con Rucola',time:'12 min',
     desc:'Carne di qualità, grigliata e profumata.',
-    steps:['Lascia la tagliata fuori dal frigo 15 min prima','Scalda griglia/piastra rovente','Cuoci 2-3 min per lato (sangue) o 4 min (cottura media)','Affetta sottile, servi su rucola','Completa con scaglie parmigiano, balsamico, olio EVO']},
+    steps:['Lascia la tagliata fuori dal frigo 15 min prima','Scalda griglia/piastra rovente','Cuoci 2-3 min per lato (sangue) o 4 min (cottura media)','Affetta sottile, servi su rucola','Completa con scaglie parmigiano, balsamico, olio EVO'],tEn:'🥩 Beef Tagliata with Arugula',descEn:'Quality meat, grilled and fragrant.',stepsEn:['Leave the steak out of the fridge 15 min before','Heat a grill/griddle until smoking hot','Cook 2-3 min per side (rare) or 4 min (medium)','Slice thin, serve over arugula','Finish with parmesan shavings, balsamic, EVO oil']},
   {id:'cen_frittata_zucchine',k:['frittata','zucchine','uova'],t:'🍳 Frittata di Zucchine',time:'15 min',
     desc:'Cena leggera in 15 minuti.',
-    steps:['Taglia 200g zucchine a rondelle, salta 5 min','Sbatti 4 uova con sale, pepe, parmigiano','Versa uova sulle zucchine, cuoci 5 min coperto','Gira con piatto e cuoci altri 3 min','Servi tiepida o fredda']},
+    steps:['Taglia 200g zucchine a rondelle, salta 5 min','Sbatti 4 uova con sale, pepe, parmigiano','Versa uova sulle zucchine, cuoci 5 min coperto','Gira con piatto e cuoci altri 3 min','Servi tiepida o fredda'],tEn:'🍳 Zucchini Frittata',descEn:'A light dinner in 15 minutes.',stepsEn:['Cut 200g zucchini into rounds, sauté 5 min','Beat 4 eggs with salt, pepper, parmesan','Pour the eggs over the zucchini, cook 5 min covered','Flip with a plate and cook 3 more min','Serve warm or cold']},
   {id:'cen_omelette_funghi',k:['omelette','funghi','formaggio'],t:'🍳 Omelette ai Funghi',time:'12 min',
     desc:'Francese, raffinata.',
-    steps:['Salta 100g funghi champignon a fette con aglio','Sbatti 3 uova con sale, pepe','Versa in padella ben calda con burro','Quando si rapprende, metti funghi al centro + 30g formaggio','Piega e servi']},
+    steps:['Salta 100g funghi champignon a fette con aglio','Sbatti 3 uova con sale, pepe','Versa in padella ben calda con burro','Quando si rapprende, metti funghi al centro + 30g formaggio','Piega e servi'],tEn:'🍳 Mushroom Omelette',descEn:'French, refined.',stepsEn:['Sauté 100g sliced champignon mushrooms with garlic','Beat 3 eggs with salt, pepper','Pour into a hot pan with butter','When it sets, put the mushrooms in the center + 30g cheese','Fold and serve']},
   {id:'cen_zucca_arrosto',k:['zucca','arrosto','vegano'],t:'🎃 Zucca Arrosto con Erbe',time:'40 min',
     desc:'Contorno autunnale o piatto vegano.',
-    steps:['Taglia 400g zucca a fette spesse 2cm','Disponi su teglia con olio, rosmarino, salvia, sale','Inforna a 200°C per 25-30 min','Servi con seitan o legumi per pasto completo']},
+    steps:['Taglia 400g zucca a fette spesse 2cm','Disponi su teglia con olio, rosmarino, salvia, sale','Inforna a 200°C per 25-30 min','Servi con seitan o legumi per pasto completo'],tEn:'🎃 Roasted Pumpkin with Herbs',descEn:'An autumn side or vegan main.',stepsEn:['Cut 400g pumpkin into 2cm-thick slices','Arrange on a tray with oil, rosemary, sage, salt','Bake at 200°C for 25-30 min','Serve with seitan or legumes for a complete meal']},
   {id:'cen_seitan_padella',k:['seitan','vegano','vegetariano'],t:'🌱 Seitan in Padella alle Erbe',time:'15 min',
     desc:'Proteico vegetale ben condito.',
-    steps:['Affetta 150g seitan a fette spesse','Marinala 5 min con olio, salsa soia, aglio, erbe','Scotta in padella ben calda 2 min per lato','Servi con verdure grigliate']},
+    steps:['Affetta 150g seitan a fette spesse','Marinala 5 min con olio, salsa soia, aglio, erbe','Scotta in padella ben calda 2 min per lato','Servi con verdure grigliate'],tEn:'🌱 Pan-Seared Seitan with Herbs',descEn:'Well-seasoned plant protein.',stepsEn:['Slice 150g seitan into thick slices','Marinate 5 min with oil, soy sauce, garlic, herbs','Sear in a very hot pan 2 min per side','Serve with grilled vegetables']},
   {id:'cen_tofu_grigliato',k:['tofu','grigliato'],t:'🌿 Tofu Marinato Grigliato',time:'15 min + marinatura',
     desc:'Vegano e saporito.',
-    steps:['Sbriciola o affetta 150g tofu','Marinala 30 min con: salsa soia, aglio, zenzero, miele','Griglia 2-3 min per lato','Servi con riso basmati e verdure stir-fry']},
+    steps:['Sbriciola o affetta 150g tofu','Marinala 30 min con: salsa soia, aglio, zenzero, miele','Griglia 2-3 min per lato','Servi con riso basmati e verdure stir-fry'],tEn:'🌿 Grilled Marinated Tofu',descEn:'Vegan and tasty.',stepsEn:['Crumble or slice 150g tofu','Marinate 30 min with: soy sauce, garlic, ginger, honey','Grill 2-3 min per side','Serve with basmati rice and stir-fry vegetables']},
   {id:'cen_burger_vegetale',k:['burger','vegano','legumi'],t:'🌱 Burger di Legumi Casalingo',time:'25 min',
     desc:'Proteico e gustoso.',
-    steps:['Frulla 200g ceci o fagioli + 30g pangrattato + 1 uovo (o purea di patate per vegan)','Aggiungi spezie: cumino, paprika, aglio in polvere','Forma 2 burger, cuoci in padella con poco olio 4 min per lato','Servi su pane integrale con verdure']},
+    steps:['Frulla 200g ceci o fagioli + 30g pangrattato + 1 uovo (o purea di patate per vegan)','Aggiungi spezie: cumino, paprika, aglio in polvere','Forma 2 burger, cuoci in padella con poco olio 4 min per lato','Servi su pane integrale con verdure'],tEn:'🌱 Homemade Legume Burger',descEn:'Protein-rich and tasty.',stepsEn:['Blend 200g chickpeas or beans + 30g breadcrumbs + 1 egg (or mashed potato for vegan)','Add spices: cumin, paprika, garlic powder','Form 2 burgers, cook in a pan with a little oil 4 min per side','Serve on whole-grain bread with vegetables']},
 
   // ─── INSALATE E PIATTI UNICI ───
   {id:'pra_caesar_pollo',k:['caesar','pollo','insalata'],t:'🥗 Caesar Salad con Pollo',time:'15 min',
     desc:'Insalata sostanziosa, pasto completo.',
-    steps:['Griglia 150g petto di pollo a strisce','Lava e taglia lattuga romana','Mescola: 1 cucchiaio yogurt greco + 1 cucchiaino senape + limone + parmigiano','Componi: lattuga, pollo, dressing, crostini, parmigiano']},
+    steps:['Griglia 150g petto di pollo a strisce','Lava e taglia lattuga romana','Mescola: 1 cucchiaio yogurt greco + 1 cucchiaino senape + limone + parmigiano','Componi: lattuga, pollo, dressing, crostini, parmigiano'],tEn:'🥗 Caesar Salad with Chicken',descEn:'A substantial salad, a complete meal.',stepsEn:['Grill 150g chicken breast into strips','Wash and cut romaine lettuce','Mix: 1 tablespoon Greek yogurt + 1 teaspoon mustard + lemon + parmesan','Assemble: lettuce, chicken, dressing, croutons, parmesan']},
   {id:'pra_caprese',k:['caprese','mozzarella','pomodoro'],t:'🍅 Caprese di Bufala',time:'5 min',
     desc:'Fresca, estiva, perfetta.',
-    steps:['Affetta 150g mozzarella di bufala','Affetta 2 pomodori maturi','Alterna in piatto: pomodoro, mozzarella, basilico','Condisci con olio EVO, sale, pepe','Servi subito']},
+    steps:['Affetta 150g mozzarella di bufala','Affetta 2 pomodori maturi','Alterna in piatto: pomodoro, mozzarella, basilico','Condisci con olio EVO, sale, pepe','Servi subito'],tEn:'🍅 Buffalo Caprese',descEn:'Fresh, summery, perfect.',stepsEn:['Slice 150g buffalo mozzarella','Slice 2 ripe tomatoes','Alternate on a plate: tomato, mozzarella, basil','Season with EVO oil, salt, pepper','Serve immediately']},
   {id:'pra_panzanella',k:['panzanella','toscana','pane'],t:'🥖 Panzanella Toscana',time:'15 min + ammollo',
     desc:'Insalata di pane raffermo, tipica estate.',
-    steps:['Bagna 200g pane raffermo in acqua e aceto 5 min, strizza','In ciotola: pane sbriciolato, pomodori, cetrioli, cipolla rossa, basilico','Condisci con olio EVO, sale','Lascia riposare 10 min in frigo']},
+    steps:['Bagna 200g pane raffermo in acqua e aceto 5 min, strizza','In ciotola: pane sbriciolato, pomodori, cetrioli, cipolla rossa, basilico','Condisci con olio EVO, sale','Lascia riposare 10 min in frigo'],tEn:'🥖 Tuscan Panzanella',descEn:'A stale-bread salad, a summer staple.',stepsEn:['Soak 200g stale bread in water and vinegar 5 min, squeeze','In a bowl: crumbled bread, tomatoes, cucumbers, red onion, basil','Season with EVO oil, salt','Let it rest 10 min in the fridge']},
   {id:'pra_farro_freddo',k:['farro','insalata','freddo'],t:'🌾 Insalata di Farro Estiva',time:'15 min',
     desc:'Pasta fredda alternativa.',
-    steps:['Lessa 80g farro perlato 30 min','Raffredda sotto acqua corrente','Unisci: tonno, pomodorini, mozzarella a cubetti, olive','Condisci con olio, basilico, limone']},
+    steps:['Lessa 80g farro perlato 30 min','Raffredda sotto acqua corrente','Unisci: tonno, pomodorini, mozzarella a cubetti, olive','Condisci con olio, basilico, limone'],tEn:'🌾 Summer Farro Salad',descEn:'An alternative cold pasta.',stepsEn:['Boil 80g pearl farro 30 min','Cool under running water','Combine: tuna, cherry tomatoes, diced mozzarella, olives','Dress with oil, basil, lemon']},
   {id:'pra_riso_freddo',k:['riso','insalata','freddo','estate'],t:'🍚 Riso Freddo Estivo',time:'20 min',
     desc:'Versione classica delle nonne.',
-    steps:['Cuoci 80g riso, scola e raffredda','Taglia a cubetti: prosciutto cotto, formaggio, sottaceti','Unisci tutto, aggiungi olive, mais, tonno','Condisci con olio EVO']},
+    steps:['Cuoci 80g riso, scola e raffredda','Taglia a cubetti: prosciutto cotto, formaggio, sottaceti','Unisci tutto, aggiungi olive, mais, tonno','Condisci con olio EVO'],tEn:'🍚 Summer Cold Rice',descEn:'The grandmas\' classic version.',stepsEn:['Cook 80g rice, drain and cool','Dice: cooked ham, cheese, pickles','Combine everything, add olives, corn, tuna','Dress with EVO oil']},
 
   // ─── SGARRI MEDI / VERSIONI LEGGERE ───
   {id:'sg_pizza_casa',k:['pizza','casalinga'],t:'🍕 Pizza Casalinga Light',time:'90 min (con lievitazione)',
     desc:'Sgarro consapevole, fatto in casa pesa meno della pizzeria.',
-    steps:['Impasta 250g farina + 150ml acqua + 5g lievito + sale + olio','Lievita 1 ora coperta','Stendi sottile, condisci: pomodoro, 100g mozzarella, basilico','Inforna 12 min a 230°C','Una pizza intera ~700-900 kcal, divide a metà se in dieta']},
+    steps:['Impasta 250g farina + 150ml acqua + 5g lievito + sale + olio','Lievita 1 ora coperta','Stendi sottile, condisci: pomodoro, 100g mozzarella, basilico','Inforna 12 min a 230°C','Una pizza intera ~700-900 kcal, divide a metà se in dieta'],tEn:'🍕 Light Homemade Pizza',descEn:'A mindful cheat — homemade weighs less than the pizzeria\'s.',stepsEn:['Knead 250g flour + 150ml water + 5g yeast + salt + oil','Let it rise 1 hour, covered','Roll out thin, top with: tomato, 100g mozzarella, basil','Bake 12 min at 230°C','A whole pizza is ~700-900 kcal, halve it if you\'re dieting']},
   {id:'sg_lasagne_speciali',k:['lasagne','sgarro'],t:'🍝 Lasagne (sgarro consapevole)',time:'90 min',
     desc:'Una porzione ragionevole entra nella dieta.',
-    steps:['Una porzione media (250g) è circa 400-500 kcal','Riduci la besciamella usando latte parz. scremato','Usa carne magra al posto del macinato grasso','Servi con insalata verde per saziare con meno calorie']},
+    steps:['Una porzione media (250g) è circa 400-500 kcal','Riduci la besciamella usando latte parz. scremato','Usa carne magra al posto del macinato grasso','Servi con insalata verde per saziare con meno calorie'],tEn:'🍝 Lasagna (mindful cheat)',descEn:'A reasonable portion fits into your diet.',stepsEn:['An average portion (250g) is about 400-500 kcal','Reduce the béchamel using semi-skimmed milk','Use lean meat instead of fatty mince','Serve with a green salad to fill up with fewer calories']},
   {id:'sg_gelato_ricotta',k:['gelato','dolce','sgarro'],t:'🍦 Gelato + Frutta Casalingo',time:'5 min',
     desc:'Sostituto sano al gelato classico.',
-    steps:['Frulla 1 banana congelata + 100g frutti rossi','Aggiungi 100g yogurt greco e 1 cucchiaino miele','Frulla fino a consistenza gelato','Servi subito (è una vera coppa di gelato a 150 kcal)']},
+    steps:['Frulla 1 banana congelata + 100g frutti rossi','Aggiungi 100g yogurt greco e 1 cucchiaino miele','Frulla fino a consistenza gelato','Servi subito (è una vera coppa di gelato a 150 kcal)'],tEn:'🍦 Homemade Ice Cream + Fruit',descEn:'A healthy substitute for classic ice cream.',stepsEn:['Blend 1 frozen banana + 100g red berries','Add 100g Greek yogurt and 1 teaspoon honey','Blend to an ice-cream consistency','Serve immediately (it\'s a real ice-cream cup at 150 kcal)']},
   {id:'sg_tiramisu_light',k:['tiramisu','dolce','light'],t:'🍰 Tiramisù Proteico',time:'30 min + frigo',
     desc:'Versione light con ricotta e meno zucchero.',
-    steps:['Mescola 250g ricotta light + 50g miele + caffè','Inzuppa savoiardi (10) in caffè veloce','Strato: savoiardi, crema, savoiardi, crema','Cospargi cacao amaro, frigo 4 ore','Una porzione ~250 kcal vs 450 del classico']},
+    steps:['Mescola 250g ricotta light + 50g miele + caffè','Inzuppa savoiardi (10) in caffè veloce','Strato: savoiardi, crema, savoiardi, crema','Cospargi cacao amaro, frigo 4 ore','Una porzione ~250 kcal vs 450 del classico'],tEn:'🍰 Protein Tiramisu',descEn:'A light version with ricotta and less sugar.',stepsEn:['Mix 250g light ricotta + 50g honey + coffee','Soak ladyfingers (10) in quick coffee','Layer: ladyfingers, cream, ladyfingers, cream','Dust with unsweetened cocoa, fridge 4 hours','One portion ~250 kcal vs 450 for the classic']},
 
   // ─── CONTORNI E RICETTE BASE ───
   {id:'pra_verdure_grigliate',k:['verdure','grigliate','contorno'],t:'🥬 Verdure Grigliate Miste',time:'15 min',
     desc:'Contorno versatile per ogni pasto.',
-    steps:['Affetta: zucchine, melanzane, peperoni, radicchio','Spennella con olio EVO e sale','Griglia 3-4 min per lato su piastra ben calda','Servi con un filo di balsamico o olio crudo']},
+    steps:['Affetta: zucchine, melanzane, peperoni, radicchio','Spennella con olio EVO e sale','Griglia 3-4 min per lato su piastra ben calda','Servi con un filo di balsamico o olio crudo'],tEn:'🥬 Mixed Grilled Vegetables',descEn:'A versatile side for any meal.',stepsEn:['Slice: zucchini, eggplant, peppers, radicchio','Brush with EVO oil and salt','Grill 3-4 min per side on a very hot griddle','Serve with a drizzle of balsamic or raw oil']},
   {id:'pra_patate_forno',k:['patate','forno','contorno'],t:'🥔 Patate al Forno con Rosmarino',time:'40 min',
     desc:'Classico contorno italiano.',
-    steps:['Taglia 300g patate a spicchi','Condisci con olio EVO, rosmarino, sale, paprika','Disponi su teglia con carta forno','Inforna a 200°C per 30-35 min girando a metà']},
+    steps:['Taglia 300g patate a spicchi','Condisci con olio EVO, rosmarino, sale, paprika','Disponi su teglia con carta forno','Inforna a 200°C per 30-35 min girando a metà'],tEn:'🥔 Roasted Potatoes with Rosemary',descEn:'A classic Italian side.',stepsEn:['Cut 300g potatoes into wedges','Season with EVO oil, rosemary, salt, paprika','Arrange on a tray with parchment paper','Bake at 200°C for 30-35 min, turning halfway']},
   {id:'pra_spinaci_burro',k:['spinaci','burro','contorno'],t:'🥬 Spinaci al Burro',time:'10 min',
     desc:'Veloce e ricco di ferro.',
-    steps:['Lessa 200g spinaci freschi 3 min, scola','Strizza bene per togliere acqua','Salta in padella con un piccolo cucchiaino di burro e aglio','Sala e servi']},
+    steps:['Lessa 200g spinaci freschi 3 min, scola','Strizza bene per togliere acqua','Salta in padella con un piccolo cucchiaino di burro e aglio','Sala e servi'],tEn:'🥬 Buttered Spinach',descEn:'Quick and rich in iron.',stepsEn:['Boil 200g fresh spinach 3 min, drain','Squeeze well to remove water','Sauté in a pan with a small teaspoon of butter and garlic','Salt and serve']},
   {id:'pra_funghi_trifolati',k:['funghi','trifolati','contorno'],t:'🍄 Funghi Trifolati',time:'15 min',
     desc:'Profumato e leggero.',
-    steps:['Pulisci 200g funghi (porcini, champignon o misti)','Soffriggi aglio in olio EVO','Aggiungi funghi a fette, sale','Cuoci 8 min a fuoco medio-alto','Completa con prezzemolo fresco']},
+    steps:['Pulisci 200g funghi (porcini, champignon o misti)','Soffriggi aglio in olio EVO','Aggiungi funghi a fette, sale','Cuoci 8 min a fuoco medio-alto','Completa con prezzemolo fresco'],tEn:'🍄 Sautéed Mushrooms',descEn:'Fragrant and light.',stepsEn:['Clean 200g mushrooms (porcini, champignon or mixed)','Sauté garlic in EVO oil','Add the sliced mushrooms, salt','Cook 8 min over medium-high heat','Finish with fresh parsley']},
 
   // ═══ RICETTE AGGIUNTE SESSIONE 2 — 60+ ricette italiane ═══
 
   // ─── COLAZIONI EXTRA ───
   {id:'col_pancake_proteici',k:['pancake','proteici','colazione'],t:'🥞 Pancake Proteici alla Banana',time:'10 min',
     desc:'Soffici e dolci, ricchi di proteine. 350 kcal, 25g proteine.',
-    steps:['Frulla 1 banana matura con 2 uova intere e 50g di fiocchi d\'avena','Aggiungi 1 cucchiaino di lievito + 1 pizzico di cannella','Scalda padella antiaderente, versa piccoli mestoli (3-4 pancake)','Cuoci 2 min per lato a fuoco medio-basso','Servi con yogurt greco e poche gocce di miele']},
+    steps:['Frulla 1 banana matura con 2 uova intere e 50g di fiocchi d\'avena','Aggiungi 1 cucchiaino di lievito + 1 pizzico di cannella','Scalda padella antiaderente, versa piccoli mestoli (3-4 pancake)','Cuoci 2 min per lato a fuoco medio-basso','Servi con yogurt greco e poche gocce di miele'],tEn:'🥞 Banana Protein Pancakes',descEn:'Soft and sweet, rich in protein. 350 kcal, 25g protein.',stepsEn:['Blend 1 ripe banana with 2 whole eggs and 50g oats','Add 1 teaspoon baking powder + a pinch of cinnamon','Heat a non-stick pan, pour small ladles (3-4 pancakes)','Cook 2 min per side over medium-low heat','Serve with Greek yogurt and a few drops of honey']},
 
   {id:'col_french_toast',k:['french toast','colazione','dolce'],t:'🍞 French Toast Salutare',time:'8 min',
     desc:'Versione fit del classico. 320 kcal.',
-    steps:['Sbatti 2 uova con 50ml latte (o bevanda vegetale) e cannella','Inumidisci 2 fette di pane integrale spesso','Cuoci in padella antiaderente 2 min per lato','Servi con frutti di bosco freschi e 1 cucchiaino di sciroppo d\'acero (opzionale)']},
+    steps:['Sbatti 2 uova con 50ml latte (o bevanda vegetale) e cannella','Inumidisci 2 fette di pane integrale spesso','Cuoci in padella antiaderente 2 min per lato','Servi con frutti di bosco freschi e 1 cucchiaino di sciroppo d\'acero (opzionale)'],tEn:'🍞 Protein French Toast',descEn:'A sweet-savory version with little sugar.',stepsEn:['Beat 2 eggs with 50ml milk and cinnamon','Soak 2 slices of whole-grain bread 30 sec per side','Cook in a non-stick pan 2 min per side','Serve with Greek yogurt and fruit']},
 
   {id:'col_avocado_toast',k:['avocado','toast','colazione','salata'],t:'🥑 Avocado Toast con Uovo',time:'7 min',
     desc:'Colazione salata e saziante.',
-    steps:['Tosta 2 fette di pane integrale','Schiaccia mezzo avocado con limone, sale e pepe','Cuoci 1 uovo in camicia in acqua bollente 3 min','Distribuisci avocado sulle fette, posiziona l\'uovo sopra','Aggiungi peperoncino in scaglie a piacere']},
+    steps:['Tosta 2 fette di pane integrale','Schiaccia mezzo avocado con limone, sale e pepe','Cuoci 1 uovo in camicia in acqua bollente 3 min','Distribuisci avocado sulle fette, posiziona l\'uovo sopra','Aggiungi peperoncino in scaglie a piacere'],tEn:'🥑 Avocado Toast with Egg',descEn:'A savory and filling breakfast.',stepsEn:['Toast 2 slices of whole-grain bread','Mash half an avocado with lemon, salt and pepper','Poach 1 egg in boiling water for 3 min','Spread the avocado on the slices, place the egg on top','Add chili flakes to taste']},
 
   {id:'col_porridge_bacche',k:['porridge','avena','bacche'],t:'🫐 Porridge con Bacche',time:'8 min',
     desc:'Colazione calda e cremosa, perfetta in inverno.',
-    steps:['Porta 250ml di latte (o bevanda d\'avena) a sfiorare il bollore','Aggiungi 50g di fiocchi d\'avena, mescola','Cuoci 5 min a fuoco basso fino a consistenza cremosa','Versa in ciotola, completa con frutti di bosco freschi e 10g mandorle a scaglie']},
+    steps:['Porta 250ml di latte (o bevanda d\'avena) a sfiorare il bollore','Aggiungi 50g di fiocchi d\'avena, mescola','Cuoci 5 min a fuoco basso fino a consistenza cremosa','Versa in ciotola, completa con frutti di bosco freschi e 10g mandorle a scaglie'],tEn:'🫐 Porridge with Berries',descEn:'A warm, creamy breakfast, perfect in winter.',stepsEn:['Bring 250ml of milk (or oat drink) to just below boiling','Add 50g oats, stir','Cook 5 min over low heat until creamy','Pour into a bowl, top with fresh berries and 10g flaked almonds']},
 
   {id:'col_smoothie_bowl',k:['smoothie','bowl','frutta','colazione'],t:'🍓 Smoothie Bowl Energetica',time:'5 min',
     desc:'Fresca, colorata e nutriente.',
-    steps:['Frulla 1 banana congelata con 100g frutti di bosco e 100g yogurt greco','Aggiungi 30ml latte fino alla consistenza desiderata','Versa in ciotola, top con muesli, 5g semi di chia e fettine di kiwi','Mangia subito per non far sciogliere']},
+    steps:['Frulla 1 banana congelata con 100g frutti di bosco e 100g yogurt greco','Aggiungi 30ml latte fino alla consistenza desiderata','Versa in ciotola, top con muesli, 5g semi di chia e fettine di kiwi','Mangia subito per non far sciogliere'],tEn:'🍓 Smoothie Bowl',descEn:'A thick smoothie to eat with a spoon.',stepsEn:['Blend 1 frozen banana + 100g red berries + 100ml milk','Pour into a bowl, it should be thick','Top with: granola, almonds, chia seeds','Stir and eat immediately']},
 
   {id:'col_omelette_spinaci',k:['omelette','frittata','spinaci','colazione'],t:'🍳 Omelette con Spinaci',time:'10 min',
     desc:'Salata, ricca di proteine. Ottima dopo workout.',
-    steps:['Salta 100g spinaci in padella con olio EVO 2 min','Sbatti 3 uova con sale, pepe e parmigiano grattugiato','Versa nella padella sugli spinaci','Cuoci coperto 4-5 min, ripiega a metà e servi con pane integrale']},
+    steps:['Salta 100g spinaci in padella con olio EVO 2 min','Sbatti 3 uova con sale, pepe e parmigiano grattugiato','Versa nella padella sugli spinaci','Cuoci coperto 4-5 min, ripiega a metà e servi con pane integrale'],tEn:'🍳 Spinach Omelette',descEn:'Savory, protein-rich. Great after a workout.',stepsEn:['Sauté 100g spinach in a pan with EVO oil 2 min','Beat 3 eggs with salt, pepper and grated parmesan','Pour into the pan over the spinach','Cook covered 4-5 min, fold in half and serve with whole-grain bread']},
 
   // ─── PRANZI EXTRA ───
   {id:'pra_pasta_tonno_olive',k:['pasta','tonno','olive','pranzo'],t:'🍝 Pasta Tonno e Olive',time:'15 min',
     desc:'Classico veloce, completo. 580 kcal.',
-    steps:['Cuoci 80g di pasta integrale al dente in acqua salata','In padella scalda 1 cucchiaio olio EVO con aglio','Aggiungi 80g tonno al naturale sgocciolato e 8 olive nere snocciolate','Quando la pasta è pronta, scolala e ripassa in padella 1 min con un mestolo di acqua di cottura','Completa con prezzemolo fresco e pepe']},
+    steps:['Cuoci 80g di pasta integrale al dente in acqua salata','In padella scalda 1 cucchiaio olio EVO con aglio','Aggiungi 80g tonno al naturale sgocciolato e 8 olive nere snocciolate','Quando la pasta è pronta, scolala e ripassa in padella 1 min con un mestolo di acqua di cottura','Completa con prezzemolo fresco e pepe'],tEn:'🍝 Tuna and Olive Pasta',descEn:'A quick, complete classic. 580 kcal.',stepsEn:['Cook 80g whole-grain pasta al dente in salted water','In a pan heat 1 tablespoon EVO oil with garlic','Add 80g drained tuna in water and 8 pitted black olives','When the pasta is ready, drain it and toss in the pan 1 min with a ladle of cooking water','Finish with fresh parsley and pepper']},
 
   {id:'pra_pasta_zucchine_gamberi',k:['pasta','zucchine','gamberi','pranzo'],t:'🦐 Pasta Zucchine e Gamberi',time:'18 min',
     desc:'Leggera ed elegante. Estiva.',
-    steps:['Cuoci 80g pasta in abbondante acqua salata','Taglia 2 zucchine a julienne sottile','Salta zucchine in padella con olio EVO e aglio 5 min','Aggiungi 100g gamberi sgusciati, cuoci 2-3 min','Scola pasta e ripassa con il sugo, prezzemolo finale']},
+    steps:['Cuoci 80g pasta in abbondante acqua salata','Taglia 2 zucchine a julienne sottile','Salta zucchine in padella con olio EVO e aglio 5 min','Aggiungi 100g gamberi sgusciati, cuoci 2-3 min','Scola pasta e ripassa con il sugo, prezzemolo finale'],tEn:'🦐 Zucchini and Prawn Pasta',descEn:'Light and elegant. Summery.',stepsEn:['Cook 80g pasta in plenty of salted water','Cut 2 zucchini into thin julienne','Sauté the zucchini in a pan with EVO oil and garlic 5 min','Add 100g peeled prawns, cook 2-3 min','Drain pasta and toss with the sauce, parsley to finish']},
 
   {id:'pra_riso_basmati_pollo_curry',k:['riso','pollo','curry','pranzo'],t:'🍛 Pollo al Curry con Basmati',time:'25 min',
     desc:'Saporito ed esotico. Macros bilanciati.',
-    steps:['Cuoci 80g riso basmati in acqua salata 12 min','Taglia 150g petto di pollo a cubetti, cuoci in padella con olio 5 min','Aggiungi 1 cipolla tritata, cuoci 3 min','Aggiungi 1 cucchiaio curry e 100ml latte di cocco light','Cuoci 5 min, servi sul riso con coriandolo']},
+    steps:['Cuoci 80g riso basmati in acqua salata 12 min','Taglia 150g petto di pollo a cubetti, cuoci in padella con olio 5 min','Aggiungi 1 cipolla tritata, cuoci 3 min','Aggiungi 1 cucchiaio curry e 100ml latte di cocco light','Cuoci 5 min, servi sul riso con coriandolo'],tEn:'🍛 Chicken Curry with Basmati',descEn:'Tasty and exotic. Balanced macros.',stepsEn:['Cook 80g basmati rice in salted water 12 min','Cut 150g chicken breast into cubes, cook in a pan with oil 5 min','Add 1 chopped onion, cook 3 min','Add 1 tablespoon curry and 100ml light coconut milk','Cook 5 min, serve over the rice with coriander']},
 
   {id:'pra_quinoa_verdure_grigliate',k:['quinoa','verdure','vegetariano','pranzo'],t:'🥗 Quinoa con Verdure Grigliate',time:'25 min',
     desc:'Vegetariana, ricca di proteine vegetali.',
-    steps:['Cuoci 80g quinoa in 200ml acqua salata 12 min','Griglia 1 zucchina, 1 melanzana e 1 peperone a fette','Mescola quinoa con verdure tagliate a cubetti','Condisci con olio EVO, succo di limone, sale e prezzemolo','Aggiungi 30g feta sbriciolata sopra']},
+    steps:['Cuoci 80g quinoa in 200ml acqua salata 12 min','Griglia 1 zucchina, 1 melanzana e 1 peperone a fette','Mescola quinoa con verdure tagliate a cubetti','Condisci con olio EVO, succo di limone, sale e prezzemolo','Aggiungi 30g feta sbriciolata sopra'],tEn:'🥗 Quinoa with Grilled Vegetables',descEn:'Vegetarian, rich in plant protein.',stepsEn:['Cook 80g quinoa in 200ml salted water 12 min','Grill 1 zucchini, 1 eggplant and 1 pepper, sliced','Mix quinoa with the diced vegetables','Dress with EVO oil, lemon juice, salt and parsley','Add 30g crumbled feta on top']},
 
   {id:'pra_insalatona_pollo',k:['insalata','pollo','pranzo'],t:'🥗 Insalatona Caesar Light',time:'12 min',
     desc:'Versione fit del classico. 450 kcal.',
-    steps:['Griglia 150g petto di pollo, taglia a strisce','Lava lattuga romana e tagliala a strisce','Prepara dressing: 2 cucchiai yogurt greco + succo limone + 1 acciuga + parmigiano','Componi: lattuga, pollo, pomodorini, dressing','Top con 20g crostini integrali tostati']},
+    steps:['Griglia 150g petto di pollo, taglia a strisce','Lava lattuga romana e tagliala a strisce','Prepara dressing: 2 cucchiai yogurt greco + succo limone + 1 acciuga + parmigiano','Componi: lattuga, pollo, pomodorini, dressing','Top con 20g crostini integrali tostati'],tEn:'🥗 Light Caesar Big Salad',descEn:'A fit version of the classic. 450 kcal.',stepsEn:['Grill 150g chicken breast, cut into strips','Wash romaine lettuce and cut into strips','Make the dressing: 2 tablespoons Greek yogurt + lemon juice + 1 anchovy + parmesan','Assemble: lettuce, chicken, cherry tomatoes, dressing','Top with 20g toasted whole-grain croutons']},
 
   {id:'pra_orzotto_funghi',k:['orzo','funghi','pranzo','vegetariano'],t:'🌾 Orzotto ai Funghi Porcini',time:'30 min',
     desc:'Sostanzioso e profumato.',
-    steps:['Reidrata 20g porcini secchi in acqua tiepida 10 min','Soffriggi 1 scalogno tritato in olio EVO','Aggiungi 80g orzo perlato, tosta 2 min','Cuoci a poco a poco aggiungendo brodo vegetale (totale 25 min)','Aggiungi i porcini ammollati negli ultimi 10 min','Manteca con 10g parmigiano']},
+    steps:['Reidrata 20g porcini secchi in acqua tiepida 10 min','Soffriggi 1 scalogno tritato in olio EVO','Aggiungi 80g orzo perlato, tosta 2 min','Cuoci a poco a poco aggiungendo brodo vegetale (totale 25 min)','Aggiungi i porcini ammollati negli ultimi 10 min','Manteca con 10g parmigiano'],tEn:'🌾 Porcini Mushroom Barley Risotto',descEn:'Substantial and fragrant.',stepsEn:['Rehydrate 20g dried porcini in warm water 10 min','Sauté 1 chopped shallot in EVO oil','Add 80g pearl barley, toast 2 min','Cook gradually adding vegetable broth (total 25 min)','Add the soaked porcini in the last 10 min','Finish with 10g parmesan']},
 
   {id:'pra_polpette_pollo_zucchine',k:['polpette','pollo','zucchine','pranzo'],t:'🍡 Polpette di Pollo e Zucchine',time:'25 min',
     desc:'Leggere e gustose. 380 kcal porzione.',
-    steps:['Trita 200g petto di pollo (o usa macinato magro)','Mescola con 1 zucchina grattugiata strizzata, 1 uovo, 30g pangrattato, sale','Forma polpettine grandi come una noce','Cuoci in padella antiaderente con poco olio 8 min, girando','Servi con insalata mista']},
+    steps:['Trita 200g petto di pollo (o usa macinato magro)','Mescola con 1 zucchina grattugiata strizzata, 1 uovo, 30g pangrattato, sale','Forma polpettine grandi come una noce','Cuoci in padella antiaderente con poco olio 8 min, girando','Servi con insalata mista'],tEn:'🍡 Chicken and Zucchini Meatballs',descEn:'Light and tasty. 380 kcal per portion.',stepsEn:['Mince 200g chicken breast (or use lean mince)','Mix with 1 grated and squeezed zucchini, 1 egg, 30g breadcrumbs, salt','Form walnut-sized meatballs','Cook in a non-stick pan with a little oil 8 min, turning','Serve with mixed salad']},
 
   {id:'pra_zuppa_legumi',k:['zuppa','legumi','vegetariano','pranzo'],t:'🍲 Zuppa di Legumi Mista',time:'35 min',
     desc:'Ricca, calda, perfetta inverno. Vegana.',
-    steps:['Soffriggi 1 carota, 1 sedano, 1 cipolla tritati in olio EVO','Aggiungi 80g legumi misti secchi (lasciati in ammollo 8h prima)','Copri con brodo vegetale, aggiungi rosmarino','Cuoci 30 min coperto a fuoco basso','Frulla parzialmente per cremosità, servi con pane integrale tostato']},
+    steps:['Soffriggi 1 carota, 1 sedano, 1 cipolla tritati in olio EVO','Aggiungi 80g legumi misti secchi (lasciati in ammollo 8h prima)','Copri con brodo vegetale, aggiungi rosmarino','Cuoci 30 min coperto a fuoco basso','Frulla parzialmente per cremosità, servi con pane integrale tostato'],tEn:'🍲 Mixed Legume Soup',descEn:'Rich, warm, perfect for winter. Vegan.',stepsEn:['Sauté 1 carrot, 1 celery stalk, 1 chopped onion in EVO oil','Add 80g dried mixed legumes (soaked 8h beforehand)','Cover with vegetable broth, add rosemary','Cook 30 min covered over low heat','Blend partially for creaminess, serve with toasted whole-grain bread']},
 
   {id:'pra_salmone_patate_dolci',k:['salmone','patate','pranzo'],t:'🍣 Salmone al Forno con Patate Dolci',time:'30 min',
     desc:'Omega-3 + carboidrati lenti. Ottimo dopo workout.',
-    steps:['Taglia 200g patata dolce a cubetti, condisci con olio, rosmarino, sale','Inforna a 200°C per 25 min','Posiziona 150g filetto salmone su teglia con limone, sale e timo','Aggiungi al forno gli ultimi 12 min di cottura patate','Servi con un cucchiaio di yogurt greco al limone']},
+    steps:['Taglia 200g patata dolce a cubetti, condisci con olio, rosmarino, sale','Inforna a 200°C per 25 min','Posiziona 150g filetto salmone su teglia con limone, sale e timo','Aggiungi al forno gli ultimi 12 min di cottura patate','Servi con un cucchiaio di yogurt greco al limone'],tEn:'🍣 Baked Salmon with Sweet Potatoes',descEn:'Omega-3 + slow carbs. Great after a workout.',stepsEn:['Cut 200g sweet potato into cubes, season with oil, rosemary, salt','Bake at 200°C for 25 min','Place a 150g salmon fillet on a tray with lemon, salt and thyme','Add to the oven for the last 12 min of the potatoes\' cooking','Serve with a spoonful of lemon Greek yogurt']},
 
   {id:'pra_pasta_pomodoro_basilico',k:['pasta','pomodoro','basilico','pranzo'],t:'🍅 Pasta al Pomodoro Fresco',time:'15 min',
     desc:'Italiana classica, semplice perfetta.',
-    steps:['Cuoci 80g pasta in acqua salata','Soffriggi aglio in olio EVO 1 min','Aggiungi 200g pomodorini tagliati a metà, sale','Cuoci 8 min a fuoco medio','Scola pasta, ripassa con il sugo + foglie di basilico fresco','Top con parmigiano']},
+    steps:['Cuoci 80g pasta in acqua salata','Soffriggi aglio in olio EVO 1 min','Aggiungi 200g pomodorini tagliati a metà, sale','Cuoci 8 min a fuoco medio','Scola pasta, ripassa con il sugo + foglie di basilico fresco','Top con parmigiano'],tEn:'🍅 Pasta with Fresh Tomato',descEn:'Italian classic, simply perfect.',stepsEn:['Cook 80g pasta in salted water','Sauté garlic in EVO oil 1 min','Add 200g halved cherry tomatoes, salt','Cook 8 min over medium heat','Drain pasta, toss with the sauce + fresh basil leaves','Top with parmesan']},
 
   // ─── CENE EXTRA ───
   {id:'cen_branzino_verdure',k:['branzino','pesce','cena'],t:'🐟 Branzino al Cartoccio',time:'35 min',
     desc:'Leggero, profumato. Ottimo dopo cena pesante.',
-    steps:['Pulisci 1 branzino (~250g), praticando 2 tagli sui lati','Adagia su un foglio di carta forno','Aggiungi limone a fette, prezzemolo, capperi, olio EVO, sale','Chiudi a cartoccio','Inforna a 200°C per 25 min','Servi con verdure al vapore']},
+    steps:['Pulisci 1 branzino (~250g), praticando 2 tagli sui lati','Adagia su un foglio di carta forno','Aggiungi limone a fette, prezzemolo, capperi, olio EVO, sale','Chiudi a cartoccio','Inforna a 200°C per 25 min','Servi con verdure al vapore'],tEn:'🐟 Sea Bass en Papillote',descEn:'Light, fragrant. Great after a heavy meal.',stepsEn:['Clean 1 sea bass (~250g), making 2 cuts on the sides','Lay it on a sheet of parchment paper','Add sliced lemon, parsley, capers, EVO oil, salt','Close into a parcel','Bake at 200°C for 25 min','Serve with steamed vegetables']},
 
   {id:'cen_tagliata_rucola',k:['tagliata','manzo','rucola','cena'],t:'🥩 Tagliata di Manzo con Rucola',time:'12 min',
     desc:'Proteica e saporita. 480 kcal.',
-    steps:['Scalda padella ben calda con poco olio EVO','Cuoci una bistecca di manzo 150g 2 min per lato (al sangue) o 4 min (media)','Lascia riposare 2 min, taglia a strisce','Adagia su un letto di rucola','Top con scaglie di parmigiano e olio EVO + balsamico']},
+    steps:['Scalda padella ben calda con poco olio EVO','Cuoci una bistecca di manzo 150g 2 min per lato (al sangue) o 4 min (media)','Lascia riposare 2 min, taglia a strisce','Adagia su un letto di rucola','Top con scaglie di parmigiano e olio EVO + balsamico'],tEn:'🥩 Beef Tagliata with Arugula',descEn:'Quality meat, grilled and fragrant.',stepsEn:['Leave the steak out of the fridge 15 min before','Heat a grill/griddle until smoking hot','Cook 2-3 min per side (rare) or 4 min (medium)','Slice thin, serve over arugula','Finish with parmesan shavings, balsamic, EVO oil']},
 
   {id:'cen_orata_olive',k:['orata','pesce','olive','cena'],t:'🐟 Orata con Olive Taggiasche',time:'30 min',
     desc:'Mediterranea ed elegante.',
-    steps:['Pulisci 1 orata (~250g)','Inforna su teglia con 8 olive taggiasche, 1 spicchio aglio, timo','Aggiungi un filo di olio EVO e mezzo bicchiere vino bianco','Cuoci a 190°C per 22 min','Servi con purè di patate light']},
+    steps:['Pulisci 1 orata (~250g)','Inforna su teglia con 8 olive taggiasche, 1 spicchio aglio, timo','Aggiungi un filo di olio EVO e mezzo bicchiere vino bianco','Cuoci a 190°C per 22 min','Servi con purè di patate light'],tEn:'🐟 Sea Bream with Taggiasca Olives',descEn:'Mediterranean and elegant.',stepsEn:['Clean 1 sea bream (~250g)','Bake on a tray with 8 Taggiasca olives, 1 clove garlic, thyme','Add a drizzle of EVO oil and half a glass of white wine','Cook at 190°C for 22 min','Serve with light mashed potatoes']},
 
   {id:'cen_uovo_zucchine_strapazzato',k:['uova','zucchine','strapazzate','cena'],t:'🍳 Uova Strapazzate con Zucchine',time:'12 min',
     desc:'Cena veloce, leggera, proteica.',
-    steps:['Salta 2 zucchine a rondelle in padella con olio EVO, aglio 6 min','Sbatti 3 uova con sale, pepe e prezzemolo','Versa in padella sulle zucchine','Mescola lentamente fino a strapazzare','Servi con 1 fetta pane integrale']},
+    steps:['Salta 2 zucchine a rondelle in padella con olio EVO, aglio 6 min','Sbatti 3 uova con sale, pepe e prezzemolo','Versa in padella sulle zucchine','Mescola lentamente fino a strapazzare','Servi con 1 fetta pane integrale'],tEn:'🍳 Scrambled Eggs with Zucchini',descEn:'Quick, light, protein-rich dinner.',stepsEn:['Sauté 2 sliced zucchini in a pan with EVO oil, garlic 6 min','Beat 3 eggs with salt, pepper and parsley','Pour into the pan over the zucchini','Stir slowly until scrambled','Serve with 1 slice of whole-grain bread']},
 
   {id:'cen_pollo_limone',k:['pollo','limone','cena'],t:'🍗 Pollo al Limone in Padella',time:'15 min',
     desc:'Veloce e profumato.',
-    steps:['Taglia 150g petto pollo a fettine sottili','Infarina leggermente con farina integrale (o gluten-free)','Cuoci in padella con olio EVO 3 min per lato','Aggiungi succo di 1 limone + un cucchiaio acqua','Cuoci 1 min finale, prezzemolo fresco','Servi con verdure miste vapore']},
+    steps:['Taglia 150g petto pollo a fettine sottili','Infarina leggermente con farina integrale (o gluten-free)','Cuoci in padella con olio EVO 3 min per lato','Aggiungi succo di 1 limone + un cucchiaio acqua','Cuoci 1 min finale, prezzemolo fresco','Servi con verdure miste vapore'],tEn:'🍋 Lemon Chicken Breast',descEn:'Fragrant, lean, quick.',stepsEn:['Cut chicken into thin slices, lightly flour','Heat oil in a pan, sear chicken 3 min per side','Deglaze with the juice of 1 lemon + broth','Cook 5 min until a creamy sauce forms','Serve with parsley']},
 
   {id:'cen_minestrone_classico',k:['minestrone','verdure','cena'],t:'🥣 Minestrone Classico',time:'40 min',
     desc:'Caldo, ricco, vegano. Ottimo serale.',
-    steps:['Trita carota, sedano, cipolla, soffriggi in olio EVO','Aggiungi 1 patata a cubetti, 1 zucchina, 100g fagiolini','Copri con brodo vegetale','Aggiungi 80g fagioli borlotti già cotti','Cuoci 30 min, aggiungi 30g pasta corta integrale ultimi 10 min','Servi con parmigiano e basilico']},
+    steps:['Trita carota, sedano, cipolla, soffriggi in olio EVO','Aggiungi 1 patata a cubetti, 1 zucchina, 100g fagiolini','Copri con brodo vegetale','Aggiungi 80g fagioli borlotti già cotti','Cuoci 30 min, aggiungi 30g pasta corta integrale ultimi 10 min','Servi con parmigiano e basilico'],tEn:'🥣 Classic Minestrone',descEn:'Warm, rich, vegan. Great in the evening.',stepsEn:['Chop carrot, celery, onion, sauté in EVO oil','Add 1 diced potato, 1 zucchini, 100g green beans','Cover with vegetable broth','Add 80g cooked borlotti beans','Cook 30 min, add 30g short whole-grain pasta in the last 10 min','Serve with parmesan and basil']},
 
   {id:'cen_frittata_verdure',k:['frittata','verdure','vegetariano','cena'],t:'🍳 Frittata di Verdure',time:'18 min',
     desc:'Versatile, svuota-frigo proteico.',
-    steps:['Salta 100g zucchine + 80g spinaci + ½ peperone tagliati','Sbatti 3 uova con sale, pepe e parmigiano','Aggiungi le verdure scolate','Cuoci in padella antiaderente 3 min per lato','Servi tagliata a spicchi con insalata']},
+    steps:['Salta 100g zucchine + 80g spinaci + ½ peperone tagliati','Sbatti 3 uova con sale, pepe e parmigiano','Aggiungi le verdure scolate','Cuoci in padella antiaderente 3 min per lato','Servi tagliata a spicchi con insalata'],tEn:'🍳 Vegetable Frittata',descEn:'Clear-out-the-fridge dinner, protein-rich and quick.',stepsEn:['Sauté the chopped vegetables (zucchini, peppers) in a pan','Beat 3 eggs with salt and parmesan','Pour over the vegetables, cook 5 min covered over low heat','Flip with a plate and cook 3 more min','Serve with salad and whole-grain bread']},
 
   {id:'cen_tofu_saltato',k:['tofu','vegano','cena'],t:'🌱 Tofu Saltato in Padella',time:'15 min',
     desc:'Vegana, proteica.',
-    steps:['Taglia 200g tofu strizzato a cubetti','Marina 5 min con salsa soia, zenzero grattugiato, aglio','Salta in padella ben calda con olio sesamo 5 min','Aggiungi 200g verdure miste (broccoli, peperone, carote)','Cuoci 5 min, completa con sesamo tostato','Servi con 80g riso basmati']},
+    steps:['Taglia 200g tofu strizzato a cubetti','Marina 5 min con salsa soia, zenzero grattugiato, aglio','Salta in padella ben calda con olio sesamo 5 min','Aggiungi 200g verdure miste (broccoli, peperone, carote)','Cuoci 5 min, completa con sesamo tostato','Servi con 80g riso basmati'],tEn:'🌱 Pan-Fried Tofu',descEn:'Vegan, protein-rich.',stepsEn:['Cut 200g squeezed tofu into cubes','Marinate 5 min with soy sauce, grated ginger, garlic','Stir-fry in a very hot pan with sesame oil 5 min','Add 200g mixed vegetables (broccoli, pepper, carrots)','Cook 5 min, finish with toasted sesame','Serve with 80g basmati rice']},
 
   {id:'cen_carpaccio_bresaola',k:['carpaccio','bresaola','cena','leggera'],t:'🥩 Carpaccio di Bresaola con Rucola',time:'5 min',
     desc:'Velocissima, fresca, super-proteica.',
-    steps:['Disponi 80g bresaola a fette su un piatto','Top con un pugno di rucola','Aggiungi scaglie di parmigiano (15g)','Condisci con olio EVO, succo di limone, pepe nero','Servi con 2 grissini integrali']},
+    steps:['Disponi 80g bresaola a fette su un piatto','Top con un pugno di rucola','Aggiungi scaglie di parmigiano (15g)','Condisci con olio EVO, succo di limone, pepe nero','Servi con 2 grissini integrali'],tEn:'🥩 Bresaola Carpaccio with Arugula',descEn:'Super quick, fresh, super-protein.',stepsEn:['Arrange 80g bresaola slices on a plate','Top with a handful of arugula','Add parmesan shavings (15g)','Season with EVO oil, lemon juice, black pepper','Serve with 2 whole-grain breadsticks']},
 
   {id:'cen_filetto_merluzzo',k:['merluzzo','pesce','cena'],t:'🐟 Filetto di Merluzzo Gratinato',time:'25 min',
     desc:'Leggero, saporito. 290 kcal.',
-    steps:['Disponi 180g filetto merluzzo su teglia','Mescola 2 cucchiai pangrattato + 1 cucchiaio olio + prezzemolo + aglio','Distribuisci sulla superficie del pesce','Inforna a 200°C per 18 min','Servi con verdure cotte al vapore']},
+    steps:['Disponi 180g filetto merluzzo su teglia','Mescola 2 cucchiai pangrattato + 1 cucchiaio olio + prezzemolo + aglio','Distribuisci sulla superficie del pesce','Inforna a 200°C per 18 min','Servi con verdure cotte al vapore'],tEn:'🐟 Gratinated Cod Fillet',descEn:'Light, tasty. 290 kcal.',stepsEn:['Place 180g cod fillet on a tray','Mix 2 tablespoons breadcrumbs + 1 tablespoon oil + parsley + garlic','Spread over the surface of the fish','Bake at 200°C for 18 min','Serve with steamed vegetables']},
 
   {id:'cen_scaloppine_funghi',k:['scaloppine','vitello','funghi','cena'],t:'🥩 Scaloppine ai Funghi',time:'18 min',
     desc:'Classica della cucina italiana.',
-    steps:['Infarina 150g fettine vitello (o tacchino)','Cuoci in padella con olio EVO 1 min per lato, togli','Salta 150g funghi champignon affettati 5 min','Aggiungi 50ml vino bianco, fai sfumare','Rimetti la carne, cuoci 2 min','Sale, prezzemolo, servi con verdure']},
+    steps:['Infarina 150g fettine vitello (o tacchino)','Cuoci in padella con olio EVO 1 min per lato, togli','Salta 150g funghi champignon affettati 5 min','Aggiungi 50ml vino bianco, fai sfumare','Rimetti la carne, cuoci 2 min','Sale, prezzemolo, servi con verdure'],tEn:'🥩 Veal Scallopine with Mushrooms',descEn:'A classic of Italian cuisine.',stepsEn:['Flour 150g veal cutlets (or turkey)','Cook in a pan with EVO oil 1 min per side, remove','Sauté 150g sliced champignon mushrooms 5 min','Add 50ml white wine, let it reduce','Return the meat, cook 2 min','Salt, parsley, serve with vegetables']},
 
   {id:'cen_seitan_padella',k:['seitan','vegano','cena'],t:'🌱 Seitan in Padella con Verdure',time:'18 min',
     desc:'Vegana, ricca di proteine vegetali.',
-    steps:['Taglia 150g seitan a fette','Cuoci in padella con olio EVO 2 min per lato','Aggiungi 1 peperone + 1 zucchina a julienne','Salsa soia + zenzero + 100ml acqua','Cuoci 8 min coperto','Servi con 70g riso integrale']},
+    steps:['Taglia 150g seitan a fette','Cuoci in padella con olio EVO 2 min per lato','Aggiungi 1 peperone + 1 zucchina a julienne','Salsa soia + zenzero + 100ml acqua','Cuoci 8 min coperto','Servi con 70g riso integrale'],tEn:'🌱 Pan-Seared Seitan with Herbs',descEn:'Well-seasoned plant protein.',stepsEn:['Slice 150g seitan into thick slices','Marinate 5 min with oil, soy sauce, garlic, herbs','Sear in a very hot pan 2 min per side','Serve with grilled vegetables']},
 
   // ─── SPUNTINI EXTRA ───
   {id:'sp_chia_pudding',k:['chia','pudding','spuntino'],t:'🍮 Chia Pudding',time:'5 min + riposo',
     desc:'Da preparare la sera prima. Ricco di omega-3.',
-    steps:['In un barattolo metti 30g semi di chia + 200ml latte (o bevanda vegetale)','Aggiungi 1 cucchiaino miele e cannella','Mescola bene, lascia in frigo 4-8h (o tutta la notte)','Top con frutti di bosco freschi prima di mangiare']},
+    steps:['In un barattolo metti 30g semi di chia + 200ml latte (o bevanda vegetale)','Aggiungi 1 cucchiaino miele e cannella','Mescola bene, lascia in frigo 4-8h (o tutta la notte)','Top con frutti di bosco freschi prima di mangiare'],tEn:'🍮 Chia Pudding',descEn:'Prepare it the night before. Rich in omega-3.',stepsEn:['In a jar put 30g chia seeds + 200ml milk (or plant drink)','Add 1 teaspoon honey and cinnamon','Stir well, leave in the fridge 4-8h (or overnight)','Top with fresh berries before eating']},
 
   {id:'sp_yogurt_proteico',k:['yogurt','proteico','spuntino'],t:'🥛 Yogurt Proteico Express',time:'2 min',
     desc:'Spuntino velocissimo, 25g proteine.',
-    steps:['Versa 200g yogurt greco 0% in ciotola','Aggiungi 1 cucchiaino miele e cannella','Top con 15g mandorle a scaglie e 50g mirtilli freschi','Mescola e mangia']},
+    steps:['Versa 200g yogurt greco 0% in ciotola','Aggiungi 1 cucchiaino miele e cannella','Top con 15g mandorle a scaglie e 50g mirtilli freschi','Mescola e mangia'],tEn:'🥛 Express Protein Yogurt',descEn:'A super quick snack, 25g protein.',stepsEn:['Pour 200g 0% Greek yogurt into a bowl','Add 1 teaspoon honey and cinnamon','Top with 15g flaked almonds and 50g fresh blueberries','Stir and eat']},
 
   {id:'sp_uovo_pane',k:['uovo','pane','spuntino'],t:'🍳 Uovo Sodo + Pane',time:'12 min',
     desc:'Salato, sostanzioso.',
-    steps:['Cuoci 1 uovo in acqua bollente 9 min (sodo)','Sbuccia e taglia a metà','Spalma 30g hummus su 1 fetta pane integrale','Adagia uovo sopra, sale, pepe e paprica']},
+    steps:['Cuoci 1 uovo in acqua bollente 9 min (sodo)','Sbuccia e taglia a metà','Spalma 30g hummus su 1 fetta pane integrale','Adagia uovo sopra, sale, pepe e paprica'],tEn:'🍳 Boiled Egg + Bread',descEn:'Savory, substantial.',stepsEn:['Cook 1 egg in boiling water 9 min (hard-boiled)','Peel and cut in half','Spread 30g hummus on 1 slice of whole-grain bread','Place the egg on top, salt, pepper and paprika']},
 
   {id:'sp_frutta_secca_mix',k:['frutta secca','mix','spuntino'],t:'🥜 Mix Frutta Secca Energetico',time:'1 min',
     desc:'15g per spuntino pre-workout. ~200 kcal.',
-    steps:['Mescola in un sacchettino: 5g mandorle, 5g noci, 5g uvetta','Aggiungi 1 quadretto cioccolato fondente 80% (5g)','Mangia 20-30 min prima di allenarti']},
+    steps:['Mescola in un sacchettino: 5g mandorle, 5g noci, 5g uvetta','Aggiungi 1 quadretto cioccolato fondente 80% (5g)','Mangia 20-30 min prima di allenarti'],tEn:'🥜 Energy Nut Mix',descEn:'15g for a pre-workout snack. ~200 kcal.',stepsEn:['Mix in a small bag: 5g almonds, 5g walnuts, 5g raisins','Add 1 square of 80% dark chocolate (5g)','Eat 20-30 min before training']},
 
   {id:'sp_smoothie_proteico',k:['smoothie','proteico','spuntino'],t:'🥤 Smoothie Proteico Post-Workout',time:'4 min',
     desc:'Ottimo recupero. 30g proteine.',
-    steps:['Frulla 1 banana, 250ml latte, 30g proteine in polvere (o 200g yogurt greco)','Aggiungi 1 cucchiaio burro arachidi','Aggiungi cubetti di ghiaccio','Frulla 30 secondi, bevi subito']},
+    steps:['Frulla 1 banana, 250ml latte, 30g proteine in polvere (o 200g yogurt greco)','Aggiungi 1 cucchiaio burro arachidi','Aggiungi cubetti di ghiaccio','Frulla 30 secondi, bevi subito'],tEn:'🥤 Post-Workout Protein Smoothie',descEn:'Great recovery. 30g protein.',stepsEn:['Blend 1 banana, 250ml milk, 30g protein powder (or 200g Greek yogurt)','Add 1 tablespoon peanut butter','Add ice cubes','Blend 30 seconds, drink immediately']},
 
   {id:'sp_ricotta_miele',k:['ricotta','miele','spuntino'],t:'🧀 Ricotta con Miele e Noci',time:'2 min',
     desc:'Goloso e proteico.',
-    steps:['Versa 100g ricotta vaccina o di pecora in ciotola','Aggiungi 1 cucchiaino miele d\'acacia','Top con 10g noci spezzettate e cannella','Mescola leggermente e mangia']},
+    steps:['Versa 100g ricotta vaccina o di pecora in ciotola','Aggiungi 1 cucchiaino miele d\'acacia','Top con 10g noci spezzettate e cannella','Mescola leggermente e mangia'],tEn:'🧀 Ricotta with Honey and Walnuts',descEn:'Indulgent and protein-rich.',stepsEn:['Pour 100g cow or sheep ricotta into a bowl','Add 1 teaspoon acacia honey','Top with 10g chopped walnuts and cinnamon','Stir lightly and eat']},
 
   // ─── CONTORNI EXTRA ───
   {id:'pra_broccoli_aglio',k:['broccoli','aglio','contorno'],t:'🥦 Broccoli all\'Aglio Saltati',time:'12 min',
     desc:'Verdure semplici e saporite.',
-    steps:['Lessa 200g cime broccoli 5 min in acqua salata','Scola e tieni da parte','In padella scalda olio EVO con aglio e peperoncino','Salta i broccoli 4 min','Sala, completa con succo limone']},
+    steps:['Lessa 200g cime broccoli 5 min in acqua salata','Scola e tieni da parte','In padella scalda olio EVO con aglio e peperoncino','Salta i broccoli 4 min','Sala, completa con succo limone'],tEn:'🥦 Sautéed Garlic Broccoli',descEn:'Simple, tasty vegetables.',stepsEn:['Boil 200g broccoli florets 5 min in salted water','Drain and set aside','In a pan heat EVO oil with garlic and chili','Sauté the broccoli 4 min','Salt, finish with lemon juice']},
 
   {id:'pra_carote_glassate',k:['carote','contorno'],t:'🥕 Carote Glassate',time:'15 min',
     desc:'Dolci e leggermente caramellate.',
-    steps:['Taglia 250g carote a rondelle','Cuoci in padella con poco olio + 1 bicchiere acqua','Aggiungi 1 cucchiaino miele e timo','Cuoci 12 min finché l\'acqua evapora e si glassano','Sala leggermente']},
+    steps:['Taglia 250g carote a rondelle','Cuoci in padella con poco olio + 1 bicchiere acqua','Aggiungi 1 cucchiaino miele e timo','Cuoci 12 min finché l\'acqua evapora e si glassano','Sala leggermente'],tEn:'🥕 Glazed Carrots',descEn:'Sweet and lightly caramelized.',stepsEn:['Cut 250g carrots into rounds','Cook in a pan with a little oil + 1 glass of water','Add 1 teaspoon honey and thyme','Cook 12 min until the water evaporates and they glaze','Salt lightly']},
 
   {id:'pra_finocchi_gratinati',k:['finocchi','gratinati','contorno'],t:'🥬 Finocchi Gratinati',time:'30 min',
     desc:'Profumati e cremosi.',
-    steps:['Lessa 2 finocchi tagliati a spicchi 8 min','Scola e disponi in pirofila','Spolvera con 30g parmigiano + pangrattato + olio EVO','Inforna a 200°C per 15 min finché dorati']},
+    steps:['Lessa 2 finocchi tagliati a spicchi 8 min','Scola e disponi in pirofila','Spolvera con 30g parmigiano + pangrattato + olio EVO','Inforna a 200°C per 15 min finché dorati'],tEn:'🥬 Gratinated Fennel',descEn:'Fragrant and creamy.',stepsEn:['Boil 2 fennel bulbs cut into wedges 8 min','Drain and arrange in a baking dish','Sprinkle with 30g parmesan + breadcrumbs + EVO oil','Bake at 200°C for 15 min until golden']},
 
   {id:'pra_zucchine_grigliate',k:['zucchine','grigliate','contorno'],t:'🥒 Zucchine Grigliate',time:'10 min',
     desc:'Estive e leggere.',
-    steps:['Taglia 2 zucchine a fette spesse 5mm','Scalda griglia ben calda','Pennella le fette con olio EVO','Griglia 2-3 min per lato','Condisci con sale, menta fresca e succo limone']},
+    steps:['Taglia 2 zucchine a fette spesse 5mm','Scalda griglia ben calda','Pennella le fette con olio EVO','Griglia 2-3 min per lato','Condisci con sale, menta fresca e succo limone'],tEn:'🥒 Grilled Zucchini',descEn:'Summery and light.',stepsEn:['Cut 2 zucchini into 5mm-thick slices','Heat a very hot grill','Brush the slices with EVO oil','Grill 2-3 min per side','Dress with salt, fresh mint and lemon juice']},
 
   {id:'pra_purea_patate_dolci',k:['patate dolci','purea','contorno'],t:'🍠 Purea di Patate Dolci',time:'25 min',
     desc:'Cremosa e dolce naturale.',
-    steps:['Lessa 300g patate dolci a cubetti 18 min','Scola e schiaccia con un cucchiaio di olio EVO','Aggiungi 50ml latte tiepido fino a cremosità','Sala, pepa, aggiungi cannella o noce moscata']},
+    steps:['Lessa 300g patate dolci a cubetti 18 min','Scola e schiaccia con un cucchiaio di olio EVO','Aggiungi 50ml latte tiepido fino a cremosità','Sala, pepa, aggiungi cannella o noce moscata'],tEn:'🍠 Sweet Potato Mash',descEn:'Creamy and naturally sweet.',stepsEn:['Boil 300g diced sweet potatoes 18 min','Drain and mash with a tablespoon of EVO oil','Add 50ml warm milk until creamy','Salt, pepper, add cinnamon or nutmeg']},
 
   {id:'pra_cavolfiore_curry',k:['cavolfiore','curry','contorno','vegetariano'],t:'🥦 Cavolfiore al Curry',time:'25 min',
     desc:'Aromatico e nutriente.',
-    steps:['Dividi 300g cavolfiore in cimette','Soffriggi 1 cipolla tritata in olio EVO','Aggiungi 1 cucchiaio curry + 1 cucchiaino curcuma','Aggiungi cavolfiore, copri con 100ml acqua','Cuoci 18 min, completa con coriandolo']},
+    steps:['Dividi 300g cavolfiore in cimette','Soffriggi 1 cipolla tritata in olio EVO','Aggiungi 1 cucchiaio curry + 1 cucchiaino curcuma','Aggiungi cavolfiore, copri con 100ml acqua','Cuoci 18 min, completa con coriandolo'],tEn:'🥦 Curried Cauliflower',descEn:'Aromatic and nourishing.',stepsEn:['Divide 300g cauliflower into florets','Sauté 1 chopped onion in EVO oil','Add 1 tablespoon curry + 1 teaspoon turmeric','Add the cauliflower, cover with 100ml water','Cook 18 min, finish with coriander']},
 
   // ─── PIATTI UNICI EXTRA ───
   {id:'unico_buddha_bowl',k:['buddha bowl','vegetariano','pranzo','cena'],t:'🍚 Buddha Bowl',time:'30 min',
     desc:'Piatto unico bilanciato e colorato.',
-    steps:['Cuoci 80g quinoa in acqua salata 12 min','Inforna 150g cavolfiore + 100g ceci con olio, paprica, cumino 20 min a 200°C','Cuoci 1 uovo sodo, 9 min','Componi ciotola: quinoa, verdure cotte, ceci, uovo a metà, avocado a fette','Condisci con tahini + limone + acqua']},
+    steps:['Cuoci 80g quinoa in acqua salata 12 min','Inforna 150g cavolfiore + 100g ceci con olio, paprica, cumino 20 min a 200°C','Cuoci 1 uovo sodo, 9 min','Componi ciotola: quinoa, verdure cotte, ceci, uovo a metà, avocado a fette','Condisci con tahini + limone + acqua'],tEn:'🍚 Buddha Bowl',descEn:'A balanced, colorful one-dish meal.',stepsEn:['Cook 80g quinoa in salted water 12 min','Bake 150g cauliflower + 100g chickpeas with oil, paprika, cumin 20 min at 200°C','Boil 1 egg hard, 9 min','Assemble the bowl: quinoa, cooked vegetables, chickpeas, halved egg, sliced avocado','Dress with tahini + lemon + water']},
 
   {id:'unico_couscous_pollo',k:['couscous','pollo','piatto unico'],t:'🥘 Couscous con Pollo e Ceci',time:'25 min',
     desc:'Mediterraneo, ricco. Mealprep ideale.',
-    steps:['Versa 80g couscous in ciotola, copri con 100ml brodo bollente, copri 5 min','Salta 150g pollo a cubetti in padella con olio + paprica + cumino','Aggiungi 80g ceci cotti, peperone, pomodorini','Sgrana il couscous con forchetta e mescola con pollo','Completa con prezzemolo']},
+    steps:['Versa 80g couscous in ciotola, copri con 100ml brodo bollente, copri 5 min','Salta 150g pollo a cubetti in padella con olio + paprica + cumino','Aggiungi 80g ceci cotti, peperone, pomodorini','Sgrana il couscous con forchetta e mescola con pollo','Completa con prezzemolo'],tEn:'🥘 Couscous with Chicken and Chickpeas',descEn:'Mediterranean, rich. Ideal meal prep.',stepsEn:['Pour 80g couscous into a bowl, cover with 100ml boiling broth, cover 5 min','Sauté 150g diced chicken in a pan with oil + paprika + cumin','Add 80g cooked chickpeas, pepper, cherry tomatoes','Fluff the couscous with a fork and mix with the chicken','Finish with parsley']},
 
   {id:'unico_lasagne_verdure',k:['lasagne','verdure','vegetariano'],t:'🍝 Lasagne di Verdure',time:'60 min',
     desc:'Cena della domenica leggera.',
-    steps:['Prepara besciamella con 30g burro + 30g farina + 500ml latte (o vegetale)','Strati: sfoglie + ratatouille (zucchine, melanzane, peperoni)','Aggiungi besciamella e parmigiano tra ogni strato','Termina con parmigiano','Inforna a 180°C per 35 min']},
+    steps:['Prepara besciamella con 30g burro + 30g farina + 500ml latte (o vegetale)','Strati: sfoglie + ratatouille (zucchine, melanzane, peperoni)','Aggiungi besciamella e parmigiano tra ogni strato','Termina con parmigiano','Inforna a 180°C per 35 min'],tEn:'🍝 Vegetable Lasagna',descEn:'A light Sunday dinner.',stepsEn:['Make a béchamel with 30g butter + 30g flour + 500ml milk (or plant-based)','Layers: pasta sheets + ratatouille (zucchini, eggplant, peppers)','Add béchamel and parmesan between each layer','Finish with parmesan','Bake at 180°C for 35 min']},
 
   // ─── DOLCI SANI ───
   {id:'dolce_brownies_proteici',k:['brownies','dolce','proteico'],t:'🍫 Brownies Proteici',time:'30 min',
     desc:'Dolce post-workout. ~150 kcal a porzione.',
-    steps:['Frulla 200g fagioli neri sciacquati con 2 uova','Aggiungi 30g cacao amaro + 30g proteine in polvere + 1 cucchiaino lievito','Aggiungi 50g miele e 1 cucchiaino vaniglia','Versa in stampo, inforna 25 min a 180°C','Taglia in 8 quadrotti']},
+    steps:['Frulla 200g fagioli neri sciacquati con 2 uova','Aggiungi 30g cacao amaro + 30g proteine in polvere + 1 cucchiaino lievito','Aggiungi 50g miele e 1 cucchiaino vaniglia','Versa in stampo, inforna 25 min a 180°C','Taglia in 8 quadrotti'],tEn:'🍫 Protein Brownies',descEn:'A post-workout treat. ~150 kcal per portion.',stepsEn:['Blend 200g rinsed black beans with 2 eggs','Add 30g unsweetened cocoa + 30g protein powder + 1 teaspoon baking powder','Add 50g honey and 1 teaspoon vanilla','Pour into a mold, bake 25 min at 180°C','Cut into 8 squares']},
 
   {id:'dolce_torta_mele_avena',k:['torta','mele','avena','dolce'],t:'🍎 Torta di Mele e Avena',time:'45 min',
     desc:'Sana, soffice, perfetta colazione domenicale.',
-    steps:['Frulla 100g fiocchi avena fino a farina','Sbatti 3 uova con 50g miele + 50g yogurt greco','Aggiungi farina avena + 1 bustina lievito','Incorpora 2 mele a cubetti + cannella','Versa in stampo, inforna 35 min a 180°C']},
+    steps:['Frulla 100g fiocchi avena fino a farina','Sbatti 3 uova con 50g miele + 50g yogurt greco','Aggiungi farina avena + 1 bustina lievito','Incorpora 2 mele a cubetti + cannella','Versa in stampo, inforna 35 min a 180°C'],tEn:'🍎 Apple and Oat Cake',descEn:'Healthy, fluffy, perfect for a Sunday breakfast.',stepsEn:['Blend 100g oats into flour','Beat 3 eggs with 50g honey + 50g Greek yogurt','Add the oat flour + 1 sachet baking powder','Fold in 2 diced apples + cinnamon','Pour into a mold, bake 35 min at 180°C']},
 
   {id:'dolce_mousse_cioccolato_avo',k:['mousse','cioccolato','avocado','dolce'],t:'🍫 Mousse Cioccolato all\'Avocado',time:'10 min',
     desc:'Cremosa, vegana, sana.',
-    steps:['Frulla 1 avocado maturo con 30g cacao amaro','Aggiungi 30g miele (o sciroppo d\'acero) e 50ml latte vegetale','Aggiungi 1 cucchiaino vaniglia','Frulla fino a cremoso','Refrigera 30 min, servi in coppette con frutti di bosco']},
+    steps:['Frulla 1 avocado maturo con 30g cacao amaro','Aggiungi 30g miele (o sciroppo d\'acero) e 50ml latte vegetale','Aggiungi 1 cucchiaino vaniglia','Frulla fino a cremoso','Refrigera 30 min, servi in coppette con frutti di bosco'],tEn:'🍫 Chocolate Avocado Mousse',descEn:'Creamy, vegan, healthy.',stepsEn:['Blend 1 ripe avocado with 30g unsweetened cocoa','Add 30g honey (or maple syrup) and 50ml plant milk','Add 1 teaspoon vanilla','Blend until creamy','Refrigerate 30 min, serve in cups with berries']},
 
   // ─── ZUPPE EXTRA ───
   {id:'cen_zuppa_zucca',k:['zuppa','zucca','vegetariano','cena'],t:'🎃 Vellutata di Zucca',time:'35 min',
     desc:'Cremosa autunnale.',
-    steps:['Soffriggi 1 cipolla tritata in olio EVO','Aggiungi 400g zucca a cubetti + 1 patata piccola','Copri con brodo vegetale','Cuoci 25 min','Frulla con minipimer fino a cremoso','Top con semi di zucca tostati e curcuma']},
+    steps:['Soffriggi 1 cipolla tritata in olio EVO','Aggiungi 400g zucca a cubetti + 1 patata piccola','Copri con brodo vegetale','Cuoci 25 min','Frulla con minipimer fino a cremoso','Top con semi di zucca tostati e curcuma'],tEn:'🎃 Pumpkin Velouté',descEn:'A creamy autumn soup.',stepsEn:['Sauté 1 chopped onion in EVO oil','Add 400g diced pumpkin + 1 small potato','Cover with vegetable broth','Cook 25 min','Blend with an immersion blender until creamy','Top with toasted pumpkin seeds and turmeric']},
 
   {id:'cen_zuppa_lenticchie',k:['zuppa','lenticchie','vegano'],t:'🥣 Zuppa di Lenticchie Toscana',time:'45 min',
     desc:'Rustica, sostanziosa.',
-    steps:['Soffriggi 1 carota, 1 sedano, 1 cipolla, 2 spicchi aglio in olio EVO','Aggiungi 200g lenticchie secche + 1 cucchiaio concentrato pomodoro','Copri con brodo vegetale + alloro','Cuoci 30 min','Servi con un filo olio EVO crudo e pane abbrustolito']},
+    steps:['Soffriggi 1 carota, 1 sedano, 1 cipolla, 2 spicchi aglio in olio EVO','Aggiungi 200g lenticchie secche + 1 cucchiaio concentrato pomodoro','Copri con brodo vegetale + alloro','Cuoci 30 min','Servi con un filo olio EVO crudo e pane abbrustolito'],tEn:'🥣 Tuscan Lentil Soup',descEn:'Rustic, substantial.',stepsEn:['Sauté 1 carrot, 1 celery stalk, 1 onion, 2 cloves garlic in EVO oil','Add 200g dried lentils + 1 tablespoon tomato paste','Cover with vegetable broth + bay leaf','Cook 30 min','Serve with a drizzle of raw EVO oil and toasted bread']},
 
   // ─── INSALATE EXTRA ───
   {id:'pra_caprese',k:['caprese','insalata','pranzo'],t:'🍅 Insalata Caprese',time:'5 min',
     desc:'Italiana classica.',
-    steps:['Affetta 2 pomodori cuore di bue maturi','Affetta 100g mozzarella di bufala','Alterna sul piatto fette di pomodoro e mozzarella','Aggiungi foglie di basilico fresco','Olio EVO, sale grosso, pepe']},
+    steps:['Affetta 2 pomodori cuore di bue maturi','Affetta 100g mozzarella di bufala','Alterna sul piatto fette di pomodoro e mozzarella','Aggiungi foglie di basilico fresco','Olio EVO, sale grosso, pepe'],tEn:'🍅 Buffalo Caprese',descEn:'Fresh, summery, perfect.',stepsEn:['Slice 150g buffalo mozzarella','Slice 2 ripe tomatoes','Alternate on a plate: tomato, mozzarella, basil','Season with EVO oil, salt, pepper','Serve immediately']},
 
   {id:'pra_insalata_riso_tonno',k:['insalata','riso','tonno','pranzo'],t:'🍣 Insalata di Riso al Tonno',time:'25 min',
     desc:'Estiva e completa, ottima da portare a lavoro.',
-    steps:['Cuoci 80g riso, scolalo e raffreddalo sotto acqua','Mescola con 80g tonno al naturale + 2 uova sode a cubetti','Aggiungi pomodorini, mais, olive, capperi','Condisci con olio EVO + limone','Lasciar riposare 20 min']},
+    steps:['Cuoci 80g riso, scolalo e raffreddalo sotto acqua','Mescola con 80g tonno al naturale + 2 uova sode a cubetti','Aggiungi pomodorini, mais, olive, capperi','Condisci con olio EVO + limone','Lasciar riposare 20 min'],tEn:'🍣 Tuna Rice Salad',descEn:'Summery and complete, great to take to work.',stepsEn:['Cook 80g rice, drain it and cool under water','Mix with 80g tuna in water + 2 diced hard-boiled eggs','Add cherry tomatoes, corn, olives, capers','Dress with EVO oil + lemon','Let it rest 20 min']},
 
   {id:'pra_insalata_farro',k:['insalata','farro','pranzo','vegetariano'],t:'🌾 Insalata di Farro Mediterranea',time:'30 min',
     desc:'Estiva, leggera, vegetariana.',
-    steps:['Cuoci 80g farro perlato 18 min, scola','Mescola con pomodorini, cetriolo, cipolla rossa, olive','Aggiungi 50g feta a cubetti','Condisci con olio EVO + limone + origano','Mescola e lascia riposare 15 min in frigo']},
+    steps:['Cuoci 80g farro perlato 18 min, scola','Mescola con pomodorini, cetriolo, cipolla rossa, olive','Aggiungi 50g feta a cubetti','Condisci con olio EVO + limone + origano','Mescola e lascia riposare 15 min in frigo'],tEn:'🌾 Mediterranean Farro Salad',descEn:'Summery, light, vegetarian.',stepsEn:['Cook 80g pearl farro 18 min, drain','Mix with cherry tomatoes, cucumber, red onion, olives','Add 50g diced feta','Dress with EVO oil + lemon + oregano','Stir and let it rest 15 min in the fridge']},
 
   // ─── PRIMI EXTRA ───
   {id:'pra_pasta_genovese',k:['pasta','pesto','pranzo'],t:'🌿 Pasta al Pesto alla Genovese',time:'15 min',
     desc:'Classica ligure.',
-    steps:['Cuoci 80g trofie (o pasta) in acqua salata','Negli ultimi 5 min aggiungi 50g fagiolini e 1 patata piccola a cubetti','Scola tutto, mantieni 1 mestolo acqua di cottura','Condisci con 2 cucchiai pesto genovese (o 100g basilico + pinoli + parmigiano + olio frullati)','Mescola con poca acqua di cottura per cremare']},
+    steps:['Cuoci 80g trofie (o pasta) in acqua salata','Negli ultimi 5 min aggiungi 50g fagiolini e 1 patata piccola a cubetti','Scola tutto, mantieni 1 mestolo acqua di cottura','Condisci con 2 cucchiai pesto genovese (o 100g basilico + pinoli + parmigiano + olio frullati)','Mescola con poca acqua di cottura per cremare'],tEn:'🌿 Pasta with Genovese Pesto',descEn:'A Ligurian classic.',stepsEn:['Cook 80g trofie (or pasta) in salted water','In the last 5 min add 50g green beans and 1 small diced potato','Drain everything, keep 1 ladle of cooking water','Dress with 2 tablespoons Genovese pesto (or 100g basil + pine nuts + parmesan + oil, blended)','Toss with a little cooking water to make it creamy']},
 
   {id:'pra_risotto_zucchine',k:['risotto','zucchine','pranzo'],t:'🍚 Risotto alle Zucchine',time:'25 min',
     desc:'Cremoso, leggero, primaverile.',
-    steps:['Taglia 2 zucchine a cubetti, salta in padella con olio + scalogno 5 min','Aggiungi 80g riso carnaroli, tosta 2 min','Sfuma con 50ml vino bianco','Cuoci aggiungendo brodo vegetale poco a poco (18 min)','Manteca con 15g parmigiano e prezzemolo']},
+    steps:['Taglia 2 zucchine a cubetti, salta in padella con olio + scalogno 5 min','Aggiungi 80g riso carnaroli, tosta 2 min','Sfuma con 50ml vino bianco','Cuoci aggiungendo brodo vegetale poco a poco (18 min)','Manteca con 15g parmigiano e prezzemolo'],tEn:'🍚 Zucchini Risotto',descEn:'Creamy, light, springtime.',stepsEn:['Dice 2 zucchini, sauté in a pan with oil + shallot 5 min','Add 80g carnaroli rice, toast 2 min','Deglaze with 50ml white wine','Cook adding vegetable broth a little at a time (18 min)','Finish with 15g parmesan and parsley']},
 
   {id:'pra_pasta_aglio_olio',k:['pasta','aglio','olio','pranzo'],t:'🌶️ Spaghetti Aglio Olio e Peperoncino',time:'12 min',
     desc:'Velocissima, romana classica.',
-    steps:['Cuoci 80g spaghetti in acqua salata','Soffriggi 3 spicchi aglio a fette + peperoncino in 1 cucchiaio olio EVO','Quando aglio è dorato, aggiungi 1 mestolo acqua cottura','Scola pasta al dente, ripassa in padella','Completa con prezzemolo']},
+    steps:['Cuoci 80g spaghetti in acqua salata','Soffriggi 3 spicchi aglio a fette + peperoncino in 1 cucchiaio olio EVO','Quando aglio è dorato, aggiungi 1 mestolo acqua cottura','Scola pasta al dente, ripassa in padella','Completa con prezzemolo'],tEn:'🌶️ Spaghetti Garlic, Oil and Chili',descEn:'Super quick, a Roman classic.',stepsEn:['Cook 80g spaghetti in salted water','Sauté 3 sliced garlic cloves + chili in 1 tablespoon EVO oil','When the garlic is golden, add 1 ladle of cooking water','Drain pasta al dente, toss in the pan','Finish with parsley']},
 
   // ─── INTERNAZIONALI ===
   {id:'pra_burrito_bowl',k:['burrito','messicano','bowl','pranzo'],t:'🌯 Burrito Bowl Messicano',time:'20 min',
     desc:'Saporito ed esotico.',
-    steps:['Cuoci 80g riso basmati','Salta 100g pollo a cubetti con paprica, cumino, peperoncino','Componi ciotola: riso, pollo, 80g fagioli neri','Top con: avocado, pomodoro a cubetti, mais, coriandolo','Squeeze di lime e cucchiaio yogurt greco']},
+    steps:['Cuoci 80g riso basmati','Salta 100g pollo a cubetti con paprica, cumino, peperoncino','Componi ciotola: riso, pollo, 80g fagioli neri','Top con: avocado, pomodoro a cubetti, mais, coriandolo','Squeeze di lime e cucchiaio yogurt greco'],tEn:'🌯 Mexican Burrito Bowl',descEn:'Tasty and exotic.',stepsEn:['Cook 80g basmati rice','Sauté 100g diced chicken with paprika, cumin, chili','Assemble the bowl: rice, chicken, 80g black beans','Top with: avocado, diced tomato, corn, coriander','Squeeze of lime and a spoon of Greek yogurt']},
 
   {id:'cen_curry_lenticchie',k:['curry','lenticchie','vegano','cena'],t:'🍛 Curry di Lenticchie Indiano (Dahl)',time:'30 min',
     desc:'Vegano, speziato e nutriente.',
-    steps:['Soffriggi 1 cipolla tritata + 1 spicchio aglio + zenzero','Aggiungi 1 cucchiaio curry + 1 cucchiaino curcuma','Aggiungi 200g lenticchie rosse + 200ml latte di cocco light + 200ml acqua','Cuoci 22 min finché lenticchie sono cremose','Sala e servi con riso basmati o naan']},
+    steps:['Soffriggi 1 cipolla tritata + 1 spicchio aglio + zenzero','Aggiungi 1 cucchiaio curry + 1 cucchiaino curcuma','Aggiungi 200g lenticchie rosse + 200ml latte di cocco light + 200ml acqua','Cuoci 22 min finché lenticchie sono cremose','Sala e servi con riso basmati o naan'],tEn:'🍛 Indian Lentil Curry (Dahl)',descEn:'Vegan, spiced and nourishing.',stepsEn:['Sauté 1 chopped onion + 1 clove garlic + ginger','Add 1 tablespoon curry + 1 teaspoon turmeric','Add 200g red lentils + 200ml light coconut milk + 200ml water','Cook 22 min until the lentils are creamy','Salt and serve with basmati rice or naan']},
 
   {id:'cen_pad_thai',k:['pad thai','thailandese','cena'],t:'🍜 Pad Thai Light',time:'25 min',
     desc:'Tailandese gustoso.',
-    steps:['Cuoci 80g noodles di riso secondo confezione','Salta 100g gamberi sgusciati in olio + aglio 2 min','Aggiungi 100g germogli di soia + 1 carota a julienne','Sbatti 1 uovo, versa in padella e mescola','Mescola noodles in padella con salsa soia + lime + 1 cucchiaino zucchero','Top con arachidi tritate e coriandolo']},
+    steps:['Cuoci 80g noodles di riso secondo confezione','Salta 100g gamberi sgusciati in olio + aglio 2 min','Aggiungi 100g germogli di soia + 1 carota a julienne','Sbatti 1 uovo, versa in padella e mescola','Mescola noodles in padella con salsa soia + lime + 1 cucchiaino zucchero','Top con arachidi tritate e coriandolo'],tEn:'🍜 Light Pad Thai',descEn:'A tasty Thai dish.',stepsEn:['Cook 80g rice noodles according to the package','Stir-fry 100g peeled prawns in oil + garlic 2 min','Add 100g bean sprouts + 1 julienned carrot','Beat 1 egg, pour into the pan and mix','Toss the noodles in the pan with soy sauce + lime + 1 teaspoon sugar','Top with chopped peanuts and coriander']},
 
 ];
 
@@ -5555,6 +5555,13 @@ window.AUTO_TRANS = {
   "Pesce": "Fish", "Latt.": "Dairy", "Latticini": "Dairy", "Uova": "Eggs", "Legumi": "Legumes",
   "Verdure": "Vegetables", "Frutta": "Fruit", "Frutta e Frutta secca": "Fruit & Nuts",
   "Condim.": "Cond.", "Condimenti e Salse": "Condiments & Sauces", "Bevande": "Drinks",
+  "Carne & Pesce": "Meat & Fish", "Carne &amp; Pesce": "Meat &amp; Fish",
+  "Latticini & Uova": "Dairy & Eggs", "Latticini &amp; Uova": "Dairy &amp; Eggs",
+  "Frutta & Verdura": "Fruit & Vegetables", "Frutta &amp; Verdura": "Fruit &amp; Vegetables",
+  "Cereali & Pane": "Grains & Bread", "Cereali &amp; Pane": "Grains &amp; Bread",
+  "Legumi & Conserve": "Legumes & Canned", "Legumi &amp; Conserve": "Legumes &amp; Canned",
+  "Snack & Frutta secca": "Snacks & Nuts", "Snack &amp; Frutta secca": "Snacks &amp; Nuts",
+  "Condimenti & Vari": "Condiments & Misc", "Condimenti &amp; Vari": "Condiments &amp; Misc",
   "Bevande e Integratori": "Drinks & Supplements", "Piatti": "Dishes", "Piatti Pronti": "Ready Meals",
   "Pizze": "Pizzas", "Pizze e Focacce": "Pizzas & Focaccia", "Dolci": "Sweets", "Gelati": "Ice Cream",
   "Fast": "Fast", "Fast Food": "Fast Food", "Snack": "Snacks", "Bar": "Bar", "Bar e Colazione": "Bar & Breakfast",
@@ -5753,6 +5760,9 @@ window.AUTO_TRANS = {
   "🥩 Carne Magra": "🥩 Lean Meat", "🥩 Manzo magro + Patate": "🥩 Lean beef + Potatoes",
   "🧀 Proteica classica": "🧀 Classic protein", "🫘 Legumi & Verdure": "🫘 Legumes & Vegetables",
   "🫘 Legumi + Cereali": "🫘 Legumes + Grains", "⚡ Pre-WO base": "⚡ Pre-WO basic",
+  "Petto di pollo": "Chicken breast", "Petto di Pollo": "Chicken Breast", "petto di pollo": "chicken breast",
+  "Petto Alto": "Upper Chest", "Petto Medio": "Mid Chest", "Petto Basso": "Lower Chest",
+  "Petto / Tricipiti": "Chest / Triceps", "Tricipiti / Petto Basso": "Triceps / Lower Chest",
   "Petto": "Chest", "Schiena": "Back", "Gambe": "Legs", "Spalle": "Shoulders", "Braccia": "Arms",
   "Addome/Core": "Abs/Core", "Total Body": "Total Body",
   "Spalla": "Shoulder", "Gomito": "Elbow", "Polso": "Wrist", "Ginocchio": "Knee",
@@ -11801,7 +11811,7 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
       ${m.fav?`<div style="background:rgba(255,104,53,.08);border-left:3px solid var(--ora);border-radius:0 10px 10px 0;padding:10px 12px;margin-bottom:10px;">
         <div style="font-size:10px;font-weight:700;color:var(--ora);letter-spacing:1.5px;margin-bottom:3px;">🍽️ I TUOI PREFERITI</div>
         <div style="font-size:12px;color:var(--text);line-height:1.5;">${escapeHtml(m.fav)}</div>
-        <div style="font-size:10px;color:var(--mut);margin-top:4px;line-height:1.4;">Considera di inserirli rispettando il target kcal del pasto (~${m.kcal} kcal).</div>
+        <div style="font-size:10px;color:var(--mut);margin-top:4px;line-height:1.4;">${LL('Considera di inserirli rispettando il target kcal del pasto (~'+m.kcal+' kcal).','Consider adding them while respecting the meal\'s kcal target (~'+m.kcal+' kcal).')}</div>
       </div>`:''}
       <!-- PUNTO 17: bottone personalizza pasto -->
       <div style="display:flex;gap:6px;margin-bottom:10px;">
@@ -12218,7 +12228,7 @@ window.renderBody = function(cW,mac,theme,pWeek,sx){
     if(!charts) charts=`<div class="card" style="text-align:center;padding:20px;color:var(--mut);font-size:13px;">Inserisci almeno 2 misurazioni per vedere i grafici di progressione</div>`;
     return`<div class="bebas" style="font-size:18px;color:var(--mut);margin:16px 0 10px;letter-spacing:1px;">📈 ${t('m_title')==='MEASUREMENTS'?'MEASUREMENTS TREND':'TREND MISURE'}</div>${charts}`;
   })()}
-  ${wLogF.length>=2?`<div class="card"><span class="lbl">VOLUME ALLENAMENTI (KG)</span>${svg(wLogF,'vol',theme,90)}</div>`:''}
+  ${wLogF.length>=2?`<div class="card"><span class="lbl">${LL('VOLUME ALLENAMENTI (KG)','WORKOUT VOLUME (KG)')}</span>${svg(wLogF,'vol',theme,90)}</div>`:''}
 
   <!-- ═══ STATISTICHE AVANZATE (sessione 5) ═══ -->
   ${(() => {
@@ -12785,7 +12795,7 @@ window.renderShopping = function(mac) {
 
   <!-- Bottoni azione -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px;">
-    <button class="btn-s" style="padding:10px;background:rgba(96,165,250,.1);border:1px solid var(--blu);color:var(--blu);font-weight:600;border-radius:8px;cursor:pointer;font-size:12px;" onclick="window.regenerateShoppingList()">🔄 RIGENERA</button>
+    <button class="btn-s" style="padding:10px;background:rgba(96,165,250,.1);border:1px solid var(--blu);color:var(--blu);font-weight:600;border-radius:8px;cursor:pointer;font-size:12px;" onclick="window.regenerateShoppingList()">${LL('🔄 RIGENERA','🔄 REGENERATE')}</button>
     <button class="btn-s" style="padding:10px;background:rgba(34,197,94,.1);border:1px solid var(--gre);color:var(--gre);font-weight:600;border-radius:8px;cursor:pointer;font-size:12px;" onclick="window.shareShoppingList()">📤 CONDIVIDI</button>
   </div>`;
 
@@ -13634,8 +13644,8 @@ window.renderShare = function(){
 
   <!-- Info gratuita -->
   <div class="card" style="background:rgba(197,241,53,.04);border-color:#1a2400;padding:14px;">
-    <div class="lbl" style="color:var(--acc);margin-bottom:6px;">💡 BUONO A SAPERSI</div>
-    <div style="font-size:12px;color:var(--text);line-height:1.6;">FitTracker PRO è <strong>gratuita</strong> e senza pubblicità. Ogni utente ha un proprio account privato e protetto sul Cloud. I dati di un utente non sono mai visibili agli altri.</div>
+    <div class="lbl" style="color:var(--acc);margin-bottom:6px;">${LL('💡 BUONO A SAPERSI','💡 GOOD TO KNOW')}</div>
+    <div style="font-size:12px;color:var(--text);line-height:1.6;">${LL('FitTracker PRO è <strong>gratuita</strong> e senza pubblicità. Ogni utente ha un proprio account privato e protetto sul Cloud. I dati di un utente non sono mai visibili agli altri.','FitTracker PRO is <strong>free</strong> and ad-free. Each user has their own private, protected account on the Cloud. One user\'s data is never visible to others.')}</div>
   </div>`;
 };
 
@@ -14421,7 +14431,7 @@ window.renderSettings = function(mac){
     <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:12px;">Crea le tue ricette personali con macro e ingredienti. Puoi usarle come pasto sostitutivo e (se attivi la condivisione) renderle disponibili agli altri utenti.</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
       <button class="btn-s btn-action" style="padding:12px 8px;font-size:12px;font-weight:700;background:var(--purp);color:#fff;border:none;cursor:pointer;letter-spacing:.5px;" onclick="openAddRecipeSheet()">➕ ${t('rec_new')}</button>
-      <button class="btn-s" style="padding:12px 8px;font-size:12px;font-weight:700;background:var(--surf);color:var(--purp);border:1.5px solid var(--purp);cursor:pointer;letter-spacing:.5px;" onclick="openMyRecipesSheet()">📚 LE MIE (${(ST.userRecipes||[]).length})</button>
+      <button class="btn-s" style="padding:12px 8px;font-size:12px;font-weight:700;background:var(--surf);color:var(--purp);border:1.5px solid var(--purp);cursor:pointer;letter-spacing:.5px;" onclick="openMyRecipesSheet()">📚 ${LL('LE MIE','MINE')} (${(ST.userRecipes||[]).length})</button>
     </div>
   </div>
 
@@ -14455,7 +14465,7 @@ window.renderSettings = function(mac){
     </div>` : `
     <div style="font-size:11px;color:var(--gre);margin-bottom:10px;">✓ Database allineato${window.__foodsSyncState?.lastConsolidated ? ` · ultimo consolidamento ${new Date(window.__foodsSyncState.lastConsolidated).toLocaleDateString('it-IT')}` : ''}</div>`}
     <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:12px;">
-      Genera un file <code style="background:var(--surf);padding:1px 5px;border-radius:4px;">food_db.js</code> aggiornato che include i cibi di base + i cibi personalizzati + quelli della community. Caricalo su GitHub per renderli permanenti per tutti gli utenti.
+      ${LL('Genera un file','Generates a')} <code style="background:var(--surf);padding:1px 5px;border-radius:4px;">food_db.js</code> ${LL('aggiornato che include i cibi di base + i cibi personalizzati + quelli della community. Caricalo su GitHub per renderli permanenti per tutti gli utenti.','updated file including base foods + custom foods + community ones. Upload it to GitHub to make them permanent for all users.')}
       <br><br>
       <strong style="color:var(--text);">Cibi attuali:</strong> ${(window.FOOD_DB||[]).length} base${(ST.customFoods||[]).length ? ` + ${ST.customFoods.length} tuoi` : ''}${window.__communityFoodsCache?.length ? ` + ${window.__communityFoodsCache.length} community` : ''}
     </div>
@@ -14566,7 +14576,7 @@ window.renderSettings = function(mac){
   <div class="card" style="border-color:var(--blu);background:rgba(96,165,250,.04);">
     <div style="font-size:11px;color:var(--blu);font-weight:700;letter-spacing:1px;margin-bottom:4px;">✈️🏖️ MODALITÀ TRASFERTA & VACANZA</div>
     <div style="font-size:11px;color:var(--mut);line-height:1.5;margin-bottom:8px;">Spostate nella tab <strong>🤖 AI Coach → Strumenti</strong> insieme alla gestione infortuni.</div>
-    <button class="btn-s" style="width:100%;padding:9px;font-size:11px;background:var(--surf);border:1px solid var(--blu);color:var(--blu);font-weight:700;border-radius:8px;cursor:pointer;" onclick="ST.tab='coach';ST.coachView='tools';render()">→ APRI STRUMENTI AI COACH</button>
+    <button class="btn-s" style="width:100%;padding:9px;font-size:11px;background:var(--surf);border:1px solid var(--blu);color:var(--blu);font-weight:700;border-radius:8px;cursor:pointer;" onclick="ST.tab='coach';ST.coachView='tools';render()">→ ${LL('APRI STRUMENTI AI COACH','OPEN AI COACH TOOLS')}</button>
   </div>
 
   ${sectionTitle('sec-notifications', '🔔', t('sec_notif_tut'), 'var(--ora)')}
@@ -14579,18 +14589,18 @@ window.renderSettings = function(mac){
     </div>
     ${(() => {
       if (!('Notification' in window)) {
-        return '<div style="margin-bottom:10px;padding:8px 12px;background:rgba(239,68,68,.08);border:1px solid var(--red);border-radius:8px;font-size:11px;color:var(--red);">⚠️ Browser non supporta notifiche.</div>';
+        return '<div style="margin-bottom:10px;padding:8px 12px;background:rgba(239,68,68,.08);border:1px solid var(--red);border-radius:8px;font-size:11px;color:var(--red);">'+LL('⚠️ Browser non supporta notifiche.','⚠️ Browser does not support notifications.')+'</div>';
       }
       const p = Notification.permission;
-      if (p === 'granted') return '<div style="margin-bottom:10px;padding:8px 12px;background:rgba(34,197,94,.08);border:1px solid var(--gre);border-radius:8px;font-size:11px;color:var(--gre);">✓ Notifiche abilitate dal browser</div>';
-      if (p === 'denied') return '<div style="margin-bottom:10px;padding:8px 12px;background:rgba(239,68,68,.08);border:1px solid var(--red);border-radius:8px;font-size:11px;color:var(--red);">✗ Notifiche bloccate. Riabilita dalle impostazioni del browser.</div>';
-      return '<div style="margin-bottom:10px;padding:8px 12px;background:rgba(251,191,36,.08);border:1px solid #fbbf24;border-radius:8px;font-size:11px;color:#fbbf24;">⏳ Notifiche non ancora attivate.</div>';
+      if (p === 'granted') return '<div style="margin-bottom:10px;padding:8px 12px;background:rgba(34,197,94,.08);border:1px solid var(--gre);border-radius:8px;font-size:11px;color:var(--gre);">'+LL('✓ Notifiche abilitate dal browser','✓ Notifications enabled by the browser')+'</div>';
+      if (p === 'denied') return '<div style="margin-bottom:10px;padding:8px 12px;background:rgba(239,68,68,.08);border:1px solid var(--red);border-radius:8px;font-size:11px;color:var(--red);">'+LL('✗ Notifiche bloccate. Riabilita dalle impostazioni del browser.','✗ Notifications blocked. Re-enable them in your browser settings.')+'</div>';
+      return '<div style="margin-bottom:10px;padding:8px 12px;background:rgba(251,191,36,.08);border:1px solid #fbbf24;border-radius:8px;font-size:11px;color:#fbbf24;">'+LL('⏳ Notifiche non ancora attivate.','⏳ Notifications not enabled yet.')+'</div>';
     })()}
     ${(() => {
       const allOff = ST.notifPrefs?.master === false;
       const noPerm = !('Notification' in window) || Notification.permission !== 'granted';
       return `
-      ${noPerm ? `<button class="btn-s" style="width:100%;padding:11px;font-size:13px;background:rgba(255,104,53,.1);border:1px solid var(--ora);color:var(--ora);font-weight:600;border-radius:8px;cursor:pointer;margin-bottom:10px;" onclick="enableNotifications()">🔔 ATTIVA NOTIFICHE</button>` : ''}
+      ${noPerm ? `<button class="btn-s" style="width:100%;padding:11px;font-size:13px;background:rgba(255,104,53,.1);border:1px solid var(--ora);color:var(--ora);font-weight:600;border-radius:8px;cursor:pointer;margin-bottom:10px;" onclick="enableNotifications()">${LL('🔔 ATTIVA NOTIFICHE','🔔 ENABLE NOTIFICATIONS')}</button>` : ''}
 
       <!-- Master toggle: ATTIVA / DISATTIVA TUTTE -->
       <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:${allOff?'rgba(239,68,68,.08)':'rgba(34,197,94,.08)'};border:1.5px solid ${allOff?'var(--red)':'var(--gre)'};border-radius:10px;margin-bottom:10px;">
@@ -14612,14 +14622,14 @@ window.renderSettings = function(mac){
       <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">
         <div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:2px;">QUALI VUOI RICEVERE</div>
         ${[
-          {k:'workout', emo:'💪', t:'Promemoria allenamento', s:'15 min prima nei giorni di training', defOn:true},
-          {k:'meals', emo:'🍽️', t:'Promemoria pasti', s:'Colazione, pranzo, cena', defOn:true},
-          {k:'weighIn', emo:'⚖️', t:'Pesata settimanale', s:'Venerdì alle 8:00', defOn:true},
-          {k:'dailyWeight', emo:'⚖️', t:'Pesata quotidiana', s:'Ogni mattina alle 8:00 (se non già fatto)', defOn:false},
-          {k:'sleep', emo:'😴', t:'Sonno della notte', s:'Mattina alle 7:30 (se non già registrato)', defOn:true},
-          {k:'water', emo:'💧', t:'Bevi acqua', s:'4 promemoria/giorno (10, 13, 16, 19)', defOn:false},
-          {k:'workoutCheck', emo:'✅', t:'Check allenamento serale', s:'Hai allenato/riposato? alle 21:00', defOn:true},
-          {k:'foodCheck', emo:'🍽️', t:'Check pasto', s:'Dopo pranzo (14:30) e cena (21:30)', defOn:false}
+          {k:'workout', emo:'💪', t:LL('Promemoria allenamento','Workout reminder'), s:LL('15 min prima nei giorni di training','15 min before on training days'), defOn:true},
+          {k:'meals', emo:'🍽️', t:LL('Promemoria pasti','Meal reminders'), s:LL('Colazione, pranzo, cena','Breakfast, lunch, dinner'), defOn:true},
+          {k:'weighIn', emo:'⚖️', t:LL('Pesata settimanale','Weekly weigh-in'), s:LL('Venerdì alle 8:00','Friday at 8:00'), defOn:true},
+          {k:'dailyWeight', emo:'⚖️', t:LL('Pesata quotidiana','Daily weigh-in'), s:LL('Ogni mattina alle 8:00 (se non già fatto)','Every morning at 8:00 (if not done yet)'), defOn:false},
+          {k:'sleep', emo:'😴', t:LL('Sonno della notte','Night sleep'), s:LL('Mattina alle 7:30 (se non già registrato)','Morning at 7:30 (if not logged yet)'), defOn:true},
+          {k:'water', emo:'💧', t:LL('Bevi acqua','Drink water'), s:LL('4 promemoria/giorno (10, 13, 16, 19)','4 reminders/day (10, 13, 16, 19)'), defOn:false},
+          {k:'workoutCheck', emo:'✅', t:LL('Check allenamento serale','Evening workout check'), s:LL('Hai allenato/riposato? alle 21:00','Trained/rested? at 21:00'), defOn:true},
+          {k:'foodCheck', emo:'🍽️', t:LL('Check pasto','Meal check'), s:LL('Dopo pranzo (14:30) e cena (21:30)','After lunch (2:30pm) and dinner (9:30pm)'), defOn:false}
         ].map(opt => {
           // Stato: se default ON, true salvo se !== false. Se default OFF, true solo se === true
           const isOn = opt.defOn ? (ST.notifPrefs?.[opt.k] !== false) : (ST.notifPrefs?.[opt.k] === true);
@@ -14649,7 +14659,7 @@ window.renderSettings = function(mac){
   <!-- ── SESSIONE 31: APPLE HEALTH SYNC ── -->
   <div class="card" style="border-color:#ff2d55;">
     <div class="bebas" style="font-size:18px;color:#ff2d55;margin-bottom:6px;">❤️ ${t('s_health_sync')}</div>
-    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:12px;">Sincronizza dati con l'app Salute di Apple. Export e import avvengono tramite file (no API native).</div>
+    <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:12px;">${LL('Sincronizza dati con l\'app Salute di Apple. Export e import avvengono tramite file (no API native).','Sync data with Apple Health. Export and import happen via file (no native APIs).')}</div>
 
     <!-- EXPORT WORKOUT → ICS -->
     <button onclick="exportWorkoutsToCalendar()" style="width:100%;padding:13px;margin-bottom:8px;background:var(--surf);border:1.5px solid #ff2d55;border-radius:10px;color:var(--text);cursor:pointer;text-align:left;">
@@ -14714,7 +14724,7 @@ window.renderSettings = function(mac){
   <div class="card" style="border-color:var(--purp);">
     <div class="bebas" style="font-size:18px;color:var(--purp);margin-bottom:6px;">🎓 TUTORIAL APP</div>
     <div style="font-size:12px;color:var(--mut);line-height:1.4;margin-bottom:10px;">Rivedi il tour guidato di benvenuto.</div>
-    <button class="btn-s btn-action" style="width:100%;padding:11px;font-size:13px;" onclick="window.startOnboardingTour()">▶ RIVEDI TOUR</button>
+    <button class="btn-s btn-action" style="width:100%;padding:11px;font-size:13px;" onclick="window.startOnboardingTour()">▶ ${LL('RIVEDI TOUR','REPLAY TOUR')}</button>
   </div>
 
   ${sectionTitle('sec-advanced', '⚙️', t('sec_advanced'), 'var(--mut)')}
@@ -15220,7 +15230,7 @@ window.render = function() {
     const diff=totalK-target;
     const diffPct=target>0?Math.round(Math.abs(diff)/target*100):0;
     const diffCol=diffPct<=10?'var(--acc)':diffPct<=20?'var(--yel)':'var(--red)';
-    const diffText=Math.abs(diff)<5?'in linea':(diff>0?`+${diff} kcal sopra`:`${diff} kcal sotto`);
+    const diffText=Math.abs(diff)<5?LL('in linea','on track'):(diff>0?`+${diff} ${LL('kcal sopra','kcal over')}`:`${diff} ${LL('kcal sotto','kcal under')}`);
     return`<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div>
       <div class="bebas" style="font-size:22px;margin-bottom:4px;">✏️ PERSONALIZZA PASTO</div>
       <div style="font-size:12px;color:var(--mut);margin-bottom:14px;">Aggiungi i cibi che mangi davvero con le quantità e le kcal. Target del pasto: <strong style="color:var(--text);">${target} kcal</strong>.</div>
@@ -15320,10 +15330,10 @@ window.render = function() {
           `;
         })() : `
           <!-- ─── MODALITÀ INSERIMENTO MANUALE ─── -->
-          <div style="font-size:11px;color:var(--mut);margin-bottom:10px;line-height:1.5;">Per cibi non presenti nel database. Inserisci tu nome, grammi e kcal totali (li trovi sull'etichetta).</div>
+          <div style="font-size:11px;color:var(--mut);margin-bottom:10px;line-height:1.5;">${LL('Per cibi non presenti nel database. Inserisci tu nome, grammi e kcal totali (li trovi sull\'etichetta).','For foods not in the database. Enter the name, grams and total kcal yourself (you\'ll find them on the label).')}</div>
           <input id="cmName" type="text" maxlength="80" placeholder="${t('ph_food_name')}" style="margin-bottom:8px;font-size:14px;padding:10px;">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-            <input id="cmGrams" type="number" min="1" max="2000" placeholder="Grammi" style="margin:0;font-size:14px;padding:10px;text-align:center;">
+            <input id="cmGrams" type="number" min="1" max="2000" placeholder="${LL('Grammi','Grams')}" style="margin:0;font-size:14px;padding:10px;text-align:center;">
             <input id="cmKcal" type="number" min="1" max="3000" placeholder="Kcal tot" style="margin:0;font-size:14px;padding:10px;text-align:center;">
           </div>
           <button class="btn-s" style="background:var(--blu);color:#fff;width:100%;padding:10px;font-size:13px;" onclick="addCustomMealItem()">+ AGGIUNGI AL PASTO</button>
@@ -15341,29 +15351,34 @@ window.render = function() {
   // TURNO 3: sheet ricetta (popup con istruzioni passo-passo)
   ST.sheet==='recipe'&&ST.sheetData?.recipe?(()=>{
     const r=ST.sheetData.recipe;
+    const _en=(window.ST&&ST.lang==='en');
+    const rt=_en&&r.tEn?r.tEn:r.t;
+    const rdesc=_en&&r.descEn?r.descEn:r.desc;
+    const rsteps=_en&&r.stepsEn?r.stepsEn:r.steps;
+    const rtime=_en&&r.timeEn?r.timeEn:r.time;
     return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div>
       <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;">
         <div style="flex:1;min-width:0;">
-          <div class="bebas" style="font-size:24px;line-height:1.1;">${escapeHtml(r.t)}</div>
+          <div class="bebas" style="font-size:24px;line-height:1.1;">${escapeHtml(rt)}</div>
           <div style="font-size:11px;color:var(--mut);margin-top:4px;display:flex;gap:10px;align-items:center;">
-            <span>⏱️ ${escapeHtml(r.time)}</span>
+            <span>⏱️ ${escapeHtml(rtime)}</span>
             <span>·</span>
-            <span>${r.steps.length} passi</span>
+            <span>${rsteps.length} ${_en?'steps':'passi'}</span>
           </div>
         </div>
         <button onclick="closeSheet()" style="background:transparent;border:1px solid var(--bord);color:var(--mut);width:30px;height:30px;border-radius:50%;font-size:14px;cursor:pointer;flex-shrink:0;">✕</button>
       </div>
       <div style="background:rgba(167,139,250,.06);border:1px solid var(--purp);border-radius:12px;padding:12px 14px;margin-bottom:14px;">
-        <div style="font-size:13px;line-height:1.55;color:var(--text);font-style:italic;">${escapeHtml(r.desc)}</div>
+        <div style="font-size:13px;line-height:1.55;color:var(--text);font-style:italic;">${escapeHtml(rdesc)}</div>
       </div>
-      <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:10px;">PREPARAZIONE</div>
-      ${r.steps.map((s,i)=>`<div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;padding:10px 12px;background:var(--surf);border:1px solid var(--bord);border-radius:10px;">
+      <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:10px;">${_en?'PREPARATION':'PREPARAZIONE'}</div>
+      ${rsteps.map((s,i)=>`<div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;padding:10px 12px;background:var(--surf);border:1px solid var(--bord);border-radius:10px;">
         <div style="width:28px;height:28px;border-radius:50%;background:var(--acc);color:#000;font-family:'Bebas Neue';font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${i+1}</div>
         <div style="font-size:13px;line-height:1.55;color:var(--text);padding-top:4px;">${escapeHtml(s)}</div>
       </div>`).join('')}
       <div style="background:var(--bg);border-radius:10px;padding:10px 12px;margin-top:14px;">
-        <div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:5px;">💡 SUGGERIMENTI</div>
-        <div style="font-size:11px;color:var(--mut);line-height:1.5;">Le grammature dei singoli ingredienti sono nella card del pasto. Adatta la cottura ai tuoi gusti — la ricetta è una linea guida, non una regola rigida.</div>
+        <div style="font-size:10px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:5px;">${_en?'💡 TIPS':'💡 SUGGERIMENTI'}</div>
+        <div style="font-size:11px;color:var(--mut);line-height:1.5;">${_en?'The gram amounts for each ingredient are in the meal card. Adapt the cooking to your taste — the recipe is a guideline, not a strict rule.':'Le grammature dei singoli ingredienti sono nella card del pasto. Adatta la cottura ai tuoi gusti — la ricetta è una linea guida, non una regola rigida.'}</div>
       </div>
       <button class="btn btn-action" style="width:100%;padding:12px;margin-top:14px;" onclick="closeSheet()">${t('c_close')}</button>
     </div></div>`;
@@ -15608,7 +15623,7 @@ window.render = function() {
     const upd = (k, v) => { ST.sheetData[k] = v; };
     return `<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh" style="max-height:90vh;overflow-y:auto;">
       <div class="sh-h"></div>
-      <div class="bebas" style="font-size:24px;color:var(--purp);margin-bottom:4px;letter-spacing:1px;">📖 ${d.editId ? 'MODIFICA' : 'NUOVA'} RICETTA</div>
+      <div class="bebas" style="font-size:24px;color:var(--purp);margin-bottom:4px;letter-spacing:1px;">📖 ${d.editId ? LL('MODIFICA RICETTA','EDIT RECIPE') : LL('NUOVA RICETTA','NEW RECIPE')}</div>
       <div style="font-size:11px;color:var(--mut);margin-bottom:14px;">Crea una tua ricetta personalizzata. Le macro sono per la porzione intera.</div>
 
       <div style="display:grid;grid-template-columns:1fr 4fr;gap:8px;margin-bottom:10px;">
@@ -15673,7 +15688,7 @@ window.render = function() {
           <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px;">Nessuna ricetta ancora</div>
           <div style="font-size:11px;line-height:1.4;">Crea la tua prima ricetta personale.<br>Apparirà qui pronta da usare come pasto.</div>
         </div>
-        <button class="btn" style="width:100%;padding:14px;background:var(--purp);color:#fff;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;border:none;border-radius:12px;margin-top:14px;" onclick="closeSheet();openAddRecipeSheet()">➕ CREA LA PRIMA RICETTA</button>
+        <button class="btn" style="width:100%;padding:14px;background:var(--purp);color:#fff;font-family:'Bebas Neue';font-size:18px;letter-spacing:1px;border:none;border-radius:12px;margin-top:14px;" onclick="closeSheet();openAddRecipeSheet()">➕ ${LL('CREA LA PRIMA RICETTA','CREATE YOUR FIRST RECIPE')}</button>
       ` : `
         <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
           ${list.map(r => `<div style="background:var(--surf);border:1px solid var(--bord);border-radius:12px;padding:12px;">
@@ -15906,7 +15921,7 @@ window.render = function() {
           <button class="btn-s" style="padding:10px;font-size:12px;background:${!d.isPortion?'var(--purp)':'var(--bg)'};color:${!d.isPortion?'#fff':'var(--mut)'};border:1px solid ${!d.isPortion?'var(--purp)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;" onclick="ST.sheetData.isPortion=false;render()">⚖️ A PESO (g)</button>
           <button class="btn-s" style="padding:10px;font-size:12px;background:${d.isPortion?'var(--ora)':'var(--bg)'};color:${d.isPortion?'#fff':'var(--mut)'};border:1px solid ${d.isPortion?'var(--ora)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;" onclick="ST.sheetData.isPortion=true;render()">📦 A PORZIONE</button>
         </div>
-        <div style="font-size:10px;color:var(--mut);margin-top:6px;font-style:italic;">${d.isPortion ? 'Es: birra media, fetta torta, panino al bar' : 'Es: pollo, pasta, pane (cibi a peso variabile)'}</div>
+        <div style="font-size:10px;color:var(--mut);margin-top:6px;font-style:italic;">${d.isPortion ? LL('Es: birra media, fetta torta, panino al bar','E.g.: medium beer, slice of cake, sandwich') : LL('Es: pollo, pasta, pane (cibi a peso variabile)','E.g.: chicken, pasta, bread (foods by variable weight)')}</div>
       </div>
 
       <!-- Riferimenti nutrizionali -->
@@ -15937,7 +15952,7 @@ window.render = function() {
             <input type="number" min="1" max="5000" step="1" value="${d.kcal||250}" oninput="ST.sheetData.kcal=parseInt(this.value)||0" style="width:100%;font-size:13px;padding:8px;text-align:center;">
           </div>
           <div>
-            <div style="font-size:10px;color:var(--mut);margin-bottom:3px;">in quanti grammi *</div>
+            <div style="font-size:10px;color:var(--mut);margin-bottom:3px;">${LL('in quanti grammi *','in how many grams *')}</div>
             <input type="number" min="1" max="5000" step="10" value="${d.refGrams||100}" oninput="ST.sheetData.refGrams=parseInt(this.value)||100" style="width:100%;font-size:13px;padding:8px;text-align:center;">
           </div>
         </div>
@@ -15946,7 +15961,7 @@ window.render = function() {
 
         <!-- Macro opzionali -->
         <div style="margin-top:10px;padding-top:8px;border-top:1px dashed var(--bord);">
-          <div style="font-size:10px;color:var(--mut);margin-bottom:6px;">Macro (opzionali, in grammi):</div>
+          <div style="font-size:10px;color:var(--mut);margin-bottom:6px;">${LL('Macro (opzionali, in grammi):','Macros (optional, in grams):')}</div>
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
             <div>
               <div style="font-size:9px;color:var(--mut);">Proteine</div>
