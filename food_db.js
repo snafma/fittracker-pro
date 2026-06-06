@@ -1193,4 +1193,3 @@ window.FOOD_DB=[
   {id:'marmellata',name:'Marmellata/Confettura',nameEn:'Jam/Preserve',cat:'condimenti',kcal:265,p:0.5,c:65,f:0.1}
 
 ];
-
