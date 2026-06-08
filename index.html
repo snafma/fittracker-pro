@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>FitTracker PRO - Elite Edition</title>
-<meta name="ft-version" content="build-SESSION56-WORKOUT-AUTH-EN">
+<meta name="ft-version" content="build-SESSION57-EN-FULLSWEEP">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -520,7 +520,7 @@ input[type="date"]::-webkit-datetime-edit { display: block; padding: 0; }
     <div class="spinner"></div>
     <div class="bebas" style="color:var(--text);font-size:28px;letter-spacing:3px;">SYSTEM BOOTING</div>
     <div style="color:var(--mut);font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:1px;">Connessione al Cloud Secure Database...</div>
-    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION56</div>
+    <div style="color:var(--mut);font-size:9px;margin-top:14px;opacity:.5;font-family:monospace;">build-SESSION57 · full EN sweep</div>
   </div>
 </div>
 
@@ -2823,38 +2823,26 @@ window.analyze=function(history,goal,wLog){
 // per mantenere realistico l'obiettivo. Restituisce {needsShift, suggestedDate, weeksDelay}
 window.checkTargetAdjustment = function(history, goal) {
   if (!history || history.length < 4 || !goal?.targetD) return { needsShift: false };
-  const recent = history.slice(-21); // ultime 3 settimane
-  if (recent.length < 4) return { needsShift: false };
-  const fw = recent[0].w;
-  const lw = recent[recent.length-1].w;
-  const days = Math.max(1, recent.length);
-  // Variazione effettiva settimanale
-  const wRate = goal.t === 'cut' ? ((fw - lw) / days * 7) : ((lw - fw) / days * 7);
-  const currW = recent[recent.length-1].w;
-  const rem = Math.abs(currW - goal.g);
-  // Quanti giorni mancano alla data target?
+  // SESSIONE 57: coerenza con la card "Stima reale" della home.
+  // Riuso ESATTAMENTE getTargetSummary (stessa finestra/rate) così la data proposta
+  // qui combacia con la "Real estimate" mostrata sopra. Niente più stime divergenti.
+  const summary = (typeof window.getTargetSummary === 'function') ? window.getTargetSummary(history, goal) : null;
+  if (!summary || !summary.etaDate || summary.etaDiffDays == null) return { needsShift: false };
   const today = new Date();
   const tgt = new Date(goal.targetD);
   const daysToTarget = Math.ceil((tgt - today) / 86400000);
   if (daysToTarget < 7) return { needsShift: false }; // troppo vicina, non rimodulare
-  // Quanti kg necessari nella settimana?
-  const reqRate = (rem / daysToTarget) * 7;
-  // Se il ratio reale è molto basso E richiede uno sforzo non realistico
-  if (wRate < reqRate * 0.4 && wRate > 0) {
-    // Calcolo nuova data realistica basata su rate effettivo
-    const wkNeed = rem / Math.max(0.1, wRate);
-    const newDate = new Date();
-    newDate.setDate(newDate.getDate() + Math.ceil(wkNeed * 7));
-    const weeksDelay = Math.ceil((newDate - tgt) / 86400000 / 7);
-    if (weeksDelay >= 2) {
-      return {
-        needsShift: true,
-        suggestedDate: newDate.toISOString().slice(0,10),
-        weeksDelay,
-        currentRate: wRate.toFixed(2),
-        requiredRate: reqRate.toFixed(2)
-      };
-    }
+  const eta = new Date(summary.etaDate);
+  const weeksDelay = Math.ceil((eta - tgt) / 86400000 / 7);
+  // Propongo lo spostamento solo se la stima reale supera il target di almeno 2 settimane
+  if (summary.etaDiffDays > 0 && weeksDelay >= 2) {
+    return {
+      needsShift: true,
+      suggestedDate: summary.etaDate,
+      weeksDelay,
+      currentRate: summary.currentRate,
+      requiredRate: summary.requiredRate
+    };
   }
   return { needsShift: false };
 };
@@ -3476,7 +3464,7 @@ window.addLibraryExerciseToDraft=function(){
   if(!ST.sheetData) return;
   saveDraftNameBeforeRender(); // FIX: conserva nome scheda prima del render
   const exId=document.getElementById('cwExSelect')?.value;
-  if(!exId||!EX[exId]) return alert('Seleziona un esercizio dalla lista.');
+  if(!exId||!EX[exId]) return alert(LL('Seleziona un esercizio dalla lista.','Select an exercise from the list.'));
   const ex=EX[exId];
   // Default reps/recupero in base al focus
   const sr=getSetsReps(ex.t,ST.p.t||'cut',pwk(ST.programStart),ST.p.focus||'total');
@@ -5438,6 +5426,41 @@ window.AUTO_TRANS = {
   "Giorno di riposo — alimentazione adattata: meno carboidrati al pomeriggio, più recupero proteico.": "Rest day — adjusted nutrition: fewer carbs in the afternoon, more protein recovery.",
   "Target adattato:": "Adjusted target:",
   "AZZERA LOG DI OGGI": "RESET TODAY'S LOG",
+  // ── SESSIONE 57: residui EN (sheet scheda, nutrition, progress, shopping, rest card) ──
+  "+ NUOVA SCHEDA": "+ NEW ROUTINE", "✏️ MODIFICA SCHEDA": "✏️ EDIT ROUTINE",
+  "+ NUOVO ESERCIZIO PERSONALIZZATO": "+ NEW CUSTOM EXERCISE",
+  "NOME ESERCIZIO": "EXERCISE NAME", "GRUPPO MUSCOLARE": "MUSCLE GROUP",
+  "RECUPERO (S)": "REST (S)", "RECUP. (S)": "REST (S)",
+  "ESERCIZI": "EXERCISES", "SERIE": "SETS",
+  "Nessun esercizio. Aggiungine almeno 1.": "No exercises. Add at least 1.",
+  "Volume totale:": "Total volume:", "Min consigliato:": "Min recommended:",
+  "DA LIBRERIA": "FROM LIBRARY",
+  "RIPOSO REGISTRATO": "REST LOGGED", "Recupero attivo": "Active recovery",
+  "Stretching, camminata, 7-8h di sonno": "Stretching, walking, 7-8h sleep",
+  "Stretching, camminata, sonno": "Stretching, walking, sleep",
+  "WORKOUT 7G": "WORKOUT 7D",
+  "ALLENAMENTO OGGI": "TODAY'S WORKOUT", "ALLENAMENTO": "WORKOUT",
+  "RIPOSO ATTIVO": "ACTIVE REST",
+  "Stretching leggero, camminata, mobilità": "Light stretching, walking, mobility",
+  "Sett.": "Wk.",
+  "SCANSIONA CODICE A BARRE": "SCAN BARCODE",
+  "Azzera log di oggi": "Reset today's log",
+  "nessun dato": "no data", "1RM STIM.": "1RM EST.", "VOL. 7GG": "VOL. 7D",
+  "Riso integrale": "Brown rice", "Pane integrale tostato": "Toasted whole wheat bread",
+  "Verdure miste di stagione": "Mixed seasonal vegetables", "Di stagione": "Seasonal",
+  "Tagliata di manzo magro": "Lean sliced beef steak",
+  "MEDIA SESS./SETT.": "AVG SESS./WK.",
+  "Nessun allenamento registrato": "No workout logged",
+  "Nessun dato": "No data",
+  "Completa qualche allenamento per vedere le statistiche.": "Complete a few workouts to see your stats.",
+  "Stima con plicometro o bilancia impedenziometrica (opzionale)": "Estimate with calipers or bioimpedance scale (optional)",
+  "prec.": "prev.",
+  "Tutto sotto controllo": "Everything on track",
+  "ECCELLENTE": "EXCELLENT", "BUONA": "GOOD", "INIZIA OGGI": "START TODAY",
+  "COMPLETATO": "COMPLETED",
+  "COSCIA DX": "THIGH R", "BICIPITE DX": "BICEPS R", "% GRASSO CORPOREO": "% BODY FAT",
+  "COMPOSIZIONE": "COMPOSITION", "RILASSATO": "RELAXED", "Contratto": "Flexed",
+  "Nessuna ricetta ancora": "No recipes yet",
   "TODAY'S MENU": "TODAY'S MENU", "Ultimo:": "Last:",
   "ingredienti": "ingredients", "INGREDIENTI": "INGREDIENTS",
   "Caffè amaro": "Black coffee", "Shaker 30g Whey/Isolate (~120 kcal)": "Shaker 30g Whey/Isolate (~120 kcal)",
@@ -8046,10 +8069,10 @@ window.confirmTravelMode = function() {
   ST.sheet = null;
   ST.sheetData = null;
   save();
-  const endLbl = new Date(d.endD+'T12:00:00').toLocaleDateString('it-IT');
+  const endLbl = new Date(d.endD+'T12:00:00').toLocaleDateString((window.ST&&ST.lang==='en')?'en-GB':'it-IT');
   alert(dietOnly
-    ? `✓ Modalità trasferta (solo dieta) attivata!\n\nNiente allenamenti programmati fino al ${endLbl}. Adatterò solo i pasti.`
-    : `✓ Modalità trasferta attivata!\n\nL'app adatterà automaticamente i tuoi allenamenti e suggerimenti pasto fino al ${endLbl}`);
+    ? LL(`✓ Modalità trasferta (solo dieta) attivata!\n\nNiente allenamenti programmati fino al ${endLbl}. Adatterò solo i pasti.`,`✓ Travel mode (diet only) enabled!\n\nNo workouts scheduled until ${endLbl}. I'll only adapt your meals.`)
+    : LL(`✓ Modalità trasferta attivata!\n\nL'app adatterà automaticamente i tuoi allenamenti e suggerimenti pasto fino al ${endLbl}`,`✓ Travel mode enabled!\n\nThe app will automatically adapt your workouts and meal suggestions until ${endLbl}`));
 };
 
 window.endTravelMode = function() {
@@ -8668,7 +8691,7 @@ window.rescheduleAllNotifications = function() {
       const sess = ST.p.sessions || 3;
       const trainingDays = sess >= 6 ? [1,2,3,4,5,6] : sess === 5 ? [1,2,3,4,5] : sess === 4 ? [1,2,4,5] : sess === 3 ? [1,3,5] : [2,4];
       if (trainingDays.includes(dayOfWeek)) {
-        scheduleNotification(wo.getTime(), '💪 Allenamento tra 15 minuti!', `Pronto per la sessione delle ${t}? Apri l'app e via.`, 'ft-workout-' + todayStr);
+        scheduleNotification(wo.getTime(), LL('💪 Allenamento tra 15 minuti!','💪 Workout in 15 minutes!'), LL(`Pronto per la sessione delle ${t}? Apri l'app e via.`,`Ready for your ${t} session? Open the app and go.`), 'ft-workout-' + todayStr);
       }
     }
   }
@@ -8685,7 +8708,7 @@ window.rescheduleAllNotifications = function() {
       const mt = new Date(today);
       mt.setHours(h, m, 0, 0);
       if (mt.getTime() > Date.now()) {
-        scheduleNotification(mt.getTime(), meal.label + ' tra poco!', 'Apri l\'app per vedere cosa mangiare oggi.', 'ft-meal-' + meal.id + '-' + todayStr);
+        scheduleNotification(mt.getTime(), meal.label + LL(' tra poco!',' soon!'), LL('Apri l\'app per vedere cosa mangiare oggi.','Open the app to see what to eat today.'), 'ft-meal-' + meal.id + '-' + todayStr);
       }
     });
   }
@@ -8697,7 +8720,7 @@ window.rescheduleAllNotifications = function() {
     friday.setDate(today.getDate() + dayDiff);
     friday.setHours(8, 0, 0, 0);
     if (friday.getTime() > Date.now() && friday.getTime() < Date.now() + 86400000 * 2) {
-      scheduleNotification(friday.getTime(), '⚖️ È venerdì! Pesata settimanale', 'Sali sulla bilancia e registra il peso per tracciare i progressi.', 'ft-weigh-' + friday.toISOString().slice(0,10));
+      scheduleNotification(friday.getTime(), LL('⚖️ È venerdì! Pesata settimanale','⚖️ It\'s Friday! Weekly weigh-in'), LL('Sali sulla bilancia e registra il peso per tracciare i progressi.','Step on the scale and log your weight to track progress.'), 'ft-weigh-' + friday.toISOString().slice(0,10));
     }
   }
 
@@ -8709,7 +8732,7 @@ window.rescheduleAllNotifications = function() {
     if (wt.getTime() > Date.now()) {
       const already = (ST.h || []).some(h => h.d === todayStr);
       if (!already) {
-        scheduleNotification(wt.getTime(), '⚖️ Pesata di oggi', 'Inizia bene la giornata: registra il peso in 5 secondi.', 'ft-dailyweight-' + todayStr);
+        scheduleNotification(wt.getTime(), LL('⚖️ Pesata di oggi','⚖️ Today\'s weigh-in'), LL('Inizia bene la giornata: registra il peso in 5 secondi.','Start the day right: log your weight in 5 seconds.'), 'ft-dailyweight-' + todayStr);
       }
     }
   }
@@ -8721,7 +8744,7 @@ window.rescheduleAllNotifications = function() {
     if (sl.getTime() > Date.now()) {
       const already = ST.life?.[todayStr]?.sleep;
       if (!already) {
-        scheduleNotification(sl.getTime(), '😴 Quanto hai dormito?', 'Servono 5 sec, calibriamo il workout di oggi.', 'ft-sleep-' + todayStr);
+        scheduleNotification(sl.getTime(), LL('😴 Quanto hai dormito?','😴 How did you sleep?'), LL('Servono 5 sec, calibriamo il workout di oggi.','Takes 5 sec, let\'s tune today\'s workout.'), 'ft-sleep-' + todayStr);
       }
     }
   }
@@ -8732,7 +8755,7 @@ window.rescheduleAllNotifications = function() {
       const wat = new Date(today);
       wat.setHours(h, 0, 0, 0);
       if (wat.getTime() > Date.now()) {
-        scheduleNotification(wat.getTime(), '💧 Bevi un bicchiere d\'acqua', 'Idratazione = performance + dimagrimento.', 'ft-water-' + todayStr + '-' + h);
+        scheduleNotification(wat.getTime(), LL('💧 Bevi un bicchiere d\'acqua','💧 Drink a glass of water'), LL('Idratazione = performance + dimagrimento.','Hydration = performance + fat loss.'), 'ft-water-' + todayStr + '-' + h);
       }
     });
   }
@@ -8748,8 +8771,8 @@ window.rescheduleAllNotifications = function() {
       const trainingDays = sess >= 6 ? [1,2,3,4,5,6] : sess === 5 ? [1,2,3,4,5] : sess === 4 ? [1,2,4,5] : sess === 3 ? [1,3,5] : [2,4];
       const isTrainDay = trainingDays.includes(dayOfWeek);
       if (!todayLogged) {
-        const title = isTrainDay ? '💪 Hai allenato oggi?' : '😌 Hai riposato?';
-        const body = isTrainDay ? 'Registra la sessione o segna riposo, così non perdi lo streak.' : 'Conferma il riposo per mantenere lo streak.';
+        const title = isTrainDay ? LL('💪 Hai allenato oggi?','💪 Did you train today?') : LL('😌 Hai riposato?','😌 Did you rest?');
+        const body = isTrainDay ? LL('Registra la sessione o segna riposo, così non perdi lo streak.','Log the session or mark rest, so you don\'t lose your streak.') : LL('Conferma il riposo per mantenere lo streak.','Confirm rest to keep your streak.');
         scheduleNotification(wc.getTime(), title, body, 'ft-wocheck-' + todayStr);
       }
     }
@@ -8757,11 +8780,11 @@ window.rescheduleAllNotifications = function() {
 
   // 8. Check cibo dopo pranzo (14:30) e dopo cena (21:30)
   if (prefs.foodCheck === true) {
-    [{h:14,m:30,lbl:'pranzo'}, {h:21,m:30,lbl:'cena'}].forEach((slot, idx) => {
+    [{h:14,m:30,lbl:'pranzo',lblEn:'lunch'}, {h:21,m:30,lbl:'cena',lblEn:'dinner'}].forEach((slot, idx) => {
       const fc = new Date(today);
       fc.setHours(slot.h, slot.m, 0, 0);
       if (fc.getTime() > Date.now()) {
-        scheduleNotification(fc.getTime(), `🍽️ Come è andato il ${slot.lbl}?`, `Inserisci eventuali sgarri o sostituzioni in 10 secondi.`, 'ft-foodcheck-' + todayStr + '-' + idx);
+        scheduleNotification(fc.getTime(), LL(`🍽️ Com'è andata la ${slot.lbl}?`,`🍽️ How was your ${slot.lblEn}?`), LL('Inserisci eventuali sgarri o sostituzioni in 10 secondi.','Log any cheats or swaps in 10 seconds.'), 'ft-foodcheck-' + todayStr + '-' + idx);
       }
     });
   }
@@ -10274,7 +10297,7 @@ window.startWo=function(id){
   render();
 }
 window.closeWo=function(){
-  if(!confirm('Uscire dall\'allenamento?')) return;
+  if(!confirm(LL('Uscire dall\'allenamento?','Exit the workout?'))) return;
   clearInterval(ST.tmrId);clearInterval(ST.setTmrId);
   WakeLockMgr.disable();
   ST.aWo=null;render();
@@ -10774,40 +10797,39 @@ window.renderDisclaimer=function(){
   // Mostra se non accettato (popup obbligatorio) OPPURE se aperto da Config (modalità rivedi)
   const isReview=!!window.disclaimerViewMode;
   if(ST.p.disclaimerAccepted && !isReview) return '';
-  const acceptedDate=ST.p.disclaimerAcceptedAt?new Date(ST.p.disclaimerAcceptedAt).toLocaleDateString('it-IT'):null;
+  const acceptedDate=ST.p.disclaimerAcceptedAt?new Date(ST.p.disclaimerAcceptedAt).toLocaleDateString((window.ST&&ST.lang==='en')?'en-GB':'it-IT'):null;
   return `<div style="position:fixed;inset:0;background:rgba(0,0,0,.92);backdrop-filter:blur(8px);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto;">
     <div style="background:var(--bg);border:2px solid var(--ora);border-radius:20px;max-width:480px;width:100%;padding:22px;box-shadow:0 0 40px rgba(255,104,53,.3);max-height:92vh;overflow-y:auto;">
 
       <!-- Header -->
       <div style="text-align:center;margin-bottom:18px;">
         <div style="font-size:48px;margin-bottom:6px;line-height:1;">📋</div>
-        <div class="bebas" style="font-size:24px;color:var(--ora);line-height:1.1;">${isReview?'TERMINI E PRIVACY':'PRIMA DI INIZIARE'}</div>
-        <div style="font-size:12px;color:var(--mut);margin-top:4px;">${isReview && acceptedDate?`Accettato il ${acceptedDate}`:'Leggi e accetta per usare l\'app'}</div>
+        <div class="bebas" style="font-size:24px;color:var(--ora);line-height:1.1;">${isReview?LL('TERMINI E PRIVACY','TERMS & PRIVACY'):LL('PRIMA DI INIZIARE','BEFORE YOU START')}</div>
+        <div style="font-size:12px;color:var(--mut);margin-top:4px;">${isReview && acceptedDate?LL(`Accettato il ${acceptedDate}`,`Accepted on ${acceptedDate}`):LL('Leggi e accetta per usare l\'app','Read and accept to use the app')}</div>
       </div>
 
       <!-- Disclaimer medico -->
       <div style="background:rgba(255,104,53,.06);border:1.5px solid var(--ora);border-radius:14px;padding:14px;margin-bottom:14px;">
-        <div class="bebas" style="font-size:17px;color:var(--ora);margin-bottom:8px;">⚠️ DISCLAIMER MEDICO</div>
+        <div class="bebas" style="font-size:17px;color:var(--ora);margin-bottom:8px;">${LL('⚠️ DISCLAIMER MEDICO','⚠️ MEDICAL DISCLAIMER')}</div>
         <div style="font-size:13px;color:var(--text);line-height:1.6;">
-          FitTracker PRO è uno strumento di supporto al fitness e all'alimentazione, <strong>non un servizio sanitario</strong>. I consigli su allenamento, calorie e macronutrienti sono generati con regole standard e <strong>non sostituiscono il parere di un medico, dietista o personal trainer qualificato</strong>.<br><br>
-          Se hai patologie (cardiache, metaboliche, alimentari), assumi farmaci, sei in gravidanza/allattamento o hai dubbi, <strong>consulta sempre un professionista</strong> prima di seguire i consigli dell'app. Usi l'app sotto la tua responsabilità.
+          ${LL('FitTracker PRO è uno strumento di supporto al fitness e all\'alimentazione, <strong>non un servizio sanitario</strong>. I consigli su allenamento, calorie e macronutrienti sono generati con regole standard e <strong>non sostituiscono il parere di un medico, dietista o personal trainer qualificato</strong>.<br><br>\n          Se hai patologie (cardiache, metaboliche, alimentari), assumi farmaci, sei in gravidanza/allattamento o hai dubbi, <strong>consulta sempre un professionista</strong> prima di seguire i consigli dell\'app. Usi l\'app sotto la tua responsabilità.','FitTracker PRO is a fitness and nutrition support tool, <strong>not a healthcare service</strong>. The training, calorie and macronutrient advice is generated with standard rules and <strong>does not replace the opinion of a qualified doctor, dietitian or personal trainer</strong>.<br><br>\n          If you have medical conditions (cardiac, metabolic, dietary), take medication, are pregnant/breastfeeding or have any doubts, <strong>always consult a professional</strong> before following the app\'s advice. You use the app at your own risk.')}
         </div>
       </div>
 
       <!-- Privacy GDPR completa (sessione 7: unificata, no file separato) -->
       <div style="background:rgba(96,165,250,.06);border:1.5px solid var(--blu);border-radius:14px;padding:14px;margin-bottom:14px;">
-        <div class="bebas" style="font-size:17px;color:var(--blu);margin-bottom:8px;">🔒 INFORMATIVA PRIVACY (GDPR)</div>
+        <div class="bebas" style="font-size:17px;color:var(--blu);margin-bottom:8px;">${LL('🔒 INFORMATIVA PRIVACY (GDPR)','🔒 PRIVACY NOTICE (GDPR)')}</div>
 
         <!-- Riepilogo breve sempre visibile -->
         <div style="font-size:13px;color:var(--text);line-height:1.6;margin-bottom:10px;">
-          I tuoi dati (peso, misure, allenamenti, pasti) sono salvati nel tuo <strong>account privato sul Cloud</strong> (Firebase Auth + Firestore di Google). Solo tu puoi leggerli. <strong>Non condividiamo dati con terzi, nessuna pubblicità, nessuna profilazione.</strong> Puoi cancellare il tuo account o esportare i dati in qualsiasi momento dalla Configurazione.
+          ${LL('I tuoi dati (peso, misure, allenamenti, pasti) sono salvati nel tuo <strong>account privato sul Cloud</strong> (Firebase Auth + Firestore di Google). Solo tu puoi leggerli. <strong>Non condividiamo dati con terzi, nessuna pubblicità, nessuna profilazione.</strong> Puoi cancellare il tuo account o esportare i dati in qualsiasi momento dalla Configurazione.','Your data (weight, measurements, workouts, meals) is saved in your <strong>private Cloud account</strong> (Google Firebase Auth + Firestore). Only you can read it. <strong>We don\'t share data with third parties, no advertising, no profiling.</strong> You can delete your account or export your data at any time from Settings.')}
         </div>
 
         <!-- Toggle versione completa -->
         <details style="font-size:12px;line-height:1.6;color:var(--text);">
-          <summary style="cursor:pointer;color:var(--blu);font-weight:600;padding:8px 0;border-top:1px solid var(--bord);margin-top:6px;">📜 Leggi l'informativa completa GDPR</summary>
+          <summary style="cursor:pointer;color:var(--blu);font-weight:600;padding:8px 0;border-top:1px solid var(--bord);margin-top:6px;">${LL('📜 Leggi l\'informativa completa GDPR','📜 Read the full GDPR notice')}</summary>
           <div style="margin-top:10px;padding-top:6px;">
-
+            ${LL(`
             <div style="font-weight:700;color:var(--blu);margin-top:10px;margin-bottom:4px;">1. Titolare del trattamento</div>
             Marcello (titolare progetto FitTracker PRO) — email: <strong>snafma@gmail.com</strong>. App personale, non commerciale.
 
@@ -10849,7 +10871,49 @@ window.renderDisclaimer=function(){
 
             <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--bord);font-size:11px;color:var(--mut);font-style:italic;">
               Ultimo aggiornamento: 4 maggio 2026 · Conforme Reg. UE 2016/679 (GDPR) e D.Lgs. 196/2003.
-            </div>
+            </div>`,`
+            <div style="font-weight:700;color:var(--blu);margin-top:10px;margin-bottom:4px;">1. Data Controller</div>
+            Marcello (FitTracker PRO project owner) — email: <strong>snafma@gmail.com</strong>. Personal, non-commercial app.
+
+            <div style="font-weight:700;color:var(--blu);margin-top:10px;margin-bottom:4px;">2. Data collected</div>
+            <strong>Account</strong>: email, password (encrypted by Firebase, never accessible in plain text), username derived from the email.<br>
+            <strong>Fitness</strong> (entered voluntarily by you): age, biological sex, height, weight over time, body measurements, workouts, meals eaten, cheats, kcal/macros, outdoor sports, steps, sleep, free notes, preferences.<br>
+            <strong>Friends leaderboard (optional)</strong>: only if explicitly enabled, you share username, training sessions, lifted volume, kcal burned (last 7 days), streak, percentage weight change (never the absolute value), strategy (cut/bulk). Can be disabled at any time.
+
+            <div style="font-weight:700;color:var(--blu);margin-top:10px;margin-bottom:4px;">3. Third-party services (Data Processor)</div>
+            <strong>Google Firebase</strong> (Google Ireland Limited): authentication + Cloud Firestore. Data may be transferred to servers outside the EU (USA) via Standard Contractual Clauses (SCC) and the EU-US Data Privacy Framework. Privacy: firebase.google.com/support/privacy<br>
+            <strong>Anthropic</strong> (USA, optional): if you use "AI coaching recalculation", an anonymized request with aggregated data is sent to Anthropic. It does NOT include your name or email. Privacy: anthropic.com/legal/privacy
+
+            <div style="font-weight:700;color:var(--blu);margin-top:10px;margin-bottom:4px;">4. Purposes and legal basis</div>
+            <strong>Service performance</strong> (art. 6.1.b GDPR): authentication, data storage, personalized program generation.<br>
+            <strong>Consent</strong> (art. 6.1.a GDPR): friends leaderboard, AI coaching. Optional and can be disabled.
+
+            <div style="font-weight:700;color:var(--blu);margin-top:10px;margin-bottom:4px;">5. Data retention</div>
+            Data is kept as long as you keep the account active. After account deletion, complete erasure within 30 days from Firebase servers. Leaderboard: removal within 24 hours of disabling.
+
+            <div style="font-weight:700;color:var(--blu);margin-top:10px;margin-bottom:4px;">6. Your GDPR rights (Art. 15-22)</div>
+            <strong>Access and portability</strong>: download your data as JSON from Settings → "Export my data".<br>
+            <strong>Rectification</strong>: edit data directly in the app.<br>
+            <strong>Erasure (right to be forgotten)</strong>: Settings → "Delete my account" (irreversible, triple confirmation).<br>
+            <strong>Restriction</strong>: disable optional sharing (leaderboard) from the relevant tabs.<br>
+            <strong>Objection</strong>: write to snafma@gmail.com.<br>
+            <strong>Complaint</strong>: Italian Data Protection Authority — garanteprivacy.it
+
+            <div style="font-weight:700;color:var(--blu);margin-top:10px;margin-bottom:4px;">7. Security</div>
+            Passwords encrypted with scrypt (Firebase Auth). Firestore Security Rules let each user access ONLY their own data. HTTPS/TLS on all communications.
+
+            <div style="font-weight:700;color:var(--blu);margin-top:10px;margin-bottom:4px;">8. Cookies and localStorage</div>
+            We use the browser's localStorage for: Firebase Auth session, privacy consent, performance cache. <strong>No advertising cookies, profiling or third-party trackers.</strong>
+
+            <div style="font-weight:700;color:var(--blu);margin-top:10px;margin-bottom:4px;">9. Minors</div>
+            App not intended for those under 16. You must be at least 16 years old to register.
+
+            <div style="font-weight:700;color:var(--blu);margin-top:10px;margin-bottom:4px;">10. Changes and contacts</div>
+            Significant changes communicated at your next login. Privacy contacts: <strong>snafma@gmail.com</strong>
+
+            <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--bord);font-size:11px;color:var(--mut);font-style:italic;">
+              Last updated: 4 May 2026 · Compliant with EU Reg. 2016/679 (GDPR) and Italian Legislative Decree 196/2003.
+            </div>`)}
           </div>
         </details>
       </div>
@@ -10858,8 +10922,8 @@ window.renderDisclaimer=function(){
       ${isReview?`
         <button class="btn" style="width:100%;padding:14px;font-family:'Bebas Neue';font-size:16px;background:var(--blu);color:#fff;" onclick="closeDisclaimerView()">${t('c_close')}</button>
       `:`
-        <div style="background:var(--surf);border:1px solid var(--bord);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:var(--mut);line-height:1.5;text-align:center;">Per usare l'app devi accettare il disclaimer e l'informativa privacy. Cliccando "Accetto" confermi di aver letto e compreso entrambi.</div>
-        <button class="btn" style="width:100%;padding:14px;font-family:'Bebas Neue';font-size:18px;background:var(--ora);color:#fff;" onclick="acceptDisclaimer()">✓ HO LETTO E ACCETTO</button>
+        <div style="background:var(--surf);border:1px solid var(--bord);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:var(--mut);line-height:1.5;text-align:center;">${LL('Per usare l\'app devi accettare il disclaimer e l\'informativa privacy. Cliccando "Accetto" confermi di aver letto e compreso entrambi.','To use the app you must accept the disclaimer and the privacy notice. By tapping "I Accept" you confirm you have read and understood both.')}</div>
+        <button class="btn" style="width:100%;padding:14px;font-family:'Bebas Neue';font-size:18px;background:var(--ora);color:#fff;" onclick="acceptDisclaimer()">${LL('✓ HO LETTO E ACCETTO','✓ I HAVE READ AND ACCEPT')}</button>
       `}
     </div>
   </div>`;
@@ -11424,7 +11488,7 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
         <div style="font-size:32px;">${mealToShow.icon}</div>
         <div style="flex:1;min-width:0;">
           <div style="font-size:16px;font-weight:700;color:var(--text);line-height:1.25;">${mealToShow.name}</div>
-          <div style="font-size:11px;color:var(--mut);margin-top:3px;">alle ${mealToShow.t} · ~${mealKcal} kcal</div>
+          <div style="font-size:11px;color:var(--mut);margin-top:3px;">${LL('alle','at')} ${mealToShow.t} · ~${mealKcal} kcal</div>
         </div>
         <div style="color:var(--mut);font-size:18px;">›</div>
       </div>
@@ -11468,7 +11532,7 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
         <div style="width:40px;height:40px;border-radius:50%;background:rgba(34,197,94,.2);border:2px solid var(--gre);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--gre);flex-shrink:0;">✓</div>
         <div style="flex:1;min-width:0;">
           <div style="font-size:10px;font-weight:700;color:var(--gre);letter-spacing:1.5px;">RIPOSO REGISTRATO${hasSport?' + SPORT':''}</div>
-          <div style="font-size:14px;font-weight:700;color:var(--text);line-height:1.25;margin-top:2px;">${hasSport?`🏃 ${todayActs[0].emo||''} ${escapeHtml(todayActs[0].name||'Attività')}${todayActs.length>1?` +${todayActs.length-1}`:''}`:'😌 Recupero attivo'}</div>
+          <div style="font-size:14px;font-weight:700;color:var(--text);line-height:1.25;margin-top:2px;">${hasSport?`🏃 ${todayActs[0].emo||''} ${escapeHtml(todayActs[0].name||LL('Attività','Activity'))}${todayActs.length>1?` +${todayActs.length-1}`:''}`:'😌 Recupero attivo'}</div>
           <div style="font-size:11px;color:var(--mut);margin-top:2px;">${sportSummary||'Stretching, camminata, 7-8h di sonno'}</div>
         </div>
         <div style="color:var(--mut);font-size:18px;">›</div>
@@ -11613,7 +11677,7 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
         <span style="font-size:11px;color:var(--mut);">→ ${ST.p.g}kg · <strong style="color:${theme};">${kgLeft}kg ${(window.ST&&ST.lang==='en')?'to go':'mancanti'}</strong></span>
       </div>
     </div>
-    ${stk>=2?`<div style="background:rgba(255,104,53,.15);color:var(--ora);padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap;">🔥 ${stk}gg</div>`:''}
+    ${stk>=2?`<div style="background:rgba(255,104,53,.15);color:var(--ora);padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap;">🔥 ${stk}${LL('gg','d')}</div>`:''}
   </div>
 
   <!-- ── PROGRESSO ENHANCED (sessione 26) ── -->
@@ -11859,17 +11923,17 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
       const lastShiftDays = Math.ceil((Date.now() - new Date(ST.lastTargetShift.date).getTime())/86400000);
       if (lastShiftDays < 14) return '';
     }
-    const newDateLabel = new Date(adj.suggestedDate).toLocaleDateString('it-IT', { day:'numeric', month:'short', year:'numeric' });
+    const newDateLabel = new Date(adj.suggestedDate).toLocaleDateString((window.ST&&ST.lang==='en')?'en-GB':'it-IT', { day:'numeric', month:'short', year:'numeric' });
     return `
     <div style="background:linear-gradient(135deg,rgba(167,139,250,.12),rgba(167,139,250,.04));border:2px solid var(--purp);border-radius:14px;padding:14px;margin-bottom:12px;">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
         <div style="font-size:22px;">🎯</div>
         <div style="font-size:11px;color:var(--purp);font-weight:800;letter-spacing:1px;">DATA OBIETTIVO DA RIVEDERE</div>
       </div>
-      <div style="font-size:12px;color:var(--text);line-height:1.5;margin-bottom:10px;">Il tuo ritmo attuale (${adj.currentRate}kg/sett) è inferiore a quello richiesto (${adj.requiredRate}kg/sett). Sposterei la data target a <strong>${newDateLabel}</strong> (+${adj.weeksDelay} sett.) per mantenerla realistica.</div>
+      <div style="font-size:12px;color:var(--text);line-height:1.5;margin-bottom:10px;">${LL(`Il tuo ritmo attuale (${adj.currentRate}kg/sett) è inferiore a quello richiesto (${adj.requiredRate}kg/sett). Sposterei la data target a `,`Your current pace (${adj.currentRate}kg/wk) is below the required one (${adj.requiredRate}kg/wk). I'd move the target date to `)}<strong>${newDateLabel}</strong>${LL(` (+${adj.weeksDelay} sett.) per mantenerla realistica.`,` (+${adj.weeksDelay} wk) to keep it realistic.`)}</div>
       <div style="display:flex;gap:6px;">
-        <button class="btn-s" style="flex:1;padding:10px;background:var(--purp);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;" onclick="window.acceptTargetShift()">✓ SPOSTA DATA</button>
-        <button class="btn-s" style="flex:1;padding:10px;background:var(--surf);color:var(--text);border:1px solid var(--bord);border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;" onclick="ST.tab='set';render()">⚙️ CAMBIA STRATEGIA</button>
+        <button class="btn-s" style="flex:1;padding:10px;background:var(--purp);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;" onclick="window.acceptTargetShift()">${LL('✓ SPOSTA DATA','✓ MOVE DATE')}</button>
+        <button class="btn-s" style="flex:1;padding:10px;background:var(--surf);color:var(--text);border:1px solid var(--bord);border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;" onclick="ST.tab='set';render()">${LL('⚙️ CAMBIA STRATEGIA','⚙️ CHANGE STRATEGY')}</button>
       </div>
     </div>`;
   })()}
@@ -11936,7 +12000,7 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
         <div style="font-size:24px;">✈️</div>
         <div style="flex:1;">
           <div style="font-size:11px;font-weight:800;color:var(--ora);letter-spacing:2px;">MODALITÀ TRASFERTA ATTIVA</div>
-          <div style="font-size:11px;color:var(--text);">Fino al ${new Date(ST.travelMode.endD+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'long'})} · ${ST.travelMode.dietOnly?'solo dieta':(ST.travelMode.hasGym?'palestra':'bodyweight')}${ST.travelMode.dietOnly?'':` · ${ST.travelMode.sessions||3}× ${ST.travelMode.dur||30}min`}</div>
+          <div style="font-size:11px;color:var(--text);">${LL('Fino al','Until')} ${new Date(ST.travelMode.endD+'T12:00:00').toLocaleDateString((window.ST&&ST.lang==='en')?'en-GB':'it-IT',{day:'2-digit',month:'long'})} · ${ST.travelMode.dietOnly?LL('solo dieta','diet only'):(ST.travelMode.hasGym?LL('palestra','gym'):'bodyweight')}${ST.travelMode.dietOnly?'':` · ${ST.travelMode.sessions||3}× ${ST.travelMode.dur||30}min`}</div>
         </div>
       </div>
     </div>` : ''}
@@ -11950,7 +12014,7 @@ window.renderHome = function(t2,cW,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId
           <div style="font-size:10px;color:var(--mut);font-weight:600;">${(window.ST&&ST.lang==='en')?`Week ${pwk(ST.programStart)} of your program`:`Settimana ${pwk(ST.programStart)} del programma`}</div>
         </div>
       </div>
-      <div style="font-size:13px;line-height:1.55;color:var(--text);font-weight:500;">È il momento di una <strong style="color:var(--purp);">deload week</strong>: riduci pesi del 30-40% mantenendo le ripetizioni, oppure dimezza le serie. Il corpo recupera, i muscoli supercompensano. La prossima settimana tornerai più forte di prima.</div>
+      <div style="font-size:13px;line-height:1.55;color:var(--text);font-weight:500;">${LL('È il momento di una <strong style="color:var(--purp);">deload week</strong>: riduci pesi del 30-40% mantenendo le ripetizioni, oppure dimezza le serie. Il corpo recupera, i muscoli supercompensano. La prossima settimana tornerai più forte di prima.','Time for a <strong style="color:var(--purp);">deload week</strong>: cut weights by 30-40% while keeping the reps, or halve the sets. The body recovers, the muscles supercompensate. Next week you\'ll come back stronger than before.')}</div>
     </div>` : ''}
 
   <!-- BLOCCO OGGI IN NUMERI -->
@@ -12006,7 +12070,7 @@ window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,to
   const isD=(pWeek-1)%4===3;
   const p=pwk(ST.programStart);
   const sr=getSetsReps('compound',ST.p.t,p);
-  const DAY_NAMES=['LUN','MAR','MER','GIO','VEN','SAB','DOM'];
+  const DAY_NAMES=(window.ST&&ST.lang==='en')?['MON','TUE','WED','THU','FRI','SAT','SUN']:['LUN','MAR','MER','GIO','VEN','SAB','DOM'];
 
   // ── BANNER TRASFERTA (sessione 7+8) ──
   // Se in trasferta + bodyweight, lo segnaliamo in cima alla tab. Gli esercizi
@@ -12018,7 +12082,7 @@ window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,to
         <div style="font-size:22px;">✈️🍽️</div>
         <div style="flex:1;">
           <div style="font-size:11px;font-weight:800;color:var(--blu);letter-spacing:1.5px;">TRASFERTA · SOLO DIETA</div>
-          <div style="font-size:11px;color:var(--text);">Fino al ${new Date(ST.travelMode.endD+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'long'})} · niente allenamenti, gestiamo i pasti</div>
+          <div style="font-size:11px;color:var(--text);">${LL('Fino al','Until')} ${new Date(ST.travelMode.endD+'T12:00:00').toLocaleDateString((window.ST&&ST.lang==='en')?'en-GB':'it-IT',{day:'2-digit',month:'long'})} · ${LL('niente allenamenti, gestiamo i pasti','no workouts, we manage meals')}</div>
         </div>
       </div>
     </div>` : `
@@ -12186,7 +12250,7 @@ window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,to
   </div>`:'';
   return`
   ${travelBanner}
-  <div class="r" style="margin-bottom:14px;"><div class="bebas" style="font-size:26px;">ALLENAMENTO</div><div style="font-size:11px;color:var(--mut);">Sett.${pWeek}${isD?' · DELOAD':''} · ${ST.p.sessions}gg pesi + ${mac.cardioLevel}gg cardio</div></div>
+  <div class="r" style="margin-bottom:14px;"><div class="bebas" style="font-size:26px;">ALLENAMENTO</div><div style="font-size:11px;color:var(--mut);">${LL('Sett.','Wk.')}${pWeek}${isD?' · DELOAD':''} · ${LL(`${ST.p.sessions}gg pesi + ${mac.cardioLevel}gg cardio`,`${ST.p.sessions}d weights + ${mac.cardioLevel}d cardio`)}</div></div>
 
   <!-- PUNTO 14: riepilogo settimana -->
   <div class="card" style="background:linear-gradient(135deg,#0a0012,#08000a);border-color:var(--purp);padding:14px 16px;margin-bottom:14px;">
@@ -12205,7 +12269,7 @@ window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,to
 
   ${missedBanner}
   <div class="card" style="background:linear-gradient(135deg,#0b1200,#0c1500);border-color:#1a2400;padding:16px;margin-bottom:14px;">
-    <span class="lbl">${DAY_NAMES[dOfW]} ${new Date(t2).toLocaleDateString('it-IT',{day:'2-digit',month:'short'})}</span>
+    <span class="lbl">${DAY_NAMES[dOfW]} ${new Date(t2).toLocaleDateString((window.ST&&ST.lang==='en')?'en-GB':'it-IT',{day:'2-digit',month:'short'})}</span>
     ${todayBox}
     ${todayLog&&!todayLog.isRest?`<div style="font-size:12px;color:var(--acc);margin-top:8px;">✅ Completato! Volume: ${todayLog.vol}kg</div>`:''}
   </div>
@@ -12280,7 +12344,7 @@ window.renderWork = function(t2,mac,an,theme,sx,pWeek,weekPlan,dOfW,todayWoId,to
         ${dayActs.map(a=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;margin-bottom:4px;">
           <div style="font-size:20px;">${a.emo||'🏃'}</div>
           <div style="flex:1;min-width:0;">
-            <div style="font-size:13px;font-weight:600;">${escapeHtml(a.name||'Attività')}</div>
+            <div style="font-size:13px;font-weight:600;">${escapeHtml(a.name||LL('Attività','Activity'))}</div>
             <div style="font-size:11px;color:var(--mut);">${a.minutes} min · <span style="color:var(--acc);font-weight:700;">${a.kcal} kcal</span></div>
           </div>
           <button class="btn-s" style="background:var(--red);color:#fff;padding:4px 8px;font-size:10px;" onclick="deleteActivity('${a.id}')">✕</button>
@@ -12337,7 +12401,7 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
       </div>
       <div style="display:flex;gap:10px;align-items:flex-start;">
         <div style="width:22px;height:22px;border-radius:50%;background:var(--acc);color:#000;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;">2</div>
-        <div style="font-size:13px;line-height:1.4;color:var(--text);"><strong>Mangia</strong> rispettando le grammature indicate (oppure tocca <span style="color:var(--purp);">💡 RICETTA</span> per le istruzioni)</div>
+        <div style="font-size:13px;line-height:1.4;color:var(--text);"><strong>Mangia</strong> rispettando le grammature indicate (oppure tocca <span style="color:var(--purp);">💡 RICETTA</span> ${LL('per le istruzioni','for instructions')})</div>
       </div>
       <div style="display:flex;gap:10px;align-items:flex-start;">
         <div style="width:22px;height:22px;border-radius:50%;background:var(--acc);color:#000;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;">3</div>
@@ -12345,7 +12409,7 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
       </div>
       <div style="display:flex;gap:10px;align-items:flex-start;">
         <div style="width:22px;height:22px;border-radius:50%;background:var(--ora);color:#000;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;">+</div>
-        <div style="font-size:13px;line-height:1.4;color:var(--text);">Hai mangiato qualcosa fuori dieta? Usa <strong style="color:var(--ora);">SGARRO</strong> più sotto</div>
+        <div style="font-size:13px;line-height:1.4;color:var(--text);">${LL('Hai mangiato qualcosa fuori dieta? Usa','Ate something off-diet? Use')} <strong style="color:var(--ora);">SGARRO</strong> ${LL('più sotto','below')}</div>
       </div>
     </div>
   </div>`:''}
@@ -12483,7 +12547,7 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
           <span style="font-size:10px;">▼</span>
         </summary>
         <div style="padding:10px 14px 12px;border-top:1px solid var(--bord);">
-          <textarea id="cheatInput" rows="2" placeholder="Es. '50g fritto misto', '2 fette pizza'" ${window.cheatLoading?'disabled':''} style="font-size:13px;margin-bottom:8px;"></textarea>
+          <textarea id="cheatInput" rows="2" placeholder="${LL("Es. '50g fritto misto', '2 fette pizza'","e.g. '50g fried food', '2 pizza slices'")}" ${window.cheatLoading?'disabled':''} style="font-size:13px;margin-bottom:8px;"></textarea>
           <button class="btn-s btn-ora" style="width:100%;padding:11px;font-size:13px;font-weight:700;${window.cheatLoading?'opacity:.6;pointer-events:none;':''}" onclick="logCheat()">${window.cheatLoading?'🔍 ANALIZZO...':'INSERISCI VELOCE'}</button>
           <div style="font-size:10px;color:var(--mut);margin-top:8px;line-height:1.4;">
             Meno preciso del DB: l\'AI cerca di interpretare quello che scrivi. Usa solo se il cibo non è nel database.
@@ -12562,12 +12626,12 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
             const meals = window.buildMeals(mac, ST.p.intol||[], profile.sx||'m', isRest, ST.p.diet||'omnivore', null, ST.p.usesSupplements, ST.p.favs);
             const isToday = idx === dowToday;
             const isFuture = dateStr >= currentDateStr;
-            const dateLbl = d.toLocaleDateString('it-IT', {day:'numeric', month:'short'});
+            const dateLbl = d.toLocaleDateString((window.ST&&ST.lang==='en')?'en-GB':'it-IT', {day:'numeric', month:'short'});
             return `<div ${isFuture?`onclick="openPlannedDaySheet('${dateStr}')" style="cursor:pointer;"`:'style=""'} >
               <div style="background:${isToday?'rgba(96,165,250,.06)':'var(--surf)'};border:1px solid ${isToday?'var(--blu)':'var(--bord)'};border-radius:10px;padding:10px;margin-bottom:6px;">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
                 <div>
-                  <span style="font-size:13px;font-weight:700;color:var(--text);">${dname}${isToday?' (oggi)':''}</span>
+                  <span style="font-size:13px;font-weight:700;color:var(--text);">${dname}${isToday?LL(' (oggi)',' (today)'):''}</span>
                   <span style="font-size:10px;color:var(--mut);margin-left:4px;">${dateLbl}</span>
                   <span style="font-size:10px;background:${isRest?'var(--mut)':'var(--ora)'};color:#fff;padding:2px 7px;border-radius:4px;margin-left:6px;font-weight:600;">${isRest?'RIPOSO':'TRAIN'}</span>
                   ${hasOverride?'<span style="font-size:9px;color:var(--blu);margin-left:4px;" title="Pianificato manualmente">📌</span>':''}
@@ -12621,8 +12685,8 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
         <div style="display:flex;gap:10px;align-items:flex-start;">
           <div style="font-size:20px;flex-shrink:0;">${diffPct > 10 ? '🚨' : '⚠️'}</div>
           <div style="flex:1;min-width:0;">
-            <div style="font-size:12px;color:var(--text);line-height:1.4;"><strong style="color:${col};">+${diff} kcal sopra il target</strong> con queste varianti scelte. ${projected} previste vs ${targetTotal} target.</div>
-            <div style="font-size:10px;color:var(--mut);margin-top:4px;line-height:1.3;">💡 Cambia variante per i pasti con il chip più carico, o salta uno spuntino.</div>
+            <div style="font-size:12px;color:var(--text);line-height:1.4;"><strong style="color:${col};">+${diff} ${LL('kcal sopra il target','kcal over target')}</strong> ${LL(`con queste varianti scelte. ${projected} previste vs ${targetTotal} target.`,`with the chosen variants. ${projected} expected vs ${targetTotal} target.`)}</div>
+            <div style="font-size:10px;color:var(--mut);margin-top:4px;line-height:1.3;">${LL('💡 Cambia variante per i pasti con il chip più carico, o salta uno spuntino.','💡 Change the variant for the meals with the most loaded chip, or skip a snack.')}</div>
           </div>
         </div>
       </div>`;
@@ -12630,7 +12694,7 @@ window.renderDiet = function(t2,mac,an,sx,todayWoId){
       // Sotto target
       return `<div style="background:rgba(96,165,250,.06);border:1px solid var(--blu);border-radius:12px;padding:10px 12px;margin-bottom:12px;display:flex;gap:10px;align-items:center;">
         <div style="font-size:20px;">📉</div>
-        <div style="flex:1;font-size:12px;color:var(--text);line-height:1.4;"><strong style="color:var(--blu);">${diff} kcal sotto il target.</strong> Con queste varianti ti mancano kcal: ok in deficit, valuta se aggiungere uno snack proteico.</div>
+        <div style="flex:1;font-size:12px;color:var(--text);line-height:1.4;"><strong style="color:var(--blu);">${diff} ${LL('kcal sotto il target.','kcal under target.')}</strong> ${LL('Con queste varianti ti mancano kcal: ok in deficit, valuta se aggiungere uno snack proteico.','With these variants you\'re short on kcal: fine in a deficit, consider adding a protein snack.')}</div>
       </div>`;
     }
   })()}
@@ -12790,12 +12854,12 @@ window.renderMeasures = function(cW,mac,theme,pWeek,sx){
   }
   return '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
     +'<div><div class="bebas" style="font-size:28px;">'+t("m_title")+'</div>'
-    +'<div style="font-size:11px;color:var(--mut);">'+(currentDateStr===getToday()?'Oggi':currentDateStr)+(prevDate&&prevDate!==currentDateStr?' &middot; ultima: '+prevDate:'')+'</div></div>'
+    +'<div style="font-size:11px;color:var(--mut);">'+(currentDateStr===getToday()?LL('Oggi','Today'):currentDateStr)+(prevDate&&prevDate!==currentDateStr?' &middot; '+LL('ultima:','last:')+' '+prevDate:'')+'</div></div>'
     +'<button onclick="saveMeasures()" style="background:var(--acc);color:#000;border:none;border-radius:12px;padding:12px 18px;font-family:\"Bebas Neue\";font-size:16px;cursor:pointer;">'+t("c_save")+'</button>'
     +'</div>'
     +(!hasMeasures?'<div class="card" style="text-align:center;padding:24px;border-style:dashed;"><div style="font-size:36px;margin-bottom:8px;">📐</div><div style="font-size:14px;font-weight:600;margin-bottom:6px;">Prima misurazione</div><div style="font-size:12px;color:var(--mut);line-height:1.6;">Inserisci le misure e salva. I grafici appariranno dopo 2+ misurazioni.</div></div>':'')
     +'<div class="card" style="padding:18px;">'
-    + (hasMeasures?'<div style="font-size:12px;color:var(--mut);margin-bottom:14px;padding:8px 12px;background:rgba(197,241,53,.05);border-radius:8px;line-height:1.5;">Le frecce mostrano la variazione vs ultima misurazione. <span style="color:var(--acc);">&#8595; verde</span> = riduzione, <span style="color:var(--red);">&#8593; rosso</span> = aumento</div>':'')
+    + (hasMeasures?'<div style="font-size:12px;color:var(--mut);margin-bottom:14px;padding:8px 12px;background:rgba(197,241,53,.05);border-radius:8px;line-height:1.5;">'+LL('Le frecce mostrano la variazione vs ultima misurazione. <span style="color:var(--acc);">&#8595; verde</span> = riduzione, <span style="color:var(--red);">&#8593; rosso</span> = aumento','Arrows show the change vs the last measurement. <span style="color:var(--acc);">&#8595; green</span> = decrease, <span style="color:var(--red);">&#8593; red</span> = increase')+'</div>':'')
     + secHdr('CIRCONFERENZE','var(--acc)')
     + mField('neck','Collo','Meta collo - orizzontale')
     + mField('shoulders','Spalle','Larghezza massima - acromi')
@@ -12882,10 +12946,10 @@ window.renderBody = function(cW,mac,theme,pWeek,sx){
   <div class="bebas" style="font-size:26px;margin-bottom:4px;">BODY ANALYTICS</div>
   <div style="font-size:11px;color:var(--mut);margin-bottom:14px;">Focus: <span style="color:${focusObj.col};font-weight:700;">${focusObj.icon} ${focusObj.label}</span> · Sett.${pWeek}</div>
   <div style="display:flex;border-radius:10px;overflow:hidden;margin-bottom:14px;border:1px solid var(--bord);">
-    <button class="flt-btn ${ST.chartFilter===7?'on':''}" onclick="setChartFlt(7)">7 GG</button>
-    <button class="flt-btn ${ST.chartFilter===30?'on':''}" onclick="setChartFlt(30)">30 GG</button>
-    <button class="flt-btn ${ST.chartFilter===90?'on':''}" onclick="setChartFlt(90)">90 GG</button>
-    <button class="flt-btn ${ST.chartFilter===180?'on':''}" onclick="setChartFlt(180)">6 MESI</button>
+    <button class="flt-btn ${ST.chartFilter===7?'on':''}" onclick="setChartFlt(7)">${LL('7 GG','7 D')}</button>
+    <button class="flt-btn ${ST.chartFilter===30?'on':''}" onclick="setChartFlt(30)">${LL('30 GG','30 D')}</button>
+    <button class="flt-btn ${ST.chartFilter===90?'on':''}" onclick="setChartFlt(90)">${LL('90 GG','90 D')}</button>
+    <button class="flt-btn ${ST.chartFilter===180?'on':''}" onclick="setChartFlt(180)">${LL('6 MESI','6 MO')}</button>
   </div>
   <div class="g2" style="margin-bottom:10px;">
     ${[[(window.ST&&ST.lang==='en')?'KG LOST':'KG PERSI',`${lost>=0?'-':'+'}${Math.abs(lost).toFixed(1)}kg`,'var(--acc)'],[(window.ST&&ST.lang==='en')?'TO GO':'MANCANTI',Math.abs(ST.p.g-cW).toFixed(1)+' kg','var(--ora)'],[(window.ST&&ST.lang==='en')?'7D AVG':'MEDIA 7G',avg7+' kg','var(--blu)'],[(window.ST&&ST.lang==='en')?'SESSIONS':'SESSIONI',wLogF.length,'var(--purp)']].map(([l,v,col])=>`<div class="card" style="text-align:center;padding:14px;border-top:3px solid ${col};"><div class="bebas" style="font-size:28px;color:${col};line-height:1;">${v}</div><div style="font-size:9px;color:var(--mut);letter-spacing:1.5px;margin-top:2px;">${l}</div></div>`).join('')}
@@ -13016,8 +13080,8 @@ window.renderBody = function(cW,mac,theme,pWeek,sx){
       on_track: 'var(--gre)', fast: 'var(--blu)', too_fast: 'var(--ora)'
     };
     const col = colMap[s.status] || 'var(--mut)';
-    const tgtLabel = ST.p?.targetD ? new Date(ST.p.targetD).toLocaleDateString('it-IT', {day:'numeric', month:'short'}) : '—';
-    const etaLabel = s.etaDate ? new Date(s.etaDate).toLocaleDateString('it-IT', {day:'numeric', month:'short', year:'numeric'}) : null;
+    const tgtLabel = ST.p?.targetD ? new Date(ST.p.targetD).toLocaleDateString((window.ST&&ST.lang==='en')?'en-GB':'it-IT', {day:'numeric', month:'short'}) : '—';
+    const etaLabel = s.etaDate ? new Date(s.etaDate).toLocaleDateString((window.ST&&ST.lang==='en')?'en-GB':'it-IT', {day:'numeric', month:'short', year:'numeric'}) : null;
     const etaWarn = s.etaDiffDays !== null && s.etaDiffDays > 14;
     return `<div class="card" style="border-left:4px solid ${col};margin-bottom:10px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
@@ -13028,7 +13092,7 @@ window.renderBody = function(cW,mac,theme,pWeek,sx){
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;font-size:10px;">
         <div style="background:var(--surf);border-radius:6px;padding:6px 8px;text-align:center;">
           <div style="color:var(--mut);">Rate attuale</div>
-          <div style="font-weight:700;color:var(--text);">${s.currentRate} kg/sett</div>
+          <div style="font-weight:700;color:var(--text);">${s.currentRate} kg/${LL('sett','wk')}</div>
         </div>
         <div style="background:var(--surf);border-radius:6px;padding:6px 8px;text-align:center;">
           <div style="color:var(--mut);">Mancano</div>
@@ -13040,7 +13104,7 @@ window.renderBody = function(cW,mac,theme,pWeek,sx){
         </div>
       </div>
       ${etaLabel ? `<div style="margin-top:8px;padding:8px 10px;background:${etaWarn?'rgba(234,88,12,.08)':'rgba(96,165,250,.06)'};border-radius:6px;font-size:11px;color:${etaWarn?'var(--ora)':'var(--blu)'};line-height:1.4;">
-        📅 Al ritmo attuale, target raggiunto entro: <strong>${etaLabel}</strong>${etaWarn?` (${s.etaDiffDays} gg dopo data prevista)`:''}
+        📅 Al ritmo attuale, target raggiunto entro: <strong>${etaLabel}</strong>${etaWarn?` (${s.etaDiffDays} ${LL('gg dopo data prevista','days after planned date')})`:''}
       </div>` : ''}
     </div>`;
   })()}
@@ -13382,7 +13446,7 @@ window.renderBody = function(cW,mac,theme,pWeek,sx){
               <div style="font-size:13px;font-weight:700;color:${progCol};">${progText}</div>
             </div>
           </div>` : ''}
-          ${isKg && s.first && s.last && s.first !== s.last ? `<div style="font-size:10px;color:var(--mut);margin-top:6px;line-height:1.4;">Da <strong style="color:var(--text);">${s.first}kg</strong> → <strong style="color:${progCol};">${s.last}kg</strong> ${s.progressPct >= 10 ? '🔥' : s.progressPct > 0 ? '📈' : s.progressPct < 0 ? '📉' : ''}</div>` : ''}
+          ${isKg && s.first && s.last && s.first !== s.last ? `<div style="font-size:10px;color:var(--mut);margin-top:6px;line-height:1.4;">${LL('Da','From')} <strong style="color:var(--text);">${s.first}kg</strong> → <strong style="color:${progCol};">${s.last}kg</strong> ${s.progressPct >= 10 ? '🔥' : s.progressPct > 0 ? '📈' : s.progressPct < 0 ? '📉' : ''}</div>` : ''}
         </div>`;
       }).join('')}
       ${exStats.length > 8 ? `<div style="font-size:11px;color:var(--mut);text-align:center;padding-top:10px;">... e altri ${exStats.length - 8} esercizi meno frequenti</div>` : ''}
@@ -13398,7 +13462,7 @@ window.renderBody = function(cW,mac,theme,pWeek,sx){
       </div>
       <div>
         <div style="font-size:13px;font-weight:600;">${w.t}</div>
-        <div style="font-size:10px;color:var(--mut);">${new Date(w.d+'T12:00:00').toLocaleDateString('it-IT',{weekday:'short',day:'2-digit',month:'short'})}</div>
+        <div style="font-size:10px;color:var(--mut);">${new Date(w.d+'T12:00:00').toLocaleDateString((window.ST&&ST.lang==='en')?'en-GB':'it-IT',{weekday:'short',day:'2-digit',month:'short'})}</div>
       </div>
     </div>
     ${!w.isRest?`<div style="text-align:right;"><div style="font-size:13px;"><strong style="color:var(--acc);">${w.vol}</strong><span style="color:var(--mut);font-size:11px;"> kg vol</span></div></div>`:''}</div>`).join('')}
@@ -14262,9 +14326,9 @@ window.renderStatsCompare = function() {
   };
   return `
   <div style="display:flex;gap:6px;margin-bottom:12px;">
-    ${[7,30,90].map(d => `<button class="btn-s" style="flex:1;padding:10px;background:${days===d?'var(--blu)':'var(--surf)'};color:${days===d?'#fff':'var(--mut)'};border:1px solid ${days===d?'var(--blu)':'var(--bord)'};font-weight:700;border-radius:8px;font-size:12px;" onclick="ST.statsCompareDays=${d};render()">${d}gg</button>`).join('')}
+    ${[7,30,90].map(d => `<button class="btn-s" style="flex:1;padding:10px;background:${days===d?'var(--blu)':'var(--surf)'};color:${days===d?'#fff':'var(--mut)'};border:1px solid ${days===d?'var(--blu)':'var(--bord)'};font-weight:700;border-radius:8px;font-size:12px;" onclick="ST.statsCompareDays=${d};render()">${d}${LL('gg','d')}</button>`).join('')}
   </div>
-  <div style="font-size:11px;color:var(--mut);margin-bottom:10px;text-align:center;">Ultimi ${days}gg vs ${days}gg precedenti</div>
+  <div style="font-size:11px;color:var(--mut);margin-bottom:10px;text-align:center;">${LL(`Ultimi ${days}gg vs ${days}gg precedenti`,`Last ${days} days vs previous ${days} days`)}</div>
   ${compare(cur.workouts, prev.workouts, '💪 Allenamenti', '')}
   ${compare(cur.totalVol, prev.totalVol, '📊 Volume', ' kg')}
   ${compare(cur.totalKcal, prev.totalKcal, '🔥 Kcal bruciate', '')}
@@ -15051,7 +15115,7 @@ window.renderCoach = function(){
       </div>
       <div style="padding:10px 0;background:var(--bg);border-top:1px solid var(--bord);">
         <div style="display:flex;gap:8px;margin-bottom:${ST.chatHistory.length?'6':'0'}px;">
-          <input id="aiIn" placeholder="Chiedimi qualcosa..." style="flex:1;margin:0;" onkeydown="if(event.key==='Enter')sendMsg();">
+          <input id="aiIn" placeholder="${LL('Chiedimi qualcosa...','Ask me anything...')}" style="flex:1;margin:0;" onkeydown="if(event.key==='Enter')sendMsg();">
           <button class="btn" style="width:auto;padding:0 16px;margin:0;font-size:16px;${ST.chatLoading?'opacity:.5;pointer-events:none':''}" onclick="sendMsg()">➤</button>
         </div>
         ${ST.chatHistory.length>0?`<div style="text-align:center;"><button class="btn-s btn-action" style="font-size:10px;padding:4px 8px;" onclick="clearChat()">🗑 Svuota chat</button></div>`:''}
@@ -15303,7 +15367,7 @@ window.renderSettings = function(mac){
       ${[{id:true,icon:'✓',lbl:'Sì, condividi'},{id:false,icon:'🔒',lbl:'No, solo io'}].map(o=>{const isOn=(ST.shareRecipesToCommunity===true)===o.id;return`<button class="btn-s" style="padding:11px 4px;border-radius:10px;border:2px solid ${isOn?'var(--purp)':'var(--bord)'};background:${isOn?'rgba(167,139,250,.08)':'var(--surf)'};color:${isOn?'var(--purp)':'var(--text)'};font-weight:700;font-size:11px;cursor:pointer;" onclick="setShareRecipesCommunity(${o.id})"><div style="font-size:18px;margin-bottom:2px;">${o.icon}</div>${o.lbl}</button>`;}).join('')}
     </div>
 
-    ${window.__communityFoodsCache?.length > 0 ? `<div style="font-size:10px;color:var(--gre);margin-top:8px;text-align:center;">📦 ${window.__communityFoodsCache.length} cibi community disponibili nelle ricerche</div>` : ''}
+    ${window.__communityFoodsCache?.length > 0 ? `<div style="font-size:10px;color:var(--gre);margin-top:8px;text-align:center;">📦 ${window.__communityFoodsCache.length} ${LL('cibi community disponibili nelle ricerche','community foods available in searches')}</div>` : ''}
   </div>
 
   <!-- ════ ESPORTA DATABASE CIBI (sessione 38) ════ -->
@@ -15311,10 +15375,10 @@ window.renderSettings = function(mac){
     <div class="bebas" style="font-size:20px;color:var(--gre);margin-bottom:6px;">💾 ESPORTA DATABASE CIBI</div>
     ${window.__foodsSyncState?.pending ? `
     <div style="background:rgba(255,184,0,.1);border:1px solid #ffb800;border-radius:10px;padding:10px 12px;margin-bottom:10px;">
-      <div style="font-size:12px;color:#ffb800;font-weight:700;margin-bottom:3px;">🔔 ${window.__foodsSyncState.pendingCount||'Alcuni'} cibi nuovi da consolidare</div>
-      <div style="font-size:11px;color:var(--mut);line-height:1.4;">Gli utenti hanno aggiunto cibi nuovi (già visibili a tutti tramite community). Per fissarli nel file base, esporta e carica su GitHub.</div>
+      <div style="font-size:12px;color:#ffb800;font-weight:700;margin-bottom:3px;">🔔 ${window.__foodsSyncState.pendingCount||LL('Alcuni','Some')} ${LL('cibi nuovi da consolidare','new foods to consolidate')}</div>
+      <div style="font-size:11px;color:var(--mut);line-height:1.4;">${LL('Gli utenti hanno aggiunto cibi nuovi (già visibili a tutti tramite community). Per fissarli nel file base, esporta e carica su GitHub.','Users added new foods (already visible to everyone via community). To lock them into the base file, export and upload to GitHub.')}</div>
     </div>` : `
-    <div style="font-size:11px;color:var(--gre);margin-bottom:10px;">✓ Database allineato${window.__foodsSyncState?.lastConsolidated ? ` · ultimo consolidamento ${new Date(window.__foodsSyncState.lastConsolidated).toLocaleDateString('it-IT')}` : ''}</div>`}
+    <div style="font-size:11px;color:var(--gre);margin-bottom:10px;">${LL('✓ Database allineato','✓ Database in sync')}${window.__foodsSyncState?.lastConsolidated ? ` · ${LL('ultimo consolidamento','last consolidation')} ${new Date(window.__foodsSyncState.lastConsolidated).toLocaleDateString((window.ST&&ST.lang==='en')?'en-GB':'it-IT')}` : ''}</div>`}
     <div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:12px;">
       ${LL('Genera un file','Generates a')} <code style="background:var(--surf);padding:1px 5px;border-radius:4px;">food_db.js</code> ${LL('aggiornato che include i cibi di base + i cibi personalizzati + quelli della community. Caricalo su GitHub per renderli permanenti per tutti gli utenti.','updated file including base foods + custom foods + community ones. Upload it to GitHub to make them permanent for all users.')}
       <br><br>
@@ -16447,7 +16511,7 @@ window.render = function() {
 
       <div style="font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px;margin-bottom:6px;">DURATA STIMATA</div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px;">
-        ${[3,7,14,30].map(n => `<button class="btn-s" style="padding:12px 4px;background:${d.days===n?'var(--red)':'var(--surf)'};color:${d.days===n?'#fff':'var(--text)'};border:1px solid ${d.days===n?'var(--red)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;font-size:13px;" onclick="ST.sheetData.days=${n};render()">${n}gg</button>`).join('')}
+        ${[3,7,14,30].map(n => `<button class="btn-s" style="padding:12px 4px;background:${d.days===n?'var(--red)':'var(--surf)'};color:${d.days===n?'#fff':'var(--text)'};border:1px solid ${d.days===n?'var(--red)':'var(--bord)'};font-weight:700;border-radius:8px;cursor:pointer;font-size:13px;" onclick="ST.sheetData.days=${n};render()">${n}${LL('gg','d')}</button>`).join('')}
       </div>
 
       <div style="background:rgba(96,165,250,.06);border:1px solid var(--blu);border-radius:8px;padding:10px;margin-bottom:14px;">
@@ -16514,10 +16578,10 @@ window.render = function() {
       </select>
 
       <div style="font-size:10px;color:var(--mut);font-weight:700;margin-bottom:4px;">INGREDIENTI (uno per riga)</div>
-      <textarea oninput="ST.sheetData.ingredients=this.value" rows="4" placeholder="100g pasta&#10;200g pomodorini&#10;1 spicchio aglio&#10;Olio EVO q.b." style="width:100%;padding:10px;font-size:13px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;color:var(--text);margin-bottom:10px;font-family:inherit;resize:vertical;">${escapeHtml(d.ingredients||'')}</textarea>
+      <textarea oninput="ST.sheetData.ingredients=this.value" rows="4" placeholder="${LL('100g pasta&#10;200g pomodorini&#10;1 spicchio aglio&#10;Olio EVO q.b.','100g pasta&#10;200g cherry tomatoes&#10;1 garlic clove&#10;Olive oil to taste')}" style="width:100%;padding:10px;font-size:13px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;color:var(--text);margin-bottom:10px;font-family:inherit;resize:vertical;">${escapeHtml(d.ingredients||'')}</textarea>
 
       <div style="font-size:10px;color:var(--mut);font-weight:700;margin-bottom:4px;">PROCEDIMENTO (uno step per riga)</div>
-      <textarea oninput="ST.sheetData.steps=this.value" rows="4" placeholder="Cuoci la pasta al dente&#10;In padella scalda aglio e olio&#10;Aggiungi i pomodorini..." style="width:100%;padding:10px;font-size:13px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;color:var(--text);margin-bottom:14px;font-family:inherit;resize:vertical;">${escapeHtml(d.steps||'')}</textarea>
+      <textarea oninput="ST.sheetData.steps=this.value" rows="4" placeholder="${LL('Cuoci la pasta al dente&#10;In padella scalda aglio e olio&#10;Aggiungi i pomodorini...','Cook the pasta al dente&#10;Heat garlic and oil in a pan&#10;Add the cherry tomatoes...')}" style="width:100%;padding:10px;font-size:13px;background:var(--surf);border:1px solid var(--bord);border-radius:8px;color:var(--text);margin-bottom:14px;font-family:inherit;resize:vertical;">${escapeHtml(d.steps||'')}</textarea>
 
       <div style="display:flex;gap:6px;">
         <button class="btn btn-action" style="flex:1;padding:14px;" onclick="closeSheet()">${t('c_cancel')}</button>
@@ -17041,15 +17105,15 @@ window.render = function() {
       return`<div class="sh-ov" onclick="if(event.target===this)closeSheet()"><div class="sh"><div class="sh-h"></div>
         <div class="bebas" style="font-size:22px;margin-bottom:14px;">+ NUOVO ESERCIZIO PERSONALIZZATO</div>
         <span class="lbl">NOME ESERCIZIO</span>
-        <input id="cwExName" type="text" maxlength="60" placeholder="Es. Alzate cinesi" style="margin-bottom:10px;">
+        <input id="cwExName" type="text" maxlength="60" placeholder="${LL('Es. Alzate cinesi','e.g. Chinese raises')}" style="margin-bottom:10px;">
         <span class="lbl">GRUPPO MUSCOLARE</span>
-        <input id="cwExMus" type="text" maxlength="40" placeholder="Es. Spalle" style="margin-bottom:10px;">
+        <input id="cwExMus" type="text" maxlength="40" placeholder="${LL('Es. Spalle','e.g. Shoulders')}" style="margin-bottom:10px;">
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">
           <div><span class="lbl" style="font-size:10px;">SERIE</span><input id="cwExSets" type="number" min="1" max="10" value="${sr.sets}" style="margin:0;text-align:center;"></div>
           <div><span class="lbl" style="font-size:10px;">REPS</span><input id="cwExReps" type="text" maxlength="15" value="${sr.reps}" style="margin:0;text-align:center;"></div>
           <div><span class="lbl" style="font-size:10px;">RECUPERO (S)</span><input id="cwExRest" type="number" min="0" max="600" value="${sr.rest}" style="margin:0;text-align:center;"></div>
         </div>
-        <div style="font-size:11px;color:var(--mut);margin-bottom:14px;line-height:1.5;">💡 Suggeriti per il tuo focus: ${sr.note||sr.sets+'×'+sr.reps+', recupero '+sr.rest+'s'}.</div>
+        <div style="font-size:11px;color:var(--mut);margin-bottom:14px;line-height:1.5;">${LL(`💡 Suggeriti per il tuo focus: ${sr.note||sr.sets+'×'+sr.reps+', recupero '+sr.rest+'s'}.`,`💡 Suggested for your focus: ${sr.note||sr.sets+'×'+sr.reps+', rest '+sr.rest+'s'}.`)}</div>
         <div style="display:flex;gap:8px;">
           <button class="btn btn-action" style="flex:1;padding:12px;" onclick="ST.sheetData.subSheet=null;render();">${t('c_cancel')}</button>
           <button class="btn" style="flex:1;padding:12px;background:var(--purp);color:#fff;" onclick="saveCustomExerciseToDraft()">${t('c_add').toUpperCase()}</button>
@@ -17062,7 +17126,7 @@ window.render = function() {
 
       <!-- Nome scheda -->
       <span class="lbl">NOME SCHEDA</span>
-      <input id="cwName" type="text" maxlength="60" value="${escapeHtml(draft.name||'')}" placeholder="Es. La mia scheda spalle" style="margin-bottom:10px;">
+      <input id="cwName" type="text" maxlength="60" value="${escapeHtml(draft.name||'')}" placeholder="${LL('Es. La mia scheda spalle','e.g. My shoulder routine')}" style="margin-bottom:10px;">
 
       <!-- Emoji -->
       <span class="lbl" style="margin-bottom:6px;">EMOJI</span>
@@ -17168,7 +17232,7 @@ window.render = function() {
       }).join('')}
     </nav>
     <div class="drawer-footer">
-      <div class="uname">Connesso come <strong>${AU.user||'—'}</strong></div>
+      <div class="uname">${LL('Connesso come','Connected as')} <strong>${AU.user||'—'}</strong></div>
       <button class="btn-s btn-action" style="width:100%;padding:10px;font-size:13px;" onclick="closeDrawer();doLogout()">🚪 Logout</button>
     </div>
   </aside>`;
