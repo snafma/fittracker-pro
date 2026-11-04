@@ -85,7 +85,7 @@ w.ST.lang='it';
 {const g=w.__guidePlan({...E.wu_cut,isWarmup:true,id:'wu_cut'});T('timer riscaldamento ancora a passi',g&&g.segs.length===6&&g.segs[0].sec===180);}
 
 // coach
-const said=[];w.SpeechSynthesisUtterance=function(t){this.text=t};w.speechSynthesis={speaking:false,pending:false,speak(u){said.push(u.text)},cancel(){},getVoices(){return[]}};
+const said=[];w.SpeechSynthesisUtterance=function(t){this.text=t};w.speechSynthesis={speaking:false,pending:false,speak(u){said.push(u.text)},cancel(){},getVoices(){return[{name:'Alice',lang:'it-IT',default:true},{name:'Daniel',lang:'en-GB'}]}};
 w.ST.p.coachMode=true;w.ST.aWo=null;w.Coach.prev=null;w.Coach.tick();
 w.startWo('A');w.ST.woPaused=null;w.Coach.tick();
 T('coach: saluto + spiegazione primo esercizio',said.some(s=>/Sono il tuo coach/.test(s)&&/riscaldamento/.test(s)),said[said.length-1]);
