@@ -1,6 +1,6 @@
 const boot=require('./harness_lib');const file=process.argv[2]||'Index.html';const w=boot(file);
 const T=(n,c,x)=>console.log((c?'✓':'✗ FAIL')+' '+n+(x!==undefined?' ['+x+']':''));w.alert=()=>{};w.confirm=()=>true;
-w.saveU=()=>Promise.resolve(true);
+w.saveU=()=>Promise.resolve(true);w._userPickedDate=true;
 const app=()=>w.document.getElementById('app');
 // opzioni
 w.ST.tab='set';w.ST.p.dur=20;w.render();

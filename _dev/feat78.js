@@ -29,4 +29,8 @@ w.ST.p.coachMode=false;const n1=said.length;w.Coach.test();T('PROVA VOCE funzion
 VO=[{name:'Alice',lang:'it-IT',default:true}];w.ST.p.coachAvatar='m';w.ST.tab='set';w.render();
 const c=w.document.getElementById('sec-coachmode').textContent;T('impostazioni: voce usata + consiglio di scaricare Luca',/Alice \(it-IT\)/.test(c)&&/scarica Luca/.test(c.replace(/\s+/g,' ')),c.match(/Voce maschile[^.]*\./)&&c.match(/Voce maschile[^.]*\./)[0]);
 VO=[{name:'Luca',lang:'it-IT'}];w.render();T('con Luca installato niente consiglio',!/Per una voce vera/.test(w.document.getElementById('sec-coachmode').textContent));
-T('versione S78',/build-SESSION78/.test(src));
+T('versione S78+',/build-SESSION(78|79)/.test(src));
+// S79: elenco voci disponibili e aggiornamento card
+VO=[{name:'Alice',lang:'it-IT',default:true},{name:'Luca',lang:'it-IT'}];w.ST.lang='it';w.ST.p.coachMode=true;w.ST.tab='set';w.render();
+{const d=w.document.querySelector('#sec-coachmode details');T('elenco voci disponibili nelle impostazioni',d&&/Voci che il telefono dà all'app \(2\)/.test(d.textContent)&&/Luca · it-IT/.test(d.textContent)&&/versione base/.test(d.textContent));}
+T('versione S79',/build-SESSION79/.test(src));
