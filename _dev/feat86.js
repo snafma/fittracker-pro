@@ -27,4 +27,4 @@ w.AU.tab='reg';w.render();T('registrazione: campi invariati',['aU','aE','aP','aP
 w.AU.tab='forgot';w.render();T('recupero password: campo email',!!w.document.getElementById('fgE'));
 w.AU.user=user;
 T('tour IT/EN aggiornato',/L'app ricorda l'accesso/.test(src)&&/The app remembers your login/.test(src));
-T('versione S86',/build-SESSION86/.test(src));
+T('versione S86+',/build-SESSION(8[6-9]|9\d)/.test(src));

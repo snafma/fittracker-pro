@@ -1,0 +1,11 @@
+const boot=require('./harness_lib');const file=process.argv[2]||'Index-SORGENTE.html';const w=boot(file);
+const T=(n,c,x)=>console.log((c?'✓':'✗ FAIL')+' '+n+(x!==undefined?' ['+x+']':''));w.saveU=()=>Promise.resolve(true);w.confirm=()=>true;w._userPickedDate=true;
+const src=require('fs').readFileSync(file,'utf8');const css=(w.document.getElementById('s87css')||{}).textContent||'';
+T('stile S87 caricato',css.length>1000);
+T('nessuno sfocato sulla barra in alto (iOS)',!/\.topbar\{[^}]*backdrop-filter/.test(css)&&!/\.topbar\{[^}]*transform/.test(css));
+T('menu laterale, fogli, campi, chip, allenamento ridisegnati',['.drawer{','.dni{','.sh{','select{','.flt-btn','.wo-head','.tmr-ring','.bbl{'].every(s=>css.includes(s)));
+T('freccia dei menu a tendina valida',/background-image:url\("data:image\/svg\+xml/.test(css)&&!/%2523/.test(css));
+T('solo tema scuro toccato (il chiaro resta com\'è)',/body:not\(\[data-theme=light\]\) \.drawer/.test(css));
+let ok=true;for(const tb of ['home','work','diet','stats','body','coach','set','profile','share']){try{w.ST.tab=tb;w.render()}catch(e){ok=false;console.log(tb,e.message)}}T('tutte le schermate si disegnano',ok);
+T('tour IT/EN aggiornato',/stile moderno e arrotondato/.test(src)&&/modern and rounded/.test(src));
+T('versione S87',/build-SESSION(8[7-9]|9\d)/.test(src));

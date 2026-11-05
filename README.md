@@ -5,7 +5,7 @@ Si installa sul telefono come una vera app e funziona anche offline.
 
 👉 **Apri l'app:** https://snafma.github.io/fittracker-pro/
 
-Versione attuale: **build-SESSION86-MODERN**
+Versione attuale: **build-SESSION87-RESTYLE**
 
 ## Funzionalità
 
@@ -48,6 +48,9 @@ Versione attuale: **build-SESSION86-MODERN**
 ### Coach coerente
 - Un solo messaggio del giorno: se l'obiettivo di peso è in ritardo o impossibile, il coach parla di quello (unendo i complimenti per la costanza negli allenamenti), con il tasto per una sessione solo cardio. La stessa card, con lo stesso stile, compare in AI Coach › Consigli.
 - Coach vocale, consigli e messaggi chiamano l'utente per nome.
+
+### Grafica
+Stile moderno e arrotondato "Apple" sul tema scuro: card con gradiente e ombra morbida, campi e menu a tendina arrotondati con freccia, menu laterale con icone in riquadri e voce attiva evidenziata, fogli dal basso con maniglia, segmenti a pillola, pulsanti con effetto alla pressione, schermate di allenamento e timer rifinite. Nessuna sfocatura sulla barra in alto (su iPhone la rende sfocata). Il tema chiaro non cambia.
 
 ### Accesso sempre ricordato
 - La sessione di Firebase viene salvata subito sul telefono (prima localStorage, poi IndexedDB) e letta all'avvio prima di mostrare qualsiasi schermata.
