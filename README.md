@@ -5,7 +5,7 @@ Si installa sul telefono come una vera app e funziona anche offline.
 
 👉 **Apri l'app:** https://snafma.github.io/fittracker-pro/
 
-Versione attuale: **build-SESSION84-GOAL-CAMERA**
+Versione attuale: **build-SESSION85-ACCOUNT**
 
 ## Funzionalità
 
@@ -23,7 +23,7 @@ Versione attuale: **build-SESSION84-GOAL-CAMERA**
 - **Timer guidato** con suoni (4 temi), pausa, ripresa automatica se l'app viene chiusa, salvataggio parziale. "Esci" riporta subito al menu (il salvataggio parziale continua in background).
 - **Scheda nuova ogni ~8 settimane**, con split alternato. Ogni esercizio si può sostituire.
 - **Schede personalizzate**, quante vuoi, con nomi univoci. Per ogni esercizio: serie, ripetizioni, recupero, kg e note, "in uso" o "escluso". Si possono aggiungere ed eliminare esercizi ed eliminare intere schede.
-- **Importa da foto o PDF**, anche con una foto scattata dall'app (più pagine di fila; iOS chiede il permesso della fotocamera la prima volta): legge una o più schede e le separa (Giorno 1, Scheda A, Lunedì, Push…), con esercizi, serie, ripetizioni, kg, recuperi e note. Il nome della scheda lo sceglie l'utente e deve essere unico (quello letto è solo un suggerimento).
+- **Importa da foto o PDF** (su iPhone lo stesso tasto permette anche di scattare la foto o scegliere un file): legge una o più schede e le separa (Giorno 1, Scheda A, Lunedì, Push…), con esercizi, serie, ripetizioni, kg, recuperi e note. Il nome della scheda lo sceglie l'utente e deve essere unico (quello letto è solo un suggerimento).
   - PDF con testo: lettura diretta. Foto e PDF scansionati: OCR nel telefono (Tesseract, italiano + inglese).
   - L'AI corregge gli errori di lettura e interpreta la scheda; senza connessione all'AI c'è un lettore locale.
   - Ogni esercizio viene riconosciuto nella libreria (con passaggi e consigli) oppure resta personalizzato. Prima di salvare puoi correggere tutto.
@@ -45,8 +45,19 @@ Versione attuale: **build-SESSION84-GOAL-CAMERA**
 - **Fattibile ma lento**: avviso "obiettivo ancora raggiungibile" con cosa fare (in definizione: una sessione solo cardio in più, passi, dieta nel weekend), senza proporre di cambiare data.
 - **Impossibile** (servirebbe più del ritmo sano): avviso chiaro con data realistica proposta, da accettare o cambiando configurazione.
 
+### Coach coerente
+- Un solo messaggio del giorno: se l'obiettivo di peso è in ritardo o impossibile, il coach parla di quello (unendo i complimenti per la costanza negli allenamenti), con il tasto per una sessione solo cardio. Lo stesso messaggio compare in AI Coach › Consigli.
+- Coach vocale, consigli e messaggi chiamano l'utente per nome.
+
+### Profilo e account
+- Scorciatoie alle sezioni: Nome ed email · Dati fisici · Sicurezza (cambio password, logout) · Privacy · Elimina account.
+- Nome e cognome; email con stato "verificata", invio dell'email di verifica (link di Firebase) e cambio email con conferma sulla nuova casella; reset della password via email dal profilo e dal login.
+
+### Condividi l'app
+- Tasto unico "Condividi" (menu del telefono), WhatsApp, Telegram, Messaggi, Email, link da copiare, anteprima del messaggio personalizzato con il nome, QR da far inquadrare e istruzioni di installazione.
+
 ### Configurazione
-Divisa in famiglie con navigazione rapida: Programma e obiettivi (con orari) · Allenamento (focus, preferenze, le mie schede) · Coach e suoni · Alimentazione (si può spegnere: il resto resta visibile) · Notifiche · Integrazioni e importazioni (Salute, bilance, calendario, CSV) · App (tema, lingua, tour).
+Divisa in famiglie con navigazione rapida: Programma e obiettivi (con orari) · Allenamento (focus, preferenze, le mie schede) · Coach e suoni · Alimentazione (si può spegnere: il resto resta visibile) · Notifiche · Integrazioni e importazioni (Salute, bilance, calendario, CSV, condivisione community) · App (tema, lingua, tour).
 
 ### Progressi
 - Peso, sonno, passi, composizione corporea (massa grassa e massa magra).

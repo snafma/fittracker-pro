@@ -16,8 +16,8 @@ nm.value='Gambe e Spalle';w.saveCustomWorkout();T('nome unico → salvata',w.ST.
 await w.importWorkoutFiles({files:[{name:'IMG_0001.jpg',type:'image/jpeg'}]});w.render();w.document.getElementById('cwName').value='Allenamento B';w.saveCustomWorkout();
 T('stesso file, nome diverso: due schede distinte',w.ST.p.customWorkouts.filter(x=>/Gambe e Spalle|Allenamento B/.test(x.name)).length===2);
 // fotocamera
-w.ST.tab='set';w.render();T('elenco schede: bottone SCATTA FOTO con fotocamera',/SCATTA FOTO/.test(app().textContent)&&!!app().querySelector('input[capture="environment"]'));
-w.openCustomWorkoutEditor();w.render();T('editor: bottone SCATTA FOTO',!!w.document.querySelector('.sh input[capture="environment"]')||/SCATTA FOTO/.test(w.document.body.innerHTML));w.closeSheet();
+w.ST.tab='set';w.render();T('elenco schede: IMPORTA DA FOTO (su iPhone offre anche la fotocamera)',/IMPORTA DA FOTO O PDF/.test(app().textContent)&&!!app().querySelector('input[accept*="image"]'));
+w.openCustomWorkoutEditor();w.render();T('editor: IMPORTA DA FOTO',/IMPORTA DA FOTO O PDF/.test(w.document.body.innerHTML));w.closeSheet();
 let got=null;const imp=w.importWorkoutFiles;w.importWorkoutFiles=async(x)=>{got=x.files.length};
 w.cameraShot({files:[{name:'a.jpg'}]});w.cameraShot({files:[{name:'b.jpg'}]});
 T('2 foto scattate: pannello con ALTRA PAGINA e LEGGI',/2 FOTO PRONTE/.test(w.document.getElementById('camOv').textContent)&&/ALTRA PAGINA/.test(w.document.getElementById('camOv').textContent));
@@ -40,7 +40,7 @@ w.ST.p.t='bulk';w.ST.p.g=95;w.ST.h=H([['2026-10-22',90],['2026-11-05',90.05]]);s
 T('massa: fattibile ma lento → consigli su calorie e costanza',s.feasible&&/calorie/.test(s.advice));
 w.ST.p.g=110;s=w.getTargetSummary(w.ST.h,w.ST.p);T('massa +20 kg in 7 mesi: impossibile (max sano 0,5 kg/sett)',s.impossible);
 T('tour IT/EN aggiornato',/ancora raggiungibile ti dico come recuperare/.test(src)&&/still reachable I tell you how to catch up/.test(src)&&/scattata dall'app/.test(src));
-T('versione S84',/build-SESSION84/.test(src));
+T('versione S84+',/build-SESSION(8[4-9]|9\d)/.test(src));
 })();
 // ── configurazione riorganizzata ──
 setTimeout(()=>{
