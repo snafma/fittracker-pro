@@ -5,7 +5,7 @@ Si installa sul telefono come una vera app e funziona anche offline.
 
 👉 **Apri l'app:** https://snafma.github.io/fittracker-pro/
 
-Versione attuale: **build-SESSION80-VOICES4**
+Versione attuale: **build-SESSION81-VOICES5**
 
 ## Funzionalità
 
@@ -25,7 +25,7 @@ Versione attuale: **build-SESSION80-VOICES4**
 - **Modalità Coach (voce)**:
   - spiega ogni esercizio, conta le ripetizioni e scandisce timer e intervalli;
   - alla fine fa i complimenti, riepiloga minuti, chili, calorie e record, poi saluta;
-  - avatar a scelta (uomo, donna, robot, orso), ognuno con una voce diversa: voce maschile, femminile, sintetica AI e vivace;
+  - avatar a scelta (uomo, donna, robot, orso), con voce maschile (molto grave se il telefono ha solo una voce femminile), femminile, e acuta e vivace per robot e orso; usa sempre la versione ottimizzata della voce, se c'è;
   - usa le voci del telefono (meglio le versioni "migliorate", es. Luca e Alice). Se ne manca una, adatta tono e ritmo così le quattro voci restano distinguibili. Nelle impostazioni mostra quale voce sta usando e l'elenco delle voci che il telefono rende disponibili all'app (su iPhone, nelle app web installate, iOS di solito dà solo la voce predefinita: in quel caso gli avatar si distinguono per tono e ritmo).
 
 ### Alimentazione
