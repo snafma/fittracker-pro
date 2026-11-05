@@ -1,0 +1,27 @@
+const fs=require('fs');const file=process.argv[2]||'Index-SORGENTE.html';const src=fs.readFileSync(file,'utf8');let ok=0,fail=0;
+const T=(n,c)=>{c?ok++:fail++;console.log((c?'✓':'✗ FAIL')+' '+n);};
+T('versione S89',/build-SESSION(89|9\d)/.test(src));
+T('niente più SYSTEM BOOTING',!/SYSTEM BOOTING/.test(src));
+const m=src.match(/<div id="?app"?>\s*<div class="?loader-wrap"?[\s\S]{0,1500}?<\/div>\s*<\/div>/);
+T('avvio con icona app',!!m&&/apple-touch-icon\.png/.test(m[0]));
+T('avvio con nome app e sfondo sfumato',!!m&&/FitTracker/.test(m[0])&&/radial-gradient/.test(m[0]));
+T('avvio con versione',!!m&&/build-SESSION\d+/.test(m[0]));
+T('tour IT/EN menziona avvio',/avvio, menu, schede/.test(src)&&/startup, menu, cards/.test(src));
+const boot=require('./harness_lib');const w=boot(file);w.saveU=()=>Promise.resolve(true);const app=()=>w.document.getElementById('app');
+w.ST.tab='profile';w.render();
+const nc=app().querySelector('#pf-news');
+T('Profilo: sezione Novità e versioni',!!nc&&/Novità e versioni/.test(nc.textContent)&&/Versione 89/.test(nc.textContent)&&/ATTUALE/.test(nc.textContent));
+T('carica solo l\'ultima versione',!!nc&&!/Versione 88/.test(nc.textContent));
+T('scorciatoia Novità nel Profilo',app().querySelectorAll('.qnav .qtile').length===6&&/Novità/.test(app().querySelector('.qnav').textContent));
+T('Novità prima di Elimina account',!!nc&&!!(nc.compareDocumentPosition(app().querySelector('#pf-danger'))&4));
+w.__relMore(nc.querySelector('button'));
+T('versioni precedenti a richiesta',/Versione 88/.test(nc.textContent)&&/Versione 75/.test(nc.textContent)&&/Nascondi/.test(nc.querySelector('button').textContent));
+w.__relMore(nc.querySelector('button'));T('si richiudono',!/Versione 88/.test(nc.textContent));
+T('storico IT/EN',w.__FT_RELEASES.every(r=>r[1]&&r[2]));
+// login
+const A=w.AU,u=A.user;A.user=null;A.loggingIn=false;A.tab='login';w.__authSettled=true;w.render();
+T('pulsanti login non maiuscoli',/^Accedi$/.test(app().querySelector('.auth-w .btn').textContent.trim()));T('login in stile nuovo',!!app().querySelector('.auth-w .auth-hero')&&!!w.document.getElementById('s89css')&&!!app().querySelector('#lU'));
+A.loggingIn=true;w.render();
+T('accesso in corso = schermata di avvio',!!app().querySelector('.s86-splash')&&/Accesso in corso/.test(app().textContent)&&/Carico i tuoi dati/.test(app().textContent));
+A.loggingIn=false;A.user=u;
+console.log('feat89   ok='+ok+' fail='+fail);process.exit(fail?1:0);

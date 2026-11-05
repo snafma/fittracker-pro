@@ -18,11 +18,11 @@ T('nome dell\'utente dal profilo',w.__firstName()==='Marcello');
 w.ST.p={...w.ST.p,t:'cut',g:80,targetD:'2027-06-01'};w.ST.h=[{d:'2026-10-22',w:90.3},{d:'2026-10-29',w:90.2},{d:'2026-11-05',w:90.1}];w.ST.goalPaceSnooze=null;
 w.ST.wLog=[{d:'2026-10-27',woId:'A',isRest:false},{d:'2026-10-29',woId:'B',isRest:false},{d:'2026-10-31',woId:'C',isRest:false},{d:'2026-11-03',woId:'A',isRest:false},{d:'2026-11-05',woId:'B',isRest:false}];
 w.ST.tab='home';w.render();H=app().innerHTML;tx=app().textContent;
-T('home: UN solo messaggio sull\'obiettivo (dentro il coach del giorno)',(tx.match(/OBIETTIVO ANCORA RAGGIUNGIBILE/g)||[]).length===1&&/IL TUO COACH · OBIETTIVO ANCORA RAGGIUNGIBILE/.test(tx));
+T('home: UN solo messaggio sull\'obiettivo (card del coach)',w.document.querySelectorAll('#app .coach-card').length===1&&(tx.match(/Fattibile, ma serve più impegno/g)||[]).length===1);
 T('coach del giorno: nome, costanza e peso lento nello stesso messaggio',/Marcello, gli allenamenti vanno alla grande \(5 nelle ultime 2 settimane\), ma il peso scende piano/.test(tx),tx.match(/Marcello[^.]*\./)&&tx.match(/Marcello[^.]*\./)[0]);
 T('niente frasi in contrasto ("costanza" generica + "fatichi" in due card)',!/Due settimane piene di costanza/.test(tx));
 T('bottone cardio nel messaggio del coach',/FAI UNA SESSIONE SOLO CARDIO/.test(tx));
-w.ST.tab='coach';w.ST.coachView='tips';w.render();T('AI Coach › Consigli: stesso messaggio',/OBIETTIVO ANCORA RAGGIUNGIBILE/.test(app().textContent)&&/Marcello, gli allenamenti/.test(app().textContent));
+w.ST.tab='coach';w.ST.coachView='tips';w.render();T('AI Coach › Consigli: stesso messaggio',/Fattibile, ma serve più impegno/.test(app().textContent)&&/Marcello, gli allenamenti/.test(app().textContent));
 w.ST.p.targetD='2027-12-31';w.ST.h=[{d:'2026-10-22',w:91.5},{d:'2026-11-05',w:90.1}];w.ST.tab='home';w.render();
 const m=w.getMotivationalMsg({status:'ok'},w.ST,90.1,{kcal:2000},{});T('obiettivo in linea: messaggio normale col nome',m&&/^Marcello, /.test(m.msg),m&&m.msg.slice(0,60));
 const said=[];w.SpeechSynthesisUtterance=function(t){this.text=t};w.speechSynthesis={speak(u){said.push(u.text)},cancel(){},getVoices(){return[{name:'Alice',lang:'it-IT'}]},addEventListener(){}};
@@ -32,7 +32,7 @@ const calls=[];w.FBAuth=Object.assign({},w.FBAuth||{},{auth:{currentUser:{email:
 w.ST.tab='profile';w.render();H=app().innerHTML;tx=app().textContent;
 T('profilo: card nome ed email con email NON VERIFICATA',/NOME E EMAIL/.test(tx)&&/m@x\.it/.test(tx)&&/NON VERIFICATA/.test(tx)&&/INVIA EMAIL DI VERIFICA/.test(tx));
 T('profilo: scorciatoie alle 5 sezioni',['pf-account','pf-body','pf-security','pf-privacy','pf-danger'].every(i=>w.document.getElementById(i))&&(H.match(/scrollIntoView/g)||[]).length>=5);
-const ord=[...app().querySelectorAll('[id^="pf-"]')].map(x=>x.id).join(',');T('ordine: nome ed email, dati fisici, sicurezza, privacy, elimina',ord==='pf-account,pf-body,pf-security,pf-privacy,pf-danger',ord);
+const ord=[...app().querySelectorAll('[id^="pf-"]')].map(x=>x.id).filter(x=>x!=='pf-news').join(',');T('ordine: nome ed email, dati fisici, sicurezza, privacy, elimina',ord==='pf-account,pf-body,pf-security,pf-privacy,pf-danger',ord);
 (async()=>{
 w.document.getElementById('acFn').value='Marco';w.document.getElementById('acLn').value='Bianchi';await w.saveAccountName();
 T('salva nome e cognome (profilo + account)',w.AU.profile.fn==='Marco'&&w.AU.profile.ln==='Bianchi'&&calls.includes('name:Marco Bianchi'));

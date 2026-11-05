@@ -30,7 +30,7 @@ let s=w.getTargetSummary(w.ST.h,w.ST.p);
 T('90→80 entro 1/6/2027 a ritmo lento: fattibile, serve più impegno',s.feasible&&!s.impossible&&/Fattibile/.test(s.label)&&/più cardio|solo cardio/.test(s.advice),s.label+' | '+s.currentRate+' vs '+s.requiredRate);
 T('ritmo calcolato sui giorni (non sul numero di pesate)',Math.abs(parseFloat(s.currentRate)-0.15)<0.03,s.currentRate);
 T('nessuna proposta di cambiare data se è fattibile',!w.checkTargetAdjustment(w.ST.h,w.ST.p).needsShift);
-w.ST.tab='home';w.ST.goalPaceSnooze=null;w.render();T('home: "obiettivo ancora raggiungibile" + bottone cardio',/OBIETTIVO ANCORA RAGGIUNGIBILE/.test(app().textContent)&&/SESSIONE SOLO CARDIO/.test(app().textContent));
+w.ST.tab='home';w.ST.goalPaceSnooze=null;w.render();T('home: "fattibile, ma serve più impegno" + bottone cardio',/Fattibile, ma serve più impegno/.test(app().textContent)&&/SESSIONE SOLO CARDIO/.test(app().textContent));
 w.ST.p.targetD='2026-12-01';s=w.getTargetSummary(w.ST.h,w.ST.p);const c=w.checkTargetAdjustment(w.ST.h,w.ST.p);
 T('90→80 entro 1/12/2026: impossibile',s.impossible&&/Impossibile/.test(s.label)&&c.needsShift&&c.suggestedDate>'2027-01-01',c.suggestedDate);
 w.render();T('home: "obiettivo impossibile alla data" con data proposta',/OBIETTIVO IMPOSSIBILE ALLA DATA/.test(app().textContent)&&/Data proposta/.test(app().textContent));

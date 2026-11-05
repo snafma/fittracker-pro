@@ -15,10 +15,10 @@ w.AU.loadingData=false;w.__authSettled=true;w.ST.tab='home';w.render();T('dati p
 T('callback: sessione decisa solo dopo i dati, grazia per il "nessun utente"',/__authNullGrace\(\)/.test(src)&&/__authHintSet\(!0\)/.test(src)&&/loadingData/.test(src));
 // 2) consiglio unico nello stesso stile
 w.ST.p={...w.ST.p,t:'cut',g:80,targetD:'2027-06-01'};w.ST.h=[{d:'2026-10-22',w:90.3},{d:'2026-10-29',w:90.2},{d:'2026-11-05',w:90.1}];
-w.ST.tab='home';w.render();const homeCard=[...app().querySelectorAll('div')].find(d=>/IL TUO COACH/.test(d.textContent)&&/Messaggio del giorno/.test(d.textContent)&&d.style.borderRadius==='18px');
-w.ST.tab='coach';w.ST.coachView='tips';w.render();const tipsCard=[...app().querySelectorAll('div')].find(d=>/IL TUO COACH/.test(d.textContent)&&/Messaggio del giorno/.test(d.textContent)&&d.style.borderRadius==='18px');
+w.ST.tab='home';w.render();const homeCard=app().querySelector('.coach-card');
+w.ST.tab='coach';w.ST.coachView='tips';w.render();const tipsCard=app().querySelector('.coach-card');
 T('Consigli: stessa card del coach della Home (stesso stile e testo)',!!homeCard&&!!tipsCard&&homeCard.getAttribute('style')===tipsCard.getAttribute('style')&&homeCard.textContent===tipsCard.textContent);
-T('Consigli: niente seconda card in stile diverso',(app().textContent.match(/OBIETTIVO ANCORA RAGGIUNGIBILE/g)||[]).length===1);
+T('Consigli: niente seconda card in stile diverso',app().querySelectorAll('.coach-card').length===1&&!/OBIETTIVO ANCORA RAGGIUNGIBILE/.test(app().textContent));
 // 3) stile e login
 T('stile moderno caricato',!!w.document.getElementById('s86css'));
 w.AU.user=null;w.__authSettled=true;w.AU.tab='login';w.render();

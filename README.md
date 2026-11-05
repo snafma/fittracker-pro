@@ -5,7 +5,7 @@ Si installa sul telefono come una vera app e funziona anche offline.
 
 👉 **Apri l'app:** https://snafma.github.io/fittracker-pro/
 
-Versione attuale: **build-SESSION87-RESTYLE**
+Versione attuale: **build-SESSION89-BOOT**
 
 ## Funzionalità
 
@@ -46,18 +46,21 @@ Versione attuale: **build-SESSION87-RESTYLE**
 - **Impossibile** (servirebbe più del ritmo sano): avviso chiaro con data realistica proposta, da accettare o cambiando configurazione.
 
 ### Coach coerente
-- Un solo messaggio del giorno: se l'obiettivo di peso è in ritardo o impossibile, il coach parla di quello (unendo i complimenti per la costanza negli allenamenti), con il tasto per una sessione solo cardio. La stessa card, con lo stesso stile, compare in AI Coach › Consigli.
+- Un solo messaggio del giorno: se l'obiettivo di peso è in ritardo o impossibile, il coach parla di quello (unendo i complimenti per la costanza negli allenamenti), con il tasto per una sessione solo cardio. La stessa card (stile Progressi) compare in Home, AI Coach › Consigli e Progressi, con bordo verde se sei in linea, arancione se serve attenzione (fattibile ma in ritardo), rosso se l'obiettivo non è raggiungibile.
 - Coach vocale, consigli e messaggi chiamano l'utente per nome.
 
 ### Grafica
 Stile moderno e arrotondato "Apple" sul tema scuro: card con gradiente e ombra morbida, campi e menu a tendina arrotondati con freccia, menu laterale con icone in riquadri e voce attiva evidenziata, fogli dal basso con maniglia, segmenti a pillola, pulsanti con effetto alla pressione, schermate di allenamento e timer rifinite. Nessuna sfocatura sulla barra in alto (su iPhone la rende sfocata). Il tema chiaro non cambia.
+- Ogni menu ha un'intestazione colorata con icona, titolo e sottotitolo (stile "Condividi app"); le navigazioni rapide sono a riquadri colorati.
+- Avvio e login nello stesso stile: icona dell'app, sfondo sfumato, testi normali (non tutto maiuscolo); "accesso in corso" usa la stessa schermata dell'avvio. Il numero di versione resta piccolo in fondo all'avvio.
 
 ### Accesso sempre ricordato
 - La sessione di Firebase viene salvata subito sul telefono (prima localStorage, poi IndexedDB) e letta all'avvio prima di mostrare qualsiasi schermata.
 - Se eri già dentro, all'apertura vedi "Bentornato" finché la sessione e i dati non sono pronti: mai più il login per qualche secondo. Se iOS segnala prima "nessun utente", l'app aspetta qualche secondo prima di decidere. Il login compare solo se sei uscito davvero (o dopo 15 secondi senza risposta, con un messaggio chiaro).
 
 ### Profilo e account
-- Scorciatoie alle sezioni: Nome ed email · Dati fisici · Sicurezza (cambio password, logout) · Privacy · Elimina account.
+- Scorciatoie alle sezioni: Nome ed email · Dati fisici · Sicurezza (cambio password, logout) · Privacy · Novità · Elimina account.
+- **Novità e versioni**: mostra la versione attuale con le sue novità; le versioni precedenti si caricano solo se le chiedi ("Mostra versioni precedenti").
 - Nome e cognome; email con stato "verificata", invio dell'email di verifica (link di Firebase) e cambio email con conferma sulla nuova casella; reset della password via email dal profilo e dal login.
 
 ### Condividi l'app
