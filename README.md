@@ -5,7 +5,7 @@ Si installa sul telefono come una vera app e funziona anche offline.
 
 👉 **Apri l'app:** https://snafma.github.io/fittracker-pro/
 
-Versione attuale: **build-SESSION83-IMPORT**
+Versione attuale: **build-SESSION84-GOAL-CAMERA**
 
 ## Funzionalità
 
@@ -23,7 +23,7 @@ Versione attuale: **build-SESSION83-IMPORT**
 - **Timer guidato** con suoni (4 temi), pausa, ripresa automatica se l'app viene chiusa, salvataggio parziale. "Esci" riporta subito al menu (il salvataggio parziale continua in background).
 - **Scheda nuova ogni ~8 settimane**, con split alternato. Ogni esercizio si può sostituire.
 - **Schede personalizzate**, quante vuoi, con nomi univoci. Per ogni esercizio: serie, ripetizioni, recupero, kg e note, "in uso" o "escluso". Si possono aggiungere ed eliminare esercizi ed eliminare intere schede.
-- **Importa da foto o PDF**: legge una o più schede e le separa (Giorno 1, Scheda A, Lunedì, Push…), con esercizi, serie, ripetizioni, kg, recuperi e note.
+- **Importa da foto o PDF**, anche con una foto scattata dall'app (più pagine di fila; iOS chiede il permesso della fotocamera la prima volta): legge una o più schede e le separa (Giorno 1, Scheda A, Lunedì, Push…), con esercizi, serie, ripetizioni, kg, recuperi e note. Il nome della scheda lo sceglie l'utente e deve essere unico (quello letto è solo un suggerimento).
   - PDF con testo: lettura diretta. Foto e PDF scansionati: OCR nel telefono (Tesseract, italiano + inglese).
   - L'AI corregge gli errori di lettura e interpreta la scheda; senza connessione all'AI c'è un lettore locale.
   - Ogni esercizio viene riconosciuto nella libreria (con passaggi e consigli) oppure resta personalizzato. Prima di salvare puoi correggere tutto.
@@ -39,6 +39,14 @@ Versione attuale: **build-SESSION83-IMPORT**
 ### Alimentazione
 - Piano adattivo con intolleranze e tipo di dieta. Inserimento rapido in 2 tocchi e oltre 1000 alimenti (`food_db.js`).
 - Riepilogo per pasto e sezione "Sgarro". Si può disattivare del tutto.
+
+### Obiettivo di peso alla data
+- Il ritmo viene calcolato sui giorni reali tra le pesate (non sul loro numero) e confrontato con quello necessario e con il **ritmo massimo sano** (dimagrimento ~1% del peso a settimana, 0,5-1,2 kg; massa 0,5 kg).
+- **Fattibile ma lento**: avviso "obiettivo ancora raggiungibile" con cosa fare (in definizione: una sessione solo cardio in più, passi, dieta nel weekend), senza proporre di cambiare data.
+- **Impossibile** (servirebbe più del ritmo sano): avviso chiaro con data realistica proposta, da accettare o cambiando configurazione.
+
+### Configurazione
+Divisa in famiglie con navigazione rapida: Programma e obiettivi (con orari) · Allenamento (focus, preferenze, le mie schede) · Coach e suoni · Alimentazione (si può spegnere: il resto resta visibile) · Notifiche · Integrazioni e importazioni (Salute, bilance, calendario, CSV) · App (tema, lingua, tour).
 
 ### Progressi
 - Peso, sonno, passi, composizione corporea (massa grassa e massa magra).

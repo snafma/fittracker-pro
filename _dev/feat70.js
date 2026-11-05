@@ -9,7 +9,7 @@ T('animazione pagine senza transform',!/@keyframes fadeUp\{from\{opacity:0;trans
 // impostazioni senza coaching
 w.ST.tab='set';w.ST.lang='it';w.render();let t=w.document.getElementById('app');
 T('sezione Coaching rimossa',!t.querySelector('#sec-coaching')&&!t.textContent.includes('CONSIGLI DEL COACH'));
-T('nav rapida porta ad AI Coach',/onclick="ST.tab='coach';render\(\)"/.test(t.innerHTML));
+T('nav rapida: niente bottone AI Coach (S84), famiglia Coach e suoni',!/AI Coach →/.test(t.innerHTML)&&/sec-coachsnd/.test(t.innerHTML));
 // cambio scheda manuale
 w.ST.programStart=D(20);w.ST.wLog=[];w.ST.pendingCycle=null;w.ST.cycleSnooze=D(-10);w.ST.aWo=null;w.ST.tab='work';w.render();t=w.document.getElementById('app');
 T('in Allenamento c\'è sempre "Cambia scheda"',/requestNewCycle\(\)/.test(t.innerHTML)&&t.textContent.includes('Cambia scheda'));

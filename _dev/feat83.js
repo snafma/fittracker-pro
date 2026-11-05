@@ -42,7 +42,7 @@ w.ST.p.customWorkouts=[{id:'cw_1',name:'Giorno 1',emoji:'🛠️',exercises:[{ex
 w.__readWorkoutFile=async()=>OCR;w.ST.tab='set';
 await w.importWorkoutFiles({files:[{name:'scheda.jpg',type:'image/jpeg'}]});
 T('dopo l\'import si apre l\'editor con la scheda letta',w.ST.sheet==='customWorkout'&&w.ST.sheetData.imported&&w.ST.sheetData.qTot===2);
-T('nome univoco (esiste già "Giorno 1")',w.ST.sheetData.draft.name==='Giorno 1 2',w.ST.sheetData.draft.name);
+T('nome lasciato all\'utente (suggerito "Giorno 1")',w.ST.sheetData.draft.name===''&&w.ST.sheetData.draft.suggestName==='Giorno 1');
 w.render();const h=app().innerHTML+w.document.body.innerHTML;
 T('editor: kg, note, in uso, letto/riconosciuto come',/>KG</.test(h)&&/NOTE/.test(h)&&/IN USO/.test(h)&&/RICONOSCIUTO COME/.test(h)&&/Scheda letta dal file \(1 di 2\)/.test(h));
 const d=w.ST.sheetData.draft;T('kg e note precompilati',d.exercises[0].kg===70&&/presa larga/.test(d.exercises[2].note));
@@ -53,7 +53,7 @@ c0.length&&w.setDraftMatch(2,c0[0]);T('…e di nuovo dalla libreria',!c0.length|
 w.removeExerciseFromDraft(1);T('elimino un esercizio',d.exercises.length===2);
 w.document.getElementById('cwName').value='giorno 1';alerts=[];w.saveCustomWorkout();T('nome già usato (maiuscole/minuscole) → bloccato',alerts.some(a=>/Esiste già/.test(a))&&w.ST.sheet==='customWorkout');
 w.document.getElementById('cwName').value='Petto Marco';w.saveCustomWorkout();
-T('salvata e si apre la seconda scheda letta',w.ST.p.customWorkouts.some(x=>x.name==='Petto Marco')&&w.ST.sheet==='customWorkout'&&w.ST.sheetData.qIdx===2&&w.ST.sheetData.draft.name==='Giorno 2');
+T('salvata e si apre la seconda scheda letta',w.ST.p.customWorkouts.some(x=>x.name==='Petto Marco')&&w.ST.sheet==='customWorkout'&&w.ST.sheetData.qIdx===2&&w.ST.sheetData.draft.suggestName==='Giorno 2');
 w.ST.sheetData.draft.exercises.forEach((e,i)=>i>0&&(e.active=false));w.render();w.document.getElementById('cwName').value='Gambe Marco';w.saveCustomWorkout();
 T('seconda salvata, coda finita',w.ST.p.customWorkouts.some(x=>x.name==='Gambe Marco')&&!w.ST.sheet);
 const g=w.ST.p.customWorkouts.find(x=>x.name==='Gambe Marco');w.ST.tab='set';w.render();T('elenco: esercizi in uso/esclusi',/1 in uso, 2 esclusi/.test(app().textContent));
@@ -64,6 +64,6 @@ const sg=w.getSuggest(R[0].id,{},'kg');T('carico di partenza dai kg della scheda
 const gw=w.buildWorkout(g.id,w.ST.p,3,{},'m',{});T('scheda con esclusi: solo quelli in uso',gw.exercises.filter(e=>!e.isWarmup&&!e.isCooldown).length===1);
 w.deleteCustomWorkout(g.id);T('elimino una scheda intera',!w.ST.p.customWorkouts.some(x=>x.id===g.id));
 T('importa da foto/PDF anche dall\'elenco schede',/IMPORTA DA FOTO O PDF/.test(app().textContent));
-T('tour IT/EN aggiornato',/importare le tue schede da foto o PDF/.test(src)&&/import your programs from a photo or PDF/.test(src));
+T('tour IT/EN aggiornato',/importare le tue schede da foto/.test(src)&&/import your programs from a photo/.test(src));
 T('versione S83+',/build-SESSION(8[3-9]|9\d)/.test(src));
 })();
