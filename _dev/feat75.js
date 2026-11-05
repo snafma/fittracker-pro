@@ -97,15 +97,15 @@ for(const s of [1,4,7]){w.ST.setElapsed=s;w.Coach.tick();}T('coach: conta le rip
 w.ST.woPhase='rest';w.ST.tmr=60;w.ST.currentSet=1;w.Coach.tick();T('coach: incoraggia e dà il recupero',/Recupera 60 secondi/.test(said[said.length-1]));
 w.ST.tmr=10;w.Coach.tick();T('coach: avviso 10 secondi',/Dieci secondi/.test(said[said.length-1]));
 w.ST.woPhase='ready';w.Coach.tick();T('coach: serie successiva',/Serie 2 di/.test(said[said.length-1]));
-w.ST.woPhase='exercise_done';w.Coach.tick();T('coach: complimenti e chiede com\'è andata',/Ottimo lavoro/.test(said[said.length-1])&&/troppo dura, ok o facile/.test(said[said.length-1]));
+w.ST.woPhase='exercise_done';w.Coach.tick();T('coach: complimenti e chiede com\'è andata',/completato/.test(said[said.length-1])&&/troppo dura o facile/.test(said[said.length-1])&&/OK/.test(said[said.length-1]));
 w.ST.woPaused={at:Date.now()};w.Coach.tick();T('coach: pausa',/Pausa/.test(said[said.length-1]));w.ST.woPaused=null;
 // timer guidato (plank / riscaldamento)
 w.ST.step=0;w.ST.woPhase='ready';w.Coach.tick();w.startSet();w.ST.setElapsed=0;w.Coach.tick();w.Coach.tick();
 T('coach: legge i passi del riscaldamento',/Corda|Jumping|Camminata|Circonduzioni|Slanci|Spalle|Squat|braccia|Rotazioni|Affondi/.test(said[said.length-1]),said[said.length-1].slice(0,80));
 // fine allenamento
 w.ST.wLog=[];w.ST.sheet='workoutDone';w.ST.sheetData={vol:3200,kcal:300,dur:52,exCount:8,prCount:2,woName:'A'};w.ST.aWo=null;w.Coach.tick();
-const fin=said[said.length-1];T('coach finale: complimenti, riepilogo, saluto',/bravissimo/.test(fin)&&/52 minuti/.test(fin)&&/2 record personali/.test(fin)&&/ciao!/.test(fin),fin.slice(0,160));
-w.ST.lang='en';w.ST.aWo='A';w.ST.sheet=null;w.Coach.prev={a:'A',st:0,set:0,ph:'ready',p:false};w.ST.sheet='workoutDone';w.ST.aWo=null;w.Coach.tick();T('coach EN finale',/You did great/.test(said[said.length-1])&&/bye!/.test(said[said.length-1]));
+const fin=said[said.length-1];T('coach finale: complimenti, riepilogo, saluto',/Bravissimo/.test(fin)&&/52 minuti/.test(fin)&&/2 record personali/.test(fin)&&/ciao!/.test(fin),fin.slice(0,160));
+w.ST.lang='en';w.ST.aWo='A';w.ST.sheet=null;w.Coach.prev={a:'A',st:0,set:0,ph:'ready',p:false};w.ST.sheet='workoutDone';w.ST.aWo=null;w.Coach.tick();T('coach EN finale',/Great job/.test(said[said.length-1])&&/bye!/.test(said[said.length-1]));
 w.ST.lang='it';
 // silenzio
 const n0=said.length;w.Coach.muted=true;w.Coach.say('prova');T('coach silenziato non parla',said.length===n0);w.Coach.muted=false;

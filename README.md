@@ -5,26 +5,27 @@ Si installa sul telefono come una vera app e funziona anche offline.
 
 👉 **Apri l'app:** https://snafma.github.io/fittracker-pro/
 
-Versione attuale: **build-SESSION81-VOICES5**
+Versione attuale: **build-SESSION82-CIRCUITS-PRO**
 
 ## Funzionalità
 
 ### Allenamento
 - **Da 1 a 6 sessioni a settimana**, con focus a scelta: tutto il corpo, parte alta, gambe, glutei, ipertrofia o forza.
 - **La scheda del giorno è quella che manca**: tra le schede previste nella settimana sceglie quella dei muscoli allenati da più tempo, e non ripete la stessa due volte di fila.
-- **Durata da 15 a 90 minuti**. Sotto i 40 minuti passa al circuito. Sotto i 30 usa riscaldamento express e scende fino a 2 serie, con almeno 3 esercizi. Non sfora mai di più di 3 minuti fino a 30 minuti di sessione, né di più di 5 oltre.
+- **Durata da 15 a 90 minuti**. Sotto i 40 minuti passa al **circuito a giri**: gli esercizi del gruppo (2-4) si fanno a rotazione, una serie ciascuno, 15 secondi per cambiare e recupero solo a fine giro, ripetendo il giro 2-4 volte. Recupero di fine giro e numero di giri si adattano alla durata. Sotto i 30 usa riscaldamento express e scende fino a 2 serie, con almeno 3 esercizi. Non sfora mai di più di 3 minuti fino a 30 minuti di sessione, né di più di 5 oltre.
 - **Recuperi calcolati per ogni esercizio**: tipo di esercizio, muscolo, ripetizioni, obiettivo e durata scelta, con un tetto massimo (niente pause infinite).
 - **Fasi definizione, massa e mantenimento**, cardio di fine sessione in aggiunta alla durata, palestra o casa.
-- **Taratura**: a fine esercizio "Troppo dura / OK / Facile" regola carichi, tempi e cardio, per arrivarci piano piano.
+- **Taratura**: a fine esercizio "OK" è già selezionato (si va avanti subito). "Troppo dura" o "Facile" regolano carichi, tempi e cardio, per arrivarci piano piano.
 - **Settimana di scarico dinamica**: arriva dopo 4 settimane di fila di allenamento, parte col primo allenamento e dura 7 giorni. Se in quella settimana non ti alleni, salta (e l'app te lo dice).
 - **Solo cardio**: sessione guidata stimata su cardio preferito, intensità, obiettivo e taratura. Si può fare al posto dei pesi o in aggiunta.
 - **Più allenamenti nello stesso giorno**: la seconda sessione tiene conto di quanto hai già fatto.
 - **Come fare**: ogni esercizio ha i passaggi in italiano e inglese, più un link a un video su YouTube.
-- **Timer guidato** con suoni (4 temi), pausa, ripresa automatica se l'app viene chiusa, salvataggio parziale.
+- **Timer guidato** con suoni (4 temi), pausa, ripresa automatica se l'app viene chiusa, salvataggio parziale. "Esci" riporta subito al menu (il salvataggio parziale continua in background).
 - **Scheda nuova ogni ~8 settimane**, con split alternato. Ogni esercizio si può sostituire.
 - **Modalità Coach (voce)**:
-  - spiega ogni esercizio, conta le ripetizioni e scandisce timer e intervalli;
-  - alla fine fa i complimenti, riepiloga minuti, chili, calorie e record, poi saluta;
+  - spiega ogni esercizio e come funziona il circuito, dà l'obiettivo della serie (carico e ripetizioni), un richiamo tecnico e di respirazione, conta le ripetizioni e scandisce timer e intervalli;
+  - nei recuperi consiglia se salire o restare sul carico, a fine esercizio confronta con l'ultima volta, a metà allenamento controlla il ritmo;
+  - alla fine fa i complimenti e riepiloga minuti, volume (confrontato con l'ultima volta della stessa scheda), calorie, record e rispetto dei tempi; dà il consiglio di recupero per la fase (definizione/massa), annuncia la prossima sessione e saluta;
   - avatar a scelta (uomo, donna, robot, orso), con voce maschile (molto grave se il telefono ha solo una voce femminile), femminile, e acuta e vivace per robot e orso; usa sempre la versione ottimizzata della voce, se c'è;
   - usa le voci del telefono (meglio le versioni "migliorate", es. Luca e Alice). Se ne manca una, adatta tono e ritmo così le quattro voci restano distinguibili. Nelle impostazioni mostra quale voce sta usando e l'elenco delle voci che il telefono rende disponibili all'app (su iPhone, nelle app web installate, iOS di solito dà solo la voce predefinita: in quel caso gli avatar si distinguono per tono e ritmo).
 
