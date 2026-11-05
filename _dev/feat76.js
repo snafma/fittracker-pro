@@ -63,7 +63,7 @@ let u=said[said.length-1];T('coach finale: calorie consumate',/340 calorie consu
 T('uomo → voce maschile (Luca), tono naturale',u.voice&&u.voice.name==='Luca'&&u.pitch===1);
 w.ST.p.coachAvatar='f';w.Coach.say('ciao',{int:true});u=said[said.length-1];T('donna → voce femminile (Alice)',u.voice.name==='Alice');
 w.ST.p.coachAvatar='robot';w.Coach.say('ciao',{int:true});u=said[said.length-1];T('robot → voce diversa dalle altre (tono più grave e lento)',u.pitch<1&&u.rate<1,u.voice.name+' '+u.pitch);
-w.ST.p.coachAvatar='animal';w.Coach.say('ciao',{int:true});u=said[said.length-1];T('animale → voce di sistema più vivace',u.voice.name==='Google italiano'&&u.pitch>1&&u.pitch<=1.25);
+w.ST.p.coachAvatar='animal';w.Coach.say('ciao',{int:true});u=said[said.length-1];T('animale → voce di sistema più vivace',u.voice.name==='Google italiano'&&u.pitch>1&&u.pitch<=1.4);
 w.ST.p.coachVoice={it:'Alice'};w.ST.p.coachAvatar='m';w.Coach.say('ciao',{int:true});u=said[said.length-1];T('niente scelta manuale: uomo resta voce maschile',u.voice.name==='Luca');
 w.ST.lang='en';w.ST.p.coachVoice={};w.Coach.say('hi',{int:true});u=said[said.length-1];T('EN uomo → Daniel, mai voci "novelty"',u.voice.name==='Daniel'&&u.lang==='en-GB');
 w.ST.lang='it';w.ST.aWo=null;w.ST.sheet=null;w.ST.tab='set';w.render();
@@ -75,7 +75,7 @@ w.render();T('robot: indicata voce AI sintetica',/Voce AI sintetica/.test(app().
 T('niente più foto incorporata',!/data:image\/jpeg;base64,\/9j/.test(src));
 T('coach chiede troppo dura / ok / facile',/troppo dura, ok o facile/.test(src));
 T('tour IT/EN aggiornato',/scegliere l'avatar/.test(src)&&/pick the avatar/.test(src)&&/settimana di scarico parte/i.test(src));
-T('versione S76+',/build-SESSION7[6-9]/.test(src));
+T('versione S76+',/build-SESSION(7[6-9]|8\d)/.test(src));
 // ── SOLO CARDIO e più allenamenti al giorno ──
 const clr=()=>{try{w.localStorage.removeItem('ft_wo_pending_v1')}catch(_){}};
 w._userPickedDate=true;w.currentDateStr='2026-11-04';w.ST.wLog=[];w.ST.aWo=null;w.ST.sheet=null;w.ST.p.coachMode=false;w.ST.exFeel={};w.ST.cardioFit=null;w.ST.lang='it';

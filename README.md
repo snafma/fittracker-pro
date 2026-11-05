@@ -5,7 +5,7 @@ Si installa sul telefono come una vera app e funziona anche offline.
 
 👉 **Apri l'app:** https://snafma.github.io/fittracker-pro/
 
-Versione attuale: **build-SESSION79-VOICES3**
+Versione attuale: **build-SESSION80-VOICES4**
 
 ## Funzionalità
 
@@ -26,7 +26,7 @@ Versione attuale: **build-SESSION79-VOICES3**
   - spiega ogni esercizio, conta le ripetizioni e scandisce timer e intervalli;
   - alla fine fa i complimenti, riepiloga minuti, chili, calorie e record, poi saluta;
   - avatar a scelta (uomo, donna, robot, orso), ognuno con una voce diversa: voce maschile, femminile, sintetica AI e vivace;
-  - usa le voci del telefono (meglio le versioni "migliorate", es. Luca e Alice). Se ne manca una, adatta tono e ritmo così le quattro voci restano distinguibili. Nelle impostazioni mostra quale voce sta usando e l'elenco delle voci che il telefono rende disponibili all'app (su iPhone le versioni "ottimizzate"/"premium" spesso non lo sono: serve anche la versione base).
+  - usa le voci del telefono (meglio le versioni "migliorate", es. Luca e Alice). Se ne manca una, adatta tono e ritmo così le quattro voci restano distinguibili. Nelle impostazioni mostra quale voce sta usando e l'elenco delle voci che il telefono rende disponibili all'app (su iPhone, nelle app web installate, iOS di solito dà solo la voce predefinita: in quel caso gli avatar si distinguono per tono e ritmo).
 
 ### Alimentazione
 - Piano adattivo con intolleranze e tipo di dieta. Inserimento rapido in 2 tocchi e oltre 1000 alimenti (`food_db.js`).
