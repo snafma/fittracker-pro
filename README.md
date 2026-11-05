@@ -5,7 +5,7 @@ Si installa sul telefono come una vera app e funziona anche offline.
 
 👉 **Apri l'app:** https://snafma.github.io/fittracker-pro/
 
-Versione attuale: **build-SESSION85-ACCOUNT**
+Versione attuale: **build-SESSION86-MODERN**
 
 ## Funzionalità
 
@@ -46,8 +46,12 @@ Versione attuale: **build-SESSION85-ACCOUNT**
 - **Impossibile** (servirebbe più del ritmo sano): avviso chiaro con data realistica proposta, da accettare o cambiando configurazione.
 
 ### Coach coerente
-- Un solo messaggio del giorno: se l'obiettivo di peso è in ritardo o impossibile, il coach parla di quello (unendo i complimenti per la costanza negli allenamenti), con il tasto per una sessione solo cardio. Lo stesso messaggio compare in AI Coach › Consigli.
+- Un solo messaggio del giorno: se l'obiettivo di peso è in ritardo o impossibile, il coach parla di quello (unendo i complimenti per la costanza negli allenamenti), con il tasto per una sessione solo cardio. La stessa card, con lo stesso stile, compare in AI Coach › Consigli.
 - Coach vocale, consigli e messaggi chiamano l'utente per nome.
+
+### Accesso sempre ricordato
+- La sessione di Firebase viene salvata subito sul telefono (prima localStorage, poi IndexedDB) e letta all'avvio prima di mostrare qualsiasi schermata.
+- Se eri già dentro, all'apertura vedi "Bentornato" finché la sessione e i dati non sono pronti: mai più il login per qualche secondo. Se iOS segnala prima "nessun utente", l'app aspetta qualche secondo prima di decidere. Il login compare solo se sei uscito davvero (o dopo 15 secondi senza risposta, con un messaggio chiaro).
 
 ### Profilo e account
 - Scorciatoie alle sezioni: Nome ed email · Dati fisici · Sicurezza (cambio password, logout) · Privacy · Elimina account.
