@@ -5,7 +5,7 @@ Si installa sul telefono come una vera app e funziona anche offline.
 
 👉 **Apri l'app:** https://snafma.github.io/fittracker-pro/
 
-Versione attuale: **build-SESSION82-CIRCUITS-PRO**
+Versione attuale: **build-SESSION83-IMPORT**
 
 ## Funzionalità
 
@@ -22,6 +22,13 @@ Versione attuale: **build-SESSION82-CIRCUITS-PRO**
 - **Come fare**: ogni esercizio ha i passaggi in italiano e inglese, più un link a un video su YouTube.
 - **Timer guidato** con suoni (4 temi), pausa, ripresa automatica se l'app viene chiusa, salvataggio parziale. "Esci" riporta subito al menu (il salvataggio parziale continua in background).
 - **Scheda nuova ogni ~8 settimane**, con split alternato. Ogni esercizio si può sostituire.
+- **Schede personalizzate**, quante vuoi, con nomi univoci. Per ogni esercizio: serie, ripetizioni, recupero, kg e note, "in uso" o "escluso". Si possono aggiungere ed eliminare esercizi ed eliminare intere schede.
+- **Importa da foto o PDF**: legge una o più schede e le separa (Giorno 1, Scheda A, Lunedì, Push…), con esercizi, serie, ripetizioni, kg, recuperi e note.
+  - PDF con testo: lettura diretta. Foto e PDF scansionati: OCR nel telefono (Tesseract, italiano + inglese).
+  - L'AI corregge gli errori di lettura e interpreta la scheda; senza connessione all'AI c'è un lettore locale.
+  - Ogni esercizio viene riconosciuto nella libreria (con passaggi e consigli) oppure resta personalizzato. Prima di salvare puoi correggere tutto.
+  - In allenamento si usano solo gli esercizi "in uso"; i kg della scheda diventano il carico di partenza e le note compaiono nell'esercizio.
+- **Circuiti solo quando servono** (sessioni brevi): con serie normali l'allenamento procede come sempre. Anche nel circuito ogni esercizio ha i suoi kg e le sue ripetizioni.
 - **Modalità Coach (voce)**:
   - spiega ogni esercizio e come funziona il circuito, dà l'obiettivo della serie (carico e ripetizioni), un richiamo tecnico e di respirazione, conta le ripetizioni e scandisce timer e intervalli;
   - nei recuperi consiglia se salire o restare sul carico, a fine esercizio confronta con l'ultima volta, a metà allenamento controlla il ritmo;

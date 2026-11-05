@@ -66,4 +66,4 @@ T('finale pro: volume vs ultima volta, record, calorie, tempi, consiglio, prossi
 // voce uomo
 w.ST.p.coachAvatar='m';w.Coach.say('x',{int:true});const u=said[said.length-1];T('uomo: tono al minimo e ritmo più lento',u.pitch===0.5&&u.rate<=0.86,u.pitch+'/'+u.rate);
 T('tour IT/EN aggiornato',/circuito a giri/.test(src)&&/circuit in rounds/.test(src)&&/già selezionato OK/.test(src));
-T('versione S82',/build-SESSION82/.test(src));
+T('versione S82+',/build-SESSION(8[2-9]|9\d)/.test(src));
