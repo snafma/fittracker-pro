@@ -24,7 +24,7 @@ w.ST.measures={};w.ST.measures[D(30)]={neck:39,abdomen:92};w.ST.measures[today]=
 w.ST.h=[{d:D(30),w:84.2},{d:today,w:86.1}];
 const b=w.bodyComp();T('massa grassa Navy ('+b.bf+'%, magra '+b.leanKg+'kg)', b.src==='navy'&&b.bf>5&&b.bf<40);
 const r=w.bodyCompRead(w.bodyCompTrend(60));T('peso su con vita stabile = muscolo', r&&/muscolo/.test(r.txt));
-w.render();t=w.document.getElementById('app').textContent;T('composizione in home', t.includes('COMPOSIZIONE CORPOREA'));
+w.render();t=w.document.getElementById('app').textContent;T('composizione in home', t.includes('COMPOSIZIONE'));
 w.ST.tab='body';w.render();t=w.document.getElementById('app').textContent;
 T('composizione + grafici in Progressi', t.includes('COMPOSIZIONE CORPOREA')&&t.includes('% MASSA GRASSA E MASSA MAGRA'));
 T('fallback BMI dichiarato', (w.ST.measures={},w.bodyComp().src==='bmi'));
@@ -63,7 +63,7 @@ w.acceptNewCycle();T('nuova scheda programmata da lunedì', w.ST.pendingCycle &&
 T('cambio non immediato', w.ST.exCycleStart==null || w.ST.exCycleStart!==w.ST.pendingCycle.from);
 // 11 EN
 w.ST.lang='en';w.ST.tab='home';w.render();t=w.document.getElementById('app').textContent;
-T('EN composizione', t.includes('BODY COMPOSITION'));
+T('EN composizione', t.includes('COMPOSITION'));
 w.ST.tab='coach';w.ST.coachView='tips';w.render();T('EN tips', w.document.getElementById('app').textContent.includes('COACHING RECALC'));
 T('tour EN aggiornato', w.getTourSteps().some(s=>/guided timer/.test(s.body))&&w.getTourSteps().some(s=>/lean mass/.test(s.body)));
 w.ST.lang='it';T('tour IT aggiornato', w.getTourSteps().some(s=>/timer guidato/.test(s.body))&&w.getTourSteps().some(s=>/massa magra/.test(s.body)));

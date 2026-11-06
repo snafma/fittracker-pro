@@ -75,7 +75,7 @@ w.render();T('robot: indicata voce acuta e vivace',/Voce acuta e vivace/.test(ap
 T('niente più foto incorporata',!/data:image\/jpeg;base64,\/9j/.test(src));
 T('coach chiede troppo dura / ok / facile',/troppo dura, ok o facile/.test(src));
 T('tour IT/EN aggiornato',/scegliere l'avatar/.test(src)&&/pick the avatar/.test(src)&&/settimana di scarico parte/i.test(src));
-T('versione S76+',/build-SESSION(7[6-9]|8\d)/.test(src));
+T('versione S76+',/build-SESSION(7[6-9]|[89]\d)/.test(src));
 // ── SOLO CARDIO e più allenamenti al giorno ──
 const clr=()=>{try{w.localStorage.removeItem('ft_wo_pending_v1')}catch(_){}};
 w._userPickedDate=true;w.currentDateStr='2026-11-04';w.ST.wLog=[];w.ST.aWo=null;w.ST.sheet=null;w.ST.p.coachMode=false;w.ST.exFeel={};w.ST.cardioFit=null;w.ST.lang='it';

@@ -29,11 +29,11 @@ w.ST.p.coachMode=false;const n1=said.length;w.Coach.test();T('PROVA VOCE funzion
 VO=[{name:'Alice',lang:'it-IT',default:true}];w.ST.p.coachAvatar='m';w.ST.tab='set';w.render();
 const c=w.document.getElementById('sec-coachmode').textContent;T('impostazioni: voce usata + consiglio di scaricare Luca',/Alice \(it-IT\)/.test(c)&&/tono e ritmo diversi/.test(c),c.match(/Voce maschile[^.]*\./)&&c.match(/Voce maschile[^.]*\./)[0]);
 VO=[{name:'Luca',lang:'it-IT'}];w.render();T('con Luca installato niente consiglio',!/tono e ritmo diversi/.test(w.document.getElementById('sec-coachmode').textContent));
-T('versione S78+',/build-SESSION(7[89]|8\d)/.test(src));
+T('versione S78+',/build-SESSION(7[89]|[89]\d)/.test(src));
 // S79: elenco voci disponibili e aggiornamento card
 VO=[{name:'Alice',lang:'it-IT',default:true},{name:'Luca',lang:'it-IT'}];w.ST.lang='it';w.ST.p.coachMode=true;w.ST.tab='set';w.render();
 {const d=w.document.querySelector('#sec-coachmode details');T('elenco voci disponibili nelle impostazioni',d&&/Voci che il telefono dà all'app \(2\)/.test(d.textContent)&&/Luca · it-IT/.test(d.textContent)&&/tono e ritmo/.test(d.textContent));}
-T('versione S79+',/build-SESSION(79|8\d)/.test(src));
+T('versione S79+',/build-SESSION(79|[89]\d)/.test(src));
 {VO=[{name:'Alice',lang:'it-IT',default:true},{name:'Alice',lang:'it-IT',default:true}];w.render();const d=w.document.querySelector('#sec-coachmode details');T('voci doppie mostrate una volta (base + ottimizzata)',/\(1\)|\(2\)/.test(d.textContent)&&(d.textContent.match(/Alice ·/g)||[]).length===1&&/base \+ ottimizzata/.test(d.textContent));}
 {VO=[{name:'Alice',lang:'it-IT',default:true}];const P=['m','f','robot','animal'].map(k=>{w.ST.p.coachAvatar=k;w.Coach.say('x',{int:true});const u=said[said.length-1];return u.pitch;});T('solo Alice: uomo ≤0.5, donna 1, robot e orso ≥1.3',P[0]<=0.5&&P[1]===1&&P[2]>=1.3&&P[3]>=1.3,P.join(','));
 {VO=[{name:'Alice',lang:'it-IT',default:true,voiceURI:'com.apple.voice.compact.it-IT.Alice'},{name:'Alice',lang:'it-IT',default:true,voiceURI:'com.apple.voice.enhanced.it-IT.Alice'}];const r=['m','f','robot','animal'].map(k=>{w.ST.p.coachAvatar=k;w.Coach.say('x',{int:true});return said[said.length-1].voice.voiceURI;});T('usa sempre Alice ottimizzata',r.every(x=>/enhanced/.test(x)),r.join(','));}}

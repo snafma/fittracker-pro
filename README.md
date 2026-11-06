@@ -5,7 +5,7 @@ Si installa sul telefono come una vera app e funziona anche offline.
 
 👉 **Apri l'app:** https://snafma.github.io/fittracker-pro/
 
-Versione attuale: **build-SESSION89-BOOT**
+Versione attuale: **build-SESSION90-BOOT**
 
 ## Funzionalità
 
@@ -40,6 +40,13 @@ Versione attuale: **build-SESSION89-BOOT**
 - Piano adattivo con intolleranze e tipo di dieta. Inserimento rapido in 2 tocchi e oltre 1000 alimenti (`food_db.js`).
 - Riepilogo per pasto e sezione "Sgarro". Si può disattivare del tutto.
 
+### Home compatta
+- Peso, streak, acqua (o kcal se l'alimentazione è attiva) e allenamenti degli ultimi 7 giorni in **una sola riga** di 4 riquadri; composizione corporea in una riga sottile (grassa/magra, barra, lettura del trend). Il dettaglio resta in Corpo.
+- **Sport outdoor** è un solo pulsante: porta in Allenamento con l'inserimento già aperto. L'inserimento propone gli **sport recenti** (un tocco), la ricerca ignora gli accenti e capisce anche i nomi inglesi, i minuti si scelgono con i tasti rapidi 15/30/45/60/90 (o scrivendoli) e per lo stesso sport ripropone i minuti dell'ultima volta.
+
+### Statistiche PRO — calcolatore 1RM
+- Peso, ripetizioni e **serie**: si scrive senza che la tastiera si chiuda (si aggiorna solo il risultato). Con più serie la fatica si accumula: ogni serie in più vale +0,5 ripetizioni a cedimento (massimo +3), poi formula di Epley. Accetta anche la virgola.
+
 ### Obiettivo di peso alla data
 - Il ritmo viene calcolato sui giorni reali tra le pesate (non sul loro numero) e confrontato con quello necessario e con il **ritmo massimo sano** (dimagrimento ~1% del peso a settimana, 0,5-1,2 kg; massa 0,5 kg).
 - **Fattibile ma lento**: avviso "obiettivo ancora raggiungibile" con cosa fare (in definizione: una sessione solo cardio in più, passi, dieta nel weekend), senza proporre di cambiare data.
@@ -52,7 +59,7 @@ Versione attuale: **build-SESSION89-BOOT**
 ### Grafica
 Stile moderno e arrotondato "Apple" sul tema scuro: card con gradiente e ombra morbida, campi e menu a tendina arrotondati con freccia, menu laterale con icone in riquadri e voce attiva evidenziata, fogli dal basso con maniglia, segmenti a pillola, pulsanti con effetto alla pressione, schermate di allenamento e timer rifinite. Nessuna sfocatura sulla barra in alto (su iPhone la rende sfocata). Il tema chiaro non cambia.
 - Ogni menu ha un'intestazione colorata con icona, titolo e sottotitolo (stile "Condividi app"); le navigazioni rapide sono a riquadri colorati.
-- Avvio e login nello stesso stile: icona dell'app, sfondo sfumato, testi normali (non tutto maiuscolo); "accesso in corso" usa la stessa schermata dell'avvio. Il numero di versione resta piccolo in fondo all'avvio.
+- Avvio e login nello stesso stile: icona dell'app, sfondo sfumato, testi normali (non tutto maiuscolo); "accesso in corso" usa la stessa schermata dell'avvio. Il numero di versione resta piccolo in fondo all'avvio (solo il numero: le novità sono nelle note di rilascio).
 
 ### Accesso sempre ricordato
 - La sessione di Firebase viene salvata subito sul telefono (prima localStorage, poi IndexedDB) e letta all'avvio prima di mostrare qualsiasi schermata.
@@ -60,6 +67,7 @@ Stile moderno e arrotondato "Apple" sul tema scuro: card con gradiente e ombra m
 
 ### Profilo e account
 - Scorciatoie alle sezioni: Nome ed email · Dati fisici · Sicurezza (cambio password, logout) · Privacy · Novità · Elimina account.
+- **Novità a tutto schermo**: alla prima apertura di una nuova versione le novità compaiono una volta a tutto schermo; chiuse con "Ho capito" non tornano più (memorizzato sul telefono e sull'account).
 - **Novità e versioni**: mostra la versione attuale con le sue novità; le versioni precedenti si caricano solo se le chiedi ("Mostra versioni precedenti").
 - Nome e cognome; email con stato "verificata", invio dell'email di verifica (link di Firebase) e cambio email con conferma sulla nuova casella; reset della password via email dal profilo e dal login.
 

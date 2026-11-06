@@ -1,0 +1,52 @@
+const fs=require('fs');const file=process.argv[2]||'Index-SORGENTE.html';const src=fs.readFileSync(file,'utf8');let ok=0,fail=0;
+const T=(n,c,x)=>{c?ok++:fail++;console.log((c?'✓':'✗ FAIL')+' '+n+(x!==undefined?' ['+x+']':''));};
+T('versione S90',/build-SESSION90-BOOT/.test(src));
+const m=src.match(/<div id="?app"?>[\s\S]{0,1500}?build-SESSION\d+[^<]*</);
+T('avvio: solo il numero di versione',!!m&&/build-SESSION90</.test(m[0]));
+const boot=require('./harness_lib');const w=boot(file);w.saveU=()=>Promise.resolve(true);w.saveBg=()=>{};const app=()=>w.document.getElementById('app');const D=w.document;
+let renders=0;const R0=w.render;w.render=function(){renders++;return R0.apply(this,arguments);};
+// ── 1RM ──
+w.ST.tab='stats';w.ST.statsView='calc1rm';w.render();
+const ins=app().querySelectorAll('#rm-out')[0]?app().querySelectorAll('.card input[type=number]'):[];
+T('1RM: tre campi (peso, reps, serie) e area risultato',ins.length>=3&&!!D.getElementById('rm-out'));
+const inp0=ins[0];renders=0;w.__rmUpd('weight','100');w.__rmUpd('reps','5');
+T('1RM: scrivere non ridisegna la pagina (il campo resta lo stesso)',renders===0&&inp0.isConnected);
+const one=+D.getElementById('rm-out').textContent.match(/(\d+(?:\.\d+)?)\s*kg/)[1];
+T('1RM: 100×5 = 116.7 (Epley)',one===116.7,one);
+w.__rmUpd('sets','5');const five=+D.getElementById('rm-out').textContent.match(/(\d+(?:\.\d+)?)\s*kg/)[1];
+T('1RM: 5 serie da 5 alzano la stima',five>one&&five<=130,five);
+T('1RM: spiegazione delle serie',/5 serie da 5/.test(D.getElementById('rm-out').textContent));
+T('1RM: virgola accettata',(w.__rmUpd('weight','100,5'),/kg/.test(D.getElementById('rm-out').textContent)));
+T('1RM: serie limitate (+3 reps max)',w.__rmEff(5,10)===8&&w.__rmEff(5,1)===5);
+w.ST.lang='en';w.render();w.__rmUpd('sets','3');T('1RM EN',/3 sets of 5/.test(D.getElementById('rm-out').textContent)&&!/CARICHI CONSIGLIATI|Forza max|Resistenza/.test(D.getElementById('rm-out').textContent),D.getElementById('rm-out').textContent.replace(/\s+/g,' ').slice(0,300));w.ST.lang='it';
+w.render=R0;
+// ── Home ──
+w.ST.tab='home';w.ST.water={};w.ST.p.nutritionOff=true;w.render();
+const k=D.getElementById('home-kpi');
+T('Home: 4 riquadri in una riga',!!k&&k.children.length===4&&/repeat\(4/.test(k.getAttribute('style')));
+T('Home: peso, streak, acqua, 7 giorni',!!k&&/PESO/.test(k.textContent)&&/STREAK/.test(k.textContent)&&/ACQUA/.test(k.textContent)&&/7 GIORNI/.test(k.textContent));
+const bc=D.getElementById('home-bc');T('Home: composizione compatta',!bc||(/Grassa/.test(bc.textContent)&&!/MASSA GRASSA/.test(bc.textContent)));
+const ob=[...app().querySelectorAll('button')].find(b=>/goOutdoor/.test(b.getAttribute('onclick')||''));
+T('Home: sport outdoor = solo pulsante',!!ob&&/AGGIUNGI/.test(ob.textContent)&&!/Tocca per tracciare/.test(app().textContent));
+w.goOutdoor();T('pulsante → Allenamento con inserimento aperto',w.ST.tab==='work'&&w.ST.sheet==='activity'&&!!D.getElementById('sportSearch'));
+
+w.updateActivityQuery('arrampicata');T('ricerca sport',/Arrampicata/.test(D.getElementById('sportListContainer').textContent));
+w.updateActivityQuery('slow run');T('ricerca anche col nome inglese',/Corsa lenta/.test(D.getElementById('sportListContainer').textContent));
+w.selectActivitySport('hiking');T('minuti rapidi',app().querySelectorAll('.act-mq').length===5);
+w.__actMin(60,1);T('minuto rapido aggiorna campo e kcal',D.getElementById('actMins').value==='60'&&/~\d+ kcal/.test(D.getElementById('actKcalPreview').textContent));
+w.confirmManualActivity();const L=w.ST.activities[w.currentDateStr]||[];T('attività salvata (60 min)',L.length===1&&L[0].minutes===60);
+w.openActivitySheet();T('sport recenti con un tocco',/RECENTI/.test(app().textContent)&&/Escursionismo/.test(app().textContent.split('RECENTI')[1]||''));
+w.selectActivitySport('hiking');T('ripropone i minuti dell\'ultima volta',D.getElementById('actMins').value==='60');
+w.closeSheet();
+// ── Novità ──
+try{w.localStorage.removeItem('ft_news_seen_v');}catch(_){}w.ST.newsSeen=0;D.getElementById('newsOv')&&D.getElementById('newsOv').remove();
+w.ST.tab='home';w.render();let ov=D.getElementById('newsOv');
+T('novità a tutto schermo alla prima apertura',!!ov&&/VERSIONE 90/.test(ov.textContent)&&/position:fixed;inset:0/.test(ov.getAttribute('style')));
+T('novità: rimando al Profilo',!!ov&&/Profilo → Novità e versioni/.test(ov.textContent));
+w.__newsClose();T('chiusa sparisce',!D.getElementById('newsOv'));
+w.render();T('non ricompare dopo la chiusura',!D.getElementById('newsOv'));
+w.ST.newsSeen=0;w.render();T('non ricompare anche se rientri (memorizzata sul telefono)',!D.getElementById('newsOv'));
+try{w.localStorage.removeItem('ft_news_seen_v');}catch(_){}w.ST.newsSeen=90;w.render();T('non ricompare (memorizzata sull\'account)',!D.getElementById('newsOv'));
+w.ST.newsSeen=0;w.ST.aWo={x:1};try{w.render();}catch(_){}T('mai durante un allenamento',!D.getElementById('newsOv'));w.ST.aWo=null;
+w.ST.tab='profile';w.render();T('consultabili nel Profilo',/Versione 90/.test((app().querySelector('#pf-news')||{}).textContent||''));
+console.log('feat90   ok='+ok+' fail='+fail);process.exit(fail?1:0);

@@ -47,10 +47,10 @@ w.pauseWo();w.confirm=()=>true;w.closeWo();T('uscita da pausa pulisce stato',!w.
 // ── 3. HOME MASSA GRASSA / MAGRA ──
 w.ST.h=[{d:today,w:86.1}];w.ST.measures={};w.ST.measures[today]={neck:40,abdomen:92};w.ST.tab='home';w.ST.lang='it';w.render();
 const t=w.document.getElementById('app').textContent;const b=w.bodyComp();
-T('home: MASSA GRASSA X kg scritto',t.includes('MASSA GRASSA')&&t.includes(w.fmtKg(b.fatKg)));
-T('home: MASSA MAGRA X kg scritto',t.includes('MASSA MAGRA')&&t.includes(w.fmtKg(b.leanKg)));
-T('home: card peso con grassa/magra',/Grassa\s*[\d.]+kg\s*·\s*Magra\s*[\d.]+kg/.test(t));
+T('home: grassa X kg scritto',/Grassa\s*[\d.]+\s*kg/.test(t)&&t.includes(w.fmtKg(b.fatKg)));
+T('home: magra X kg scritto',/Magra\s*[\d.]+\s*kg/.test(t)&&t.includes(w.fmtKg(b.leanKg)));
+T('home: grassa/magra in una riga (S90)',!!w.document.getElementById('home-bc'));
 w.ST.lang='en';w.render();const e=w.document.getElementById('app').textContent;
-T('EN: FAT MASS / LEAN MASS',e.includes('FAT MASS')&&e.includes('LEAN MASS'));
+T('EN: Fat / Lean',/Fat\s*[\d.]+/.test(e)&&/Lean\s*[\d.]+/.test(e));
 w.ST.aWo='A';w.ST.woPhase='ready';w.ST.step=1;w.pauseWo();T('EN: WORKOUT PAUSED',w.document.getElementById('app').textContent.includes('WORKOUT PAUSED'));
 process.exit(0);

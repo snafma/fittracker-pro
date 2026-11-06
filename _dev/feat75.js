@@ -114,4 +114,4 @@ w.ST.p.coachMode=false;w.Coach.say('prova');T('coach spento non parla',said.leng
 const s=w.defST();T('defST: exFeel e cardioFit','exFeel' in s&&'cardioFit' in s);
 T('payload salvataggio con exFeel/cardioFit',/exFeel: ST\.exFeel|exFeel:ST\.exFeel/.test(src)&&/cardioFit: ST\.cardioFit|cardioFit:ST\.cardioFit/.test(src));
 T('tour IT/EN aggiornato',/modalità Coach/.test(src)&&/Coach mode/.test(src));
-T('versione S75+',/build-SESSION(7[5-9]|8\d)/.test(src));
+T('versione S75+',/build-SESSION(7[5-9]|[89]\d)/.test(src));
