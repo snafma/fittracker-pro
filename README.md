@@ -5,11 +5,12 @@ Si installa sul telefono come una vera app e funziona anche offline.
 
 👉 **Apri l'app:** https://snafma.github.io/fittracker-pro/
 
-Versione attuale: **build-SESSION93-BOOT**
+Versione attuale: **build-SESSION94-BOOT**
 
 ## Funzionalità
 
 ### Allenamento
+- Tasto 🎙️ nell'intestazione dell'allenamento (pronto, serie, recupero): accende o spegne il coach vocale senza uscire.
 - **Focus di allenamento** con nomi nella lingua dell'app (Tutto il corpo / Full body, Parte alta / Upper body, Parte bassa / Lower body, Glutei e addome / Glutes & core, Ipertrofia massima / Max hypertrophy, Forza pura / Pure strength). Per ognuno una scheda spiega a chi serve, le schede a rotazione per il numero di allenamenti scelto e serie × ripetizioni × recupero di esercizi base e complementari, calcolati con le stesse regole dell'allenamento sull'obiettivo scelto (si aggiorna se cambi definizione/massa).
 - Parte alta e Parte bassa: da 3 allenamenti a settimana la rotazione è a tre sedute, una delle quali Tutto il corpo, per mantenere la parte non prioritaria.
 - **Da 1 a 6 sessioni a settimana**, con focus a scelta: tutto il corpo, parte alta, gambe, glutei, ipertrofia o forza.
@@ -40,16 +41,20 @@ Versione attuale: **build-SESSION93-BOOT**
 
 ### Alimentazione
 - Piano adattivo con intolleranze e tipo di dieta. Inserimento rapido in 2 tocchi e oltre 1100 alimenti (`food_db.js`), tutti con nome inglese e senza doppioni (gli id rimossi restano validi tramite `FOOD_ALIAS`); aggiunti prodotti proteici (budino, yogurt, latte, mousse, gelato, preparato per pancake), cereali già cotti, konjac, dolcificanti, bevande sportive.
-- **Giorni di allenamento**: se non sono ancora stati scelti, in Alimentazione un avviso (una volta) mostra quelli usati e porta a impostarli. Scelti in Configurazione › Programma (chip L-M-M-G-V-S-D, sincronizzati con le sessioni/settimana; senza scelta vale lo schema standard). Calendario, piano settimanale e dieta li usano.
+- **Giorni di allenamento** anche nella configurazione iniziale (stessi chip, salvati nel profilo creato). Se non sono ancora stati scelti, in Alimentazione un avviso (una volta) mostra quelli usati e porta a impostarli. Scelti in Configurazione › Programma (chip L-M-M-G-V-S-D, sincronizzati con le sessioni/settimana; senza scelta vale lo schema standard). Calendario, piano settimanale e dieta li usano.
 - **Ciclo dei carboidrati**: nei giorni di allenamento più carboidrati (+35 g definizione, +50 g massa), a riposo meno (max −45/−35 g); la media settimanale resta il target dell'obiettivo e la differenza viene solo dai carboidrati (proteine e grassi uguali).
 - Proteine e grassi calcolati sul peso di riferimento (massimo quello a BMI 27): con molto grasso corporeo non vengono gonfiati. In definizione senza pesi proteine 1,6 g/kg (1,4 donne).
 - Riepilogo per pasto e sezione "Sgarro". Si può disattivare del tutto.
 
 ### Home compatta
+- **Domenica**: al posto del messaggio del coach, "La tua settimana": allenamenti fatti/previsti, peso e variazione sulla settimana prima, proteine medie sul target (se l'alimentazione è attiva) e un consiglio (allenamenti mancanti → proteine basse → peso nella direzione sbagliata o troppo veloce → conferma).
+- **Giorni reali diversi da quelli impostati**: se nelle ultime 3 settimane (almeno 4 allenamenti) almeno metà delle sedute cade fuori dai giorni impostati, una card propone i giorni più frequenti ("Aggiorna" / "No, grazie": non ripropone la stessa scelta).
+- **Settimana di scarico**: il banner spiega i numeri applicati davvero (carichi −30%; definizione 2×12-15 con 60 s, altrimenti 3×8-10 con 90 s) e perché.
 - Peso, streak, acqua (o kcal se l'alimentazione è attiva) e allenamenti degli ultimi 7 giorni in **una sola riga** di 4 riquadri; composizione corporea in una riga sottile (grassa/magra, barra, lettura del trend). Il dettaglio resta in Corpo.
 - **Sport outdoor** è un solo pulsante: porta in Allenamento con l'inserimento già aperto. L'inserimento propone gli **sport recenti** (un tocco), la ricerca ignora gli accenti e capisce anche i nomi inglesi, i minuti si scelgono con i tasti rapidi 15/30/45/60/90 (o scrivendoli) e per lo stesso sport ripropone i minuti dell'ultima volta.
 
 ### Statistiche PRO — calcolatore 1RM
+- **Esercizio facoltativo** (prima i tuoi, poi gli altri): confronto immediato col record (nuovo record +X kg oppure % del record) e tasto "Salva nello storico" (`ST.rmLog`, ultime 20 per esercizio). Le stime salvate contano come record in `getBest1RM` e compaiono in "I tuoi 1RM record".
 - Peso, ripetizioni e **serie**: si scrive senza che la tastiera si chiuda (si aggiorna solo il risultato). Con più serie la fatica si accumula: ogni serie in più vale +0,5 ripetizioni a cedimento (massimo +3), poi formula di Epley. Accetta anche la virgola.
 
 ### Obiettivo di peso alla data
