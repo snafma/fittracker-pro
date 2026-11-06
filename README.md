@@ -5,7 +5,7 @@ Si installa sul telefono come una vera app e funziona anche offline.
 
 👉 **Apri l'app:** https://snafma.github.io/fittracker-pro/
 
-Versione attuale: **build-SESSION92-BOOT**
+Versione attuale: **build-SESSION93-BOOT**
 
 ## Funzionalità
 
