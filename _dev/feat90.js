@@ -1,8 +1,8 @@
 const fs=require('fs');const file=process.argv[2]||'Index-SORGENTE.html';const src=fs.readFileSync(file,'utf8');let ok=0,fail=0;
 const T=(n,c,x)=>{c?ok++:fail++;console.log((c?'✓':'✗ FAIL')+' '+n+(x!==undefined?' ['+x+']':''));};
-T('versione S90',/build-SESSION90-BOOT/.test(src));
+const CV=+src.match(/build-SESSION(\d+)-BOOT/)[1];T('versione S90+',CV>=90);
 const m=src.match(/<div id="?app"?>[\s\S]{0,1500}?build-SESSION\d+[^<]*</);
-T('avvio: solo il numero di versione',!!m&&/build-SESSION90</.test(m[0]));
+T('avvio: solo il numero di versione',!!m&&new RegExp('build-SESSION'+CV+'<').test(m[0]));
 const boot=require('./harness_lib');const w=boot(file);w.saveU=()=>Promise.resolve(true);w.saveBg=()=>{};const app=()=>w.document.getElementById('app');const D=w.document;
 let renders=0;const R0=w.render;w.render=function(){renders++;return R0.apply(this,arguments);};
 // ── 1RM ──
@@ -41,12 +41,12 @@ w.closeSheet();
 // ── Novità ──
 try{w.localStorage.removeItem('ft_news_seen_v');}catch(_){}w.ST.newsSeen=0;D.getElementById('newsOv')&&D.getElementById('newsOv').remove();
 w.ST.tab='home';w.render();let ov=D.getElementById('newsOv');
-T('novità a tutto schermo alla prima apertura',!!ov&&/VERSIONE 90/.test(ov.textContent)&&/position:fixed;inset:0/.test(ov.getAttribute('style')));
+T('novità a tutto schermo alla prima apertura',!!ov&&ov.textContent.includes('VERSIONE '+CV)&&/position:fixed;inset:0/.test(ov.getAttribute('style')));
 T('novità: rimando al Profilo',!!ov&&/Profilo → Novità e versioni/.test(ov.textContent));
 w.__newsClose();T('chiusa sparisce',!D.getElementById('newsOv'));
 w.render();T('non ricompare dopo la chiusura',!D.getElementById('newsOv'));
 w.ST.newsSeen=0;w.render();T('non ricompare anche se rientri (memorizzata sul telefono)',!D.getElementById('newsOv'));
-try{w.localStorage.removeItem('ft_news_seen_v');}catch(_){}w.ST.newsSeen=90;w.render();T('non ricompare (memorizzata sull\'account)',!D.getElementById('newsOv'));
+try{w.localStorage.removeItem('ft_news_seen_v');}catch(_){}w.ST.newsSeen=CV;w.render();T('non ricompare (memorizzata sull\'account)',!D.getElementById('newsOv'));
 w.ST.newsSeen=0;w.ST.aWo={x:1};try{w.render();}catch(_){}T('mai durante un allenamento',!D.getElementById('newsOv'));w.ST.aWo=null;
-w.ST.tab='profile';w.render();T('consultabili nel Profilo',/Versione 90/.test((app().querySelector('#pf-news')||{}).textContent||''));
+w.ST.tab='profile';w.render();T('consultabili nel Profilo',((app().querySelector('#pf-news')||{}).textContent||'').includes('Versione '+CV));
 console.log('feat90   ok='+ok+' fail='+fail);process.exit(fail?1:0);

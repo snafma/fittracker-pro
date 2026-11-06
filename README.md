@@ -5,7 +5,7 @@ Si installa sul telefono come una vera app e funziona anche offline.
 
 👉 **Apri l'app:** https://snafma.github.io/fittracker-pro/
 
-Versione attuale: **build-SESSION90-BOOT**
+Versione attuale: **build-SESSION91-BOOT**
 
 ## Funzionalità
 
@@ -37,7 +37,10 @@ Versione attuale: **build-SESSION90-BOOT**
   - usa le voci del telefono (meglio le versioni "migliorate", es. Luca e Alice). Se ne manca una, adatta tono e ritmo così le quattro voci restano distinguibili. Nelle impostazioni mostra quale voce sta usando e l'elenco delle voci che il telefono rende disponibili all'app (su iPhone, nelle app web installate, iOS di solito dà solo la voce predefinita: in quel caso gli avatar si distinguono per tono e ritmo).
 
 ### Alimentazione
-- Piano adattivo con intolleranze e tipo di dieta. Inserimento rapido in 2 tocchi e oltre 1000 alimenti (`food_db.js`).
+- Piano adattivo con intolleranze e tipo di dieta. Inserimento rapido in 2 tocchi e oltre 1100 alimenti (`food_db.js`), tutti con nome inglese e senza doppioni (gli id rimossi restano validi tramite `FOOD_ALIAS`); aggiunti prodotti proteici (budino, yogurt, latte, mousse, gelato, preparato per pancake), cereali già cotti, konjac, dolcificanti, bevande sportive.
+- **Giorni di allenamento**: scelti in Configurazione › Programma (chip L-M-M-G-V-S-D, sincronizzati con le sessioni/settimana; senza scelta vale lo schema standard). Calendario, piano settimanale e dieta li usano.
+- **Ciclo dei carboidrati**: nei giorni di allenamento più carboidrati (+35 g definizione, +50 g massa), a riposo meno (max −45/−35 g); la media settimanale resta il target dell'obiettivo e la differenza viene solo dai carboidrati (proteine e grassi uguali).
+- Proteine e grassi calcolati sul peso di riferimento (massimo quello a BMI 27): con molto grasso corporeo non vengono gonfiati. In definizione senza pesi proteine 1,6 g/kg (1,4 donne).
 - Riepilogo per pasto e sezione "Sgarro". Si può disattivare del tutto.
 
 ### Home compatta
@@ -73,6 +76,10 @@ Stile moderno e arrotondato "Apple" sul tema scuro: card con gradiente e ombra m
 
 ### Condividi l'app
 - Tasto unico "Condividi" (menu del telefono), WhatsApp, Telegram, Messaggi, Email, link da copiare, anteprima del messaggio personalizzato con il nome, QR da far inquadrare e istruzioni di installazione.
+
+### Tour e campi obbligatori
+- Tour di benvenuto: intestazione e pulsanti fissi, solo il testo scorre; i passi lunghi sono divisi in punti dentro riquadri con bordo.
+- Registrazione, configurazione iniziale e Programma: se mancano campi obbligatori compare il messaggio con l'elenco, i campi diventano rossi (il rosso sparisce appena compilati) e il cursore va sul primo. I messaggi non cancellano più quanto già scritto.
 
 ### Configurazione
 Divisa in famiglie con navigazione rapida: Programma e obiettivi (con orari) · Allenamento (focus, preferenze, le mie schede) · Coach e suoni · Alimentazione (si può spegnere: il resto resta visibile) · Notifiche · Integrazioni e importazioni (Salute, bilance, calendario, CSV, condivisione community) · App (tema, lingua, tour).
