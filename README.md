@@ -5,11 +5,13 @@ Si installa sul telefono come una vera app e funziona anche offline.
 
 👉 **Apri l'app:** https://snafma.github.io/fittracker-pro/
 
-Versione attuale: **build-SESSION91-BOOT**
+Versione attuale: **build-SESSION92-BOOT**
 
 ## Funzionalità
 
 ### Allenamento
+- **Focus di allenamento** con nomi nella lingua dell'app (Tutto il corpo / Full body, Parte alta / Upper body, Parte bassa / Lower body, Glutei e addome / Glutes & core, Ipertrofia massima / Max hypertrophy, Forza pura / Pure strength). Per ognuno una scheda spiega a chi serve, le schede a rotazione per il numero di allenamenti scelto e serie × ripetizioni × recupero di esercizi base e complementari, calcolati con le stesse regole dell'allenamento sull'obiettivo scelto (si aggiorna se cambi definizione/massa).
+- Parte alta e Parte bassa: da 3 allenamenti a settimana la rotazione è a tre sedute, una delle quali Tutto il corpo, per mantenere la parte non prioritaria.
 - **Da 1 a 6 sessioni a settimana**, con focus a scelta: tutto il corpo, parte alta, gambe, glutei, ipertrofia o forza.
 - **La scheda del giorno è quella che manca**: tra le schede previste nella settimana sceglie quella dei muscoli allenati da più tempo, e non ripete la stessa due volte di fila.
 - **Durata da 15 a 90 minuti**. Sotto i 40 minuti passa al **circuito a giri**: gli esercizi del gruppo (2-4) si fanno a rotazione, una serie ciascuno, 15 secondi per cambiare e recupero solo a fine giro, ripetendo il giro 2-4 volte. Recupero di fine giro e numero di giri si adattano alla durata. Sotto i 30 usa riscaldamento express e scende fino a 2 serie, con almeno 3 esercizi. Non sfora mai di più di 3 minuti fino a 30 minuti di sessione, né di più di 5 oltre.
@@ -38,7 +40,7 @@ Versione attuale: **build-SESSION91-BOOT**
 
 ### Alimentazione
 - Piano adattivo con intolleranze e tipo di dieta. Inserimento rapido in 2 tocchi e oltre 1100 alimenti (`food_db.js`), tutti con nome inglese e senza doppioni (gli id rimossi restano validi tramite `FOOD_ALIAS`); aggiunti prodotti proteici (budino, yogurt, latte, mousse, gelato, preparato per pancake), cereali già cotti, konjac, dolcificanti, bevande sportive.
-- **Giorni di allenamento**: scelti in Configurazione › Programma (chip L-M-M-G-V-S-D, sincronizzati con le sessioni/settimana; senza scelta vale lo schema standard). Calendario, piano settimanale e dieta li usano.
+- **Giorni di allenamento**: se non sono ancora stati scelti, in Alimentazione un avviso (una volta) mostra quelli usati e porta a impostarli. Scelti in Configurazione › Programma (chip L-M-M-G-V-S-D, sincronizzati con le sessioni/settimana; senza scelta vale lo schema standard). Calendario, piano settimanale e dieta li usano.
 - **Ciclo dei carboidrati**: nei giorni di allenamento più carboidrati (+35 g definizione, +50 g massa), a riposo meno (max −45/−35 g); la media settimanale resta il target dell'obiettivo e la differenza viene solo dai carboidrati (proteine e grassi uguali).
 - Proteine e grassi calcolati sul peso di riferimento (massimo quello a BMI 27): con molto grasso corporeo non vengono gonfiati. In definizione senza pesi proteine 1,6 g/kg (1,4 donne).
 - Riepilogo per pasto e sezione "Sgarro". Si può disattivare del tutto.
