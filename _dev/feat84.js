@@ -16,7 +16,7 @@ nm.value='Gambe e Spalle';w.saveCustomWorkout();T('nome unico → salvata',w.ST.
 await w.importWorkoutFiles({files:[{name:'IMG_0001.jpg',type:'image/jpeg'}]});w.render();w.document.getElementById('cwName').value='Allenamento B';w.saveCustomWorkout();
 T('stesso file, nome diverso: due schede distinte',w.ST.p.customWorkouts.filter(x=>/Gambe e Spalle|Allenamento B/.test(x.name)).length===2);
 // fotocamera
-w.ST.tab='set';w.render();T('elenco schede: IMPORTA DA FOTO (su iPhone offre anche la fotocamera)',/IMPORTA DA FOTO O PDF/.test(app().textContent)&&!!app().querySelector('input[accept*="image"]'));
+w.ST.tab='set';w.render();T('elenco schede: IMPORTA DA FOTO (su iPhone offre anche la fotocamera)',/IMPORTA DA FOTO O PDF/.test(app().textContent)&&!!app().querySelector('[onclick*="__pickWorkoutFiles"]')&&(()=>{const k=w.HTMLInputElement.prototype.click;w.HTMLInputElement.prototype.click=function(){};w.__pickWorkoutFiles();w.HTMLInputElement.prototype.click=k;return /image/.test(w.document.getElementById('ftImpFiles').accept);})());
 w.openCustomWorkoutEditor();w.render();T('editor: IMPORTA DA FOTO',/IMPORTA DA FOTO O PDF/.test(w.document.body.innerHTML));w.closeSheet();
 let got=null;const imp=w.importWorkoutFiles;w.importWorkoutFiles=async(x)=>{got=x.files.length};
 w.cameraShot({files:[{name:'a.jpg'}]});w.cameraShot({files:[{name:'b.jpg'}]});
