@@ -9,7 +9,7 @@ await w.importWorkoutFiles({files:[{name:'IMG_0001.jpg',type:'image/jpeg'}]});
 const d=w.ST.sheetData.draft;T('import: nome vuoto, lo sceglie l\'utente (suggerito "Scheda A")',d.name===''&&d.suggestName==='Scheda A');
 w.render();const nm=w.document.getElementById('cwName');T('campo nome con suggerimento',nm&&nm.value===''&&/Dai un nome unico, es\. Scheda A/.test(nm.getAttribute('placeholder')));
 T('messaggio: dai un nome unico',/Dai alla scheda un nome unico/.test(w.document.body.innerHTML));
-alerts=[];w.saveCustomWorkout();T('senza nome non salva',alerts.length>0&&w.ST.sheet==='customWorkout');
+alerts=[];w.saveCustomWorkout();T('senza nome non salva',(alerts.length>0||!!w.document.getElementById('reqMsg'))&&w.ST.sheet==='customWorkout');
 nm.value='allenamento a';alerts=[];w.saveCustomWorkout();T('nome già esistente non salva',alerts.some(a=>/Esiste già/.test(a)));
 nm.value='Gambe e Spalle';w.saveCustomWorkout();T('nome unico → salvata',w.ST.p.customWorkouts.some(x=>x.name==='Gambe e Spalle')&&!w.ST.sheet);
 // stesso file caricato di nuovo: altro nome scelto dall'utente

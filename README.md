@@ -5,11 +5,14 @@ Si installa sul telefono come una vera app e funziona anche offline.
 
 👉 **Apri l'app:** https://snafma.github.io/fittracker-pro/
 
-Versione attuale: **build-SESSION94-BOOT**
+Versione attuale: **build-SESSION95-BOOT**
 
 ## Funzionalità
 
 ### Allenamento
+- **Schede da foto/PDF (S95)**: OCR in modalità blocco uniforme (righe di tabella intere) con foto in scala di grigi e contrasto; il lettore locale capisce tabelle senza "x" (`Panca 4 10`), nomi e numeri su righe diverse, colonne lette separatamente, nomi senza numeri (non più persi). Se l'AI trova meno esercizi del lettore locale, i mancanti vengono reinseriti al loro posto e segnati "da controllare".
+- **Duplica esercizio** nelle schede: copia subito sotto, con scelta della variante (stesso gruppo muscolare) o nome personalizzato modificabile.
+- **Aggiunta dalla libreria**: ricerca (anche nomi inglesi e muscoli), filtri per gruppo, un tocco aggiunge con serie/ripetizioni/recupero del proprio obiettivo e messaggio di conferma; avviso se già presente; risultato vuoto spiegato. Nome scheda e nome esercizio mancanti: campo rosso + focus; serie/recupero fuori range corretti automaticamente.
 - Tasto 🎙️ nell'intestazione dell'allenamento (pronto, serie, recupero): accende o spegne il coach vocale senza uscire.
 - **Focus di allenamento** con nomi nella lingua dell'app (Tutto il corpo / Full body, Parte alta / Upper body, Parte bassa / Lower body, Glutei e addome / Glutes & core, Ipertrofia massima / Max hypertrophy, Forza pura / Pure strength). Per ognuno una scheda spiega a chi serve, le schede a rotazione per il numero di allenamenti scelto e serie × ripetizioni × recupero di esercizi base e complementari, calcolati con le stesse regole dell'allenamento sull'obiettivo scelto (si aggiorna se cambi definizione/massa).
 - Parte alta e Parte bassa: da 3 allenamenti a settimana la rotazione è a tre sedute, una delle quali Tutto il corpo, per mantenere la parte non prioritaria.
