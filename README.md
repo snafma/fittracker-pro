@@ -5,12 +5,13 @@ Si installa sul telefono come una vera app e funziona anche offline.
 
 👉 **Apri l'app:** https://snafma.github.io/fittracker-pro/
 
-Versione attuale: **build-SESSION95-BOOT**
+Versione attuale: **build-SESSION96-BOOT**
 
 ## Funzionalità
 
 ### Allenamento
 - **Schede da foto/PDF (S95)**: OCR in modalità blocco uniforme (righe di tabella intere) con foto in scala di grigi e contrasto; il lettore locale capisce tabelle senza "x" (`Panca 4 10`), nomi e numeri su righe diverse, colonne lette separatamente, nomi senza numeri (non più persi). Se l'AI trova meno esercizi del lettore locale, i mancanti vengono reinseriti al loro posto e segnati "da controllare".
+- **Selezione file su iPhone (S96)**: i campi file per importare (foto/PDF e fotocamera) sono fissi in `document.body`, fuori da `#app`. Prima erano dentro la pagina: tornando dal selettore l'app veniva ridisegnata e la scelta andava persa senza alcun caricamento.
 - **Duplica esercizio** nelle schede: copia subito sotto, con scelta della variante (stesso gruppo muscolare) o nome personalizzato modificabile.
 - **Aggiunta dalla libreria**: ricerca (anche nomi inglesi e muscoli), filtri per gruppo, un tocco aggiunge con serie/ripetizioni/recupero del proprio obiettivo e messaggio di conferma; avviso se già presente; risultato vuoto spiegato. Nome scheda e nome esercizio mancanti: campo rosso + focus; serie/recupero fuori range corretti automaticamente.
 - Tasto 🎙️ nell'intestazione dell'allenamento (pronto, serie, recupero): accende o spegne il coach vocale senza uscire.
