@@ -11,7 +11,7 @@ T('tour: passo lungo con area di testo scorrevole',w.tourStep>=0&&!!tb&&/overflo
 T('tour: card alta al massimo quanto lo schermo',/max-height:100%/.test(D.getElementById('tourOv').firstElementChild.getAttribute('style')));
 T('tour: testo lungo diviso in riquadri con bordo',tb.children.length>=3&&/border-left:3px solid/.test(tb.children[0].getAttribute('style')),tb.children.length);
 T('tour: pulsanti fuori dall\'area che scorre',!tb.querySelector('button')&&/tourNext/.test(D.getElementById('tourOv').innerHTML));
-w.tourStep=0;w.render();T('tour: passo corto in un riquadro unico',D.getElementById('tourBody').children.length===1);
+const __gts=w.getTourSteps;w.getTourSteps=()=>[{icon:'👋',title:'X',body:'Testo breve di prova.',color:'var(--acc)'}];w.tourStep=0;w.render();w.getTourSteps=__gts;T('tour: passo corto in un riquadro unico',D.getElementById('tourBody').children.length===1);
 w.ST.lang='en';w.render();T('tour: nessun lookbehind (iOS vecchi)',!/\(\?<[=!]/.test(w.renderTour.toString()));T('tour EN',/Skip tour/.test(D.getElementById('tourOv').textContent)&&/Next/.test(D.getElementById('tourOv').textContent));w.ST.lang='it';
 w.ST.p.tourCompleted=true;w.render();
 // ── giorni di allenamento ──

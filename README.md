@@ -5,12 +5,14 @@ Si installa sul telefono come una vera app e funziona anche offline.
 
 👉 **Apri l'app:** https://snafma.github.io/fittracker-pro/
 
-Versione attuale: **build-SESSION96-BOOT**
+Versione attuale: **build-SESSION97-BOOT**
 
 ## Funzionalità
 
 ### Allenamento
+- **Salta esercizio (S97)**: "⏭ Salta questo esercizio" sotto INIZIA SERIE (non per riscaldamento, defaticamento, bonus e circuiti). Prima un avviso ("non saltare: piuttosto meno ripetizioni o meno peso"); se confermato si passa al successivo, non entra nel volume né nelle calorie e il riepilogo conta solo gli esercizi fatti (`ST.exSkip`). La volta dopo un avviso giallo ricorda che era stato saltato; pesi e ripetizioni restano quelli inseriti l'ultima volta. L'avviso sparisce quando lo completi.
 - **Schede da foto/PDF (S95)**: OCR in modalità blocco uniforme (righe di tabella intere) con foto in scala di grigi e contrasto; il lettore locale capisce tabelle senza "x" (`Panca 4 10`), nomi e numeri su righe diverse, colonne lette separatamente, nomi senza numeri (non più persi). Se l'AI trova meno esercizi del lettore locale, i mancanti vengono reinseriti al loro posto e segnati "da controllare".
+- **Schede affiancate e scritte a mano (S97)**: `__splitCols` separa le tabelle affiancate lette riga per riga (intestazioni tipo "SCHEDA A    SCHEDA B" oppure righe con due esercizi) prima di interpretarle; righe "A"/"B" da sole sono titoli di scheda. L'AI riceve istruzioni su più schede, correzioni a penna/matita e lingua dell'app (nomi e note in italiano o inglese). Le foto passano prima dall'**AI con visione** (`AI_VISION_URL`, worker in `_dev/worker-vision/worker.js`, modello Llama 4 Scout): se il worker non risponde si usa la lettura del testo come prima. In revisione: riepilogo (esercizi trovati, scheda X di Y, "da controllare ›" che porta al primo). La copia di un esercizio si porta dietro tutto, anche il riconoscimento.
 - **Selezione file su iPhone (S96)**: i campi file per importare (foto/PDF e fotocamera) sono fissi in `document.body`, fuori da `#app`. Prima erano dentro la pagina: tornando dal selettore l'app veniva ridisegnata e la scelta andava persa senza alcun caricamento.
 - **Duplica esercizio** nelle schede: copia subito sotto, con scelta della variante (stesso gruppo muscolare) o nome personalizzato modificabile.
 - **Aggiunta dalla libreria**: ricerca (anche nomi inglesi e muscoli), filtri per gruppo, un tocco aggiunge con serie/ripetizioni/recupero del proprio obiettivo e messaggio di conferma; avviso se già presente; risultato vuoto spiegato. Nome scheda e nome esercizio mancanti: campo rosso + focus; serie/recupero fuori range corretti automaticamente.
@@ -91,6 +93,10 @@ Stile moderno e arrotondato "Apple" sul tema scuro: card con gradiente e ombra m
 ### Tour e campi obbligatori
 - Tour di benvenuto: intestazione e pulsanti fissi, solo il testo scorre; i passi lunghi sono divisi in punti dentro riquadri con bordo.
 - Registrazione, configurazione iniziale e Programma: se mancano campi obbligatori compare il messaggio con l'elenco, i campi diventano rossi (il rosso sparisce appena compilati) e il cursore va sul primo. I messaggi non cancellano più quanto già scritto.
+
+### Navigazione
+- **Finestre (S97)**: in ogni finestra il tasto ✕ resta fisso in alto (nelle sotto-finestre torna indietro) e la riga dei pulsanti finali (Annulla/Salva…) resta fissa in basso: non serve più scorrere per trovarli.
+- **Cerca una funzione (S97)**: 🔍 in cima al menu ☰ apre una ricerca a tutto schermo con i più cercati; ~50 funzioni con parole chiave IT/EN. Il tocco porta alla sezione giusta e la evidenzia; se non trova nulla propone parole più semplici o il coach AI.
 
 ### Configurazione
 Divisa in famiglie con navigazione rapida: Programma e obiettivi (con orari) · Allenamento (focus, preferenze, le mie schede) · Coach e suoni · Alimentazione (si può spegnere: il resto resta visibile) · Notifiche · Integrazioni e importazioni (Salute, bilance, calendario, CSV, condivisione community) · App (tema, lingua, tour).

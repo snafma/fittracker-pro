@@ -35,7 +35,7 @@ T('avviso "da controllare" visibile',/letto con meno sicurezza/.test(app().textC
 const n0=d.exercises.length;w.duplicateExerciseInDraft(0);
 T('duplica: copia subito sotto',d.exercises.length===n0+1&&d.exercises[1].dup===true&&d.exercises[1].exId===d.exercises[0].exId);
 T('duplica: tasto per ogni esercizio',app().querySelectorAll('button[onclick^="duplicateExerciseInDraft"]').length===d.exercises.length);
-T('duplica: scelta variante o nome proprio',/COPIA: SCEGLI LA VARIANTE/.test(app().textContent));
+T('duplica: la copia si porta dietro tutto (anche il riconoscimento)',/RICONOSCIUTO COME|COPIA: SCEGLI LA VARIANTE/.test(app().textContent)&&d.exercises[1].ocrName===d.exercises[0].ocrName&&d.exercises[1].kg===d.exercises[0].kg&&d.exercises[1].note===d.exercises[0].note);
 w.__cwSetVar(1,'__custom');T('copia → personalizzato con nome modificabile',d.exercises[1].isCustom&&/variante/.test(d.exercises[1].customName)&&!!app().querySelector('input[oninput^="updateExerciseInDraft(1,\'customName\'"]'));
 w.updateExerciseInDraft(1,'customName','Panca presa stretta');T('rinomina copia',d.exercises[1].customName==='Panca presa stretta');
 const alt=Object.keys(w.eval('EX')).find(k=>w.eval('EX')[k].cat==='chest'&&k!==d.exercises[0].exId);w.__cwSetVar(1,alt);T('copia → altra variante della libreria',d.exercises[1].exId===alt&&!d.exercises[1].isCustom);
