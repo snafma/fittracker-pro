@@ -1,6 +1,6 @@
 const fs=require('fs');const file=process.argv[2]||'Index-SORGENTE.html';const src=fs.readFileSync(file,'utf8');let ok=0,fail=0;
 const T=(n,c,x)=>{c?ok++:fail++;console.log((c?'✓':'✗ FAIL')+' '+n+(x!==undefined?' ['+x+']':''));};
-T('versione S97+',+src.match(/build-SESSION(\d+)-BOOT/)[1]>=97);
+T('versione S98+',+src.match(/build-SESSION(\d+)-BOOT/)[1]>=98);
 const w=require('./harness_lib')(file);w.saveU=()=>Promise.resolve(true);w.saveBg=()=>{};w.save=()=>Promise.resolve();const D=w.document,app=()=>D.getElementById('app');
 try{w.localStorage.setItem('ft_news_seen_v','999');}catch(_){}
 const P=(t)=>w.__parseWorkoutLocal(t),sum=(r)=>r.map(x=>(x.name||'-')+':'+x.exercises.map(e=>e.name+' '+e.sets+'x'+e.reps).join(',')).join(' || ');
@@ -12,21 +12,13 @@ T('tabelle affiancate senza intestazioni → due schede',r.length===2&&r[0].exer
 r=P('A\nPanca 4x10\nCroci 3x12\nB\nSquat 4x8\nStacco 3x5');
 T('schede una sotto l\'altra con "A" e "B"',r.length===2&&r[0].name==='A'&&r[1].name==='B'&&r[1].exercises.length===2,sum(r));
 r=P('Panca piana 4x10\nRematore 4x8');T('scheda singola invariata',r.length===1&&r[0].exercises.length===2);
-T('istruzioni AI: più schede, penna/matita, lingua',/AFFIANCATE/.test(w.__ocrSys(true))&&/PENNA o MATITA/.test(w.__ocrSys(true))&&/in italiano/.test(w.__ocrSys())&&(w.ST.lang='en',/in inglese/.test(w.__ocrSys())));w.ST.lang='it';
-// ── visione ──
+T('istruzioni AI: più schede, lingua',/AFFIANCATE/.test(w.__ocrSys())&&/in italiano/.test(w.__ocrSys())&&(w.ST.lang='en',/in inglese/.test(w.__ocrSys())));w.ST.lang='it';
 (async()=>{
-let posted=null;w.fetch=async(u,o)=>{posted={u,b:JSON.parse(o.body)};return {ok:true,json:async()=>({content:[{text:'Ecco: {"workouts":[{"name":"Scheda A","exercises":[{"name":"Panca piana","sets":4,"reps":"8","kg":62.5,"rest":"1\'30\\"","note":"ultima serie a cedimento (penna)"}]},{"name":"Scheda B","exercises":[{"name":"Squat","sets":"4","reps":"6","kg":"80","rest":120,"note":null}]}]}'}]})};};
-w.Image=class{set src(v){setTimeout(()=>this.onload&&this.onload(),0)}get naturalWidth(){return 2000}get naturalHeight(){return 1500}};
-w.HTMLCanvasElement.prototype.getContext=function(){return{drawImage(){}}};w.HTMLCanvasElement.prototype.toDataURL=function(){return 'data:image/jpeg;base64,AAAA'};
-w.URL.createObjectURL=()=>'blob:x';w.URL.revokeObjectURL=()=>{};
-const f=new w.File(['x'],'scheda.jpg',{type:'image/jpeg'});
-await w.importWorkoutFiles({files:[f]});
-T('foto → AI con visione (immagine inviata, istruzioni scritte a mano)',!!posted&&/fittracker-vision/.test(posted.u)&&posted.b.images[0].startsWith('data:image/jpeg')&&/PENNA/.test(posted.b.system));
-const sd=w.ST.sheetData;T('visione: due schede, valori corretti a mano letti',w.ST.sheet==='customWorkout'&&sd.qTot===2&&sd.via==='vision'&&sd.draft.exercises[0].kg===62.5&&sd.draft.exercises[0].rest===90&&/penna/.test(sd.draft.exercises[0].note),JSON.stringify(sd.draft.exercises[0]));
-T('revisione: riepilogo in cima',/1 esercizi/.test(D.getElementById('cwImpSum').textContent)&&/scheda 1 di 2/.test(D.getElementById('cwImpSum').textContent)&&/letta dalla foto con AI/.test(D.getElementById('cwImpSum').textContent));
-// visione non disponibile → lettura testo
-w.closeSheet();let fell=0;w.fetch=async()=>{throw new Error('net')};
-const orig=w.__readWorkoutFile;
+T('nessuna lettura con AI esterna sulle foto',!/fittracker-vision|AI_VISION_URL/.test(src));
+T('istruzioni AI: scritte a mano lette male ignorate, note tenute',/annotazioni scritte a mano/.test(w.__ocrSys()));
+w.ST.sheet='customWorkout';w.ST.sheetData={draft:{id:'cw_t',name:'',emoji:'💪',exercises:[{exId:'ch_man',sets:4,reps:'8',rest:90,chk:true}]},isNew:true,imported:true,qIdx:1,qTot:2};w.ST.tab='work';w.render();
+const sm=D.getElementById('cwImpSum');T('revisione: riepilogo e istruzioni per correggere',!!sm&&/1 esercizi/.test(sm.textContent)&&/scheda 1 di 2/.test(sm.textContent)&&/1 da controllare/.test(sm.textContent)&&/⧉ per duplicare/.test(sm.textContent));
+w.closeSheet();
 // ── finestre ──
 w.ST.sheet='customWorkout';w.ST.sheetData={draft:{id:'cw_t',name:'',emoji:'💪',exercises:[]},isNew:true};w.ST.tab='work';w.render();
 const sh=app().querySelector('.sh');T('finestra: ✕ sempre in alto',!!sh.querySelector('.sh-xw .sh-x'));
