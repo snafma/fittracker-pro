@@ -5,11 +5,14 @@ Si installa sul telefono come una vera app e funziona anche offline.
 
 👉 **Apri l'app:** https://snafma.github.io/fittracker-pro/
 
-Versione attuale: **build-SESSION100-BOOT**
+Versione attuale: **build-SESSION101-BOOT**
 
 ## Funzionalità
 
 ### Allenamento
+- **Coach più vivo (S101)**: frasi varie mai ripetute di fila, tono più energico (motivazione) o più calmo (respirazione); parla quasi sempre: durante la serie (~8 s), nel recupero (esercizi mancanti, % fatta, peso suggerito), nel cardio (minuti fatti/mancanti, ultimo minuto, 10 secondi, oltre il tempo). Le pause di lettura (`|`) non compaiono nel testo. Tocco sull'avatar: silenzio in allenamento.
+- **Coach in Home (S101)**: con la modalità coach attiva resta visibile in Home; toccandolo dice com'è la giornata (allenato/riposo/da fare, kcal bruciate).
+- **Kcal bruciate in Home (S101)**: il riquadro STREAK diventa 🔥 KCAL bruciate oggi = allenamenti + sport outdoor + passi (passi × 0,00055 × peso); il tocco apre Statistiche (`__burnToday`).
 - **Scarico ovunque (S100)**: in settimana di scarico le serie restano quelle dello scarico anche dopo il riempimento della durata (prima tornavano a 4-5) e le schede personalizzate usano serie/ripetizioni/recupero dello scarico; il carico scritto nella scheda viene proposto −30%. Ogni esercizio mostra "🛌 Settimana di scarico: …".
 - **Kcal del cardio (S100)**: i minuti reali di ogni cardio (timer) vengono registrati (`ST.woCardio`) e contano con il MET dell'attività (bici LISS 6,8, HIIT 8,5, corda 11…); il resto della sessione con il MET dei pesi. Se termini un cardio sotto l'85% del tempo previsto: "Stai terminando prima… non mollare!" (Annulla = continui). A fine allenamento: minuti di cardio rispetto al previsto ed esercizi saltati.
 - **Salta esercizio (S97)**: "⏭ Salta questo esercizio" sotto INIZIA SERIE (non per riscaldamento, defaticamento, bonus e circuiti). Prima un avviso ("non saltare: piuttosto meno ripetizioni o meno peso"); se confermato si passa al successivo, non entra nel volume né nelle calorie e il riepilogo conta solo gli esercizi fatti (`ST.exSkip`). La volta dopo un avviso giallo ricorda che era stato saltato; pesi e ripetizioni restano quelli inseriti l'ultima volta. L'avviso sparisce quando lo completi.

@@ -24,7 +24,7 @@ w.render=R0;
 w.ST.tab='home';w.ST.water={};w.ST.p.nutritionOff=true;w.render();
 const k=D.getElementById('home-kpi');
 T('Home: 4 riquadri in una riga',!!k&&k.children.length===4&&/repeat\(4/.test(k.getAttribute('style')));
-T('Home: peso, streak, acqua, 7 giorni',!!k&&/PESO/.test(k.textContent)&&/STREAK/.test(k.textContent)&&/ACQUA/.test(k.textContent)&&/7 GIORNI/.test(k.textContent));
+T('Home: peso, kcal, acqua, 7 giorni',!!k&&/PESO/.test(k.textContent)&&/KCAL/.test(k.textContent)&&/ACQUA/.test(k.textContent)&&/7 GIORNI/.test(k.textContent));
 const bc=D.getElementById('home-bc');T('Home: composizione compatta',!bc||(/Grassa/.test(bc.textContent)&&!/MASSA GRASSA/.test(bc.textContent)));
 const ob=[...app().querySelectorAll('button')].find(b=>/goOutdoor/.test(b.getAttribute('onclick')||''));
 T('Home: sport outdoor = solo pulsante',!!ob&&/AGGIUNGI/.test(ob.textContent)&&!/Tocca per tracciare/.test(app().textContent));
