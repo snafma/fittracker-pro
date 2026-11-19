@@ -8,4 +8,4 @@ T('freccia dei menu a tendina valida',/background-image:url\("data:image\/svg\+x
 T('solo tema scuro toccato (il chiaro resta com\'è)',/body:not\(\[data-theme=light\]\) \.drawer/.test(css));
 let ok=true;for(const tb of ['home','work','diet','stats','body','coach','set','profile','share']){try{w.ST.tab=tb;w.render()}catch(e){ok=false;console.log(tb,e.message)}}T('tutte le schermate si disegnano',ok);
 T('tour IT/EN aggiornato',/stile moderno e arrotondato/.test(src)&&/modern and rounded/.test(src));
-T('versione S87',/build-SESSION(8[7-9]|9\d)/.test(src));
+T('versione S87',+(src.match(/build-SESSION(\d+)/)||[0,0])[1]>=87);

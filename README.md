@@ -5,11 +5,13 @@ Si installa sul telefono come una vera app e funziona anche offline.
 
 👉 **Apri l'app:** https://snafma.github.io/fittracker-pro/
 
-Versione attuale: **build-SESSION99-BOOT**
+Versione attuale: **build-SESSION100-BOOT**
 
 ## Funzionalità
 
 ### Allenamento
+- **Scarico ovunque (S100)**: in settimana di scarico le serie restano quelle dello scarico anche dopo il riempimento della durata (prima tornavano a 4-5) e le schede personalizzate usano serie/ripetizioni/recupero dello scarico; il carico scritto nella scheda viene proposto −30%. Ogni esercizio mostra "🛌 Settimana di scarico: …".
+- **Kcal del cardio (S100)**: i minuti reali di ogni cardio (timer) vengono registrati (`ST.woCardio`) e contano con il MET dell'attività (bici LISS 6,8, HIIT 8,5, corda 11…); il resto della sessione con il MET dei pesi. Se termini un cardio sotto l'85% del tempo previsto: "Stai terminando prima… non mollare!" (Annulla = continui). A fine allenamento: minuti di cardio rispetto al previsto ed esercizi saltati.
 - **Salta esercizio (S97)**: "⏭ Salta questo esercizio" sotto INIZIA SERIE (non per riscaldamento, defaticamento, bonus e circuiti). Prima un avviso ("non saltare: piuttosto meno ripetizioni o meno peso"); se confermato si passa al successivo, non entra nel volume né nelle calorie e il riepilogo conta solo gli esercizi fatti (`ST.exSkip`). La volta dopo un avviso giallo ricorda che era stato saltato; pesi e ripetizioni restano quelli inseriti l'ultima volta. L'avviso sparisce quando lo completi.
 - **Schede da foto/PDF (S95)**: OCR in modalità blocco uniforme (righe di tabella intere) con foto in scala di grigi e contrasto; il lettore locale capisce tabelle senza "x" (`Panca 4 10`), nomi e numeri su righe diverse, colonne lette separatamente, nomi senza numeri (non più persi). Se l'AI trova meno esercizi del lettore locale, i mancanti vengono reinseriti al loro posto e segnati "da controllare".
 - **Schede in tabella (S99)**: i PDF vengono ricostruiti riga per riga rispettando le distanze (`__pdfRows`), così le colonne restano separate. `__tableNorm` riconosce le intestazioni di colonna (esercizio, serie, ripetizioni, recupero, carico, note, gruppo muscolare; IT/EN, anche abbreviate tipo RIP/REC) e trasforma ogni riga in "nome serie×rip rec N kg (note)"; più gruppi di colonne sulla stessa riga = schede affiancate (con i titoli della riga sopra). Colonna del gruppo muscolare ignorata; con celle non allineate decide il contenuto (4x8, 2', 60kg). `__cleanSheet` (anche per foto a spazi singoli) toglie intestazioni e righe di solo muscolo, il muscolo in testa alla riga e legge il recupero scritto come 30'' / 1'30'' / 2'. Gergo da palestra collegato alla libreria (Dip, Spinte seduto, Sopra la testa, Curl martello, Punta piede seduto, Affondi gamba dietro…). Test su un PDF reale da Google Sheets (`_dev/fixtures/scheda-abc-pdf.json`): 22 esercizi su 22.

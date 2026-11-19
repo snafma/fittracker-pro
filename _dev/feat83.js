@@ -65,5 +65,5 @@ const gw=w.buildWorkout(g.id,w.ST.p,3,{},'m',{});T('scheda con esclusi: solo que
 w.deleteCustomWorkout(g.id);T('elimino una scheda intera',!w.ST.p.customWorkouts.some(x=>x.id===g.id));
 T('importa da foto/PDF anche dall\'elenco schede',/IMPORTA DA FOTO O PDF/.test(app().textContent));
 T('tour IT/EN aggiornato',/importare le tue schede da foto/.test(src)&&/import your programs from a photo/.test(src));
-T('versione S83+',/build-SESSION(8[3-9]|9\d)/.test(src));
+T('versione S83+',+(src.match(/build-SESSION(\d+)/)||[0,0])[1]>=83);
 })();

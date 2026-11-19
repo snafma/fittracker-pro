@@ -1,6 +1,6 @@
 const fs=require('fs');const file=process.argv[2]||'Index-SORGENTE.html';const src=fs.readFileSync(file,'utf8');let ok=0,fail=0;
 const T=(n,c)=>{c?ok++:fail++;console.log((c?'✓':'✗ FAIL')+' '+n);};
-T('versione S89',/build-SESSION(89|9\d)/.test(src));
+T('versione S89',+(src.match(/build-SESSION(\d+)/)||[0,0])[1]>=89);
 T('niente più SYSTEM BOOTING',!/SYSTEM BOOTING/.test(src));
 const m=src.match(/<div id="?app"?>\s*<div class="?loader-wrap"?[\s\S]{0,1500}?<\/div>\s*<\/div>/);
 T('avvio con icona app',!!m&&/apple-touch-icon\.png/.test(m[0]));

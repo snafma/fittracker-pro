@@ -48,7 +48,7 @@ T('condividi: grande CONDIVIDI + 4 canali + link + QR + come si installa',/CONDI
 T('messaggio personalizzato col nome',/Marco ti invita a provare FitTracker PRO/.test(tx));
 let opened=null;w.open=(u)=>{opened=u};w.shareOpen('wa');T('WhatsApp con messaggio',/wa\.me\/\?text=Marco%20ti%20invita/.test(opened),opened&&opened.slice(0,60));
 T('tour IT/EN aggiornato',/Nel Profilo, diviso in sezioni/.test(src)&&/In Profile, split into sections/.test(src));
-T('versione S85+',/build-SESSION(8[5-9]|9\d)/.test(src));
+T('versione S85+',+(src.match(/build-SESSION(\d+)/)||[0,0])[1]>=85);
 })();
 setTimeout(()=>{w.FBAuth.auth.currentUser.emailVerified=false;w.ST.tab='profile';w.render();const sec=w.document.getElementById('pf-security'),bd=w.document.getElementById('pf-body');
 T('cambia password nella sezione Sicurezza',(!/CAMBIA PASSWORD/.test(app().textContent))||(/CAMBIA PASSWORD/.test(sec.textContent)&&!/CAMBIA PASSWORD/.test(bd.textContent)));},300);

@@ -22,4 +22,4 @@ w.ST.tab='home';w.render();T('Home senza intestazione extra',!app().querySelecto
 w.ST.tab='set';w.render();T('navigazione rapida a riquadri colorati (Configurazione)',app().querySelectorAll('.qnav .qtile').length>=7);
 w.ST.tab='profile';w.render();T('navigazione rapida a riquadri colorati (Profilo)',app().querySelectorAll('.qnav .qtile').length>=5);
 T('tour IT/EN aggiornato',/bordo verde se va bene, arancione se serve attenzione/.test(src)&&/green border if all is well/.test(src));
-T('versione S88',/build-SESSION(8[8-9]|9\d)/.test(src));
+T('versione S88',+(src.match(/build-SESSION(\d+)/)||[0,0])[1]>=88);

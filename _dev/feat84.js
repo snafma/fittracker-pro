@@ -40,7 +40,7 @@ w.ST.p.t='bulk';w.ST.p.g=95;w.ST.h=H([['2026-10-22',90],['2026-11-05',90.05]]);s
 T('massa: fattibile ma lento → consigli su calorie e costanza',s.feasible&&/calorie/.test(s.advice));
 w.ST.p.g=110;s=w.getTargetSummary(w.ST.h,w.ST.p);T('massa +20 kg in 7 mesi: impossibile (max sano 0,5 kg/sett)',s.impossible);
 T('tour IT/EN aggiornato',/ancora raggiungibile ti dico come recuperare/.test(src)&&/still reachable I tell you how to catch up/.test(src)&&/scattata dall'app/.test(src));
-T('versione S84+',/build-SESSION(8[4-9]|9\d)/.test(src));
+T('versione S84+',+(src.match(/build-SESSION(\d+)/)||[0,0])[1]>=84);
 })();
 // ── configurazione riorganizzata ──
 setTimeout(()=>{
